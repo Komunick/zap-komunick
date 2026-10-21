@@ -19,6 +19,10 @@ import { loadJSON } from "../../helpers/loadJSON";
 import api from "../../services/api";
 
 const frontendGitInfo = loadJSON("/gitinfo.json");
+
+// AGPL: users must be able to get the source code of this modified version
+const SOURCE_CODE_URL = "https://github.com/Komunick/zap-komunick";
+const UPSTREAM_URL = "https://github.com/ticketz-oss/ticketz";
 const logo = "/vector/logo.svg";
 const logoDark = "/vector/logo-dark.svg";
 
@@ -156,17 +160,19 @@ const AboutModal = ({ open, onClose }) => {
               <Typography>
                 <Link
                   target="_blank"
-                  href="https://github.com/ticketz-oss/ticketz/blob/main/LICENSE.md"
+                  href={`${SOURCE_CODE_URL}/blob/main/LICENSE.md`}
                 >
                   {i18n.t("about.licensefulltext")}
                 </Link>
               </Typography>
               <Typography>
-                <Link
-                  target="_blank"
-                  href="https://github.com/ticketz-oss/ticketz"
-                >
+                <Link target="_blank" href={SOURCE_CODE_URL}>
                   {i18n.t("about.licensesourcecode")}
+                </Link>
+              </Typography>
+              <Typography>
+                <Link target="_blank" href={UPSTREAM_URL}>
+                  {i18n.t("about.basedOnTicketz")}
                 </Link>
               </Typography>
             </>
@@ -178,6 +184,11 @@ const AboutModal = ({ open, onClose }) => {
               <Typography className={classes.textCenter}>
                 <Link target="_blank" href="https://ticke.tz">
                   {i18n.t("about.copyright")}
+                </Link>
+              </Typography>
+              <Typography className={classes.textCenter}>
+                <Link target="_blank" href={SOURCE_CODE_URL}>
+                  {i18n.t("about.licensesourcecode")}
                 </Link>
               </Typography>
             </>
