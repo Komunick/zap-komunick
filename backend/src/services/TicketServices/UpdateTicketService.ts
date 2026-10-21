@@ -212,7 +212,8 @@ const UpdateTicketService = async ({
           await ticket.update({
             chatbot: null,
             queueOptionId: null,
-            status: "closed"
+            status: "closed",
+            unansweredSince: null
           });
 
           await ticket.reload();
@@ -287,7 +288,8 @@ const UpdateTicketService = async ({
       userId,
       whatsappId: ticket.whatsappId,
       chatbot,
-      queueOptionId
+      queueOptionId,
+      ...(status === "closed" ? { unansweredSince: null } : {})
     });
 
     if (oldStatus !== status) {

@@ -11,8 +11,53 @@ import Whatsapp from "../../models/Whatsapp";
 import Queue from "../../models/Queue";
 import { incrementCounter } from "../CounterServices/IncrementCounter";
 import AppError from "../../errors/AppError";
+import User from "../../models/User";
+import {
+  resolveWalletAssignment,
+  WalletAssignment
+} from "../../helpers/WalletRules";
 
 const createTicketMutex = new Mutex();
+
+// Zap Komunick: client wallet (docs/PRD.md, RF-003)
+const findWalletAssignment = async (
+  contact: Contact,
+  whatsappId: number,
+  companyId: number,
+  isGroup: boolean
+): Promise<WalletAssignment | null> => {
+  if (isGroup || !contact?.walletUserId) {
+    return null;
+  }
+
+  const enabled =
+    (await GetCompanySetting(companyId, "walletAutoAssign", "disabled")) ===
+    "enabled";
+  if (!enabled) {
+    return null;
+  }
+
+  const [owner, whatsapp] = await Promise.all([
+    User.findByPk(contact.walletUserId, {
+      attributes: ["id", "companyId"],
+      include: [{ model: Queue, as: "queues", attributes: ["id"] }]
+    }),
+    Whatsapp.findByPk(whatsappId, {
+      attributes: ["id"],
+      include: [{ model: Queue, as: "queues", attributes: ["id"] }]
+    })
+  ]);
+
+  return resolveWalletAssignment({
+    enabled,
+    isGroup,
+    companyId,
+    walletUserId: contact.walletUserId,
+    ownerCompanyId: owner?.companyId ?? null,
+    ownerQueueIds: (owner?.queues || []).map(queue => queue.id),
+    connectionQueueIds: (whatsapp?.queues || []).map(queue => queue.id)
+  });
+};
 
 type FindOrCreateTicketOptions = {
   groupContact?: Contact;
@@ -108,9 +153,16 @@ const internalFindOrCreateTicketService = async (
         }));
 
       if (ticket) {
+        const wallet = await findWalletAssignment(
+          contact,
+          whatsappId,
+          companyId,
+          false
+        );
         await ticket.update({
           status: "pending",
-          userId: null,
+          userId: wallet?.userId ?? null,
+          ...(wallet?.queueId ? { queueId: wallet.queueId } : {}),
           unreadMessages: incrementUnread
             ? ticket.unreadMessages + 1
             : ticket.unreadMessages,
@@ -142,13 +194,21 @@ const internalFindOrCreateTicketService = async (
     }
 
     if (!ticket) {
+      const wallet = await findWalletAssignment(
+        contact,
+        whatsappId,
+        companyId,
+        !!groupContact
+      );
+
       ticket = await Ticket.create({
         contactId: groupContact ? groupContact.id : contact.id,
         status: "pending",
         isGroup: !!groupContact,
         unreadMessages: incrementUnread ? 1 : 0,
         whatsappId,
-        queueId,
+        queueId: wallet?.queueId ?? queueId,
+        userId: wallet?.userId ?? null,
         companyId
       });
 
