@@ -5,6 +5,7 @@ import { SerializeUser } from "../../helpers/SerializeUser";
 import User from "../../models/User";
 import Plan from "../../models/Plan";
 import Company from "../../models/Company";
+import { AccessHours, normalizeAccessHours } from "../../helpers/AccessHours";
 
 interface Request {
   email: string;
@@ -13,6 +14,7 @@ interface Request {
   queueIds?: number[];
   companyId?: number;
   profile?: string;
+  accessHours?: AccessHours | null;
 }
 
 interface Response {
@@ -28,8 +30,16 @@ const CreateUserService = async ({
   name,
   queueIds = [],
   companyId,
-  profile = "admin"
+  profile = "admin",
+  accessHours
 }: Request): Promise<Response> => {
+  let normalizedAccessHours: AccessHours | null;
+  try {
+    normalizedAccessHours = normalizeAccessHours(accessHours);
+  } catch {
+    throw new AppError("ERR_INVALID_ACCESS_HOURS");
+  }
+
   if (companyId !== undefined) {
     const company = await Company.findOne({
       where: {
@@ -84,7 +94,8 @@ const CreateUserService = async ({
       password,
       name,
       companyId,
-      profile
+      profile,
+      accessHours: normalizedAccessHours
     },
     { include: ["queues", "company"] }
   );

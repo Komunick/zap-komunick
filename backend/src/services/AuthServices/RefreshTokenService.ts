@@ -11,6 +11,7 @@ import {
   decodeRefreshToken,
   RefreshTokenPayload
 } from "../../helpers/DecodeRefreshToken";
+import { canAccessNow } from "../../helpers/AccessHours";
 
 interface Response {
   user: User;
@@ -22,6 +23,9 @@ export const RefreshTokenService = async (
   res: Res,
   token: string
 ): Promise<Response> => {
+  let result: Response;
+  let impersonatedSession = false;
+
   try {
     const decoded = decodeRefreshToken(token);
     const {
@@ -50,9 +54,18 @@ export const RefreshTokenService = async (
       originalCompanyId
     });
 
-    return { user, newToken, refreshToken };
+    impersonatedSession = impersonated === true;
+    result = { user, newToken, refreshToken };
   } catch {
     res.clearCookie("jrt");
     throw new AppError("ERR_SESSION_EXPIRED", 401);
   }
+
+  // Zap Komunick: access hours also end sessions already open
+  if (!impersonatedSession && !canAccessNow(result.user)) {
+    res.clearCookie("jrt");
+    throw new AppError("ERR_OUT_OF_ACCESS_HOURS", 401);
+  }
+
+  return result;
 };

@@ -301,6 +301,9 @@ const Schedules = () => {
                 {i18n.t("schedules.table.sendAt")}
               </TableCell>
               <TableCell align="center">
+                {i18n.t("recurrence.column")}
+              </TableCell>
+              <TableCell align="center">
                 {i18n.t("schedules.table.status")}
               </TableCell>
               <TableCell align="center">
@@ -320,6 +323,11 @@ const Schedules = () => {
                     {moment(schedule.sendAt)
                       .local()
                       .format("DD/MM/YYYY HH:mm:ss")}
+                  </TableCell>
+                  <TableCell align="center">
+                    {i18n.t(
+                      `recurrence.options.${schedule.recurrence || "none"}`
+                    )}
                   </TableCell>
                   <TableCell align="center">
                     {capitalize(schedule.status)}

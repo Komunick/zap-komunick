@@ -16,6 +16,8 @@ import WhatsAppIcon from "@material-ui/icons/WhatsApp";
 import SearchIcon from "@material-ui/icons/Search";
 import TextField from "@material-ui/core/TextField";
 import InputAdornment from "@material-ui/core/InputAdornment";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Switch from "@material-ui/core/Switch";
 
 import IconButton from "@material-ui/core/IconButton";
 import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
@@ -133,6 +135,7 @@ const Contacts = () => {
   const [loading, setLoading] = useState(false);
   const [pageNumber, setPageNumber] = useState(1);
   const [searchParam, setSearchParam] = useState("");
+  const [onlyMyWallet, setOnlyMyWallet] = useState(false);
   const [contacts, dispatch] = useReducer(reducer, []);
   const [selectedContactId, setSelectedContactId] = useState(null);
   const [contactModalOpen, setContactModalOpen] = useState(false);
@@ -159,7 +162,7 @@ const Contacts = () => {
   useEffect(() => {
     dispatch({ type: "RESET" });
     setPageNumber(1);
-  }, [searchParam]);
+  }, [searchParam, onlyMyWallet]);
 
   useEffect(() => {
     setLoading(true);
@@ -167,7 +170,11 @@ const Contacts = () => {
       const fetchContacts = async () => {
         try {
           const { data } = await api.get("/contacts/", {
-            params: { searchParam, pageNumber }
+            params: {
+              searchParam,
+              pageNumber,
+              ...(onlyMyWallet ? { walletUserId: "me" } : {})
+            }
           });
           dispatch({ type: "LOAD_CONTACTS", payload: data.contacts });
           setHasMore(data.hasMore);
@@ -179,7 +186,7 @@ const Contacts = () => {
       fetchContacts();
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [searchParam, pageNumber]);
+  }, [searchParam, pageNumber, onlyMyWallet]);
 
   useEffect(() => {
     const companyId = localStorage.getItem("companyId");
@@ -356,6 +363,16 @@ const Contacts = () => {
       <MainHeader>
         <Title>{i18n.t("contacts.title")}</Title>
         <MainHeaderButtonsWrapper>
+          <FormControlLabel
+            control={
+              <Switch
+                color="primary"
+                checked={onlyMyWallet}
+                onChange={e => setOnlyMyWallet(e.target.checked)}
+              />
+            }
+            label={i18n.t("wallet.myWallet")}
+          />
           <TextField
             placeholder={i18n.t("contacts.searchPlaceholder")}
             type="search"
@@ -425,6 +442,7 @@ const Contacts = () => {
               <TableCell align="center">
                 {i18n.t("contacts.table.email")}
               </TableCell>
+              <TableCell align="center">{i18n.t("wallet.column")}</TableCell>
               <TableCell align="center">
                 {i18n.t("contacts.table.actions")}
               </TableCell>
@@ -469,6 +487,9 @@ const Contacts = () => {
                   <TableCell align="center">{contact.number}</TableCell>
                   <TableCell align="center">{contact.email}</TableCell>
                   <TableCell align="center">
+                    {contact.walletUser?.name || ""}
+                  </TableCell>
+                  <TableCell align="center">
                     {!contact.isGroup && (
                       <IconButton
                         size="small"
@@ -507,7 +528,7 @@ const Contacts = () => {
                   </TableCell>
                 </TableRow>
               ))}
-              {loading && <TableRowSkeleton avatar columns={3} />}
+              {loading && <TableRowSkeleton avatar columns={4} />}
             </>
           </TableBody>
         </Table>

@@ -4,6 +4,7 @@ import AppError from "../../errors/AppError";
 import ShowUserService from "./ShowUserService";
 import Company from "../../models/Company";
 import User from "../../models/User";
+import { AccessHours, normalizeAccessHours } from "../../helpers/AccessHours";
 
 interface UserData {
   email?: string;
@@ -12,6 +13,7 @@ interface UserData {
   profile?: string;
   companyId?: number;
   queueIds?: number[];
+  accessHours?: AccessHours | null;
 }
 
 interface Request {
@@ -61,11 +63,21 @@ const UpdateUserService = async ({
   }
 
   if (requestUser.profile === "admin") {
+    let accessHours: AccessHours | null | undefined;
+    if (userData.accessHours !== undefined) {
+      try {
+        accessHours = normalizeAccessHours(userData.accessHours);
+      } catch {
+        throw new AppError("ERR_INVALID_ACCESS_HOURS");
+      }
+    }
+
     await user.update({
       email,
       password,
       profile,
-      name
+      name,
+      accessHours
     });
     await user.$set("queues", queueIds);
   } else {

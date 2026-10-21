@@ -6,16 +6,21 @@ import { messages as frenchMessages } from "./fr";
 import { messages as germanMessages } from "./de";
 import { messages as italianMessages } from "./it";
 import { messages as indonesianMessages } from "./id";
+import { merge } from "lodash";
+import { komunickMessages } from "./komunick";
 
-const messages = {
-  ...portugueseMessages,
-  ...portuguesePortugalMessages,
-  ...englishMessages,
-  ...spanishMessages,
-  ...frenchMessages,
-  ...germanMessages,
-  ...italianMessages,
-  ...indonesianMessages
-};
+const messages = merge(
+  {
+    ...portugueseMessages,
+    ...portuguesePortugalMessages,
+    ...englishMessages,
+    ...spanishMessages,
+    ...frenchMessages,
+    ...germanMessages,
+    ...italianMessages,
+    ...indonesianMessages
+  },
+  komunickMessages
+);
 
 export { messages };

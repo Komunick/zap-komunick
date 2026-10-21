@@ -10,6 +10,7 @@ import ShowContactService from "../services/ContactServices/ShowContactService";
 import UpdateContactService from "../services/ContactServices/UpdateContactService";
 import DeleteContactService from "../services/ContactServices/DeleteContactService";
 import FindOrCreateContactService from "../services/ContactServices/FindOrCreateContactService";
+import SetContactWalletService from "../services/ContactServices/SetContactWalletService";
 
 import CheckContactNumber, {
   CheckNumberAndCreateContact,
@@ -33,6 +34,7 @@ import { csvDetectDelimiter } from "../helpers/csvDetectDelimiter";
 type IndexQuery = {
   searchParam: string;
   pageNumber: string;
+  walletUserId?: string;
 };
 
 type IndexGetContactQuery = {
@@ -53,13 +55,17 @@ interface ContactData {
 }
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
-  const { searchParam, pageNumber } = req.query as IndexQuery;
+  const { searchParam, pageNumber, walletUserId } = req.query as IndexQuery;
   const { companyId } = req.user;
 
   const { contacts, count, hasMore } = await ListContactsService({
     searchParam,
     pageNumber,
-    companyId
+    companyId,
+    walletUserId:
+      walletUserId === "me"
+        ? Number(req.user.id)
+        : Number(walletUserId) || undefined
   });
 
   return res.json({ contacts, count, hasMore });
@@ -400,4 +406,30 @@ export const exportCsv = async (
   );
 
   return res;
+};
+
+export const updateWallet = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { contactId } = req.params;
+  const { companyId } = req.user;
+  const walletUserId = Number(req.body?.walletUserId) || null;
+
+  const contact = await SetContactWalletService({
+    contactId,
+    walletUserId,
+    companyId
+  });
+
+  const io = getIO();
+  io.to(`company-${companyId}-mainchannel`).emit(
+    `company-${companyId}-contact`,
+    {
+      action: "update",
+      contact
+    }
+  );
+
+  return res.status(200).json(contact);
 };
