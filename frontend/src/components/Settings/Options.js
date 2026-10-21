@@ -132,6 +132,11 @@ export default function Options(props) {
   const [pendingTicketTimeoutAction, setPendingTicketTimeoutAction] =
     useState("0");
 
+  // Zap Komunick
+  const [slaMinutes, setSlaMinutes] = useState("0");
+  const [slaOldTicketHours, setSlaOldTicketHours] = useState("72");
+  const [walletAutoAssign, setWalletAutoAssign] = useState("disabled");
+
   const [queues, setQueues] = useState([]);
   const { findAll: findAllQueues } = useQueues();
 
@@ -319,6 +324,17 @@ export default function Options(props) {
         s => s.key === "pendingTicketTimeoutAction"
       );
       setPendingTicketTimeoutAction(pendingTicketTimeoutAction?.value || "0");
+
+      const slaMinutesSetting = settings.find(s => s.key === "slaMinutes");
+      setSlaMinutes(slaMinutesSetting?.value || "0");
+      const slaOldTicketHoursSetting = settings.find(
+        s => s.key === "slaOldTicketHours"
+      );
+      setSlaOldTicketHours(slaOldTicketHoursSetting?.value || "72");
+      const walletAutoAssignSetting = settings.find(
+        s => s.key === "walletAutoAssign"
+      );
+      setWalletAutoAssign(walletAutoAssignSetting?.value || "disabled");
 
       const gracePeriod = settings.find(s => s.key === "gracePeriod");
       setGracePeriod(gracePeriod?.value || 0);
@@ -924,6 +940,78 @@ export default function Options(props) {
                   {i18n.t("common.transferTo")} {queue.name}
                 </MenuItem>
               ))}
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid item xs={12}>
+          <h2 className={classes.groupTitle}>{i18n.t("settings.sla.group")}</h2>
+        </Grid>
+
+        <Grid xs={12} sm={6} md={4} item>
+          <FormControl className={classes.selectContainer}>
+            <TextField
+              id="sla-minutes-field"
+              label={i18n.t("settings.sla.minutes")}
+              helperText={i18n.t("settings.sla.minutesHelper")}
+              variant="standard"
+              name="slaMinutes"
+              type="number"
+              inputProps={{ min: 0 }}
+              value={slaMinutes}
+              onChange={e => {
+                setSlaMinutes(e.target.value);
+              }}
+              onBlur={async _ => {
+                await handleSetting("slaMinutes", slaMinutes);
+              }}
+            />
+          </FormControl>
+        </Grid>
+
+        <Grid xs={12} sm={6} md={4} item>
+          <FormControl className={classes.selectContainer}>
+            <TextField
+              id="sla-old-ticket-hours-field"
+              label={i18n.t("settings.sla.oldTicketHours")}
+              helperText={i18n.t("settings.sla.oldTicketHoursHelper")}
+              variant="standard"
+              name="slaOldTicketHours"
+              type="number"
+              inputProps={{ min: 0 }}
+              value={slaOldTicketHours}
+              onChange={e => {
+                setSlaOldTicketHours(e.target.value);
+              }}
+              onBlur={async _ => {
+                await handleSetting("slaOldTicketHours", slaOldTicketHours);
+              }}
+            />
+          </FormControl>
+        </Grid>
+
+        <Grid xs={12} sm={6} md={4} item>
+          <FormControl className={classes.selectContainer}>
+            <InputLabel id="wallet-auto-assign-label">
+              {i18n.t("settings.wallet.autoAssign")}
+            </InputLabel>
+            <Select
+              labelId="wallet-auto-assign-label"
+              value={walletAutoAssign}
+              onChange={async e => {
+                handleSetting(
+                  "walletAutoAssign",
+                  e.target.value,
+                  setWalletAutoAssign
+                );
+              }}
+            >
+              <MenuItem value={"disabled"}>
+                {i18n.t("settings.wallet.options.disabled")}
+              </MenuItem>
+              <MenuItem value={"enabled"}>
+                {i18n.t("settings.wallet.options.enabled")}
+              </MenuItem>
             </Select>
           </FormControl>
         </Grid>

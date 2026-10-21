@@ -27,6 +27,7 @@ import { i18n } from "../../translate/i18n";
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import QueueSelect from "../QueueSelect";
+import AccessHoursEditor from "../AccessHoursEditor";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { Can } from "../Can";
 
@@ -84,6 +85,7 @@ const UserModal = ({ open, onClose, userId }) => {
   const [user, setUser] = useState(initialState);
   const [showPassword, setShowPassword] = useState(false);
   const [selectedQueueIds, setSelectedQueueIds] = useState([]);
+  const [accessHours, setAccessHours] = useState(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -95,6 +97,7 @@ const UserModal = ({ open, onClose, userId }) => {
         });
         const userQueueIds = data.queues?.map(queue => queue.id);
         setSelectedQueueIds(userQueueIds);
+        setAccessHours(data.accessHours || null);
       } catch (err) {
         toastError(err);
       }
@@ -106,11 +109,15 @@ const UserModal = ({ open, onClose, userId }) => {
   const handleClose = () => {
     onClose();
     setUser(initialState);
+    setAccessHours(null);
     setShowPassword(false);
   };
 
   const handleSaveUser = async values => {
     const userData = { ...values, queueIds: selectedQueueIds };
+    if (loggedInUser.profile === "admin") {
+      userData.accessHours = accessHours;
+    }
     try {
       if (userId) {
         await api.put(`/users/${userId}`, userData);
@@ -253,6 +260,12 @@ const UserModal = ({ open, onClose, userId }) => {
                     />
                   )}
                 />
+                {loggedInUser.profile === "admin" && (
+                  <AccessHoursEditor
+                    value={accessHours}
+                    onChange={setAccessHours}
+                  />
+                )}
               </DialogContent>
               <DialogActions>
                 <Button

@@ -32,6 +32,8 @@ import Annoucements from "../pages/Annoucements";
 import Chat from "../pages/Chat";
 import ToDoList from "../pages/ToDoList/";
 import Subscription from "../pages/Subscription/";
+import Kanban from "../pages/Kanban/";
+import Sla from "../pages/Sla/";
 
 const Routes = () => {
   const [showCampaigns, setShowCampaigns] = useState(false);
@@ -79,6 +81,8 @@ const Routes = () => {
                   isPrivate
                 />
                 <Route exact path="/todolist" component={ToDoList} isPrivate />
+                <Route exact path="/kanban" component={Kanban} isPrivate />
+                <Route exact path="/sla" component={Sla} isPrivate />
                 <Route exact path="/tags" component={Tags} isPrivate />
                 <Route exact path="/contacts" component={Contacts} isPrivate />
                 <Route exact path="/helps" component={Helps} isPrivate />

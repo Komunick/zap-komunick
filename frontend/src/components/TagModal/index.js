@@ -21,7 +21,13 @@ import { i18n } from "../../translate/i18n";
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import { AuthContext } from "../../context/Auth/AuthContext";
-import { IconButton, InputAdornment, FormControl } from "@material-ui/core";
+import {
+  IconButton,
+  InputAdornment,
+  FormControl,
+  FormControlLabel,
+  Switch
+} from "@material-ui/core";
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -75,7 +81,7 @@ const TagModal = ({ open, onClose, tagId, reload, kanban }) => {
   const initialState = {
     name: "",
     color: "",
-    kanban: kanban
+    kanban: kanban || 0
   };
 
   const [tag, setTag] = useState(initialState);
@@ -103,7 +109,11 @@ const TagModal = ({ open, onClose, tagId, reload, kanban }) => {
   };
 
   const handleSaveTag = async values => {
-    const tagData = { ...values, userId: user.id, kanban: kanban };
+    const tagData = {
+      ...values,
+      userId: user.id,
+      kanban: values.kanban ? 1 : 0
+    };
     try {
       if (tagId) {
         await api.put(`/tags/${tagId}`, tagData);
@@ -111,7 +121,7 @@ const TagModal = ({ open, onClose, tagId, reload, kanban }) => {
         await api.post("/tags", tagData);
       }
       toast.success(
-        kanban === 0
+        tagData.kanban === 0
           ? `${i18n.t("tagModal.success")}`
           : `${i18n.t("tagModal.successKanban")}`
       );
@@ -153,7 +163,7 @@ const TagModal = ({ open, onClose, tagId, reload, kanban }) => {
             }, 400);
           }}
         >
-          {({ touched, errors, isSubmitting, values }) => (
+          {({ touched, errors, isSubmitting, values, setFieldValue }) => (
             <Form>
               <DialogContent dividers>
                 <div className={classes.multFieldLine}>
@@ -206,6 +216,21 @@ const TagModal = ({ open, onClose, tagId, reload, kanban }) => {
                     margin="dense"
                   />
                 </div>
+
+                <FormControlLabel
+                  control={
+                    <Switch
+                      color="primary"
+                      checked={!!values.kanban}
+                      onChange={e => {
+                        const value = e.target.checked ? 1 : 0;
+                        setFieldValue("kanban", value);
+                        setTag(prev => ({ ...prev, kanban: value }));
+                      }}
+                    />
+                  }
+                  label={i18n.t("tagModal.form.kanban")}
+                />
 
                 {colorPickerModalOpen && (
                   <div>

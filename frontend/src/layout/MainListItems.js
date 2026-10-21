@@ -33,6 +33,8 @@ import AnnouncementIcon from "@material-ui/icons/Announcement";
 import ForumIcon from "@material-ui/icons/Forum";
 import LocalAtmIcon from "@material-ui/icons/LocalAtm";
 import RotateRight from "@material-ui/icons/RotateRight";
+import ViewColumnIcon from "@material-ui/icons/ViewColumn";
+import AlarmIcon from "@material-ui/icons/Alarm";
 import { i18n } from "../translate/i18n";
 import BorderColorIcon from "@material-ui/icons/BorderColor";
 import { WhatsAppsContext } from "../context/WhatsApp/WhatsAppsContext";
@@ -310,6 +312,11 @@ const MainListItems = props => {
                 icon={<WhatsAppIcon />}
               />
               <ListItemLink
+                to="/kanban"
+                primary={i18n.t("mainDrawer.listItems.kanban")}
+                icon={<ViewColumnIcon />}
+              />
+              <ListItemLink
                 to="/todolist"
                 primary={i18n.t("mainDrawer.listItems.tasks")}
                 icon={<BorderColorIcon />}
@@ -377,6 +384,12 @@ const MainListItems = props => {
               to="/"
               primary="Dashboard"
               icon={<DashboardOutlinedIcon />}
+            />
+            <ListItemLink
+              small
+              to="/sla"
+              primary={i18n.t("mainDrawer.listItems.sla")}
+              icon={<AlarmIcon />}
             />
           </>
         )}
