@@ -1,11 +1,7 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import {
-  makeStyles,
-  createTheme,
-  ThemeProvider
-} from "@material-ui/core/styles";
+import { makeStyles } from "@material-ui/core/styles";
 import { IconButton } from "@material-ui/core";
 import { MoreVert, Replay } from "@material-ui/icons";
 
@@ -16,15 +12,22 @@ import ButtonWithSpinner from "../ButtonWithSpinner";
 import toastError from "../../errors/toastError";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { TicketsContext } from "../../context/Tickets/TicketsContext";
-import CheckCircleIcon from "@material-ui/icons/CheckCircle";
 import UndoRoundedIcon from "@material-ui/icons/UndoRounded";
 import AddBoxIcon from "@material-ui/icons/AddBox";
 import { Call, CallEnd } from "@material-ui/icons";
 import Tooltip from "@material-ui/core/Tooltip";
-import { green } from "@material-ui/core/colors";
 import { PhoneCallContext } from "../../context/PhoneCall/PhoneCallContext";
 import { wavoipAvailable, wavoipCall } from "../../helpers/wavoipCallManager";
 import { toBeChecked } from "@testing-library/jest-dom/matchers";
+// Zap Komunick: pause, transfer and close reason (docs/PRD.md, RF-007)
+import Button from "@material-ui/core/Button";
+import PauseCircleOutlineIcon from "@material-ui/icons/PauseCircleOutline";
+import PlayArrowRoundedIcon from "@material-ui/icons/PlayArrowRounded";
+import SwapHorizIcon from "@material-ui/icons/SwapHoriz";
+import DoneRoundedIcon from "@material-ui/icons/DoneRounded";
+import CloseTicketModal from "../CloseTicketModal";
+import TransferTicketModalCustom from "../TransferTicketModalCustom";
+import useSettings from "../../hooks/useSettings";
 
 const useStyles = makeStyles(theme => ({
   actionButtons: {
@@ -32,9 +35,14 @@ const useStyles = makeStyles(theme => ({
     flex: "none",
     alignSelf: "center",
     marginLeft: "auto",
+    display: "flex",
+    alignItems: "center",
     "& > *": {
       margin: theme.spacing(0.5)
     }
+  },
+  finishButton: {
+    whiteSpace: "nowrap"
   }
 }));
 
@@ -47,12 +55,17 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
   const { user } = useContext(AuthContext);
   const { setCurrentTicket } = useContext(TicketsContext);
   const phoneContext = useContext(PhoneCallContext);
+  const { getSetting } = useSettings();
+  const [closeReasonRequired, setCloseReasonRequired] = useState(false);
+  const [closeModalOpen, setCloseModalOpen] = useState(false);
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
 
-  const customTheme = createTheme({
-    palette: {
-      primary: green
-    }
-  });
+  useEffect(() => {
+    getSetting("closeReasonRequired", "disabled")
+      .then(value => setCloseReasonRequired(value === "enabled"))
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticket.id]);
 
   const handleOpenTicketOptionsMenu = e => {
     setAnchorEl(e.currentTarget);
@@ -71,7 +84,7 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
       });
 
       setLoading(false);
-      if (status === "open") {
+      if (status === "open" || status === "paused") {
         setCurrentTicket({ ...ticket, code: "#open" });
       } else {
         setCurrentTicket({ id: null, code: null });
@@ -82,6 +95,49 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
       toastError(err);
     }
   };
+
+  const handleFinish = e => {
+    if (closeReasonRequired && !ticket.isGroup) {
+      setCloseModalOpen(true);
+      return;
+    }
+    handleUpdateTicketStatus(e, "closed", user?.id);
+  };
+
+  const handleClosedWithReason = () => {
+    setCurrentTicket({ id: null, code: null });
+    history.push("/tickets");
+  };
+
+  const finishButton = (
+    <Button
+      size="small"
+      variant="contained"
+      color="primary"
+      disableElevation
+      className={classes.finishButton}
+      startIcon={<DoneRoundedIcon />}
+      disabled={loading}
+      onClick={handleFinish}
+    >
+      {i18n.t("messagesList.header.buttons.finish")}
+    </Button>
+  );
+
+  const optionsMenu = (
+    <>
+      <IconButton onClick={handleOpenTicketOptionsMenu}>
+        <MoreVert />
+      </IconButton>
+      <TicketOptionsMenu
+        ticket={ticket}
+        anchorEl={anchorEl}
+        menuOpen={ticketOptionsMenuOpen}
+        handleClose={handleCloseTicketOptionsMenu}
+        showTabGroups={showTabGroups}
+      />
+    </>
+  );
 
   const handleCall = async () => {
     wavoipCall(ticket, () => {
@@ -104,6 +160,18 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
 
   return (
     <div className={classes.actionButtons}>
+      <CloseTicketModal
+        open={closeModalOpen}
+        onClose={() => setCloseModalOpen(false)}
+        ticket={ticket}
+        onClosed={handleClosedWithReason}
+      />
+      <TransferTicketModalCustom
+        modalOpen={transferModalOpen}
+        onClose={() => setTransferModalOpen(false)}
+        ticketid={ticket.id}
+        hideUserSelection={showTabGroups && ticket.isGroup}
+      />
       {ticket.status === "closed" && (!showTabGroups || !ticket.isGroup) && (
         <>
           <Tooltip title={i18n.t("ticketsManager.buttons.newTicket")}>
@@ -165,31 +233,40 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
                   <UndoRoundedIcon />
                 </IconButton>
               </Tooltip>
-              <ThemeProvider theme={customTheme}>
-                <Tooltip title={i18n.t("messagesList.header.buttons.resolve")}>
-                  <IconButton
-                    onClick={e =>
-                      handleUpdateTicketStatus(e, "closed", user?.id)
-                    }
-                    color="primary"
-                  >
-                    <CheckCircleIcon />
-                  </IconButton>
-                </Tooltip>
-              </ThemeProvider>
+              <Tooltip title={i18n.t("messagesList.header.buttons.transfer")}>
+                <IconButton onClick={() => setTransferModalOpen(true)}>
+                  <SwapHorizIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title={i18n.t("messagesList.header.buttons.pause")}>
+                <IconButton
+                  disabled={loading}
+                  onClick={e => handleUpdateTicketStatus(e, "paused", user?.id)}
+                >
+                  <PauseCircleOutlineIcon />
+                </IconButton>
+              </Tooltip>
+              {finishButton}
             </>
           )}
 
-          <IconButton onClick={handleOpenTicketOptionsMenu}>
-            <MoreVert />
-          </IconButton>
-          <TicketOptionsMenu
-            ticket={ticket}
-            anchorEl={anchorEl}
-            menuOpen={ticketOptionsMenuOpen}
-            handleClose={handleCloseTicketOptionsMenu}
-            showTabGroups={showTabGroups}
-          />
+          {optionsMenu}
+        </>
+      )}
+      {ticket.status === "paused" && (!showTabGroups || !ticket.isGroup) && (
+        <>
+          <ButtonWithSpinner
+            loading={loading}
+            size="small"
+            variant="outlined"
+            color="primary"
+            startIcon={<PlayArrowRoundedIcon />}
+            onClick={e => handleUpdateTicketStatus(e, "open", user?.id)}
+          >
+            {i18n.t("messagesList.header.buttons.resume")}
+          </ButtonWithSpinner>
+          {finishButton}
+          {optionsMenu}
         </>
       )}
       {ticket.status === "pending" && (!showTabGroups || !ticket.isGroup) && (

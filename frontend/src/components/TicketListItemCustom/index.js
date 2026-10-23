@@ -4,7 +4,7 @@ import { useHistory, useParams } from "react-router-dom";
 import { parseISO, format, isSameDay } from "date-fns";
 import clsx from "clsx";
 
-import { makeStyles } from "@material-ui/core/styles";
+import { alpha, makeStyles } from "@material-ui/core/styles";
 import { green, grey, red, blue } from "@material-ui/core/colors";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemText from "@material-ui/core/ListItemText";
@@ -12,7 +12,6 @@ import ListItemAvatar from "@material-ui/core/ListItemAvatar";
 import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import Typography from "@material-ui/core/Typography";
 import Avatar from "@material-ui/core/Avatar";
-import Divider from "@material-ui/core/Divider";
 import Badge from "@material-ui/core/Badge";
 import Box from "@material-ui/core/Box";
 
@@ -33,6 +32,7 @@ import WhatsAppIcon from "@material-ui/icons/WhatsApp";
 import AndroidIcon from "@material-ui/icons/Android";
 import VisibilityIcon from "@material-ui/icons/Visibility";
 import TicketMessagesDialog from "../TicketMessagesDialog";
+import CloseTicketModal from "../CloseTicketModal";
 import DoneIcon from "@material-ui/icons/Done";
 import ClearOutlinedIcon from "@material-ui/icons/ClearOutlined";
 import { generateColor } from "../../helpers/colorGenerator";
@@ -52,7 +52,19 @@ const useStyles = makeStyles(theme => ({
     paddingHorizontal: 10,
     paddingVertical: 0,
     paddingTop: 0,
-    paddingBottom: 0
+    paddingBottom: 0,
+    // Zap Komunick: rounded rows instead of dividers
+    margin: "2px 6px",
+    width: "auto",
+    borderRadius: 12,
+    "&:hover": {
+      backgroundColor: theme.komunick.hover
+    },
+    // Direção B: selected row gets a 2 px green outline (inset, no layout shift)
+    "&.Mui-selected, &.Mui-selected:hover": {
+      backgroundColor: theme.komunick.selectedRow,
+      boxShadow: `inset 0 0 0 2px ${theme.komunick.accent}`
+    }
   },
 
   pendingTicket: {
@@ -126,11 +138,12 @@ const useStyles = makeStyles(theme => ({
 
   ticketQueueColor: {
     flex: "none",
-    width: "8px",
-    height: "100%",
+    width: "4px",
+    height: "calc(100% - 28px)",
     position: "absolute",
-    top: "0%",
-    left: "0%"
+    top: 14,
+    left: 4,
+    borderRadius: 4
   },
 
   ticketInfo: {
@@ -160,6 +173,29 @@ const useStyles = makeStyles(theme => ({
     color: theme.mode === "light" ? "green" : "lightgreen",
     fontWeight: "bold"
   },
+  chipUser: {
+    "& .MuiBadge-badge": {
+      backgroundColor: theme.komunick.subtle,
+      color: theme.palette.text.secondary,
+      border: `1px solid ${theme.palette.divider}`
+    }
+  },
+  chipConnection: {
+    "& .MuiBadge-badge": {
+      backgroundColor: "transparent",
+      color: theme.palette.text.secondary,
+      border: `1px dashed ${theme.palette.divider}`
+    }
+  },
+  pausedBadge: {
+    backgroundColor: alpha(theme.palette.warning.main, 0.16),
+    color: theme.palette.warning.dark,
+    borderRadius: 7,
+    padding: "0 5px",
+    marginRight: 4,
+    fontSize: 10,
+    fontWeight: "bold"
+  },
   slaBadge: {
     backgroundColor: red[700],
     color: "white",
@@ -175,7 +211,8 @@ const TicketListItemCustom = ({
   ticket,
   setTabOpen,
   groupActionButtons,
-  slaMinutes
+  slaMinutes,
+  closeReasonRequired
 }) => {
   const classes = useStyles();
 
@@ -184,6 +221,7 @@ const TicketListItemCustom = ({
   const [whatsAppName, setWhatsAppName] = useState(null);
 
   const [openTicketMessageDialog, setOpenTicketMessageDialog] = useState(false);
+  const [closeModalOpen, setCloseModalOpen] = useState(false);
   const { ticketId } = useParams();
   const isMounted = useRef(true);
   const { setCurrentTicket } = useContext(TicketsContext);
@@ -205,6 +243,11 @@ const TicketListItemCustom = ({
   }, [ticket]);
 
   const handleCloseTicket = async id => {
+    // Zap Komunick: ask for the reason first (docs/PRD.md, RF-007)
+    if (closeReasonRequired && !ticket.isGroup) {
+      setCloseModalOpen(true);
+      return;
+    }
     try {
       await api.put(`/tickets/${id}`, {
         status: "closed",
@@ -242,35 +285,16 @@ const TicketListItemCustom = ({
       return (
         <>
           <Badge
-            className={classes.Radiusdot}
+            className={clsx(classes.Radiusdot, classes.chipUser)}
             badgeContent={`${ticketUser}`}
-            //color="primary"
-            style={{
-              backgroundColor: "#3498db",
-              height: 18,
-              padding: 5,
-              position: "inherit",
-              borderRadius: 7,
-              color: "#fff",
-              top: -6,
-              marginRight: 3
-            }}
+            style={{ position: "inherit", top: -6, marginRight: 3 }}
           />
 
           {ticket.whatsappId && (
             <Badge
-              className={classes.Radiusdot}
+              className={clsx(classes.Radiusdot, classes.chipConnection)}
               badgeContent={`${whatsAppName}`}
-              style={{
-                backgroundColor: "#7d79f2",
-                height: 18,
-                padding: 5,
-                position: "inherit",
-                borderRadius: 7,
-                color: "white",
-                top: -6,
-                marginRight: 3
-              }}
+              style={{ position: "inherit", top: -6, marginRight: 3 }}
             />
           )}
 
@@ -297,15 +321,15 @@ const TicketListItemCustom = ({
                 onClick={() => handleCloseTicket(ticket.id)}
                 fontSize="small"
                 style={{
-                  color: "#fff",
-                  backgroundColor: red[700],
+                  color: red[700],
+                  backgroundColor: alpha(red[700], 0.12),
                   cursor: "pointer",
                   //margin: '0 5 0 5',
                   padding: 2,
                   height: 23,
                   width: 23,
                   fontSize: 12,
-                  borderRadius: 50,
+                  borderRadius: 8,
                   position: "absolute",
                   right: 0,
                   top: -8
@@ -326,10 +350,10 @@ const TicketListItemCustom = ({
                   height: 23,
                   width: 23,
                   fontSize: 12,
-                  color: "#fff",
+                  color: blue[700],
                   cursor: "pointer",
-                  backgroundColor: blue[700],
-                  borderRadius: 50,
+                  backgroundColor: alpha(blue[700], 0.12),
+                  borderRadius: 8,
                   position: "absolute",
                   right: 28,
                   top: -8
@@ -352,18 +376,9 @@ const TicketListItemCustom = ({
         <>
           {ticket.whatsappId && (
             <Badge
-              className={classes.Radiusdot}
+              className={clsx(classes.Radiusdot, classes.chipConnection)}
               badgeContent={`${whatsAppName}`}
-              style={{
-                backgroundColor: "#7d79f2",
-                height: 18,
-                padding: 5,
-                position: "inherit",
-                borderRadius: 7,
-                color: "white",
-                top: -6,
-                marginRight: 3
-              }}
+              style={{ position: "inherit", top: -6, marginRight: 3 }}
             />
           )}
 
@@ -392,8 +407,8 @@ const TicketListItemCustom = ({
                   onClick={() => handleCloseTicket(ticket.id)}
                   fontSize="small"
                   style={{
-                    color: "#fff",
-                    backgroundColor: red[700],
+                    color: red[700],
+                    backgroundColor: alpha(red[700], 0.12),
                     cursor: "pointer",
                     margin: "0 5 0 5",
                     padding: 2,
@@ -401,7 +416,7 @@ const TicketListItemCustom = ({
                     height: 23,
                     width: 23,
                     fontSize: 12,
-                    borderRadius: 50,
+                    borderRadius: 8,
                     top: -8,
                     position: "absolute"
                   }}
@@ -440,15 +455,15 @@ const TicketListItemCustom = ({
                   onClick={() => handleAcceptTicket(ticket.id)}
                   fontSize="small"
                   style={{
-                    color: "#fff",
-                    backgroundColor: green[700],
+                    color: green[700],
+                    backgroundColor: alpha(green[700], 0.12),
                     cursor: "pointer",
                     //margin: '0 5 0 5',
                     padding: 2,
                     height: 23,
                     width: 23,
                     fontSize: 12,
-                    borderRadius: 50,
+                    borderRadius: 8,
                     right: 25,
                     top: -8,
                     position: "absolute"
@@ -470,10 +485,10 @@ const TicketListItemCustom = ({
                   height: 23,
                   width: 23,
                   fontSize: 12,
-                  color: "#fff",
+                  color: blue[700],
                   cursor: "pointer",
-                  backgroundColor: blue[700],
-                  borderRadius: 50,
+                  backgroundColor: alpha(blue[700], 0.12),
+                  borderRadius: 8,
                   right: 0,
                   top: -8,
                   position: "absolute"
@@ -493,6 +508,13 @@ const TicketListItemCustom = ({
         handleClose={() => setOpenTicketMessageDialog(false)}
         ticketId={ticket.id}
       ></TicketMessagesDialog>
+      <CloseTicketModal
+        open={closeModalOpen}
+        onClose={() => setCloseModalOpen(false)}
+        ticket={ticket}
+        justClose
+        onClosed={() => history.push(`/tickets/`)}
+      />
       <ListItem
         dense
         button
@@ -504,7 +526,10 @@ const TicketListItemCustom = ({
             return;
           handleSelectTicket(ticket);
         }}
-        selected={ticketId && +ticketId === ticket.id}
+        // Zap Komunick: the route carries the uuid, so compare it too
+        selected={
+          !!ticketId && (ticketId === ticket.uuid || +ticketId === ticket.id)
+        }
         className={clsx(classes.ticket, {
           [classes.pendingTicket]: ticket.status === "pending"
         })}
@@ -615,6 +640,11 @@ const TicketListItemCustom = ({
                 variant="body2"
                 color="textSecondary"
               >
+                {ticket.status === "paused" && (
+                  <span className={classes.pausedBadge}>
+                    {i18n.t("tickets.paused.badge")}
+                  </span>
+                )}
                 {isSlaBreached(ticket, slaMinutes) && (
                   <Tooltip
                     title={i18n.t("sla.badgeTooltip", {
@@ -643,7 +673,6 @@ const TicketListItemCustom = ({
           )}
         </ListItemSecondaryAction>
       </ListItem>
-      <Divider variant="inset" component="li" />
     </div>
   );
 };

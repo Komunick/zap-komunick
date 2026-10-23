@@ -22,6 +22,9 @@ import InputAdornment from "@material-ui/core/InputAdornment";
 
 import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
 import EditIcon from "@material-ui/icons/Edit";
+import AttachFileIcon from "@material-ui/icons/AttachFile";
+import EventAvailableIcon from "@material-ui/icons/EventAvailable";
+import Tooltip from "@material-ui/core/Tooltip";
 
 import MainContainer from "../../components/MainContainer";
 import MainHeader from "../../components/MainHeader";
@@ -318,11 +321,35 @@ const Schedules = () => {
                   <TableCell align="center">{schedule.contact.name}</TableCell>
                   <TableCell align="center" title={schedule.body}>
                     {truncate(schedule.body, 25)}
+                    {/* Zap Komunick: attachment (docs/PRD.md, RF-008) */}
+                    {schedule.mediaPath && (
+                      <Tooltip
+                        title={i18n.t("scheduleExtras.attachmentTooltip", {
+                          name: schedule.mediaName || ""
+                        })}
+                      >
+                        <AttachFileIcon
+                          fontSize="small"
+                          style={{ verticalAlign: "middle", marginLeft: 4 }}
+                        />
+                      </Tooltip>
+                    )}
                   </TableCell>
                   <TableCell align="center">
                     {moment(schedule.sendAt)
                       .local()
                       .format("DD/MM/YYYY HH:mm:ss")}
+                    {schedule.businessDaysOnly && (
+                      <Tooltip
+                        title={i18n.t("scheduleExtras.businessDaysTooltip")}
+                      >
+                        <EventAvailableIcon
+                          fontSize="small"
+                          color="primary"
+                          style={{ verticalAlign: "middle", marginLeft: 4 }}
+                        />
+                      </Tooltip>
+                    )}
                   </TableCell>
                   <TableCell align="center">
                     {i18n.t(

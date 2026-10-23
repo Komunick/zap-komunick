@@ -30,6 +30,11 @@ import moment from "moment";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { isArray, capitalize } from "lodash";
 import { timeZonesNames } from "@vvo/tzdb";
+import {
+  ScheduleAttachment,
+  ScheduleBusinessDays,
+  ScheduleRecipients
+} from "../ScheduleExtras";
 
 const ALL_TIMEZONES = timeZonesNames.map(tz => ({
   value: tz,
@@ -68,7 +73,11 @@ const useStyles = makeStyles(theme => ({
 
 const ScheduleSchema = Yup.object().shape({
   body: Yup.string().min(5, "Mensagem muito curta").required("Obrigatório"),
-  contactId: Yup.number().required("Obrigatório"),
+  // Zap Komunick: or several contacts, or a tag (docs/PRD.md, RF-008)
+  contactId: Yup.mixed().test("recipients", "Obrigatório", function (value) {
+    const { contactIds, tagId } = this.parent;
+    return Boolean(value) || contactIds?.length > 0 || Boolean(tagId);
+  }),
   sendAt: Yup.string().required("Obrigatório"),
   saveMessage: Yup.bool()
 });
@@ -92,7 +101,12 @@ const ScheduleModal = ({
     sentAt: "",
     saveMessage: false,
     recurrence: "none",
-    recurrenceEndAt: ""
+    recurrenceEndAt: "",
+    contactIds: [],
+    tagId: "",
+    mediaPath: null,
+    mediaName: null,
+    businessDaysOnly: false
   };
 
   const initialContact = {
@@ -130,7 +144,7 @@ const ScheduleModal = ({
           }
           if (contactId) {
             setSchedule(prevState => {
-              return { ...prevState, contactId };
+              return { ...prevState, contactId, contactIds: [contactId] };
             });
           }
 
@@ -237,20 +251,30 @@ const ScheduleModal = ({
         ? `${values.recurrenceEndAt}T23:59:59${offsetSign}${offsetHours}:${offsetMins}`
         : null;
 
+    const { contactIds, tagId, ...rest } = values;
     const scheduleData = {
-      ...values,
+      ...rest,
       userId: user.id,
       sendAt: sendAtWithTimezone,
       recurrence: values.recurrence || "none",
-      recurrenceEndAt
+      recurrenceEndAt,
+      // Zap Komunick: recipients of a new schedule (docs/PRD.md, RF-008)
+      ...(scheduleId
+        ? {}
+        : { contactId: undefined, contactIds, tagId: tagId || null })
     };
     try {
       if (scheduleId) {
         await api.put(`/schedules/${scheduleId}`, scheduleData);
+        toast.success(i18n.t("scheduleModal.success"));
       } else {
-        await api.post("/schedules", scheduleData);
+        const { data } = await api.post("/schedules", scheduleData);
+        toast.success(
+          Array.isArray(data) && data.length > 1
+            ? i18n.t("scheduleExtras.created", { count: data.length })
+            : i18n.t("scheduleModal.success")
+        );
       }
-      toast.success(i18n.t("scheduleModal.success"));
       if (typeof reload == "function") {
         reload();
       }
@@ -296,32 +320,47 @@ const ScheduleModal = ({
           {({ touched, errors, isSubmitting, values, setFieldValue }) => (
             <Form>
               <DialogContent dividers>
-                <div className={classes.multFieldLine}>
-                  <FormControl fullWidth>
-                    <Autocomplete
-                      fullWidth
-                      value={currentContact}
-                      options={contacts}
-                      onChange={(e, contact) => {
-                        const contactId = contact ? contact.id : "";
-                        setFieldValue("contactId", contactId);
-                        setCurrentContact(contact ? contact : initialContact);
-                      }}
-                      getOptionLabel={option => option.name}
-                      getOptionSelected={(option, value) => {
-                        return value.id === option.id;
-                      }}
-                      renderInput={params => (
-                        <TextField
-                          variant="outlined"
-                          margin="dense"
-                          {...params}
-                          placeholder="Contato"
-                        />
-                      )}
-                    />
-                  </FormControl>
-                </div>
+                {/* Zap Komunick: a new schedule can go to several contacts or a tag */}
+                {!scheduleId ? (
+                  <ScheduleRecipients
+                    contacts={contacts}
+                    contactIds={values.contactIds || []}
+                    tagId={values.tagId}
+                    onChange={({ contactIds, tagId }) => {
+                      setFieldValue("contactIds", contactIds);
+                      setFieldValue("contactId", contactIds[0] || "");
+                      setFieldValue("tagId", tagId);
+                    }}
+                    error={touched.contactId && errors.contactId}
+                  />
+                ) : (
+                  <div className={classes.multFieldLine}>
+                    <FormControl fullWidth>
+                      <Autocomplete
+                        fullWidth
+                        value={currentContact}
+                        options={contacts}
+                        onChange={(e, contact) => {
+                          const contactId = contact ? contact.id : "";
+                          setFieldValue("contactId", contactId);
+                          setCurrentContact(contact ? contact : initialContact);
+                        }}
+                        getOptionLabel={option => option.name}
+                        getOptionSelected={(option, value) => {
+                          return value.id === option.id;
+                        }}
+                        renderInput={params => (
+                          <TextField
+                            variant="outlined"
+                            margin="dense"
+                            {...params}
+                            placeholder="Contato"
+                          />
+                        )}
+                      />
+                    </FormControl>
+                  </div>
+                )}
                 <div className={classes.multFieldLine}>
                   <FormControlLabel
                     label={i18n.t("scheduleModal.form.saveMessage")}
@@ -339,6 +378,12 @@ const ScheduleModal = ({
                     }
                   />
                 </div>
+                <ScheduleBusinessDays
+                  checked={values.businessDaysOnly}
+                  onChange={checked =>
+                    setFieldValue("businessDaysOnly", checked)
+                  }
+                />
                 <div className={classes.multFieldLine}>
                   <Field
                     variant="outlined"
@@ -429,6 +474,15 @@ const ScheduleModal = ({
                     fullWidth
                   />
                 </div>
+                <ScheduleAttachment
+                  mediaPath={values.mediaPath}
+                  mediaName={values.mediaName}
+                  disabled={Boolean(schedule.sentAt)}
+                  onChange={({ mediaPath, mediaName }) => {
+                    setFieldValue("mediaPath", mediaPath);
+                    setFieldValue("mediaName", mediaName);
+                  }}
+                />
               </DialogContent>
               <DialogActions>
                 <Button

@@ -459,6 +459,10 @@ const CustomInput = props => {
   };
 
   const renderPlaceholder = () => {
+    // Zap Komunick: paused tickets wait for "Retomar" (docs/PRD.md, RF-007)
+    if (ticketStatus === "paused") {
+      return i18n.t("messagesInput.placeholderPaused");
+    }
     if (ticketStatus === "open") {
       return i18n.t("messagesInput.placeholderOpen");
     }
@@ -1088,7 +1092,10 @@ const MessageInputCustom = props => {
 
   const isGroup = showTabGroups && ticket.isGroup;
   const disableOption =
-    (!isGroup && loading) || recording || ticketStatus === "closed";
+    (!isGroup && loading) ||
+    recording ||
+    ticketStatus === "closed" ||
+    ticketStatus === "paused";
 
   const renderReplyingMessage = message => {
     return (

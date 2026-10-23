@@ -4,7 +4,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { QueryClient, QueryClientProvider } from "react-query";
 
 import { ptBR } from "@material-ui/core/locale";
-import { createTheme, ThemeProvider } from "@material-ui/core/styles";
+import { ThemeProvider } from "@material-ui/core/styles";
 import { useMediaQuery } from "@material-ui/core";
 import ColorModeContext from "./layout/themeContext";
 import { PhoneCallProvider } from "./context/PhoneCall/PhoneCallContext";
@@ -12,6 +12,11 @@ import { SocketContext, socketManager } from "./context/Socket/SocketContext";
 import useSettings from "./hooks/useSettings";
 import Favicon from "react-favicon";
 import { getBackendURL } from "./services/config";
+import {
+  createKomunickTheme,
+  DEFAULT_PRIMARY_DARK,
+  DEFAULT_PRIMARY_LIGHT
+} from "./theme/komunick";
 
 import Routes from "./routes";
 
@@ -104,7 +109,7 @@ const App = () => {
 
   const theme = useMemo(
     () =>
-      createTheme(
+      createKomunickTheme(
         {
           scrollbarStyles: {
             "&::-webkit-scrollbar": {
@@ -226,14 +231,14 @@ const App = () => {
   useEffect(() => {
     getPublicSetting("primaryColorLight")
       .then(color => {
-        setPrimaryColorLight(color || "#0000FF");
+        setPrimaryColorLight(color || DEFAULT_PRIMARY_LIGHT);
       })
       .catch(error => {
         console.log("Error reading setting", error);
       });
     getPublicSetting("primaryColorDark")
       .then(color => {
-        setPrimaryColorDark(color || "#39ACE7");
+        setPrimaryColorDark(color || DEFAULT_PRIMARY_DARK);
       })
       .catch(error => {
         console.log("Error reading setting", error);
@@ -268,7 +273,7 @@ const App = () => {
       });
     getPublicSetting("appName")
       .then(name => {
-        setAppName(name || "ticketz");
+        setAppName(name || "Zap Komunick");
       })
       .catch(error => {
         console.log("Error reading setting", error);

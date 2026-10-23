@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { useHistory } from "react-router-dom";
 
-import { makeStyles } from "@material-ui/core/styles";
+import { alpha, makeStyles } from "@material-ui/core/styles";
 import Paper from "@material-ui/core/Paper";
 import SearchIcon from "@material-ui/icons/Search";
 import InputBase from "@material-ui/core/InputBase";
@@ -10,6 +10,7 @@ import Tab from "@material-ui/core/Tab";
 import Badge from "@material-ui/core/Badge";
 import MoveToInboxIcon from "@material-ui/icons/MoveToInbox";
 import CheckBoxIcon from "@material-ui/icons/CheckBox";
+import PauseCircleOutlineIcon from "@material-ui/icons/PauseCircleOutline";
 
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Switch from "@material-ui/core/Switch";
@@ -42,8 +43,52 @@ const useStyles = makeStyles(theme => ({
   },
 
   tabsHeader: {
-    flex: "none"
-    // backgroundColor: "#eee",
+    flex: "none",
+    // Zap Komunick: segmented pills
+    padding: 6,
+    borderBottom: `1px solid ${theme.palette.divider}`,
+    "& .MuiTabs-indicator": {
+      display: "none"
+    },
+    "& .MuiTab-root": {
+      minHeight: 40,
+      borderRadius: 10,
+      color: theme.palette.text.secondary
+    },
+    "& .MuiTab-wrapper": {
+      flexDirection: "row",
+      gap: 6
+    },
+    "& .MuiTab-labelIcon .MuiTab-wrapper > *:first-child": {
+      marginBottom: 0,
+      fontSize: 20
+    },
+    "& .Mui-selected": {
+      color: theme.palette.primary.main,
+      backgroundColor: alpha(theme.palette.primary.main, 0.1)
+    }
+  },
+
+  statusTabs: {
+    margin: theme.spacing(0, 1),
+    minHeight: 40,
+    borderRadius: 12,
+    backgroundColor: theme.komunick.subtle,
+    border: `1px solid ${theme.palette.divider}`,
+    "& .MuiTabs-indicator": {
+      display: "none"
+    },
+    "& .MuiTab-root": {
+      minHeight: 36,
+      margin: 2,
+      borderRadius: 10,
+      color: theme.palette.text.secondary
+    },
+    "& .Mui-selected": {
+      color: theme.palette.text.primary,
+      backgroundColor: theme.palette.background.paper,
+      boxShadow: theme.komunick.shadow
+    }
   },
 
   settingsIcon: {
@@ -53,13 +98,11 @@ const useStyles = makeStyles(theme => ({
   },
 
   tabWithGroups: {
-    minWidth: 90,
-    width: 90
+    minWidth: 72
   },
 
   tab: {
-    minWidth: 120,
-    width: 120
+    minWidth: 90
   },
 
   ticketOptionsBox: {
@@ -225,6 +268,15 @@ const TicketsManagerTabs = () => {
             }}
           />
 
+          <Tab
+            value={"paused"}
+            icon={<PauseCircleOutlineIcon />}
+            label={i18n.t("tickets.tabs.paused.title")}
+            classes={{
+              root: showTabGroups ? classes.tabWithGroups : classes.tab
+            }}
+          />
+
           {showTabGroups && (
             <Tab
               value={"groups"}
@@ -318,6 +370,7 @@ const TicketsManagerTabs = () => {
           indicatorColor="primary"
           textColor="primary"
           variant="fullWidth"
+          className={classes.statusTabs}
         >
           <Tab
             label={
@@ -365,6 +418,14 @@ const TicketsManagerTabs = () => {
             showTabGroups={showTabGroups}
           />
         </Paper>
+      </TabPanel>
+      <TabPanel value={tab} name="paused" className={classes.ticketsWrapper}>
+        <TicketsList
+          status="paused"
+          showAll={showAllTickets}
+          selectedQueueIds={selectedQueueIds}
+          showTabGroups={showTabGroups}
+        />
       </TabPanel>
       <TabPanel value={tab} name="closed" className={classes.ticketsWrapper}>
         <TicketsList

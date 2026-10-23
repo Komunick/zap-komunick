@@ -41,6 +41,7 @@ import UserSocketSession from "../models/UserSocketSession";
 import OutOfTicketMessage from "../models/OutOfTicketMessages";
 import Translation from "../models/Translation";
 import Wavoip from "../models/Wavoip";
+import CloseReason from "../models/CloseReason";
 
 const dbConfig = require("../config/database");
 
@@ -94,7 +95,8 @@ const models = [
   OutOfTicketMessage,
   Subscriptions,
   Translation,
-  Wavoip
+  Wavoip,
+  CloseReason
 ];
 
 sequelize.addModels(models);

@@ -212,11 +212,16 @@ const TicketsListCustom = props => {
   // Zap Komunick: SLA highlight (docs/PRD.md, RF-002)
   const { getSetting } = useSettings();
   const [slaMinutes, setSlaMinutes] = useState("0");
+  // Zap Komunick: close reason (docs/PRD.md, RF-007)
+  const [closeReasonRequired, setCloseReasonRequired] = useState("disabled");
   const [, setSlaTick] = useState(0);
 
   useEffect(() => {
     getSetting("slaMinutes", "0")
       .then(value => setSlaMinutes(value || "0"))
+      .catch(() => {});
+    getSetting("closeReasonRequired", "disabled")
+      .then(value => setCloseReasonRequired(value || "disabled"))
       .catch(() => {});
     // re-render once a minute so tickets cross the deadline without events
     const timer = setInterval(() => setSlaTick(tick => tick + 1), 60000);
@@ -229,6 +234,9 @@ const TicketsListCustom = props => {
     const onSettings = data => {
       if (data?.key === "slaMinutes") {
         setSlaMinutes(data.value || "0");
+      }
+      if (data?.key === "closeReasonRequired") {
+        setCloseReasonRequired(data.value || "disabled");
       }
     };
     socket.on("settings", onSettings);
@@ -522,6 +530,7 @@ const TicketsListCustom = props => {
                   key={ticket.id}
                   groupActionButtons={!groups && !showTabGroups}
                   slaMinutes={slaMinutes}
+                  closeReasonRequired={closeReasonRequired === "enabled"}
                 />
               ))}
             </>

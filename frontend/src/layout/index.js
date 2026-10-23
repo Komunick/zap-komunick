@@ -73,7 +73,7 @@ const useStyles = makeStyles(theme => ({
   root: {
     display: "flex",
     height: "var(--vh)",
-    backgroundColor: theme.palette.fancyBackground,
+    backgroundColor: theme.palette.background.default,
     "& .MuiButton-outlinedPrimary": {
       color: theme.palette.primary,
       border:
@@ -106,10 +106,8 @@ const useStyles = makeStyles(theme => ({
     borderRadius: 20,
     overflow: "hidden",
     cursor: "pointer",
-    backgroundColor:
-      theme.mode === "dark"
-        ? "rgba(0, 0, 0, 0.2)"
-        : "rgba(255, 255, 255, 0.15)",
+    border: `1px solid ${theme.palette.divider}`,
+    backgroundColor: theme.komunick.subtle,
     [theme.breakpoints.down("xs")]: {
       borderRadius: 20
     }
@@ -141,7 +139,7 @@ const useStyles = makeStyles(theme => ({
     }
   },
   userInfoName: {
-    color: theme.palette.primary.contrastText,
+    color: theme.palette.text.primary,
     fontSize: 11,
     lineHeight: "15px",
     fontWeight: 600,
@@ -151,7 +149,7 @@ const useStyles = makeStyles(theme => ({
     maxWidth: "100%"
   },
   userInfoCompany: {
-    color: theme.palette.primary.contrastText,
+    color: theme.palette.text.secondary,
     fontSize: 11,
     lineHeight: "15px",
     opacity: 0.75,
@@ -165,15 +163,32 @@ const useStyles = makeStyles(theme => ({
     color:
       localStorage.getItem("impersonated") === "true"
         ? theme.palette.secondary.contrastText
-        : theme.palette.primary.contrastText,
+        : theme.palette.text.primary,
     background:
       localStorage.getItem("impersonated") === "true"
         ? theme.palette.secondary.main
-        : theme.palette.primary.main,
+        : theme.palette.background.paper,
     marginRight: "10px",
     marginTop: "10px",
     marginBottom: "10px",
-    borderRadius: "10px"
+    borderRadius: "14px",
+    border: `1px solid ${theme.palette.divider}`,
+    boxShadow: theme.komunick.shadow,
+    // the upstream bar icons use primary.contrastText, made for a colored bar
+    ...(localStorage.getItem("impersonated") === "true"
+      ? {}
+      : {
+          "& .MuiIconButton-root:not(.MuiIconButton-colorSecondary)": {
+            color: theme.palette.text.secondary
+          },
+          "& .MuiIconButton-root:not(.MuiIconButton-colorSecondary) .MuiSvgIcon-root":
+            {
+              color: "inherit !important"
+            },
+          "& $avatar": {
+            color: `${theme.palette.text.secondary} !important`
+          }
+        })
   },
   toolbarIcon: {
     display: "flex",
@@ -208,7 +223,7 @@ const useStyles = makeStyles(theme => ({
     }
   },
   menuButton: {
-    color: theme.palette.primary.contrastText
+    color: "inherit"
   },
   menuButtonHidden: {
     display: "none"
@@ -216,11 +231,12 @@ const useStyles = makeStyles(theme => ({
   title: {
     flexGrow: 1,
     fontSize: 14,
-    color: "white"
+    fontWeight: 600,
+    color: "inherit"
   },
   wsConnectionAlertButton: {
     marginRight: theme.spacing(1.5),
-    color: theme.palette.primary.contrastText,
+    color: "inherit",
     padding: theme.spacing(0.5)
   },
   wsConnectionAlertIcon: {
@@ -255,7 +271,10 @@ const useStyles = makeStyles(theme => ({
     }),
     overflowY: "clip",
     border: "unset",
-    backgroundColor: theme.palette.fancyBackground,
+    // Zap Komunick: black side menu (Direção B)
+    borderRight: `1px solid ${theme.komunick.sidebarBorder}`,
+    backgroundColor: theme.komunick.sidebar,
+    color: theme.komunick.sidebarText,
     ...theme.scrollbarStylesSoft
   },
   drawerPaperClose: {
@@ -285,16 +304,13 @@ const useStyles = makeStyles(theme => ({
     marginLeft: "0px",
     marginRight: "10px",
     marginBottom: "10px",
-    borderRadius: "10px",
-    borderColor: theme.palette.primary.main,
-    borderStyle: "solid",
-    borderWidth: "1px",
+    borderRadius: "14px",
     "&::-webkit-scrollbar": {
       width: "10px",
       height: "8px"
     },
     "&::-webkit-scrollbar-thumb": {
-      backgroundColor: theme.palette.primary.main,
+      backgroundColor: theme.komunick.borderStrong,
       borderRadius: "10px"
     }
   },
@@ -324,19 +340,26 @@ const useStyles = makeStyles(theme => ({
     overflowX: "clip",
     marginRight: "10px",
     marginLeft: "10px",
-    borderStyle: "solid",
-    borderColor: theme.palette.primary.main,
-    borderWidth: "1px",
-    borderRadius: "10px",
+    border: "none",
+    // Zap Komunick: section titles of the menu
+    "& .MuiListSubheader-root": {
+      fontSize: "11px !important",
+      fontWeight: 700,
+      letterSpacing: "0.08em",
+      textTransform: "uppercase",
+      color: theme.komunick.sidebarMuted,
+      lineHeight: "32px",
+      marginTop: 8
+    },
     "&::-webkit-scrollbar": {
       width: "10px",
       height: "8px"
     },
     "&::-webkit-scrollbar-thumb": {
-      backgroundColor: theme.palette.primary.main,
+      backgroundColor: theme.komunick.sidebarBorder,
       borderRadius: "10px"
     },
-    color: theme.palette.primary.main
+    color: theme.komunick.sidebarText
   },
   containerNarrowWithScroll: {
     flex: 1,
@@ -344,16 +367,23 @@ const useStyles = makeStyles(theme => ({
     overflowX: "hidden",
     marginRight: "10px",
     marginLeft: "10px",
-    borderStyle: "solid",
-    borderColor: theme.palette.primary.main,
-    borderWidth: "1px",
-    borderRadius: "10px",
+    border: "none",
+    // Zap Komunick: section titles of the menu
+    "& .MuiListSubheader-root": {
+      fontSize: "11px !important",
+      fontWeight: 700,
+      letterSpacing: "0.08em",
+      textTransform: "uppercase",
+      color: theme.komunick.sidebarMuted,
+      lineHeight: "32px",
+      marginTop: 8
+    },
     "&::-webkit-scrollbar": {
       width: "10px",
       height: "8px"
     },
     "&::-webkit-scrollbar-thumb": {
-      backgroundColor: theme.palette.primary.main,
+      backgroundColor: theme.komunick.sidebarBorder,
       borderRadius: "10px"
     }
   },
@@ -375,18 +405,19 @@ const useStyles = makeStyles(theme => ({
   },
   version: {
     margin: "auto",
-    fontSize: "12px",
+    fontSize: "11px",
     textAlign: "center",
-    color: theme.palette.primary.contrastText,
-    fontWeight: "bold"
+    color: theme.komunick.sidebarMuted,
+    fontWeight: 600
   },
   hideLogo: {
     display: "none"
   },
   versionBox: {
-    backgroundColor: theme.palette.primary.main,
+    backgroundColor: theme.komunick.sidebarHover,
+    border: `1px solid ${theme.komunick.sidebarBorder}`,
     margin: "10px",
-    padding: "8px",
+    padding: "6px 8px",
     borderRadius: "10px"
   }
 }));

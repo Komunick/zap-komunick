@@ -317,6 +317,7 @@ const Sla = () => {
                       key={key}
                       label={i18n.t(`sla.filters.${key}`)}
                       color={filter === key ? "primary" : "default"}
+                      variant={filter === key ? "default" : "outlined"}
                       onClick={() => setFilter(key)}
                       clickable
                     />

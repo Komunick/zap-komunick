@@ -17,6 +17,11 @@ import { incrementCounter } from "../CounterServices/IncrementCounter";
 import { getJidOf } from "../WbotServices/getJidOf";
 import Queue from "../../models/Queue";
 import { _t } from "../TranslationServices/i18nService";
+import {
+  checkCloseReason,
+  checkStatusTransition
+} from "../../helpers/TicketPauseAndClose";
+import { ActiveCloseReasonIds } from "../CloseReasonServices/CloseReasonService";
 
 export interface UpdateTicketData {
   status?: string;
@@ -25,6 +30,8 @@ export interface UpdateTicketData {
   chatbot?: boolean;
   queueOptionId?: number;
   justClose?: boolean;
+  closeReasonId?: number | null;
+  closeReasonNote?: string | null;
 }
 
 interface Request {
@@ -175,6 +182,39 @@ const UpdateTicketService = async ({
       await CheckContactOpenTickets(ticket.contactId, ticket.whatsappId);
       chatbot = null;
       queueOptionId = null;
+    }
+
+    // Zap Komunick: pause and close reason (docs/PRD.md, RF-007)
+    const transitionError = checkStatusTransition(oldStatus, status);
+    if (transitionError) {
+      throw new AppError(transitionError, 400);
+    }
+
+    if (status === "closed" && oldStatus !== "closed") {
+      const closeReasonId = Number(ticketData.closeReasonId) || null;
+      const closeReasonError = checkCloseReason({
+        required:
+          (await GetCompanySetting(
+            companyId,
+            "closeReasonRequired",
+            "disabled"
+          )) === "enabled",
+        userInitiated: !!reqUserId,
+        isGroup: !!isGroup,
+        closeReasonId,
+        activeReasonIds: await ActiveCloseReasonIds(companyId)
+      });
+      if (closeReasonError) {
+        throw new AppError(closeReasonError, 400);
+      }
+      if (closeReasonId) {
+        ticketTraking.closeReasonId = closeReasonId;
+      }
+      if (ticketData.closeReasonNote) {
+        ticketTraking.closeReasonNote = String(
+          ticketData.closeReasonNote
+        ).slice(0, 1000);
+      }
     }
 
     if (status !== undefined && ["closed"].indexOf(status) > -1) {
