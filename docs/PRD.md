@@ -5,8 +5,9 @@
 **Fonte oficial:** `docs/PRD.md` no repositório
 **Validado por:** Pendente
 
-Este PRD delimita a primeira entrega do fork (Linear KOM-136 e subtarefas KOM-137 a KOM-142). Não há especificação
-separada em `docs/specs/` para ela.
+Este PRD delimita as duas primeiras entregas do fork: RF-001 a RF-006 (Linear KOM-136 e subtarefas KOM-137 a KOM-142)
+e RF-007 a RF-009 (Linear KOM-144, com KOM-145 visual, KOM-146 pausar e motivo e KOM-147 agendamento completo). Não há
+especificação separada em `docs/specs/` para elas.
 
 ## 1. Problema e objetivo
 
@@ -25,8 +26,11 @@ os atendimentos em etapas e controla quando cada atendente pode entrar; lembrete
 ## 2. Escopo
 
 **Escopo descrito:** código-fonte acessível (RF-001), painel de SLA (RF-002), carteira de clientes (RF-003), Kanban por
-etiquetas (RF-004), horário de acesso por usuário (RF-005) e agendamento recorrente (RF-006), sobre o Ticketz como ele
-é hoje (filas, chatbot, etiquetas, agendamentos, perfis admin e usuário).
+etiquetas (RF-004), horário de acesso por usuário (RF-005), agendamento recorrente (RF-006), pausar atendimento e motivo
+de finalização (RF-007), agendamento para vários contatos com anexo e dia útil (RF-008) e a identidade visual da
+Komunick (RF-009), sobre o Ticketz como ele é hoje (filas, chatbot, etiquetas, agendamentos, perfis admin e usuário).
+A segunda entrega saiu da comparação com o ZapContábil feita em 21/10/2026 numa conta de cliente, só olhando, sem mudar
+nada nela.
 
 **Fora do escopo:** canais oficiais (API oficial do WhatsApp, Instagram, Messenger; no zap.komunick.com chegam pelo
 Ticketz PRO, que é fechado), integrações financeiras e contábeis (Asaas, Omie, Nibo, G-Click, Conta Azul), PABX
@@ -181,10 +185,106 @@ Dado um lembrete mensal a partir de 31/01,
 quando o envio de 31/01 acontece,
 então aparece um novo agendamento pendente para 28/02 e, depois dele, para 31/03.
 
+### RF-007 — Pausar atendimento e motivo de finalização
+
+**O que faz:** o atendente pausa um atendimento em andamento e retoma quando puder; ao finalizar, a empresa pode exigir
+um motivo, escolhido de uma lista cadastrada pelo administrador. Inspiração: "Pausar" e os motivos de finalização do
+ZapContábil.
+
+**Regras importantes:**
+- Só atendimento em andamento ("em atendimento") pode ser pausado. O pausado fica na aba "Pausados", com o mesmo
+  atendente e a etiqueta "Pausado" na lista. O campo de mensagem fica travado até "Retomar", que devolve o atendimento
+  para "em atendimento" com o mesmo atendente. Do pausado também dá para finalizar.
+- O atendimento pausado continua recebendo as mensagens do cliente (não abre outro atendimento).
+- O SLA não conta atendimento pausado: ele sai do painel e não leva o selo. A marca de espera continua sendo gravada,
+  então, ao retomar, a espera conta desde a primeira mensagem do cliente sem resposta, inclusive o tempo pausado.
+- Motivos de finalização (menu de administração, só administradores): nome de 2 a 120 caracteres, sem repetir
+  (maiúsculas e minúsculas contam como iguais), ativar e desativar, renomear e excluir. Desativar tira o motivo da
+  lista do atendente e guarda o histórico; excluir deixa os atendimentos já finalizados com ele como "sem motivo".
+- "Exigir motivo ao finalizar" em Configurações (padrão: não exigir). Exigido, quem finaliza escolhe um motivo ativo e
+  pode escrever uma observação de até 1000 caracteres. Vale quando um atendente finaliza; grupos e encerramentos
+  automáticos (inatividade, conexão, chatbot) ficam de fora.
+- Mesmo sem exigir, um motivo enviado precisa existir na empresa e estar ativo.
+- A página de motivos mostra quantos atendimentos foram finalizados com cada motivo nos últimos 30 dias, e quantos sem
+  motivo.
+
+**Cenário de sucesso:**
+
+Dado "Exigir motivo ao finalizar" ligado e os motivos "Dúvida resolvida" e "Encaminhado a outro setor",
+quando o atendente clica em "Finalizar" e escolhe "Dúvida resolvida",
+então o atendimento vai para "Resolvidos" e passa a contar no uso de "Dúvida resolvida".
+
+**Exceções importantes:**
+
+Dado "Exigir motivo ao finalizar" ligado,
+quando um atendente tenta finalizar sem motivo (por exemplo, por uma chamada direta à API),
+então a finalização é recusada com o aviso "Escolha o motivo para finalizar o atendimento".
+
+Dado um atendimento aguardando,
+quando alguém tenta pausá-lo,
+então o pedido é recusado: só atendimento em andamento pode ser pausado.
+
+### RF-008 — Agendamento para vários contatos, com anexo e dia útil
+
+**O que faz:** o mesmo agendamento sai para vários contatos ou para todos os contatos de uma etiqueta, com um arquivo
+anexo e a opção de enviar só em dia útil. Inspiração: os agendamentos do ZapContábil.
+
+**Regras importantes:**
+- No novo agendamento, os contatos escolhidos e os da etiqueta somam, sem repetir, até 500 por vez; só contatos da
+  empresa. Cada contato ganha o seu agendamento, que depois se edita e exclui um a um. A edição continua com um contato
+  por agendamento, como no Ticketz.
+- Anexo: um arquivo por agendamento, enviado uma vez e guardado na pasta da empresa; vai junto com a mensagem para
+  cada contato. O servidor só aceita anexo que esteja na pasta da própria empresa.
+- "Enviar só em dia útil": se a data cair em sábado, domingo ou feriado, o envio passa para o próximo dia útil, no mesmo
+  horário. Feriados considerados: os nacionais (1/1, 21/4, 1/5, 7/9, 12/10, 2/11, 15/11, 20/11 a partir de 2024 e
+  25/12) mais Carnaval (segunda e terça), Sexta-feira Santa e Corpus Christi. Feriados estaduais e municipais não
+  entram.
+- Com repetição, cada data da série é calculada a partir da data pedida e só depois levada ao dia útil, então a série
+  não se desloca. Exemplo: todo dia 10; se um dia 10 cair no sábado, aquele envio vai na segunda 12 e o próximo volta
+  ao dia 10.
+
+**Cenário de sucesso:**
+
+Dado um agendamento para sábado, 31/10/2026, às 10:00, com "Enviar só em dia útil",
+quando o atendente salva,
+então o envio fica para terça, 03/11/2026, às 10:00 (pula o domingo e Finados).
+
+Dado os contatos Padaria e Mercado escolhidos e a etiqueta VIP com Padaria e Oficina,
+quando o atendente salva o agendamento,
+então são criados três agendamentos, um para cada contato.
+
+**Exceção importante:**
+
+Dado um novo agendamento sem contato e sem etiqueta,
+quando o atendente tenta salvar,
+então o formulário pede pelo menos um contato ou uma etiqueta.
+
+### RF-009 — Identidade visual da Komunick
+
+**O que faz:** o sistema abre com a marca da Komunick e um visual mais atual que o do Ticketz e o do ZapContábil, com
+referências do Dribbble (painéis de atendimento e CRMs de 2025 e 2026).
+
+**Regras importantes:**
+- Logo, ícone e cores da Komunick por padrão: verde #35B62E, preto #020605 e a fonte Manrope. Botões e textos em verde
+  usam o tom mais escuro #1F7F1B no tema claro, para manter o contraste. O logo e a cor que a empresa configurar em
+  Whitelabel continuam valendo.
+- Tema claro e escuro com as mesmas cores em todas as telas: menu, barra do topo, lista de atendimentos, chat, Kanban,
+  SLA, cadastros e login.
+- Direção visual "B — Menu preto" (escolhida pelo responsável entre três no Stitch): menu lateral #020605 nos dois
+  temas, com ícone e barra verdes no item ativo, e o atendimento selecionado na lista com contorno verde de 2 px. As
+  telas de referência estão em `docs/design/stitch-direcao-b` (inspiração visual, não especificação de cada tela).
+- Login em duas colunas (formulário e painel da marca); no celular, só o formulário.
+
+**Cenário de sucesso:**
+
+Dado uma instalação nova, sem Whitelabel configurado,
+quando o usuário abre o login,
+então vê o logo da Komunick, o botão verde e o painel da marca, no tema claro ou escuro que escolheu.
+
 ## 4. Restrições e cuidados
 
-**Uso e acesso:** navegador, perfis do Ticketz (admin e usuário). Painel de SLA, carteira e horário de acesso são
-geridos só por administradores.
+**Uso e acesso:** navegador, perfis do Ticketz (admin e usuário). Painel de SLA, carteira, horário de acesso, motivos
+de finalização e a exigência de motivo são geridos só por administradores.
 
 **Dados e integrações:** dados de contatos e mensagens dos clientes das empresas usuárias. Nenhum dado novo sai do
 sistema; nenhuma integração externa nova.
@@ -206,3 +306,8 @@ estourados que ele passou a ver no painel e se a carteira e o Kanban substituír
 - Ordem das colunas do Kanban por nome: confirmar se atende ou se precisa de ordem manual.
 - Atendente que responde pelo celular sem aceitar o atendimento não para o relógio do SLA (a resposta chega com o
   atendimento ainda aguardando).
+- Calendário do "Enviar só em dia útil" (RF-008): nacional mais Carnaval, Sexta-feira Santa e Corpus Christi, como no
+  calendário bancário. Confirmar com o responsável; feriados estaduais e municipais pediriam cadastro por empresa.
+- Pausa e SLA (RF-007): hoje o tempo pausado conta na espera quando o atendimento é retomado. Confirmar se o gestor
+  prefere que a pausa zere ou congele o relógio.
+- Lista de motivos de finalização: o sistema começa sem nenhum. Os motivos de cada empresa são definidos pelo gestor.

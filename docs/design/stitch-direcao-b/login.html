@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1440, initial-scale=1.0">
+  <title>Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Manrope', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              green: '#35B62E',
+              darkgreen: '#1F7F1B',
+              black: '#020605',
+              bg: '#F3F5F4',
+              border: '#E4E9E6',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Manrope', sans-serif;
+      background-color: #FFFFFF;
+      color: #020605;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body class="w-[1440px] h-[900px] flex bg-white antialiased select-none">
+
+  <!-- Coluna Esquerda (50%, fundo branco) -->
+  <div class="w-1/2 h-full bg-white flex flex-col justify-between p-12 shrink-0">
+    <!-- Topo da coluna esquerda: logo à esquerda, "Usar tema escuro" à direita -->
+    <header class="flex items-center justify-between">
+      <div class="w-32 h-10 flex items-center">
+        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBK5yK2HUCmAvYXZDuc5nEDh9cYMGZY88SmJDSSQvQYB3lI69ke3lU4ETIohBFVsoSmkD_yHV5NIVmF3Wtn-Oks8wPmNZt_Br06t1UZMHoKvUcojvgM6wOGXg-wenTy2iqzOQVn2yVO4ojA0V0wuBABHXfILT9FVOSQZ-X7I_xkQFV0jwcs6MGuEXZahB7mqyxGIBB-b9vx8DLMIuNg3tCKCPDGS5Erx7HtDZxRgdtvHJZbY2VLeanbEmz661T-axMy" alt="komunick" class="w-full h-auto object-contain">
+      </div>
+      <button class="text-xs font-semibold text-gray-500 hover:text-gray-800 transition-colors">
+        Usar tema escuro
+      </button>
+    </header>
+
+    <!-- Centro: Formulário de 380px -->
+    <main class="w-[380px] mx-auto my-auto flex flex-col">
+      <h1 class="text-2xl font-bold text-[#020605] tracking-tight mb-2">Entrar na sua conta</h1>
+      <p class="text-sm text-gray-500 mb-8 leading-relaxed">
+        Use o e-mail e a senha cadastrados pelo administrador.
+      </p>
+
+      <form class="space-y-5" onsubmit="event.preventDefault();">
+        <!-- Campo Email -->
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 mb-1.5">Email</label>
+          <input type="email" placeholder="seu@email.com" class="w-full px-3.5 py-2.5 bg-white border border-[#E4E9E6] rounded-[10px] text-sm text-[#020605] placeholder-gray-400 focus:outline-none focus:border-[#35B62E]">
+        </div>
+
+        <!-- Campo Senha -->
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 mb-1.5">Senha</label>
+          <div class="relative">
+            <input type="password" placeholder="••••••••" class="w-full pl-3.5 pr-10 py-2.5 bg-white border border-[#E4E9E6] rounded-[10px] text-sm text-[#020605] placeholder-gray-400 focus:outline-none focus:border-[#35B62E]">
+            <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center cursor-pointer text-gray-400 hover:text-gray-600">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botão largo verde escuro "Entrar" -->
+        <button type="submit" class="w-full py-3 bg-[#1F7F1B] hover:bg-[#196916] text-white font-semibold text-sm rounded-[10px] shadow-sm transition-colors mt-2">
+          Entrar
+        </button>
+
+        <!-- Embaixo: texto e link -->
+        <div class="text-center pt-2">
+          <span class="text-xs text-gray-500">Ainda não tem conta?</span>
+          <a href="#" class="text-xs font-semibold text-[#1F7F1B] hover:text-[#35B62E] ml-1 transition-colors">Cadastre-se</a>
+        </div>
+      </form>
+    </main>
+
+    <!-- Rodapé vazio para centralização exata -->
+    <footer class="h-6"></footer>
+  </div>
+
+  <!-- Coluna Direita (50%): Painel arredondado em preto #020605 -->
+  <div class="w-1/2 h-full p-6 flex shrink-0">
+    <div class="w-full h-full bg-[#020605] rounded-[28px] relative overflow-hidden flex flex-col justify-between p-12 text-white">
+      
+      <!-- Efeito de brilho verde suave no canto superior direito e traçado fino com pontos verdes ao fundo -->
+      <div class="absolute -top-24 -right-24 w-96 h-96 bg-[#35B62E]/20 rounded-full blur-3xl pointer-events-none"></div>
+      
+      <!-- Traçado fino de rota com pontos verdes ao fundo -->
+      <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-30" viewBox="0 0 600 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M-50 150 C 150 100, 250 300, 450 220 S 650 450, 550 750" stroke="#35B62E" stroke-width="1.2" stroke-dasharray="4 6" />
+        <path d="M50 700 C 200 650, 320 500, 520 400" stroke="#35B62E" stroke-width="1" stroke-dasharray="3 5" />
+        <circle cx="210" cy="220" r="3.5" fill="#35B62E" />
+        <circle cx="450" cy="220" r="4.5" fill="#35B62E" />
+        <circle cx="360" cy="460" r="3" fill="#35B62E" />
+        <circle cx="520" cy="400" r="4" fill="#35B62E" />
+        <circle cx="280" cy="560" r="3" fill="#35B62E" />
+      </svg>
+
+      <!-- Parte superior da coluna direita: Conteúdo Institucional -->
+      <div class="relative z-10 max-w-lg mt-4">
+        <h2 class="text-3xl font-extrabold tracking-tight leading-snug mb-3">
+          Todo o atendimento do WhatsApp em um só lugar.
+        </h2>
+        <p class="text-sm text-gray-400 font-normal leading-relaxed mb-6">
+          Filas, carteira de clientes, Kanban e prazos de resposta para a equipe inteira atender pelo mesmo número.
+        </p>
+
+        <!-- Três pílulas translúcidas -->
+        <div class="flex flex-wrap gap-2.5">
+          <span class="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/10 text-white border border-white/10 backdrop-blur-md">
+            Painel de SLA
+          </span>
+          <span class="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/10 text-white border border-white/10 backdrop-blur-md">
+            Carteira de clientes
+          </span>
+          <span class="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/10 text-white border border-white/10 backdrop-blur-md">
+            Kanban por etiquetas
+          </span>
+        </div>
+      </div>
+
+      <!-- Parte inferior: Três cartões translúcidos de conversa de exemplo -->
+      <div class="relative z-10 space-y-3 max-w-md">
+        <!-- Cartão 1: Cliente Modelo -->
+        <div class="bg-white/10 border border-white/10 backdrop-blur-md rounded-[14px] p-4 flex items-center justify-between">
+          <div>
+            <span class="text-xs font-bold text-white block mb-0.5">Cliente Modelo</span>
+            <span class="text-xs text-gray-300">Bom dia! Pode me mandar a guia?</span>
+          </div>
+          <span class="px-2.5 py-1 bg-red-500/20 text-red-300 border border-red-500/30 rounded-[8px] text-[11px] font-semibold">
+            SLA
+          </span>
+        </div>
+
+        <!-- Cartão 2: Padaria Avenida -->
+        <div class="bg-white/10 border border-white/10 backdrop-blur-md rounded-[14px] p-4 flex items-center justify-between">
+          <div>
+            <span class="text-xs font-bold text-white block mb-0.5">Padaria Avenida</span>
+            <span class="text-xs text-gray-300">Enviei os documentos agora.</span>
+          </div>
+          <span class="px-2.5 py-1 bg-[#35B62E]/20 text-[#35B62E] border border-[#35B62E]/30 rounded-[8px] text-[11px] font-semibold">
+            Carteira
+          </span>
+        </div>
+
+        <!-- Cartão 3: Loja Fictícia -->
+        <div class="bg-white/10 border border-white/10 backdrop-blur-md rounded-[14px] p-4 flex items-center justify-between">
+          <div>
+            <span class="text-xs font-bold text-white block mb-0.5">Loja Fictícia</span>
+            <span class="text-xs text-gray-300">Combinado, aguardo o retorno.</span>
+          </div>
+          <span class="px-2.5 py-1 bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded-[8px] text-[11px] font-semibold">
+            Em análise
+          </span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>
