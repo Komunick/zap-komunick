@@ -219,6 +219,11 @@ export function komunickThemeOptions(mode) {
       MuiDialogActions: {
         root: { padding: "12px 24px 20px" }
       },
+      // the upstream CssBaseline sits outside the theme, so labels would keep
+      // the browser's black text on the dark theme
+      MuiFormControlLabel: {
+        label: { color: t.text }
+      },
       MuiTableHead: {
         root: { backgroundColor: t.subtle }
       },
