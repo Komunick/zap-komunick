@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useReducer, useState } from "react";
-import { Link as RouterLink, useHistory } from "react-router-dom";
+import { Link as RouterLink, useHistory, useLocation } from "react-router-dom";
+import clsx from "clsx";
 
 import ListItem from "@material-ui/core/ListItem";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
@@ -35,6 +36,7 @@ import LocalAtmIcon from "@material-ui/icons/LocalAtm";
 import RotateRight from "@material-ui/icons/RotateRight";
 import ViewColumnIcon from "@material-ui/icons/ViewColumn";
 import AlarmIcon from "@material-ui/icons/Alarm";
+import AssignmentTurnedInOutlinedIcon from "@material-ui/icons/AssignmentTurnedInOutlined";
 import { i18n } from "../translate/i18n";
 import BorderColorIcon from "@material-ui/icons/BorderColor";
 import { WhatsAppsContext } from "../context/WhatsApp/WhatsAppsContext";
@@ -53,40 +55,73 @@ const useStyles = makeStyles(theme => ({
     marginBottom: "-10px"
   },
   menuLink: {
-    paddingLeft: "14px",
-    color: theme.palette.primary.main,
+    margin: "2px 8px",
+    width: "auto",
+    borderRadius: 10,
+    paddingLeft: "12px",
+    // Zap Komunick: black side menu (Direção B), green bar on the active item
+    position: "relative",
+    color: theme.komunick.sidebarText,
+    "& .MuiListItemText-primary": {
+      fontWeight: 600,
+      fontSize: 14
+    },
     "&:hover": {
-      backgroundColor: theme.palette.primary.main,
-      color: theme.palette.primary.contrastText
+      backgroundColor: theme.komunick.sidebarHover,
+      color: "#FFFFFF"
+    }
+  },
+  menuLinkActive: {
+    backgroundColor: `${theme.komunick.sidebarActive} !important`,
+    color: theme.komunick.sidebarTextActive,
+    "&:hover": {
+      color: theme.komunick.sidebarTextActive
+    },
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      left: -8,
+      top: 4,
+      bottom: 4,
+      width: 4,
+      borderRadius: "0 4px 4px 0",
+      backgroundColor: theme.komunick.accent
     }
   },
   menuIcon: {
-    color: "inherit"
+    color: "inherit",
+    minWidth: 40
   },
   submenuLink: {
+    margin: "1px 8px",
+    width: "auto",
+    borderRadius: 10,
     paddingLeft: "0px",
-    color: theme.palette.primary.main,
+    color: theme.komunick.sidebarText,
     paddingTop: 0,
     paddingBottom: 0,
     "&:hover": {
-      backgroundColor: theme.palette.primary.main,
-      color: theme.palette.primary.contrastText
+      backgroundColor: theme.komunick.sidebarHover,
+      color: "#FFFFFF"
     }
   },
   submenuIcon: {
     color: "inherit"
   },
   collapseMenu: {
-    marginLeft: "14px",
+    marginLeft: "22px",
     borderLeftStyle: "solid",
     borderWidth: "1px",
-    borderColor: theme.palette.primary.main
+    borderColor: theme.komunick.sidebarBorder
   }
 }));
 
 function ListItemLink(props) {
   const classes = useStyles();
   const { icon, primary, to } = props;
+  const location = useLocation();
+  const active =
+    to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
 
   const renderLink = React.useMemo(
     () =>
@@ -102,7 +137,8 @@ function ListItemLink(props) {
         button
         dense
         component={renderLink}
-        className={classes.menuLink}
+        className={clsx(classes.menuLink, active && classes.menuLinkActive)}
+        aria-current={active ? "page" : undefined}
       >
         {icon ? (
           <ListItemIcon className={classes.menuIcon}>{icon}</ListItemIcon>
@@ -494,6 +530,11 @@ const MainListItems = props => {
               to="/queues"
               primary={i18n.t("mainDrawer.listItems.queues")}
               icon={<AccountTreeOutlinedIcon />}
+            />
+            <ListItemLink
+              to="/close-reasons"
+              primary={i18n.t("mainDrawer.listItems.closeReasons")}
+              icon={<AssignmentTurnedInOutlinedIcon />}
             />
             <ListItemLink
               to="/users"

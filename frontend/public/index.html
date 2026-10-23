@@ -3,7 +3,7 @@
   <head>
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Roboto:wght@300;400;500;700&display=swap"
     />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/favicon.ico" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
@@ -330,7 +330,8 @@
           .then(response => response.json())
           .then(data => {
             const root = document.documentElement;
-            const color = data || (theme === "dark" ? "#39ACE7" : "#00f");
+            // Zap Komunick: brand defaults
+            const color = data || (theme === "dark" ? "#35B62E" : "#1F7F1B");
 
             root.style.setProperty("--primary", color);
             // Persist the resolved primary color so the restart
@@ -373,7 +374,7 @@
         fetch(settingsBaseUrl + "/appName")
           .then(response => response.json())
           .then(data => {
-            document.title = data || "ticketz";
+            document.title = data || "Zap Komunick";
           });
       };
 
