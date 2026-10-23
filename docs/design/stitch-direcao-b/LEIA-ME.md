@@ -29,3 +29,17 @@ Os textos de exemplo e as imagens das telas são fictícios; a logo vem de um en
 
 Raios (cartão 14, botão 10, etiqueta 8, janela 18) e fundo `#F3F5F4` já eram os do tema. O menu continua alternando entre
 largo e só ícones; a Direção B mostra só ícones.
+
+## Aplicado nas telas internas (PR seguinte)
+
+- Título de página em preto e negrito (`components/Title`), cabeçalho de tabela com faixa de fundo (`MuiTableHead`).
+- Kanban: colunas sem painel, só a barra colorida no topo; cartões com borda e avatar neutro.
+- Contatos: avatares neutros, carteira como etiqueta verde clara, importar e exportar em contorno.
+- Painel de SLA: selos de situação em tom suave (fundo translúcido, texto colorido).
+
+## Fica de fora (decisão registrada)
+
+- Rótulos acima dos campos e "×" no título das janelas (Material-UI usa rótulo flutuante; mudar isso afeta todos os
+  formulários do upstream).
+- Título da tela e interruptor "Modo escuro" na barra do topo, e o menu sempre só com ícones.
+- Campo de busca preenchido e arredondado, e os "—" nas células vazias das tabelas.

@@ -37,13 +37,13 @@ import toastError from "../../errors/toastError";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { Can } from "../../components/Can";
 import { SocketContext } from "../../context/Socket/SocketContext";
-import { generateColor } from "../../helpers/colorGenerator";
 import { getInitials } from "../../helpers/getInitials";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCloudArrowUp } from "@fortawesome/free-solid-svg-icons";
 import { faDownload } from "@fortawesome/free-solid-svg-icons";
 import {
+  Chip,
   FormControl,
   Grid,
   InputLabel,
@@ -123,7 +123,19 @@ const useStyles = makeStyles(theme => ({
     overflow: "hidden",
     textOverflow: "ellipsis"
   },
-  contactName: {}
+  contactName: {},
+  // Zap Komunick (Direção B): neutral initials and a soft green wallet chip
+  avatar: {
+    backgroundColor: theme.komunick.tagBackground,
+    color: theme.palette.text.primary,
+    fontWeight: 700,
+    fontSize: 14
+  },
+  walletChip: {
+    backgroundColor: theme.komunick.bubbleMine,
+    border: `1px solid ${theme.komunick.bubbleMineBorder}`,
+    color: theme.palette.primary.main
+  }
 }));
 
 const Contacts = () => {
@@ -388,27 +400,20 @@ const Contacts = () => {
           />
           {user?.profile === "admin" && (
             <>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => importCsv()}
+              <Button variant="outlined" onClick={() => importCsv()}
               >
                 &nbsp;
                 <FontAwesomeIcon icon={faCloudArrowUp} />
                 &nbsp;
               </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => exportCsv()}
+              <Button variant="outlined" onClick={() => exportCsv()}
               >
                 &nbsp;
                 <FontAwesomeIcon icon={faDownload} />
                 &nbsp;
               </Button>
               <Button
-                variant="contained"
-                color="primary"
+                variant="outlined"
                 onClick={() => setImportConfirmOpen(true)}
               >
                 {i18n.t("contacts.buttons.import")}
@@ -455,11 +460,7 @@ const Contacts = () => {
                   <TableCell style={{ paddingRight: 0 }}>
                     {
                       <Avatar
-                        style={{
-                          backgroundColor: generateColor(contact?.number),
-                          fontWeight: "bold",
-                          color: "white"
-                        }}
+                        className={classes.avatar}
                         src={contact.profilePicUrl}
                       >
                         {getInitials(contact?.name)}
@@ -487,7 +488,13 @@ const Contacts = () => {
                   <TableCell align="center">{contact.number}</TableCell>
                   <TableCell align="center">{contact.email}</TableCell>
                   <TableCell align="center">
-                    {contact.walletUser?.name || ""}
+                    {contact.walletUser?.name && (
+                      <Chip
+                        size="small"
+                        label={contact.walletUser.name}
+                        className={classes.walletChip}
+                      />
+                    )}
                   </TableCell>
                   <TableCell align="center">
                     {!contact.isGroup && (

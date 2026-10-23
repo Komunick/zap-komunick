@@ -31,7 +31,6 @@ import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import { i18n } from "../../translate/i18n";
 import { SocketContext } from "../../context/Socket/SocketContext";
-import { generateColor } from "../../helpers/colorGenerator";
 import { getInitials } from "../../helpers/getInitials";
 import pastRelativeDate from "../../helpers/pastRelativeDate";
 
@@ -54,8 +53,12 @@ const useStyles = makeStyles(theme => ({
     display: "flex",
     flexDirection: "column",
     maxHeight: "100%",
-    backgroundColor: theme.mode === "light" ? "#f4f5f7" : "#2b2b2b",
+    // Direção B: no panel behind the cards, just the colored bar on top
+    backgroundColor: "transparent",
+    border: "none",
+    boxShadow: "none",
     borderTop: "4px solid",
+    borderRadius: "4px 4px 0 0",
     transition: "box-shadow 120ms"
   },
   laneOver: {
@@ -82,8 +85,17 @@ const useStyles = makeStyles(theme => ({
     gap: theme.spacing(1),
     minHeight: 80
   },
+  avatar: {
+    backgroundColor: theme.komunick.tagBackground,
+    color: theme.palette.text.primary,
+    width: 32,
+    height: 32,
+    fontSize: 12,
+    fontWeight: 700
+  },
   card: {
-    padding: theme.spacing(1),
+    padding: theme.spacing(1.5),
+    border: `1px solid ${theme.palette.divider}`,
     cursor: "grab",
     display: "flex",
     gap: theme.spacing(1),
@@ -149,13 +161,7 @@ const KanbanCard = ({ ticket, lanes, currentLane, onMove, onOpen }) => {
       <Avatar
         onClick={() => onOpen(ticket)}
         src={ticket.contact?.profilePicUrl}
-        style={{
-          backgroundColor: generateColor(ticket.contact?.number),
-          color: "white",
-          width: 32,
-          height: 32,
-          fontSize: 14
-        }}
+        className={classes.avatar}
       >
         {getInitials(ticket.contact?.name || "")}
       </Avatar>

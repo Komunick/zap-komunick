@@ -37,6 +37,8 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 - O botão de resolver do atendimento virou "Finalizar".
 - Menu lateral preto (#020605) nos dois temas, com ícone e barra verdes no item ativo, e atendimento selecionado com
   contorno verde na lista, conforme a Direção B do Stitch (referências em `docs/design/stitch-direcao-b`).
+- Telas internas no estilo da Direção B: títulos pretos, cabeçalho de tabela com faixa de fundo, Kanban sem painel atrás
+  das colunas, avatares neutros e carteira em etiqueta verde em Contatos, selos de situação suaves no Painel de SLA.
 
 ### Operação
 

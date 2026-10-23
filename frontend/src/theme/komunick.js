@@ -219,6 +219,9 @@ export function komunickThemeOptions(mode) {
       MuiDialogActions: {
         root: { padding: "12px 24px 20px" }
       },
+      MuiTableHead: {
+        root: { backgroundColor: t.subtle }
+      },
       MuiTableCell: {
         root: { borderBottomColor: t.border },
         head: {
