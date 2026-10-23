@@ -1,3 +1,4 @@
+import path from "path";
 import * as Sentry from "@sentry/node";
 import Queue, { Job } from "bull";
 import moment from "moment";
@@ -29,6 +30,7 @@ import { startCampaignQueues } from "./queues/campaign";
 import { clearRepeatableJobsFromQueues } from "./queues/repeatableJobs";
 import OutOfTicketMessage from "./models/OutOfTicketMessages";
 import CreateNextOccurrenceService from "./services/ScheduleServices/CreateNextOccurrenceService";
+import { getPublicPath } from "./helpers/GetPublicPath";
 import { getJidOf } from "./services/WbotServices/getJidOf";
 import { _t } from "./services/TranslationServices/i18nService";
 import { makeRandomId } from "./helpers/MakeRandomId";
@@ -148,7 +150,13 @@ async function handleSendScheduledMessage(job) {
         body: schedule.body,
         contact: schedule.contact,
         currentUser: schedule.user
-      })
+      }),
+      // Zap Komunick: attachment of the schedule
+      ...(scheduleRecord?.mediaPath
+        ? {
+            mediaPath: path.resolve(getPublicPath(), scheduleRecord.mediaPath)
+          }
+        : {})
     });
 
     if (schedule.saveMessage) {

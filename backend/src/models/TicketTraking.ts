@@ -14,6 +14,7 @@ import Company from "./Company";
 import User from "./User";
 import Ticket from "./Ticket";
 import Whatsapp from "./Whatsapp";
+import CloseReason from "./CloseReason";
 
 @Table({
   tableName: "TicketTraking"
@@ -84,6 +85,17 @@ class TicketTraking extends Model {
 
   @Column
   serviceTime: number;
+
+  // Zap Komunick: reason chosen when the cycle was closed
+  @ForeignKey(() => CloseReason)
+  @Column
+  closeReasonId: number;
+
+  @BelongsTo(() => CloseReason)
+  closeReason: CloseReason;
+
+  @Column
+  closeReasonNote: string;
 }
 
 export default TicketTraking;

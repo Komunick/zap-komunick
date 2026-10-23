@@ -1,4 +1,5 @@
 import { Transaction, Op, col, fn } from "sequelize";
+import { ACTIVE_TICKET_STATUSES } from "../../helpers/TicketPauseAndClose";
 import sequelize from "../../database";
 import CampaignShipping from "../../models/CampaignShipping";
 import Contact from "../../models/Contact";
@@ -39,7 +40,7 @@ const closeDuplicatedOpenTicketsPerConnection = async (
     where: {
       contactId,
       status: {
-        [Op.or]: ["open", "pending"]
+        [Op.or]: ACTIVE_TICKET_STATUSES
       }
     }
   });

@@ -11,6 +11,7 @@ import Whatsapp from "../../models/Whatsapp";
 import Queue from "../../models/Queue";
 import { incrementCounter } from "../CounterServices/IncrementCounter";
 import AppError from "../../errors/AppError";
+import { ACTIVE_TICKET_STATUSES } from "../../helpers/TicketPauseAndClose";
 import User from "../../models/User";
 import {
   resolveWalletAssignment,
@@ -91,7 +92,7 @@ const internalFindOrCreateTicketService = async (
     let ticket = await Ticket.findOne({
       where: {
         status: {
-          [Op.or]: ["open", "pending"]
+          [Op.or]: ACTIVE_TICKET_STATUSES
         },
         contactId: groupContact ? groupContact.id : contact.id,
         whatsappId

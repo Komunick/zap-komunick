@@ -2,6 +2,7 @@ import { getIO } from "../../libs/socket";
 import Contact from "../../models/Contact";
 import Schedule from "../../models/Schedule";
 import { nextOccurrence } from "../../helpers/ScheduleRecurrence";
+import { nextBusinessDay } from "../../helpers/BusinessDays";
 
 // Zap Komunick: creates the next send of a recurring schedule after the current
 // one was processed (docs/PRD.md, RF-006)
@@ -29,9 +30,14 @@ const CreateNextOccurrenceService = async (
     return null;
   }
 
+  // Zap Komunick: business days (docs/PRD.md, RF-008)
+  const finalSendAt = schedule.businessDaysOnly
+    ? nextBusinessDay(sendAt)
+    : sendAt;
+
   const next = await Schedule.create({
     body: schedule.body,
-    sendAt,
+    sendAt: finalSendAt,
     contactId: schedule.contactId,
     ticketId: schedule.ticketId,
     companyId: schedule.companyId,
@@ -40,7 +46,10 @@ const CreateNextOccurrenceService = async (
     status: "PENDENTE",
     recurrence: schedule.recurrence,
     recurrenceEndAt: schedule.recurrenceEndAt,
-    recurrenceAnchorAt: anchor
+    recurrenceAnchorAt: anchor,
+    mediaPath: schedule.mediaPath,
+    mediaName: schedule.mediaName,
+    businessDaysOnly: schedule.businessDaysOnly
   });
 
   await next.reload({ include: [{ model: Contact, as: "contact" }] });
