@@ -9,6 +9,7 @@ import UpdateUserService from "../services/UserServices/UpdateUserService";
 import ShowUserService from "../services/UserServices/ShowUserService";
 import DeleteUserService from "../services/UserServices/DeleteUserService";
 import SimpleListService from "../services/UserServices/SimpleListService";
+import OnlineUsersService from "../services/UserServices/OnlineUsersService";
 import User from "../models/User";
 
 type IndexQuery = {
@@ -136,6 +137,15 @@ export const remove = async (
   });
 
   return res.status(200).json({ message: "User deleted" });
+};
+
+// Zap Komunick: who of the team is online and how busy (RF-013)
+export const online = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { companyId } = req.user;
+  return res.status(200).json(await OnlineUsersService(companyId));
 };
 
 export const list = async (req: Request, res: Response): Promise<Response> => {

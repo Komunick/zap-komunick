@@ -29,7 +29,7 @@ os atendimentos em etapas e controla quando cada atendente pode entrar; lembrete
 etiquetas (RF-004), horário de acesso por usuário (RF-005), agendamento recorrente (RF-006), pausar atendimento e motivo
 de finalização (RF-007), agendamento para vários contatos com anexo e dia útil (RF-008) e a identidade visual da
 Komunick (RF-009) o chat interno com conversas e contatos (RF-010) , as
-ações em lote nos atendimentos (RF-011) e os filtros completos da lista (RF-012), sobre o Ticketz como ele é hoje (filas, chatbot, etiquetas, agendamentos, perfis admin e usuário).
+ações em lote nos atendimentos (RF-011), os filtros completos da lista (RF-012) e os usuários online (RF-013), sobre o Ticketz como ele é hoje (filas, chatbot, etiquetas, agendamentos, perfis admin e usuário).
 A segunda entrega saiu da comparação com o ZapContábil feita em 21/10/2026 numa conta de cliente, só olhando, sem mudar
 nada nela.
 
@@ -363,6 +363,27 @@ estouraram o prazo) sem sair da visão em que se está.
 Dado uma atendente com a carteira de clientes dela,
 quando ela filtra "Minha carteira" e "Só com mensagens não lidas",
 então a lista mostra só os clientes dela que mandaram mensagem e ainda não foram lidos, e continua assim ao recarregar.
+
+### RF-013 — Usuários online
+
+**Objetivo:** o gestor ver, num lugar só, quem da equipe está conectado e quanto cada um tem em mãos, para redistribuir
+atendimentos antes que a fila acumule.
+
+- Página "Usuários online" (menu Gerência, só administradores). No topo: online, em atendimento, online sem
+  atendimento, offline e, quando houver, fora do horário.
+- Um cartão por pessoa: situação (online, offline ou "fora do horário de acesso" quando a sessão continua aberta
+  depois do horário permitido), há quanto tempo está online ou quando foi vista por último ("nunca entrou" para quem
+  não entrou), atendimentos em andamento, pausados e finalizados hoje, e as filas dela.
+- Ordem: fora do horário primeiro, depois os online mais ocupados, depois os offline por quem saiu por último. Opção
+  de esconder os offline.
+- Atualiza sozinha quando alguém entra ou sai e quando atendimentos mudam, e a cada minuto para os tempos.
+- "Online" é ter o sistema aberto em algum navegador (sessão do socket); não mede se a pessoa está na frente da tela.
+
+**Cenário de sucesso:**
+
+Dado três atendentes com o sistema aberto e um deles com oito atendimentos,
+quando o gestor abre "Usuários online",
+então vê os três online, o mais ocupado no topo com "8 em atendimento", e quem está online sem atendimento no resumo.
 
 ## 4. Restrições e cuidados
 
