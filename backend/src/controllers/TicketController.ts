@@ -14,6 +14,7 @@ import {
   BULK_FROM_STATUSES,
   parseBulkRequest
 } from "../helpers/BulkTicketActions";
+import { parseTicketFilters } from "../helpers/TicketFilters";
 import ListTicketsServiceKanban from "../services/TicketServices/ListTicketsServiceKanban";
 
 type IndexQuery = {
@@ -70,6 +71,12 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
   const userId = req.user.id;
   const { companyId } = req.user;
 
+  // Zap Komunick: filter panel of the list (RF-012)
+  const { filters, error: filterError } = parseTicketFilters(req.query);
+  if (filterError) {
+    throw new AppError(filterError, 400);
+  }
+
   let queueIds: number[] = [];
   let tagsIds: number[] = [];
   let usersIds: number[] = [];
@@ -104,7 +111,8 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     withUnreadMessages,
     notClosed: !!notClosed,
     all: !!all,
-    companyId
+    companyId,
+    filters
   });
 
   return res.status(200).json({

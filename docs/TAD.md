@@ -110,6 +110,12 @@ Stitch entra como tokens: `sidebar*` (menu preto, igual nos dois temas), `accent
   `pending`, transferir e finalizar de `open`/`pending`/`paused`); o controlador confere a empresa e a situação de cada
   um e chama `UpdateTicketService` em sequência, sob o mesmo mutex do `PUT /tickets/:id`. Resposta `{ done, failed }`
   com o erro de cada id que não passou; uma falha não interrompe os demais. Sem tabela nova.
+- `GET /tickets` ganha os filtros do painel (RF-012): `whatsappIds`, `userIds`, `filterTags` (listas JSON, até 50),
+  `createdFrom`/`createdTo` (`AAAA-MM-DD`, dia inteiro no fuso do backend), `unread`, `slaBreached`, `wallet`
+  (`mine`|`none`). `helpers/TicketFilters` valida (400 com `ERR_FILTER_*`) e monta as condições somadas com `AND` às da
+  lista; `userIds` só vale para administrador; as etiquetas entram no mesmo cálculo das etiquetas da busca; SLA
+  estourado = aberto ou aguardando, sem chatbot e `unansweredSince` mais antigo que o prazo. No frontend,
+  `components/TicketsFilters` repete a regra para os eventos do socket. Sem tabela nova.
 
 **Integridade:**
 - `unansweredSince` só muda com mensagem nova: `CreateMessageService` confere se a mensagem já existia antes do

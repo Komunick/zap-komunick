@@ -58,6 +58,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   `WAVOIP_ENABLED=true` no ambiente do frontend. Ligadas, o ícone do Wavoip fica em Conexões para cadastrar o token de
   cada conexão e o botão de ligar aparece no atendimento aberto de conexões com token; só em `https` ou `localhost` (o
   microfone exige). Sai o texto do cupom "TICKETZ" da janela do token.
+- Filtros completos na lista de atendimentos: botão "Filtros" com conexão, atendente (administradores), etiquetas,
+  período de abertura, carteira (minha ou sem responsável), só não lidas e só SLA estourado. Valem em todas as visões,
+  inclusive na busca e nos atendimentos que chegam em tempo real, e ficam guardados no navegador.
 - Ações em lote nos atendimentos: botão "Selecionar" na lista, caixas de marcar, "Marcar todos" e as ações Aceitar,
   Transferir (fila e, se quiser, atendente) e Finalizar (com motivo e observação). Até 100 por vez, pelas mesmas regras
   do atendimento individual (`POST /tickets/bulk`); o que não puder ser alterado é informado à parte.

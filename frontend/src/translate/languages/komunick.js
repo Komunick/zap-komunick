@@ -274,6 +274,25 @@ const pt = {
     basedOnTicketz: "Baseado no Ticketz (código original)"
   },
   tickets: {
+    filters: {
+      button: "Filtros",
+      title: "Filtrar atendimentos",
+      connections: "Conexão",
+      attendants: "Atendente",
+      tags: "Etiquetas (todas)",
+      period: "Aberto entre",
+      from: "De",
+      to: "Até",
+      wallet: "Carteira",
+      wallet_all: "Todas",
+      wallet_mine: "Minha carteira",
+      wallet_none: "Sem responsável",
+      unread: "Só com mensagens não lidas",
+      sla: "Só SLA estourado (prazo de {{minutes}} min)",
+      slaOff: "Só SLA estourado (prazo desligado)",
+      clear: "Limpar",
+      apply: "Aplicar"
+    },
     bulk: {
       select: "Selecionar",
       selected: "{{count}} selecionado(s)",
@@ -676,6 +695,25 @@ const en = {
     basedOnTicketz: "Based on Ticketz (original code)"
   },
   tickets: {
+    filters: {
+      button: "Filters",
+      title: "Filter tickets",
+      connections: "Connection",
+      attendants: "Attendant",
+      tags: "Tags (all of them)",
+      period: "Opened between",
+      from: "From",
+      to: "To",
+      wallet: "Wallet",
+      wallet_all: "All",
+      wallet_mine: "My wallet",
+      wallet_none: "No owner",
+      unread: "Only with unread messages",
+      sla: "Only breached SLA ({{minutes}} min deadline)",
+      slaOff: "Only breached SLA (deadline off)",
+      clear: "Clear",
+      apply: "Apply"
+    },
     bulk: {
       select: "Select",
       selected: "{{count}} selected",
@@ -1080,6 +1118,25 @@ const es = {
     basedOnTicketz: "Basado en Ticketz (código original)"
   },
   tickets: {
+    filters: {
+      button: "Filtros",
+      title: "Filtrar atenciones",
+      connections: "Conexión",
+      attendants: "Atendente",
+      tags: "Etiquetas (todas)",
+      period: "Abierta entre",
+      from: "Desde",
+      to: "Hasta",
+      wallet: "Cartera",
+      wallet_all: "Todas",
+      wallet_mine: "Mi cartera",
+      wallet_none: "Sin responsable",
+      unread: "Solo con mensajes no leídos",
+      sla: "Solo SLA vencido (plazo de {{minutes}} min)",
+      slaOff: "Solo SLA vencido (plazo desactivado)",
+      clear: "Limpiar",
+      apply: "Aplicar"
+    },
     bulk: {
       select: "Seleccionar",
       selected: "{{count}} seleccionado(s)",
