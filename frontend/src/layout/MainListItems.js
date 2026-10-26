@@ -1,4 +1,10 @@
-import React, { useContext, useEffect, useReducer, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useReducer,
+  useState
+} from "react";
 import { Link as RouterLink, useHistory, useLocation } from "react-router-dom";
 import clsx from "clsx";
 
@@ -7,6 +13,7 @@ import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
 import ListSubheader from "@material-ui/core/ListSubheader";
 import Divider from "@material-ui/core/Divider";
+import Tooltip from "@material-ui/core/Tooltip";
 import { Badge, Collapse, List } from "@material-ui/core";
 import DashboardOutlinedIcon from "@material-ui/icons/DashboardOutlined";
 import WhatsAppIcon from "@material-ui/icons/WhatsApp";
@@ -130,8 +137,12 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
+// Zap Komunick: in the icon rail the label is shown as a tooltip
+const NavCollapsedContext = createContext(false);
+
 function ListItemLink(props) {
   const classes = useStyles();
+  const collapsed = useContext(NavCollapsedContext);
   const { icon, primary, to } = props;
   const location = useLocation();
   const active =
@@ -147,18 +158,25 @@ function ListItemLink(props) {
 
   return (
     <li>
-      <ListItem
-        button
-        dense
-        component={renderLink}
-        className={clsx(classes.menuLink, active && classes.menuLinkActive)}
-        aria-current={active ? "page" : undefined}
+      <Tooltip
+        title={collapsed && typeof primary === "string" ? primary : ""}
+        placement="right"
+        arrow
       >
-        {icon ? (
-          <ListItemIcon className={classes.menuIcon}>{icon}</ListItemIcon>
-        ) : null}
-        <ListItemText primary={primary} />
-      </ListItem>
+        <ListItem
+          button
+          dense
+          component={renderLink}
+          className={clsx(classes.menuLink, active && classes.menuLinkActive)}
+          aria-current={active ? "page" : undefined}
+          aria-label={typeof primary === "string" ? primary : undefined}
+        >
+          {icon ? (
+            <ListItemIcon className={classes.menuIcon}>{icon}</ListItemIcon>
+          ) : null}
+          <ListItemText primary={primary} />
+        </ListItem>
+      </Tooltip>
     </li>
   );
 }
@@ -221,7 +239,7 @@ const reducer = (state, action) => {
 
 const MainListItems = props => {
   const classes = useStyles();
-  const { drawerClose, drawerOpen } = props;
+  const { drawerClose, drawerOpen, collapsed } = props;
   const { whatsApps } = useContext(WhatsAppsContext);
   const { user, handleLogout } = useContext(AuthContext);
   const [connectionWarning, setConnectionWarning] = useState(false);
@@ -333,6 +351,7 @@ const MainListItems = props => {
   };
 
   return (
+    <NavCollapsedContext.Provider value={!!collapsed}>
     <div onClick={drawerClose}>
       <Can
         role={user.profile}
@@ -576,6 +595,7 @@ const MainListItems = props => {
       />
       <Divider />
     </div>
+    </NavCollapsedContext.Provider>
   );
 };
 

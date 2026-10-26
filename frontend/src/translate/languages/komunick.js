@@ -161,6 +161,17 @@ const pt = {
     empty: "Nenhum contato encontrado.",
     column: "Carteira"
   },
+  layoutMode: {
+    title: "Layout",
+    workspace: "Workspace",
+    foco: "Foco",
+    more: "Mais",
+    goTo: "Ir para",
+    tickets: "Atendimentos",
+    searchPlaceholder: "Buscar atendimento, contato ou ação",
+    noResults: "Nada encontrado.",
+    darkMode: "Modo escuro"
+  },
   accessHours: {
     restrict: "Restringir horário de acesso",
     helper:
@@ -456,6 +467,17 @@ const en = {
       "No contacts in your wallet. An administrator sets the owner of each contact.",
     empty: "No contacts found.",
     column: "Wallet"
+  },
+  layoutMode: {
+    title: "Layout",
+    workspace: "Workspace",
+    foco: "Focus",
+    more: "More",
+    goTo: "Go to",
+    tickets: "Tickets",
+    searchPlaceholder: "Search ticket, contact or action",
+    noResults: "Nothing found.",
+    darkMode: "Dark mode"
   },
   accessHours: {
     restrict: "Restrict access hours",
@@ -754,6 +776,17 @@ const es = {
       "Ningún contacto en tu cartera. El administrador define el responsable de cada contacto.",
     empty: "No se encontraron contactos.",
     column: "Cartera"
+  },
+  layoutMode: {
+    title: "Diseño",
+    workspace: "Workspace",
+    foco: "Foco",
+    more: "Más",
+    goTo: "Ir a",
+    tickets: "Atenciones",
+    searchPlaceholder: "Buscar atención, contacto o acción",
+    noResults: "No se encontró nada.",
+    darkMode: "Modo oscuro"
   },
   accessHours: {
     restrict: "Restringir horario de acceso",
