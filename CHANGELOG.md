@@ -61,6 +61,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 - Configurações: rótulos longos (como "Timeout para reabertura automática (minutos)") ficam em uma linha e não cobrem mais o
   valor do campo.
 - O menu do usuário fecha ao trocar entre tema claro e escuro.
+- O app não trava mais com o erro "JSON.parse: unexpected character" quando o navegador guarda, para este endereço, um
+  "token" que não é do sistema (por exemplo, deixado por outro aplicativo que usou a mesma porta): o valor inválido é
+  descartado e a tela de login aparece.
 
 ### Operação
 
