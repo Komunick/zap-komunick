@@ -54,6 +54,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   vez de solto na barra do topo; o botão de hambúrguer da barra do topo só aparece no celular.
 - Menu lateral maior e mais legível: itens de 48 px, ícones de 26 px, texto de 15,5 px, títulos de seção de 12,5 px e
   largura de 264 px (72 px só com ícones).
+- Ligações de voz pelo WhatsApp com o Wavoip (serviço de terceiros, escolha do responsável): o ícone do Wavoip volta à
+  tela de Conexões para cadastrar o token de cada conexão, e o botão de ligar aparece no atendimento aberto de conexões
+  com token. Só funciona em `https` ou `localhost` (o microfone exige). Sai o texto do cupom "TICKETZ" da janela do token.
 - Kanban em formato de post-it: cada atendimento é uma nota na cor da etiqueta da coluna (amarelo na coluna "Em aberto"),
   com fita no topo, canto dobrado, pequena inclinação fixa por atendimento e efeito ao passar o mouse.
 

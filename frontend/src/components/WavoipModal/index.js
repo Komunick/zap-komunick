@@ -129,13 +129,6 @@ const WavoipModal = ({ open, onClose, whatsappId }) => {
                 wavoip.com.br
               </a>
             </Typography>
-            <Typography
-              className={classes.wavoipInstructions}
-              variant="body2"
-              gutterBottom
-            >
-              {i18n.t("wavoipModal.coupon")}
-            </Typography>
             <TextField
               label="Token"
               value={token || ""}

@@ -68,8 +68,11 @@ export async function wavoipCall(ticket, disconnect) {
   return wavoipInstance;
 }
 
+// Zap Komunick: calls need the microphone, which browsers only allow on https
+// or localhost
 export function wavoipAvailable() {
-  return false;
-  // disabled for future refactor
-  // return window.location.protocol === "https:" || window.location.hostname === "localhost";
+  return (
+    window.location.protocol === "https:" ||
+    window.location.hostname === "localhost"
+  );
 }
