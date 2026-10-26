@@ -28,7 +28,8 @@ os atendimentos em etapas e controla quando cada atendente pode entrar; lembrete
 **Escopo descrito:** código-fonte acessível (RF-001), painel de SLA (RF-002), carteira de clientes (RF-003), Kanban por
 etiquetas (RF-004), horário de acesso por usuário (RF-005), agendamento recorrente (RF-006), pausar atendimento e motivo
 de finalização (RF-007), agendamento para vários contatos com anexo e dia útil (RF-008) e a identidade visual da
-Komunick (RF-009) e o chat interno com conversas e contatos (RF-010), sobre o Ticketz como ele é hoje (filas, chatbot, etiquetas, agendamentos, perfis admin e usuário).
+Komunick (RF-009) o chat interno com conversas e contatos (RF-010) e as
+ações em lote nos atendimentos (RF-011), sobre o Ticketz como ele é hoje (filas, chatbot, etiquetas, agendamentos, perfis admin e usuário).
 A segunda entrega saiu da comparação com o ZapContábil feita em 21/10/2026 numa conta de cliente, só olhando, sem mudar
 nada nela.
 
@@ -321,6 +322,28 @@ então vê o logo da Komunick, o botão verde e o painel da marca, no tema claro
 Dado um atendente que nunca conversou com a colega Ana,
 quando ele abre o Chat interno e clica em "Ana" na parte de contatos,
 então a conversa a dois abre vazia, e depois da primeira mensagem ela aparece no topo das conversas dos dois.
+
+### RF-011 — Ações em lote nos atendimentos
+
+**Objetivo:** tratar vários atendimentos de uma vez (por exemplo, a fila acumulada depois de um feriado), com as mesmas
+regras de quando se trata um por um.
+
+- Botão "Selecionar" nas visões em atendimento, aguardando, pausados, grupos e busca (não em resolvidos). Na seleção,
+  cada linha ganha uma caixa de marcar e o clique marca em vez de abrir a conversa; "Marcar todos" pega o que a lista
+  mostra.
+- Ações: **Aceitar** (só os aguardando da seleção, para quem aceita), **Transferir** (fila obrigatória; com atendente vai
+  direto para ele, sem atendente volta à fila aguardando, como na transferência de um atendimento) e **Finalizar**
+  (motivo e observação valem para todos; o motivo é exigido quando há motivos cadastrados; o cliente não recebe a
+  pesquisa de avaliação).
+- Até 100 atendimentos por vez. Cada um passa pelas mesmas permissões e regras do atendimento individual; o que não
+  puder ser alterado (situação mudou, sem permissão, falta de motivo) é contado à parte e os demais seguem.
+- Trocar de visão ou concluir a ação sai da seleção.
+
+**Cenário de sucesso:**
+
+Dado 12 atendimentos aguardando na fila Fiscal depois de um feriado,
+quando o atendente seleciona todos e escolhe "Aceitar",
+então os 12 passam para "Em atendimento" com ele, e o aviso mostra "12 atendimento(s) atualizado(s)".
 
 ## 4. Restrições e cuidados
 

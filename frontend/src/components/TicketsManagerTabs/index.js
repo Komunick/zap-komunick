@@ -15,6 +15,11 @@ import Switch from "@material-ui/core/Switch";
 import NewTicketModal from "../NewTicketModal";
 import TicketsList from "../TicketsListCustom";
 import TabPanel from "../TabPanel";
+import {
+  BulkBar,
+  BulkSelectionContext,
+  useBulkSelectionState
+} from "../TicketsBulk";
 
 import { i18n } from "../../translate/i18n";
 import { AuthContext } from "../../context/Auth/AuthContext";
@@ -172,6 +177,12 @@ const useStyles = makeStyles(theme => ({
     height: 8,
     borderRadius: "50%"
   },
+  bulkButton: {
+    marginLeft: 6,
+    textTransform: "none",
+    fontWeight: 600,
+    color: theme.palette.text.secondary
+  },
   settingsIcon: {
     alignSelf: "center",
     marginLeft: "auto",
@@ -311,6 +322,22 @@ const TicketsManagerTabs = () => {
 
   const view = tab === "open" ? (tabOpen === "open" ? "mine" : "waiting") : tab;
 
+  // Zap Komunick: selection for the actions in bulk (RF-011); each view has
+  // its own list, and the closed tickets have no bulk action
+  const selection = useBulkSelectionState();
+  const bulkListKey = {
+    mine: "open",
+    waiting: "pending",
+    paused: "paused",
+    groups: "groups",
+    search: "search"
+  }[view];
+
+  useEffect(() => {
+    selection.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view]);
+
   const handleChangeView = (e, newValue) => {
     if (newValue === "mine" || newValue === "waiting") {
       setTab("open");
@@ -323,7 +350,9 @@ const TicketsManagerTabs = () => {
   const toggleQueue = queueId => {
     setSelectedQueueIds(current => {
       if (current.includes(queueId)) {
-        return current.length > 1 ? current.filter(id => id !== queueId) : current;
+        return current.length > 1
+          ? current.filter(id => id !== queueId)
+          : current;
       }
       return [...current, queueId];
     });
@@ -368,192 +397,212 @@ const TicketsManagerTabs = () => {
   };
 
   return (
-    <Paper elevation={0} variant="outlined" className={classes.ticketsWrapper}>
-      <NewTicketModal
-        modalOpen={newTicketModalOpen}
-        onClose={ticket => {
-          handleCloseOrOpenTicket(ticket);
-        }}
-      />
-      <Tabs
-        value={view}
-        onChange={handleChangeView}
-        variant="scrollable"
-        scrollButtons="off"
-        indicatorColor="primary"
-        textColor="primary"
-        className={classes.visions}
-        aria-label={i18n.t("tickets.views.label")}
+    <BulkSelectionContext.Provider value={selection}>
+      <Paper
+        elevation={0}
+        variant="outlined"
+        className={classes.ticketsWrapper}
       >
-        <Tab
-          value="mine"
-          label={visionLabel(
-            showAllTickets
-              ? i18n.t("tickets.views.inService")
-              : i18n.t("tickets.views.mine"),
-            openCount
-          )}
+        <NewTicketModal
+          modalOpen={newTicketModalOpen}
+          onClose={ticket => {
+            handleCloseOrOpenTicket(ticket);
+          }}
         />
-        <Tab
-          value="waiting"
-          label={visionLabel(
-            i18n.t("tickets.views.waiting"),
-            pendingCount,
-            true
-          )}
-        />
-        <Tab value="paused" label={i18n.t("tickets.tabs.paused.title")} />
-        {showTabGroups && (
-          <Tab value="groups" label={i18n.t("tickets.tabs.groups.title")} />
-        )}
-        <Tab value="closed" label={i18n.t("tickets.tabs.closed.title")} />
-        <Tab
-          value="search"
-          className={classes.visionSearch}
-          icon={<SearchIcon fontSize="small" />}
-          aria-label={i18n.t("tickets.tabs.search.title")}
-        />
-      </Tabs>
-      <Paper square elevation={0} className={classes.ticketOptionsBox}>
-        {tab === "search" ? (
-          <div className={classes.serachInputWrapper}>
-            <SearchIcon className={classes.searchIcon} />
-            <InputBase
-              className={classes.searchInput}
-              inputRef={searchInputRef}
-              placeholder={i18n.t("tickets.search.placeholder")}
-              type="search"
-              onChange={handleSearch}
-            />
-          </div>
-        ) : (
-          <>
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={() => setNewTicketModalOpen(true)}
-            >
-              {i18n.t("ticketsManager.buttons.newTicket")}
-            </Button>
-            {tab === "open" && (
-              <Can
-                role={user.profile}
-                perform="tickets-manager:showall"
-                yes={() => (
-                  <FormControlLabel
-                    label={i18n.t("tickets.buttons.showAll")}
-                    labelPlacement="start"
-                    control={
-                      <Switch
-                        size="small"
-                        checked={showAllTickets}
-                        onChange={() =>
-                          setShowAllTickets(prevState => !prevState)
-                        }
-                        name="showAllTickets"
-                        color="primary"
-                      />
-                    }
-                  />
-                )}
-              />
+        <Tabs
+          value={view}
+          onChange={handleChangeView}
+          variant="scrollable"
+          scrollButtons="off"
+          indicatorColor="primary"
+          textColor="primary"
+          className={classes.visions}
+          aria-label={i18n.t("tickets.views.label")}
+        >
+          <Tab
+            value="mine"
+            label={visionLabel(
+              showAllTickets
+                ? i18n.t("tickets.views.inService")
+                : i18n.t("tickets.views.mine"),
+              openCount
             )}
-          </>
-        )}
-      </Paper>
-      {(user?.queues || []).length > 0 && (
-        <div className={classes.queueRow}>
-          <span className={classes.queueLabel}>{i18n.t("tickets.views.queues")}</span>
-          {(user?.queues || []).map(queue => (
-            <button
-              key={queue.id}
-              type="button"
-              aria-pressed={selectedQueueIds.includes(queue.id)}
-              className={clsx(
-                classes.queueChip,
-                selectedQueueIds.includes(queue.id) && classes.queueChipOn
-              )}
-              onClick={() => toggleQueue(queue.id)}
-            >
-              <span
-                className={classes.queueDot}
-                style={{ backgroundColor: queue.color || "#7C7C7C" }}
+          />
+          <Tab
+            value="waiting"
+            label={visionLabel(
+              i18n.t("tickets.views.waiting"),
+              pendingCount,
+              true
+            )}
+          />
+          <Tab value="paused" label={i18n.t("tickets.tabs.paused.title")} />
+          {showTabGroups && (
+            <Tab value="groups" label={i18n.t("tickets.tabs.groups.title")} />
+          )}
+          <Tab value="closed" label={i18n.t("tickets.tabs.closed.title")} />
+          <Tab
+            value="search"
+            className={classes.visionSearch}
+            icon={<SearchIcon fontSize="small" />}
+            aria-label={i18n.t("tickets.tabs.search.title")}
+          />
+        </Tabs>
+        <Paper square elevation={0} className={classes.ticketOptionsBox}>
+          {tab === "search" ? (
+            <div className={classes.serachInputWrapper}>
+              <SearchIcon className={classes.searchIcon} />
+              <InputBase
+                className={classes.searchInput}
+                inputRef={searchInputRef}
+                placeholder={i18n.t("tickets.search.placeholder")}
+                type="search"
+                onChange={handleSearch}
               />
-              {queue.name}
-            </button>
-          ))}
-        </div>
-      )}
-      <TabPanel value={tab} name="open" className={classes.ticketsWrapper}>
-        <Paper className={classes.ticketsWrapper}>
+            </div>
+          ) : (
+            <>
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => setNewTicketModalOpen(true)}
+              >
+                {i18n.t("ticketsManager.buttons.newTicket")}
+              </Button>
+              {bulkListKey && !selection.selecting && (
+                <Button
+                  size="small"
+                  className={classes.bulkButton}
+                  onClick={selection.start}
+                >
+                  {i18n.t("tickets.bulk.select")}
+                </Button>
+              )}
+              {tab === "open" && (
+                <Can
+                  role={user.profile}
+                  perform="tickets-manager:showall"
+                  yes={() => (
+                    <FormControlLabel
+                      label={i18n.t("tickets.buttons.showAll")}
+                      labelPlacement="start"
+                      control={
+                        <Switch
+                          size="small"
+                          checked={showAllTickets}
+                          onChange={() =>
+                            setShowAllTickets(prevState => !prevState)
+                          }
+                          name="showAllTickets"
+                          color="primary"
+                        />
+                      }
+                    />
+                  )}
+                />
+              )}
+            </>
+          )}
+        </Paper>
+        {(user?.queues || []).length > 0 && (
+          <div className={classes.queueRow}>
+            <span className={classes.queueLabel}>
+              {i18n.t("tickets.views.queues")}
+            </span>
+            {(user?.queues || []).map(queue => (
+              <button
+                key={queue.id}
+                type="button"
+                aria-pressed={selectedQueueIds.includes(queue.id)}
+                className={clsx(
+                  classes.queueChip,
+                  selectedQueueIds.includes(queue.id) && classes.queueChipOn
+                )}
+                onClick={() => toggleQueue(queue.id)}
+              >
+                <span
+                  className={classes.queueDot}
+                  style={{ backgroundColor: queue.color || "#7C7C7C" }}
+                />
+                {queue.name}
+              </button>
+            ))}
+          </div>
+        )}
+        {selection.selecting && bulkListKey && (
+          <BulkBar selection={selection} listKey={bulkListKey} />
+        )}
+        <TabPanel value={tab} name="open" className={classes.ticketsWrapper}>
+          <Paper className={classes.ticketsWrapper}>
+            <TicketsList
+              status="open"
+              showAll={showAllTickets}
+              selectedQueueIds={selectedQueueIds}
+              updateCount={val => setOpenCount(val)}
+              style={applyPanelStyle("open")}
+              setTabOpen={setTabOpen}
+              showTabGroups={showTabGroups}
+            />
+            <TicketsList
+              status="pending"
+              selectedQueueIds={selectedQueueIds}
+              updateCount={val => setPendingCount(val)}
+              style={applyPanelStyle("pending")}
+              setTabOpen={setTabOpen}
+              showTabGroups={showTabGroups}
+            />
+          </Paper>
+        </TabPanel>
+        <TabPanel value={tab} name="paused" className={classes.ticketsWrapper}>
           <TicketsList
-            status="open"
+            status="paused"
             showAll={showAllTickets}
             selectedQueueIds={selectedQueueIds}
-            updateCount={val => setOpenCount(val)}
-            style={applyPanelStyle("open")}
-            setTabOpen={setTabOpen}
             showTabGroups={showTabGroups}
           />
+        </TabPanel>
+        <TabPanel value={tab} name="closed" className={classes.ticketsWrapper}>
           <TicketsList
-            status="pending"
+            status="closed"
+            showAll={true}
             selectedQueueIds={selectedQueueIds}
-            updateCount={val => setPendingCount(val)}
-            style={applyPanelStyle("pending")}
-            setTabOpen={setTabOpen}
             showTabGroups={showTabGroups}
           />
-        </Paper>
-      </TabPanel>
-      <TabPanel value={tab} name="paused" className={classes.ticketsWrapper}>
-        <TicketsList
-          status="paused"
-          showAll={showAllTickets}
-          selectedQueueIds={selectedQueueIds}
-          showTabGroups={showTabGroups}
-        />
-      </TabPanel>
-      <TabPanel value={tab} name="closed" className={classes.ticketsWrapper}>
-        <TicketsList
-          status="closed"
-          showAll={true}
-          selectedQueueIds={selectedQueueIds}
-          showTabGroups={showTabGroups}
-        />
-      </TabPanel>
-      <TabPanel value={tab} name="groups" className={classes.ticketsWrapper}>
-        <TicketsList
-          groups={true}
-          showAll={true}
-          selectedQueueIds={selectedQueueIds}
-          showTabGroups={showTabGroups}
-        />
-      </TabPanel>
-      <TabPanel value={tab} name="search" className={classes.ticketsWrapper}>
-        <Box style={{ paddingRight: 10, paddingLeft: 10 }}>
-          <ContactSelect
-            onSelected={contactId => {
-              setSelectedContact(contactId);
-            }}
-            allowCreate={false}
+        </TabPanel>
+        <TabPanel value={tab} name="groups" className={classes.ticketsWrapper}>
+          <TicketsList
+            groups={true}
+            showAll={true}
+            selectedQueueIds={selectedQueueIds}
+            showTabGroups={showTabGroups}
           />
-        </Box>
-        <TagsFilter onFiltered={handleSelectedTags} />
-        {profile === "admin" && (
-          <UsersFilter onFiltered={handleSelectedUsers} />
-        )}
-        <TicketsList
-          isSearch={true}
-          searchParam={searchParam}
-          showAll={true}
-          contactId={selectedContact}
-          tags={selectedTags}
-          users={selectedUsers}
-          selectedQueueIds={selectedQueueIds}
-          showTabGroups={showTabGroups}
-        />
-      </TabPanel>
-    </Paper>
+        </TabPanel>
+        <TabPanel value={tab} name="search" className={classes.ticketsWrapper}>
+          <Box style={{ paddingRight: 10, paddingLeft: 10 }}>
+            <ContactSelect
+              onSelected={contactId => {
+                setSelectedContact(contactId);
+              }}
+              allowCreate={false}
+            />
+          </Box>
+          <TagsFilter onFiltered={handleSelectedTags} />
+          {profile === "admin" && (
+            <UsersFilter onFiltered={handleSelectedUsers} />
+          )}
+          <TicketsList
+            isSearch={true}
+            searchParam={searchParam}
+            showAll={true}
+            contactId={selectedContact}
+            tags={selectedTags}
+            users={selectedUsers}
+            selectedQueueIds={selectedQueueIds}
+            showTabGroups={showTabGroups}
+          />
+        </TabPanel>
+      </Paper>
+    </BulkSelectionContext.Provider>
   );
 };
 
