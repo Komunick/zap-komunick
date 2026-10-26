@@ -29,7 +29,7 @@ os atendimentos em etapas e controla quando cada atendente pode entrar; lembrete
 etiquetas (RF-004), horário de acesso por usuário (RF-005), agendamento recorrente (RF-006), pausar atendimento e motivo
 de finalização (RF-007), agendamento para vários contatos com anexo e dia útil (RF-008) e a identidade visual da
 Komunick (RF-009) o chat interno com conversas e contatos (RF-010) , as
-ações em lote nos atendimentos (RF-011), os filtros completos da lista (RF-012) e os usuários online (RF-013), sobre o Ticketz como ele é hoje (filas, chatbot, etiquetas, agendamentos, perfis admin e usuário).
+ações em lote nos atendimentos (RF-011), os filtros completos da lista (RF-012), os usuários online (RF-013) e a carteira em lote (RF-014), sobre o Ticketz como ele é hoje (filas, chatbot, etiquetas, agendamentos, perfis admin e usuário).
 A segunda entrega saiu da comparação com o ZapContábil feita em 21/10/2026 numa conta de cliente, só olhando, sem mudar
 nada nela.
 
@@ -384,6 +384,26 @@ atendimentos antes que a fila acumule.
 Dado três atendentes com o sistema aberto e um deles com oito atendimentos,
 quando o gestor abre "Usuários online",
 então vê os três online, o mais ocupado no topo com "8 em atendimento", e quem está online sem atendimento no resumo.
+
+### RF-014 — Carteira em lote
+
+**Objetivo:** montar e reorganizar carteiras sem abrir contato por contato: distribuir os clientes entre a equipe e
+passar a carteira inteira de quem sai para quem fica.
+
+- Em Contatos (só administradores), uma caixa de marcar por contato e uma no cabeçalho para marcar a lista visível.
+  Com contatos marcados aparece a barra: escolher o responsável e "Definir responsável", ou "Tirar da carteira".
+- Botão "Transferir carteira": de um responsável (ou dos contatos sem responsável) para outro (ou para ninguém),
+  mostrando antes quantos contatos a carteira tem. Origem e destino iguais não são aceitos.
+- Grupos nunca entram em carteira: são ignorados e o aviso diz quantos foram. Até 500 contatos marcados por vez; a
+  transferência leva a carteira inteira.
+- O responsável precisa ser da mesma empresa. A lista recarrega depois da ação e os outros usuários recebem a mudança
+  em tempo real.
+
+**Cenário de sucesso:**
+
+Dado uma atendente que sai da empresa com 120 clientes na carteira,
+quando o gestor escolhe "Transferir carteira" dela para outro atendente,
+então os 120 passam para o novo responsável, e as próximas conversas desses clientes já entram na fila dele.
 
 ## 4. Restrições e cuidados
 

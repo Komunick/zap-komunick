@@ -30,6 +30,8 @@ import { verifyContact } from "../services/WbotServices/verifyContact";
 import { getWbot } from "../libs/wbot";
 import GetDefaultWhatsApp from "../helpers/GetDefaultWhatsApp";
 import { csvDetectDelimiter } from "../helpers/csvDetectDelimiter";
+import { parseWalletBulk } from "../helpers/WalletBulk";
+import SetWalletBulkService from "../services/ContactServices/SetWalletBulkService";
 
 type IndexQuery = {
   searchParam: string;
@@ -65,7 +67,8 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     walletUserId:
       walletUserId === "me"
         ? Number(req.user.id)
-        : Number(walletUserId) || undefined
+        : Number(walletUserId) || undefined,
+    withoutWallet: walletUserId === "none"
   });
 
   return res.json({ contacts, count, hasMore });
@@ -406,6 +409,35 @@ export const exportCsv = async (
   );
 
   return res;
+};
+
+// Zap Komunick: wallet in bulk, by selection or moving a whole wallet (RF-014)
+export const updateWalletBulk = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { companyId } = req.user;
+  const { request, error } = parseWalletBulk(req.body);
+  if (error) {
+    throw new AppError(error, 400);
+  }
+
+  const { updated, skippedGroups } = await SetWalletBulkService(
+    request,
+    companyId
+  );
+
+  const io = getIO();
+  updated.forEach(contact => {
+    io.to(`company-${companyId}-mainchannel`).emit(
+      `company-${companyId}-contact`,
+      { action: "update", contact }
+    );
+  });
+
+  return res
+    .status(200)
+    .json({ updated: updated.length, skippedGroups });
 };
 
 export const updateWallet = async (
