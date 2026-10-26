@@ -37,6 +37,60 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 - O botão de resolver do atendimento virou "Finalizar".
 - Menu lateral preto (#020605) nos dois temas, com ícone e barra verdes no item ativo, e atendimento selecionado com
   contorno verde na lista, conforme a Direção B do Stitch (referências em `docs/design/stitch-direcao-b`).
+- Telas internas no estilo da Direção B: títulos pretos, cabeçalho de tabela com faixa de fundo, Kanban sem painel atrás
+  das colunas, avatares neutros e carteira em etiqueta verde em Contatos, selos de situação suaves no Painel de SLA.
+- Dashboard sem propaganda do Ticketz: saem o banner do Ticketz PRO, o blog do Ticketz PRO, o pedido de doação (PIX,
+  Mercado Pago e PayPal) e o cadastro da instalação no Ticketz. A tela abre direto nas métricas.
+- Três layouts próprios, escolhidos no menu do usuário: "Workspace" (trilho de ícones à esquerda), "Foco" (logo e abas de
+  navegação no topo, sem barra lateral) e "Painel" (barra lateral compacta de 224 px, clara e quente no tema claro, com o
+  botão de recolher dentro dela e a logo na barra do topo). Todos têm barra do topo plana, conteúdo sem cartões flutuantes e
+  busca global com `Ctrl K` (páginas e atendimentos). O trilho de ícones ganha dica com o nome de cada página. Na tela de
+  Atendimentos a coluna da lista fica fixa em 380 px e a conversa ocupa o resto.
+- Tela de Atendimentos redesenhada: as visões "Em atendimento (ou Meus)", "Aguardando", "Pausados" e "Resolvidos" ficam em
+  uma só linha de abas com contadores, as filas viram chips, e cada atendimento é uma linha enxuta (nome e hora, última
+  mensagem, fila, etiquetas e atendente; as ações extras aparecem ao passar o mouse). Em telas de 1400 px ou mais, o painel
+  do cliente fica fixo à direita da conversa, com carteira, fila, atendente, cronômetro do SLA, etiquetas e notas.
+- O botão de recolher o menu fica dentro da barra lateral, ao lado da logo (ou logo abaixo dela, no modo só ícones), em
+  vez de solto na barra do topo; o botão de hambúrguer da barra do topo só aparece no celular.
+- Menu lateral maior e mais legível: itens de 48 px, ícones de 26 px, texto de 15,5 px, títulos de seção de 12,5 px e
+  largura de 264 px (72 px só com ícones).
+- Ligações de voz pelo WhatsApp com o Wavoip (serviço de terceiros), desligadas por padrão: só aparecem com
+  `WAVOIP_ENABLED=true` no ambiente do frontend. Ligadas, o ícone do Wavoip fica em Conexões para cadastrar o token de
+  cada conexão e o botão de ligar aparece no atendimento aberto de conexões com token; só em `https` ou `localhost` (o
+  microfone exige). Sai o texto do cupom "TICKETZ" da janela do token.
+- Chat interno reorganizado: ao abrir a tela já aparecem as conversas (grupos e a dois, a mais recente primeiro) e as
+  pessoas da empresa, numa lista só com busca. Clicar numa pessoa abre (ou cria) a conversa a dois com ela; grupos
+  ganham o botão "Novo grupo" e a edição e exclusão no cabeçalho da conversa. A lista se atualiza em tempo real e, no
+  celular, mostra lista e conversa uma de cada vez.
+- Português como idioma padrão e tema que acompanha o claro ou escuro do Windows (também quando ele muda com a tela
+  aberta); o interruptor fixa uma escolha e "Tema do sistema (Windows)", no menu do usuário, volta a seguir o sistema.
+- Barra de digitar mensagem com tom próprio: campo arredondado flutuando sobre o fundo da conversa, nos atendimentos e
+  no chat interno.
+- Dashboard redesenhado: saudação, período em botões, cartões "Agora" com rosca e filas principais, indicadores do
+  período com ícones, gráfico nas cores da marca. No celular a busca do topo vira só o botão da lupa.
+- Kanban em formato de post-it: cada atendimento é uma nota na cor da etiqueta da coluna (amarelo na coluna "Em aberto"),
+  com fita no topo, canto dobrado, pequena inclinação fixa por atendimento e efeito ao passar o mouse.
+
+### Corrigido
+
+- O sistema não pede mais a localização do navegador ao abrir. O país do campo de telefone vem do idioma do navegador
+  (pt-BR vira Brasil), sem enviar coordenadas ao OpenStreetMap nem o endereço IP ao ipinfo.io.
+- O Dashboard não consulta mais o ipapi.co com o IP de quem abre, e o painel não carrega mais o Google Analytics do
+  projeto Ticketz para superusuários.
+- Os contadores das abas "Atendendo" e "Aguardando" não cobrem mais o texto da aba, e o botão "Aceitar" da lista de
+  notificações não cobre mais o nome e o horário do atendimento.
+- Erro de console em todas as páginas: o `index.html` chamava um script (`/notificame-gateway.js`) que não existe no projeto.
+- Kanban: a coluna "Em aberto" esticava até 2.800 px com uma mensagem longa e escondia as outras colunas; agora fica em
+  290 px. A prévia da mensagem não mostra mais as marcas de formatação (como `*Admin:*`) e o contato sem nome aparece
+  com o número formatado, como na lista de atendimentos.
+- A janela de novo agendamento agora se chama "Novo Agendamento" (antes "Mensagem").
+- Contatos com "Minha carteira" ligada, ou com uma busca sem resultado, mostra uma mensagem em vez de uma tabela em branco.
+- Configurações: rótulos longos (como "Timeout para reabertura automática (minutos)") ficam em uma linha e não cobrem mais o
+  valor do campo.
+- O menu do usuário fecha ao trocar entre tema claro e escuro.
+- O app não trava mais com o erro "JSON.parse: unexpected character" quando o navegador guarda, para este endereço, um
+  "token" que não é do sistema (por exemplo, deixado por outro aplicativo que usou a mesma porta): o valor inválido é
+  descartado e a tela de login aparece.
 
 ### Operação
 

@@ -28,7 +28,7 @@ os atendimentos em etapas e controla quando cada atendente pode entrar; lembrete
 **Escopo descrito:** código-fonte acessível (RF-001), painel de SLA (RF-002), carteira de clientes (RF-003), Kanban por
 etiquetas (RF-004), horário de acesso por usuário (RF-005), agendamento recorrente (RF-006), pausar atendimento e motivo
 de finalização (RF-007), agendamento para vários contatos com anexo e dia útil (RF-008) e a identidade visual da
-Komunick (RF-009), sobre o Ticketz como ele é hoje (filas, chatbot, etiquetas, agendamentos, perfis admin e usuário).
+Komunick (RF-009) e o chat interno com conversas e contatos (RF-010), sobre o Ticketz como ele é hoje (filas, chatbot, etiquetas, agendamentos, perfis admin e usuário).
 A segunda entrega saiu da comparação com o ZapContábil feita em 21/10/2026 numa conta de cliente, só olhando, sem mudar
 nada nela.
 
@@ -133,6 +133,9 @@ de coluna troca a etiqueta dele.
 - O quadro mostra os atendimentos em aberto que o usuário pode ver na lista: o administrador vê todos; o atendente vê
   os seus e os aguardando das filas dele, e só move esses. Mostra até 500, os movimentados mais recentemente.
 - Além de arrastar, cada cartão tem o menu "Mover para" (teclado e leitores de tela).
+- Cada atendimento aparece como um post-it: papel na cor da etiqueta da coluna (amarelo em "Em aberto"), com fita, canto
+  dobrado e inclinação pequena e fixa. A coluna tem largura fixa de 290 px; a prévia da mensagem é de uma linha, sem marcas
+  de formatação.
 
 **Cenário de sucesso:**
 
@@ -273,13 +276,51 @@ referências do Dribbble (painéis de atendimento e CRMs de 2025 e 2026).
 - Direção visual "B — Menu preto" (escolhida pelo responsável entre três no Stitch): menu lateral #020605 nos dois
   temas, com ícone e barra verdes no item ativo, e o atendimento selecionado na lista com contorno verde de 2 px. As
   telas de referência estão em `docs/design/stitch-direcao-b` (inspiração visual, não especificação de cada tela).
+- Três layouts, escolhidos no menu do usuário e lembrados no navegador: "Workspace" (trilho de ícones, que abre em menu
+  largo), "Foco" (abas de navegação no topo, sem barra lateral) e "Painel" (barra lateral compacta de 224 px, clara e
+  quente no tema claro, que recolhe para o trilho). Barra do topo plana com busca global (Ctrl K: páginas e
+  atendimentos que o usuário pode ver), interruptor de tema e usuário; conteúdo sem cartões flutuantes. No celular os três
+  usam a gaveta. Referências em `docs/design/stitch-layouts`.
+- Atendimentos: uma linha de visões com contadores (em atendimento ou meus, aguardando, pausados, resolvidos) mais a
+  busca; filas como chips que o usuário liga e desliga (sempre fica ao menos uma); cada atendimento em uma linha enxuta;
+  em telas de 1400 px ou mais, painel do cliente fixo à direita da conversa (carteira, fila, atendente, SLA, etiquetas,
+  notas e edição do contato); abaixo disso, o contato continua abrindo numa gaveta.
+- Menu lateral legível: itens de 48 px, ícones de 26 px, texto de 15,5 px e títulos de seção de 12,5 px; largura de 264 px
+  aberto e 72 px só com ícones (a lista rola quando não cabe na tela).
 - Login em duas colunas (formulário e painel da marca); no celular, só o formulário.
+- Português é o idioma padrão (o idioma do navegador não é mais adivinhado; a escolha do usuário no menu continua
+  valendo). O tema segue o claro ou escuro do sistema operacional, inclusive quando ele muda com a tela aberta; o
+  interruptor "Modo escuro" fixa uma escolha e "Tema do sistema (Windows)", no menu do usuário, volta a seguir o sistema.
+- Barra de digitar mensagem (atendimentos e chat interno) em tom próprio: campo arredondado que flutua sobre o fundo da
+  conversa, com contorno verde ao focar.
+- Dashboard: saudação com o nome, período em botões (personalizado, 3, 7, 15, 30 e 90 dias), cartões "Agora" (equipe
+  online, aguardando, em atendimento, cada um com rosca e as filas principais), indicadores do período com ícones,
+  gráfico nas cores da marca e tabela da equipe.
 
 **Cenário de sucesso:**
 
 Dado uma instalação nova, sem Whitelabel configurado,
 quando o usuário abre o login,
 então vê o logo da Komunick, o botão verde e o painel da marca, no tema claro ou escuro que escolheu.
+
+### RF-010 — Chat interno: conversas e contatos numa lista só
+
+**Objetivo:** abrir a tela e já ver com quem falar, sem precisar criar uma "conversa" com título antes.
+
+- Ao abrir, a lista mostra as conversas (grupos e conversas a dois, a mais recente primeiro, com a última mensagem e as
+  não lidas) e, abaixo, as pessoas da empresa com quem ainda não há conversa. Uma busca filtra as duas partes.
+- Clicar numa pessoa abre a conversa a dois com ela; se não existir, é criada na hora. Cada par de pessoas tem uma só
+  conversa a dois, que mostra para cada lado o nome do outro.
+- A conversa a dois não tem título, não muda de participantes e não pode ser excluída (apagaria o histórico dos dois).
+  Grupos continuam com nome, participantes editáveis e exclusão pelo dono, agora no cabeçalho da conversa.
+- A lista se atualiza em tempo real (mensagem nova sobe a conversa e soma não lidas; com a conversa aberta, ela é
+  marcada como lida). No celular, a lista e a conversa aparecem uma de cada vez, com botão de voltar.
+
+**Cenário de sucesso:**
+
+Dado um atendente que nunca conversou com a colega Ana,
+quando ele abre o Chat interno e clica em "Ana" na parte de contatos,
+então a conversa a dois abre vazia, e depois da primeira mensagem ela aparece no topo das conversas dos dois.
 
 ## 4. Restrições e cuidados
 
@@ -288,6 +329,20 @@ de finalização e a exigência de motivo são geridos só por administradores.
 
 **Dados e integrações:** dados de contatos e mensagens dos clientes das empresas usuárias. Nenhum dado novo sai do
 sistema; nenhuma integração externa nova.
+
+**Privacidade:** o sistema não pede a localização do navegador e não envia IP, coordenadas nem dados de uso a terceiros por
+conta própria. O país do campo de telefone vem do idioma do navegador. Saem de cena a geolocalização e o
+`nominatim.openstreetmap.org` e o `ipinfo.io` (carregamento do app), o `ipapi.co` (Dashboard), o Google Analytics com a tag
+do projeto Ticketz (superusuário), e do Dashboard o banner e o blog do Ticketz PRO, o pedido de doação (PIX, Mercado Pago,
+PayPal) e o cadastro da instalação no Ticketz. Seguem como chamadas externas herdadas do Ticketz, a decidir pelo
+responsável: lista de países (`cdn.jsdelivr.net`), fontes do Google e a consulta da versão do WhatsApp Web
+(`waversion.ticke.tz`, no backend, ao iniciar cada sessão). A tela "Sobre" mantém o crédito ao Ticketz e o link do código
+(licença AGPL-3.0).
+
+**Ligações (opcional, desligadas):** fazer ligação de voz pelo WhatsApp usa o Wavoip, serviço de terceiros
+(`wavoip.com`), com um token por conexão cadastrado em Conexões. A Komunick decidiu não usar por enquanto: a função só
+aparece com `WAVOIP_ENABLED=true` no frontend, e sem token nada é enviado ao Wavoip. Ligações recebidas seguem
+só com a mensagem automática e o registro de chamada perdida.
 
 **Limites reais:** licença AGPL-3.0 (RF-001). O Ticketz PRO é fechado e não pode ter código copiado para cá.
 

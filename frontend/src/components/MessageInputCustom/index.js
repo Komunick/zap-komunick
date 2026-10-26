@@ -64,23 +64,31 @@ const useStyles = makeStyles(theme => ({
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    borderTop: "1px solid rgba(0, 0, 0, 0.12)"
+    paddingTop: 8,
+    backgroundColor: theme.komunick.chatBackground
   },
 
   newMessageBox: {
-    width: "100%",
     display: "flex",
-    padding: "7px",
-    alignItems: "center"
+    alignItems: "center",
+    // Zap Komunick: the composer is a rounded bar in its own tone over the
+    // conversation background, apart from the rest of the screen
+    margin: "0 12px 10px",
+    width: "calc(100% - 24px)",
+    padding: "4px 6px",
+    borderRadius: 26,
+    border: `1px solid ${theme.komunick.composerBorder}`,
+    backgroundColor: theme.komunick.composer,
+    boxShadow: theme.komunick.composerShadow,
+    "&:focus-within": {
+      borderColor: theme.komunick.accent
+    }
   },
 
   messageInputWrapper: {
-    padding: 6,
-    marginRight: 7,
-    //background: "#fff",
-    border: "1px solid #ccc",
+    padding: "6px 4px",
+    marginRight: 4,
     display: "flex",
-    borderRadius: 20,
     flex: 1
   },
 

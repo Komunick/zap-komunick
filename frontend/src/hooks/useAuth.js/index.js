@@ -11,6 +11,7 @@ import { SocketContext } from "../../context/Socket/SocketContext";
 import { clearAllCachedSettings } from "../../helpers/settingsCache";
 import moment from "moment";
 import { decodeToken } from "react-jwt";
+import { readStoredToken } from "../../helpers/storedToken";
 
 let apiInterceptorsRegistered = false;
 
@@ -30,9 +31,9 @@ const useAuth = () => {
 
     api.interceptors.request.use(
       config => {
-        const token = localStorage.getItem("token");
+        const token = readStoredToken();
         if (token) {
-          config.headers["Authorization"] = `Bearer ${JSON.parse(token)}`;
+          config.headers["Authorization"] = `Bearer ${token}`;
           setIsAuth(true);
         }
         return config;

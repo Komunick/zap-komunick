@@ -18,13 +18,16 @@ export const DEFAULT_PRIMARY_DARK = BRAND_GREEN;
 
 // Direção B (Stitch, docs/design/stitch-direcao-b): the black side menu is the
 // same in both modes; the green marks the active item and the selected row.
+// The "Painel" layout swaps them for a light, warm side menu through CSS variables
+// (set on the document by layout/index.js), so no component needs to know.
 const sidebarTokens = {
-  sidebar: BRAND_BLACK,
-  sidebarText: "#A3A3A3",
-  sidebarTextActive: BRAND_GREEN,
-  sidebarHover: "rgba(255, 255, 255, 0.05)",
-  sidebarActive: "rgba(255, 255, 255, 0.05)",
-  sidebarMuted: "#6B7A72",
+  sidebar: `var(--zk-sidebar, ${BRAND_BLACK})`,
+  sidebarText: "var(--zk-sidebar-text, #A3A3A3)",
+  sidebarTextActive: `var(--zk-sidebar-text-active, ${BRAND_GREEN})`,
+  sidebarHover: "var(--zk-sidebar-hover, rgba(255, 255, 255, 0.05))",
+  sidebarHoverText: "var(--zk-sidebar-hover-text, #FFFFFF)",
+  sidebarActive: "var(--zk-sidebar-active, rgba(255, 255, 255, 0.05))",
+  sidebarMuted: "var(--zk-sidebar-muted, #6B7A72)",
   accent: BRAND_GREEN,
   accentPressed: BRAND_GREEN_PRESSED
 };
@@ -33,7 +36,7 @@ const tokens = mode =>
   mode === "light"
     ? {
         ...sidebarTokens,
-        sidebarBorder: "#1A221E",
+        sidebarBorder: "var(--zk-sidebar-border, #1A221E)",
         canvas: "#F3F5F4",
         paper: "#FFFFFF",
         subtle: "#F7F9F8",
@@ -43,6 +46,10 @@ const tokens = mode =>
         textSecondary: "#5C6862",
         hover: "rgba(2, 6, 5, 0.04)",
         chatBackground: "#ECF0ED",
+        // message composer: its own tone, floating over the conversation
+        composer: "#FFFFFF",
+        composerBorder: "#DCE6DF",
+        composerShadow: "0 2px 8px rgba(2, 6, 5, 0.08)",
         bubbleMine: "#EAF7EA",
         bubbleMineBorder: "#CDECCB",
         bubbleTheirs: "#FFFFFF",
@@ -55,7 +62,7 @@ const tokens = mode =>
       }
     : {
         ...sidebarTokens,
-        sidebarBorder: "#232C27",
+        sidebarBorder: "var(--zk-sidebar-border, #232C27)",
         canvas: "#0C110E",
         paper: "#141A17",
         subtle: "#18201C",
@@ -65,6 +72,9 @@ const tokens = mode =>
         textSecondary: "#9AA8A0",
         hover: "rgba(233, 239, 235, 0.06)",
         chatBackground: "#0F1512",
+        composer: "#22302A",
+        composerBorder: "#2F4038",
+        composerShadow: "0 2px 10px rgba(0, 0, 0, 0.45)",
         bubbleMine: "#1E4A22",
         bubbleMineBorder: "#2A6130",
         bubbleTheirs: "#1B2420",
@@ -207,6 +217,16 @@ export function komunickThemeOptions(mode) {
         },
         notchedOutline: { borderColor: t.borderStrong }
       },
+      // a long label wrapped to two lines and covered the value of the field
+      MuiInputLabel: {
+        root: {
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          maxWidth: "calc(100% - 24px)",
+          "&$shrink": { maxWidth: "calc(133% - 32px)" }
+        }
+      },
       MuiInputBase: {
         root: { fontSize: "0.92rem" }
       },
@@ -218,6 +238,14 @@ export function komunickThemeOptions(mode) {
       },
       MuiDialogActions: {
         root: { padding: "12px 24px 20px" }
+      },
+      // the upstream CssBaseline sits outside the theme, so labels would keep
+      // the browser's black text on the dark theme
+      MuiFormControlLabel: {
+        label: { color: t.text }
+      },
+      MuiTableHead: {
+        root: { backgroundColor: t.subtle }
       },
       MuiTableCell: {
         root: { borderBottomColor: t.border },

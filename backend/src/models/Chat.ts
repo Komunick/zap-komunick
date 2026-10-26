@@ -41,6 +41,11 @@ class Chat extends Model<Chat> {
   @Column({ defaultValue: "" })
   lastMessage: string;
 
+  // one-to-one conversation opened from the contact list; it has no title
+  // (each side sees the name of the other user) and its members never change
+  @Column({ defaultValue: false })
+  isDirect: boolean;
+
   @ForeignKey(() => Company)
   @Column
   companyId: number;

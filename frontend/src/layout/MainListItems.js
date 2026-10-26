@@ -1,4 +1,10 @@
-import React, { useContext, useEffect, useReducer, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useReducer,
+  useState
+} from "react";
 import { Link as RouterLink, useHistory, useLocation } from "react-router-dom";
 import clsx from "clsx";
 
@@ -7,6 +13,7 @@ import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
 import ListSubheader from "@material-ui/core/ListSubheader";
 import Divider from "@material-ui/core/Divider";
+import Tooltip from "@material-ui/core/Tooltip";
 import { Badge, Collapse, List } from "@material-ui/core";
 import DashboardOutlinedIcon from "@material-ui/icons/DashboardOutlined";
 import WhatsAppIcon from "@material-ui/icons/WhatsApp";
@@ -55,20 +62,26 @@ const useStyles = makeStyles(theme => ({
     marginBottom: "-10px"
   },
   menuLink: {
-    margin: "2px 8px",
+    // bigger touch targets: 48 px high, 26 px icons, 15.5 px text
+    margin: "3px 0",
     width: "auto",
-    borderRadius: 10,
-    paddingLeft: "12px",
+    minHeight: 48,
+    borderRadius: 12,
+    paddingLeft: 13,
+    paddingRight: 13,
     // Zap Komunick: black side menu (Direção B), green bar on the active item
     position: "relative",
     color: theme.komunick.sidebarText,
     "& .MuiListItemText-primary": {
       fontWeight: 600,
-      fontSize: 14
+      fontSize: 15.5
+    },
+    "& .MuiSvgIcon-root, & svg": {
+      fontSize: 26
     },
     "&:hover": {
       backgroundColor: theme.komunick.sidebarHover,
-      color: "#FFFFFF"
+      color: theme.komunick.sidebarHoverText
     }
   },
   menuLinkActive: {
@@ -80,9 +93,9 @@ const useStyles = makeStyles(theme => ({
     "&::before": {
       content: '""',
       position: "absolute",
-      left: -8,
-      top: 4,
-      bottom: 4,
+      left: -10,
+      top: 6,
+      bottom: 6,
       width: 4,
       borderRadius: "0 4px 4px 0",
       backgroundColor: theme.komunick.accent
@@ -90,10 +103,18 @@ const useStyles = makeStyles(theme => ({
   },
   menuIcon: {
     color: "inherit",
-    minWidth: 40
+    minWidth: 46
   },
   submenuLink: {
-    margin: "1px 8px",
+    margin: "2px 0",
+    minHeight: 42,
+    "& .MuiListItemText-primary": {
+      fontSize: 14.5,
+      fontWeight: 600
+    },
+    "& .MuiSvgIcon-root, & svg": {
+      fontSize: 22
+    },
     width: "auto",
     borderRadius: 10,
     paddingLeft: "0px",
@@ -102,7 +123,7 @@ const useStyles = makeStyles(theme => ({
     paddingBottom: 0,
     "&:hover": {
       backgroundColor: theme.komunick.sidebarHover,
-      color: "#FFFFFF"
+      color: theme.komunick.sidebarHoverText
     }
   },
   submenuIcon: {
@@ -116,8 +137,12 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
+// Zap Komunick: in the icon rail the label is shown as a tooltip
+const NavCollapsedContext = createContext(false);
+
 function ListItemLink(props) {
   const classes = useStyles();
+  const collapsed = useContext(NavCollapsedContext);
   const { icon, primary, to } = props;
   const location = useLocation();
   const active =
@@ -133,18 +158,25 @@ function ListItemLink(props) {
 
   return (
     <li>
-      <ListItem
-        button
-        dense
-        component={renderLink}
-        className={clsx(classes.menuLink, active && classes.menuLinkActive)}
-        aria-current={active ? "page" : undefined}
+      <Tooltip
+        title={collapsed && typeof primary === "string" ? primary : ""}
+        placement="right"
+        arrow
       >
-        {icon ? (
-          <ListItemIcon className={classes.menuIcon}>{icon}</ListItemIcon>
-        ) : null}
-        <ListItemText primary={primary} />
-      </ListItem>
+        <ListItem
+          button
+          dense
+          component={renderLink}
+          className={clsx(classes.menuLink, active && classes.menuLinkActive)}
+          aria-current={active ? "page" : undefined}
+          aria-label={typeof primary === "string" ? primary : undefined}
+        >
+          {icon ? (
+            <ListItemIcon className={classes.menuIcon}>{icon}</ListItemIcon>
+          ) : null}
+          <ListItemText primary={primary} />
+        </ListItem>
+      </Tooltip>
     </li>
   );
 }
@@ -207,7 +239,7 @@ const reducer = (state, action) => {
 
 const MainListItems = props => {
   const classes = useStyles();
-  const { drawerClose, drawerOpen } = props;
+  const { drawerClose, drawerOpen, collapsed } = props;
   const { whatsApps } = useContext(WhatsAppsContext);
   const { user, handleLogout } = useContext(AuthContext);
   const [connectionWarning, setConnectionWarning] = useState(false);
@@ -319,6 +351,7 @@ const MainListItems = props => {
   };
 
   return (
+    <NavCollapsedContext.Provider value={!!collapsed}>
     <div onClick={drawerClose}>
       <Can
         role={user.profile}
@@ -562,6 +595,7 @@ const MainListItems = props => {
       />
       <Divider />
     </div>
+    </NavCollapsedContext.Provider>
   );
 };
 

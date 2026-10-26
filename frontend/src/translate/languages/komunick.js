@@ -33,6 +33,8 @@ const pt = {
     }
   },
   mainDrawer: {
+    collapseMenu: "Recolher menu",
+    expandMenu: "Expandir menu",
     listItems: {
       kanban: "Kanban",
       sla: "Painel de SLA",
@@ -154,7 +156,41 @@ const pt = {
     ownerHelper: "Atendente responsável por este cliente",
     none: "Sem responsável",
     myWallet: "Minha carteira",
+    emptyMine:
+      "Nenhum contato na sua carteira. O administrador define o responsável de cada contato.",
+    empty: "Nenhum contato encontrado.",
     column: "Carteira"
+  },
+  customerPanel: {
+    title: "Painel do cliente",
+    wallet: "Carteira",
+    noWallet: "Sem responsável",
+    queue: "Fila",
+    noQueue: "Sem fila",
+    attendant: "Atendente",
+    noAttendant: "Sem atendente",
+    sla: "SLA",
+    waiting: "Aguardando há {{time}}",
+    limit: "Prazo de {{minutes}} min",
+    answered: "Respondido",
+    tags: "Etiquetas",
+    noTags: "Sem etiquetas",
+    notes: "Notas",
+    edit: "Editar contato"
+  },
+  layoutMode: {
+    title: "Layout",
+    workspace: "Workspace",
+    foco: "Foco",
+    painel: "Painel",
+    menu: "Menu",
+    systemTheme: "Tema do sistema (Windows)",
+    more: "Mais",
+    goTo: "Ir para",
+    tickets: "Atendimentos",
+    searchPlaceholder: "Buscar atendimento, contato ou ação",
+    noResults: "Nada encontrado.",
+    darkMode: "Modo escuro"
   },
   accessHours: {
     restrict: "Restringir horário de acesso",
@@ -187,11 +223,64 @@ const pt = {
       yearly: "Todo ano"
     }
   },
+  chatPage: {
+    people: "Equipe",
+    search: "Buscar pessoa ou conversa",
+    conversations: "Conversas",
+    contacts: "Contatos",
+    nobody: "Ninguém encontrado.",
+    newGroup: "Novo grupo",
+    editGroup: "Editar grupo",
+    deleteGroup: "Excluir grupo",
+    deleteWarning:
+      "O grupo e todas as mensagens dele serão apagados para todos os participantes. Esta ação não pode ser revertida, confirmar?",
+    groupName: "Nome do grupo",
+    close: "Fechar",
+    save: "Salvar",
+    needTitle: "Preencha o nome do grupo.",
+    needUsers: "Selecione pelo menos uma pessoa.",
+    back: "Voltar para a lista",
+    pick: "Escolha uma conversa ou uma pessoa",
+    pickHint: "Clique em alguém da lista para começar a conversar."
+  },
+  dashboardPage: {
+    hello: "Olá, {{name}}!",
+    helloAnonymous: "Olá!",
+    subtitle: "Veja como está o atendimento agora e no período escolhido.",
+    now: "Agora",
+    inPeriod: "No período",
+    team: "Equipe no período",
+    teamOnline: "Equipe online",
+    waiting: "Aguardando atendimento",
+    inService: "Em atendimento",
+    done: "Atendimentos finalizados",
+    online: "Online",
+    offline: "Offline",
+    nobodyOnline: "Ninguém online agora.",
+    nobodyWaiting: "Ninguém esperando. Tudo em dia!",
+    nobodyInService: "Nenhum atendimento em andamento.",
+    more: "+ {{count}} outras filas",
+    periods: {
+      p0: "Personalizado",
+      p3: "3 dias",
+      p7: "7 dias",
+      p15: "15 dias",
+      p30: "30 dias",
+      p90: "90 dias"
+    }
+  },
   about: {
     licensesourcecode: "Código-fonte desta versão",
     basedOnTicketz: "Baseado no Ticketz (código original)"
   },
   tickets: {
+    views: {
+      label: "Visões dos atendimentos",
+      mine: "Meus",
+      inService: "Em atendimento",
+      waiting: "Aguardando",
+      queues: "Fila:"
+    },
     tabs: {
       paused: { title: "Pausados" }
     },
@@ -326,6 +415,8 @@ const en = {
     }
   },
   mainDrawer: {
+    collapseMenu: "Collapse menu",
+    expandMenu: "Expand menu",
     listItems: {
       kanban: "Kanban",
       sla: "SLA panel",
@@ -445,7 +536,41 @@ const en = {
     ownerHelper: "Attendant responsible for this client",
     none: "No owner",
     myWallet: "My wallet",
+    emptyMine:
+      "No contacts in your wallet. An administrator sets the owner of each contact.",
+    empty: "No contacts found.",
     column: "Wallet"
+  },
+  customerPanel: {
+    title: "Customer panel",
+    wallet: "Wallet",
+    noWallet: "No owner",
+    queue: "Queue",
+    noQueue: "No queue",
+    attendant: "Attendant",
+    noAttendant: "No attendant",
+    sla: "SLA",
+    waiting: "Waiting for {{time}}",
+    limit: "Deadline of {{minutes}} min",
+    answered: "Answered",
+    tags: "Tags",
+    noTags: "No tags",
+    notes: "Notes",
+    edit: "Edit contact"
+  },
+  layoutMode: {
+    title: "Layout",
+    workspace: "Workspace",
+    foco: "Focus",
+    painel: "Panel",
+    menu: "Menu",
+    systemTheme: "System theme",
+    more: "More",
+    goTo: "Go to",
+    tickets: "Tickets",
+    searchPlaceholder: "Search ticket, contact or action",
+    noResults: "Nothing found.",
+    darkMode: "Dark mode"
   },
   accessHours: {
     restrict: "Restrict access hours",
@@ -478,11 +603,64 @@ const en = {
       yearly: "Every year"
     }
   },
+  chatPage: {
+    people: "Team",
+    search: "Search a person or conversation",
+    conversations: "Conversations",
+    contacts: "Contacts",
+    nobody: "Nobody found.",
+    newGroup: "New group",
+    editGroup: "Edit group",
+    deleteGroup: "Delete group",
+    deleteWarning:
+      "The group and all its messages will be deleted for every member. This cannot be undone, confirm?",
+    groupName: "Group name",
+    close: "Close",
+    save: "Save",
+    needTitle: "Fill in the group name.",
+    needUsers: "Select at least one person.",
+    back: "Back to the list",
+    pick: "Pick a conversation or a person",
+    pickHint: "Click someone in the list to start chatting."
+  },
+  dashboardPage: {
+    hello: "Hi, {{name}}!",
+    helloAnonymous: "Hi!",
+    subtitle: "See how support is doing now and in the chosen period.",
+    now: "Now",
+    inPeriod: "In the period",
+    team: "Team in the period",
+    teamOnline: "Team online",
+    waiting: "Waiting",
+    inService: "In service",
+    done: "Closed tickets",
+    online: "Online",
+    offline: "Offline",
+    nobodyOnline: "Nobody online right now.",
+    nobodyWaiting: "Nobody waiting. All caught up!",
+    nobodyInService: "No ticket in progress.",
+    more: "+ {{count}} other queues",
+    periods: {
+      p0: "Custom",
+      p3: "3 days",
+      p7: "7 days",
+      p15: "15 days",
+      p30: "30 days",
+      p90: "90 days"
+    }
+  },
   about: {
     licensesourcecode: "Source code of this version",
     basedOnTicketz: "Based on Ticketz (original code)"
   },
   tickets: {
+    views: {
+      label: "Ticket views",
+      mine: "Mine",
+      inService: "In service",
+      waiting: "Waiting",
+      queues: "Queue:"
+    },
     tabs: {
       paused: { title: "Paused" }
     },
@@ -617,6 +795,8 @@ const es = {
     }
   },
   mainDrawer: {
+    collapseMenu: "Contraer menú",
+    expandMenu: "Expandir menú",
     listItems: {
       kanban: "Kanban",
       sla: "Panel de SLA",
@@ -738,7 +918,41 @@ const es = {
     ownerHelper: "Agente responsable de este cliente",
     none: "Sin responsable",
     myWallet: "Mi cartera",
+    emptyMine:
+      "Ningún contacto en tu cartera. El administrador define el responsable de cada contacto.",
+    empty: "No se encontraron contactos.",
     column: "Cartera"
+  },
+  customerPanel: {
+    title: "Panel del cliente",
+    wallet: "Cartera",
+    noWallet: "Sin responsable",
+    queue: "Cola",
+    noQueue: "Sin cola",
+    attendant: "Atendente",
+    noAttendant: "Sin atendente",
+    sla: "SLA",
+    waiting: "Esperando hace {{time}}",
+    limit: "Plazo de {{minutes}} min",
+    answered: "Respondido",
+    tags: "Etiquetas",
+    noTags: "Sin etiquetas",
+    notes: "Notas",
+    edit: "Editar contacto"
+  },
+  layoutMode: {
+    title: "Diseño",
+    workspace: "Workspace",
+    foco: "Foco",
+    painel: "Panel",
+    menu: "Menú",
+    systemTheme: "Tema del sistema",
+    more: "Más",
+    goTo: "Ir a",
+    tickets: "Atenciones",
+    searchPlaceholder: "Buscar atención, contacto o acción",
+    noResults: "No se encontró nada.",
+    darkMode: "Modo oscuro"
   },
   accessHours: {
     restrict: "Restringir horario de acceso",
@@ -771,11 +985,64 @@ const es = {
       yearly: "Todos los años"
     }
   },
+  chatPage: {
+    people: "Equipo",
+    search: "Buscar persona o conversación",
+    conversations: "Conversaciones",
+    contacts: "Contactos",
+    nobody: "No se encontró a nadie.",
+    newGroup: "Nuevo grupo",
+    editGroup: "Editar grupo",
+    deleteGroup: "Eliminar grupo",
+    deleteWarning:
+      "El grupo y todos sus mensajes se borrarán para todos los participantes. Esta acción no se puede revertir, ¿confirmar?",
+    groupName: "Nombre del grupo",
+    close: "Cerrar",
+    save: "Guardar",
+    needTitle: "Complete el nombre del grupo.",
+    needUsers: "Seleccione al menos una persona.",
+    back: "Volver a la lista",
+    pick: "Elija una conversación o una persona",
+    pickHint: "Haga clic en alguien de la lista para empezar a conversar."
+  },
+  dashboardPage: {
+    hello: "¡Hola, {{name}}!",
+    helloAnonymous: "¡Hola!",
+    subtitle: "Vea cómo está la atención ahora y en el período elegido.",
+    now: "Ahora",
+    inPeriod: "En el período",
+    team: "Equipo en el período",
+    teamOnline: "Equipo en línea",
+    waiting: "Esperando atención",
+    inService: "En atención",
+    done: "Atenciones finalizadas",
+    online: "En línea",
+    offline: "Desconectado",
+    nobodyOnline: "Nadie en línea ahora.",
+    nobodyWaiting: "Nadie esperando. ¡Todo al día!",
+    nobodyInService: "Ninguna atención en curso.",
+    more: "+ {{count}} otras colas",
+    periods: {
+      p0: "Personalizado",
+      p3: "3 días",
+      p7: "7 días",
+      p15: "15 días",
+      p30: "30 días",
+      p90: "90 días"
+    }
+  },
   about: {
     licensesourcecode: "Código fuente de esta versión",
     basedOnTicketz: "Basado en Ticketz (código original)"
   },
   tickets: {
+    views: {
+      label: "Vistas de atenciones",
+      mine: "Míos",
+      inService: "En atención",
+      waiting: "En espera",
+      queues: "Cola:"
+    },
     tabs: {
       paused: { title: "Pausados" }
     },

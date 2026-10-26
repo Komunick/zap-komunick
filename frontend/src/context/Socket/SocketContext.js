@@ -45,6 +45,7 @@ import { getBackendSocketURL } from "../../services/config";
 import { decodeToken, isExpired } from "react-jwt";
 import { toast } from "react-toastify";
 import api from "../../services/api";
+import { readStoredToken } from "../../helpers/storedToken";
 
 class ManagedSocket {
   constructor(socketManager) {
@@ -365,7 +366,7 @@ const socketManager = {
   },
 
   GetSocket: function (_discardCompanyId = null) {
-    const token = JSON.parse(localStorage.getItem("token"));
+    const token = readStoredToken();
     if (!token) {
       return new DummySocket();
     }
@@ -397,7 +398,7 @@ const socketManager = {
       this.currentSocket.io.on("reconnect_attempt", async () => {
         this.incrementWsReconnectAttemptCount();
         this.currentSocket.io.opts.query.r = 1;
-        const newToken = JSON.parse(localStorage.getItem("token"));
+        const newToken = readStoredToken();
         if (isExpired(newToken)) {
           console.debug("Refreshing before reconnect attempt");
           const refreshedToken = await this.refreshAuthToken();
@@ -418,7 +419,7 @@ const socketManager = {
 
         if (reason.startsWith("io server disconnect")) {
           console.debug("tryng to reconnect", this.currentSocket);
-          const newToken = JSON.parse(localStorage.getItem("token"));
+          const newToken = readStoredToken();
 
           if (isExpired(newToken)) {
             console.debug("Expired token - refreshing and reconnecting");

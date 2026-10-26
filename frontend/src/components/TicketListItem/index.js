@@ -58,11 +58,14 @@ const useStyles = makeStyles(theme => ({
 
   contactNameWrapper: {
     display: "flex",
-    justifyContent: "space-between"
+    justifyContent: "space-between",
+    minWidth: 0
   },
 
   lastMessageTime: {
-    justifySelf: "flex-end"
+    justifySelf: "flex-end",
+    flexShrink: 0,
+    marginLeft: 8
   },
 
   closedBadge: {
@@ -87,9 +90,12 @@ const useStyles = makeStyles(theme => ({
     backgroundColor: green[500]
   },
 
+  // Zap Komunick: the button takes its own space on the right instead of
+  // floating over the contact name and the time
   acceptButton: {
-    position: "absolute",
-    left: "50%"
+    flexShrink: 0,
+    alignSelf: "center",
+    marginLeft: 12
   },
 
   ticketQueueColor: {
