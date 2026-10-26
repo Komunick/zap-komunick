@@ -55,16 +55,22 @@ const useStyles = makeStyles(theme => ({
     marginBottom: "-10px"
   },
   menuLink: {
-    margin: "2px 8px",
+    // bigger touch targets: 48 px high, 26 px icons, 15.5 px text
+    margin: "3px 0",
     width: "auto",
-    borderRadius: 10,
-    paddingLeft: "12px",
+    minHeight: 48,
+    borderRadius: 12,
+    paddingLeft: 13,
+    paddingRight: 13,
     // Zap Komunick: black side menu (Direção B), green bar on the active item
     position: "relative",
     color: theme.komunick.sidebarText,
     "& .MuiListItemText-primary": {
       fontWeight: 600,
-      fontSize: 14
+      fontSize: 15.5
+    },
+    "& .MuiSvgIcon-root, & svg": {
+      fontSize: 26
     },
     "&:hover": {
       backgroundColor: theme.komunick.sidebarHover,
@@ -80,9 +86,9 @@ const useStyles = makeStyles(theme => ({
     "&::before": {
       content: '""',
       position: "absolute",
-      left: -8,
-      top: 4,
-      bottom: 4,
+      left: -10,
+      top: 6,
+      bottom: 6,
       width: 4,
       borderRadius: "0 4px 4px 0",
       backgroundColor: theme.komunick.accent
@@ -90,10 +96,18 @@ const useStyles = makeStyles(theme => ({
   },
   menuIcon: {
     color: "inherit",
-    minWidth: 40
+    minWidth: 46
   },
   submenuLink: {
-    margin: "1px 8px",
+    margin: "2px 0",
+    minHeight: 42,
+    "& .MuiListItemText-primary": {
+      fontSize: 14.5,
+      fontWeight: 600
+    },
+    "& .MuiSvgIcon-root, & svg": {
+      fontSize: 22
+    },
     width: "auto",
     borderRadius: 10,
     paddingLeft: "0px",

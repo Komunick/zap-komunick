@@ -39,6 +39,8 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   contorno verde na lista, conforme a Direção B do Stitch (referências em `docs/design/stitch-direcao-b`).
 - Telas internas no estilo da Direção B: títulos pretos, cabeçalho de tabela com faixa de fundo, Kanban sem painel atrás
   das colunas, avatares neutros e carteira em etiqueta verde em Contatos, selos de situação suaves no Painel de SLA.
+- Menu lateral maior e mais legível: itens de 48 px, ícones de 26 px, texto de 15,5 px, títulos de seção de 12,5 px e
+  largura de 264 px (72 px só com ícones).
 
 ### Corrigido
 

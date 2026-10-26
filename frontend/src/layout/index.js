@@ -56,7 +56,7 @@ import { loadJSON } from "../helpers/loadJSON";
 
 const gitinfo = loadJSON("/gitinfo.json");
 
-const drawerWidth = 240;
+const drawerWidth = 264;
 const DRAWER_STORAGE_KEY = "drawerOpen";
 
 function getStoredDrawerOpen() {
@@ -341,13 +341,17 @@ const useStyles = makeStyles(theme => ({
     border: "none",
     // Zap Komunick: section titles of the menu
     "& .MuiListSubheader-root": {
-      fontSize: "11px !important",
+      fontSize: "12.5px !important",
       fontWeight: 700,
-      letterSpacing: "0.08em",
+      letterSpacing: "0.1em",
       textTransform: "uppercase",
       color: theme.komunick.sidebarMuted,
-      lineHeight: "32px",
-      marginTop: 8
+      lineHeight: "36px",
+      marginTop: 10
+    },
+    "& .MuiDivider-root": {
+      margin: "10px 4px 4px",
+      backgroundColor: theme.komunick.sidebarBorder
     },
     "&::-webkit-scrollbar": {
       width: "10px",
@@ -368,13 +372,17 @@ const useStyles = makeStyles(theme => ({
     border: "none",
     // Zap Komunick: section titles of the menu
     "& .MuiListSubheader-root": {
-      fontSize: "11px !important",
+      fontSize: "12.5px !important",
       fontWeight: 700,
-      letterSpacing: "0.08em",
+      letterSpacing: "0.1em",
       textTransform: "uppercase",
       color: theme.komunick.sidebarMuted,
-      lineHeight: "32px",
-      marginTop: 8
+      lineHeight: "36px",
+      marginTop: 10
+    },
+    "& .MuiDivider-root": {
+      margin: "10px 4px 4px",
+      backgroundColor: theme.komunick.sidebarBorder
     },
     "&::-webkit-scrollbar": {
       width: "10px",

@@ -273,6 +273,8 @@ referências do Dribbble (painéis de atendimento e CRMs de 2025 e 2026).
 - Direção visual "B — Menu preto" (escolhida pelo responsável entre três no Stitch): menu lateral #020605 nos dois
   temas, com ícone e barra verdes no item ativo, e o atendimento selecionado na lista com contorno verde de 2 px. As
   telas de referência estão em `docs/design/stitch-direcao-b` (inspiração visual, não especificação de cada tela).
+- Menu lateral legível: itens de 48 px, ícones de 26 px, texto de 15,5 px e títulos de seção de 12,5 px; largura de 264 px
+  aberto e 72 px só com ícones (a lista rola quando não cabe na tela).
 - Login em duas colunas (formulário e painel da marca); no celular, só o formulário.
 
 **Cenário de sucesso:**
@@ -294,7 +296,6 @@ conta própria. O país do campo de telefone vem do idioma do navegador. Saem de
 e o `ipinfo.io` (carregamento do app), o `ipapi.co` (Dashboard) e o Google Analytics com a tag do projeto Ticketz (superusuário).
 Seguem como chamadas externas herdadas do Ticketz, a decidir pelo responsável: lista de países (`cdn.jsdelivr.net`), blog e
 anúncio do Ticketz PRO (`pro.ticke.tz`), botão de doação (`paypalobjects.com`) e fontes do Google.
-
 
 **Limites reais:** licença AGPL-3.0 (RF-001). O Ticketz PRO é fechado e não pode ter código copiado para cá.
 
