@@ -7,6 +7,8 @@ interface Request {
   pageNumber?: string;
   companyId: number;
   walletUserId?: number;
+  // Zap Komunick: contacts without an owner (RF-014)
+  withoutWallet?: boolean;
 }
 
 interface Response {
@@ -19,7 +21,8 @@ const ListContactsService = async ({
   searchParam = "",
   pageNumber = "1",
   companyId,
-  walletUserId
+  walletUserId,
+  withoutWallet
 }: Request): Promise<Response> => {
   const normalizedSearchParam = searchParam.toLowerCase().trim();
   const whereCondition = {
@@ -42,7 +45,8 @@ const ListContactsService = async ({
     companyId: {
       [Op.eq]: companyId
     },
-    ...(walletUserId ? { walletUserId } : {})
+    ...(walletUserId ? { walletUserId } : {}),
+    ...(withoutWallet ? { walletUserId: null, isGroup: false } : {})
   };
   const limit = 20;
   const offset = limit * (+pageNumber - 1);

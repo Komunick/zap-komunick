@@ -58,6 +58,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   `WAVOIP_ENABLED=true` no ambiente do frontend. Ligadas, o ícone do Wavoip fica em Conexões para cadastrar o token de
   cada conexão e o botão de ligar aparece no atendimento aberto de conexões com token; só em `https` ou `localhost` (o
   microfone exige). Sai o texto do cupom "TICKETZ" da janela do token.
+- Carteira em lote em Contatos (administradores): marcar vários contatos e definir ou tirar o responsável de uma vez,
+  e "Transferir carteira" de um responsável para outro (ou dos sem responsável, ou para ninguém), com a contagem antes
+  de confirmar. Grupos são ignorados. `PUT /contacts/wallet/bulk`.
 - Página "Usuários online" (Gerência, administradores): resumo da equipe e um cartão por pessoa com situação
   (online, offline ou fora do horário de acesso), tempo online ou última vez vista, atendimentos em andamento,
   pausados e finalizados hoje, e as filas. Atualiza sozinha quando alguém entra ou sai.

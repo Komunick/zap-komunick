@@ -121,6 +121,12 @@ Stitch entra como tokens: `sidebar*` (menu preto, igual nos dois temas), `accent
   conta atendimentos `open` e `paused` de cada usuário e os finalizados hoje em `TicketTraking.finishedAt`, com as
   filas; `helpers/OnlineUsers` classifica (fora do horário pelo `canAccessNow`), ordena e resume. A página escuta
   `userOnlineChange` e `counter` (com espera de 2 s) e atualiza a cada minuto. Sem tabela nova.
+- `PUT /contacts/wallet/bulk` (administrador; RF-014), declarada antes de `/contacts/:contactId/wallet`:
+  `{ mode: "contacts", contactIds, walletUserId }` (até 500) ou `{ mode: "transfer", fromUserId, walletUserId }`, com
+  `null` para "sem responsável". `helpers/WalletBulk` valida; `SetWalletBulkService` confere os responsáveis na
+  empresa, ignora grupos e faz um `UPDATE` só nos contatos da empresa; cada contato alterado sai no evento
+  `company-<id>-contact`. `GET /contacts?walletUserId=none` lista os contatos sem responsável (sem grupos). Resposta
+  `{ updated, skippedGroups }`. Sem tabela nova.
 
 **Integridade:**
 - `unansweredSince` só muda com mensagem nova: `CreateMessageService` confere se a mensagem já existia antes do
