@@ -41,9 +41,11 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   das colunas, avatares neutros e carteira em etiqueta verde em Contatos, selos de situação suaves no Painel de SLA.
 - Dashboard sem propaganda do Ticketz: saem o banner do Ticketz PRO, o blog do Ticketz PRO, o pedido de doação (PIX,
   Mercado Pago e PayPal) e o cadastro da instalação no Ticketz. A tela abre direto nas métricas.
-- Dois layouts próprios, escolhidos no menu do usuário: "Workspace" (trilho de ícones à esquerda) e "Foco" (logo e abas de
-  navegação no topo, sem barra lateral). Os dois têm barra do topo plana, conteúdo sem cartões flutuantes e busca global
-  com `Ctrl K` (páginas e atendimentos). O trilho de ícones ganha dica com o nome de cada página.
+- Três layouts próprios, escolhidos no menu do usuário: "Workspace" (trilho de ícones à esquerda), "Foco" (logo e abas de
+  navegação no topo, sem barra lateral) e "Painel" (barra lateral compacta de 224 px, clara e quente no tema claro, com o
+  botão de recolher dentro dela e a logo na barra do topo). Todos têm barra do topo plana, conteúdo sem cartões flutuantes e
+  busca global com `Ctrl K` (páginas e atendimentos). O trilho de ícones ganha dica com o nome de cada página. Na tela de
+  Atendimentos a coluna da lista fica fixa em 380 px e a conversa ocupa o resto.
 - Tela de Atendimentos redesenhada: as visões "Em atendimento (ou Meus)", "Aguardando", "Pausados" e "Resolvidos" ficam em
   uma só linha de abas com contadores, as filas viram chips, e cada atendimento é uma linha enxuta (nome e hora, última
   mensagem, fila, etiquetas e atendente; as ações extras aparecem ao passar o mouse). Em telas de 1400 px ou mais, o painel

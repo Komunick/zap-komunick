@@ -81,7 +81,7 @@ const useStyles = makeStyles(theme => ({
     },
     "&:hover": {
       backgroundColor: theme.komunick.sidebarHover,
-      color: "#FFFFFF"
+      color: theme.komunick.sidebarHoverText
     }
   },
   menuLinkActive: {
@@ -123,7 +123,7 @@ const useStyles = makeStyles(theme => ({
     paddingBottom: 0,
     "&:hover": {
       backgroundColor: theme.komunick.sidebarHover,
-      color: "#FFFFFF"
+      color: theme.komunick.sidebarHoverText
     }
   },
   submenuIcon: {

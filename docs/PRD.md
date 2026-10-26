@@ -276,9 +276,10 @@ referências do Dribbble (painéis de atendimento e CRMs de 2025 e 2026).
 - Direção visual "B — Menu preto" (escolhida pelo responsável entre três no Stitch): menu lateral #020605 nos dois
   temas, com ícone e barra verdes no item ativo, e o atendimento selecionado na lista com contorno verde de 2 px. As
   telas de referência estão em `docs/design/stitch-direcao-b` (inspiração visual, não especificação de cada tela).
-- Dois layouts, escolhidos no menu do usuário e lembrados no navegador: "Workspace" (trilho de ícones, que abre em menu
-  largo) e "Foco" (abas de navegação no topo, sem barra lateral). Barra do topo plana com busca global (Ctrl K: páginas e
-  atendimentos que o usuário pode ver), interruptor de tema e usuário; conteúdo sem cartões flutuantes. No celular os dois
+- Três layouts, escolhidos no menu do usuário e lembrados no navegador: "Workspace" (trilho de ícones, que abre em menu
+  largo), "Foco" (abas de navegação no topo, sem barra lateral) e "Painel" (barra lateral compacta de 224 px, clara e
+  quente no tema claro, que recolhe para o trilho). Barra do topo plana com busca global (Ctrl K: páginas e
+  atendimentos que o usuário pode ver), interruptor de tema e usuário; conteúdo sem cartões flutuantes. No celular os três
   usam a gaveta. Referências em `docs/design/stitch-layouts`.
 - Atendimentos: uma linha de visões com contadores (em atendimento ou meus, aguardando, pausados, resolvidos) mais a
   busca; filas como chips que o usuário liga e desliga (sempre fica ao menos uma); cada atendimento em uma linha enxuta;

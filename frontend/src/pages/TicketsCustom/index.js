@@ -27,7 +27,11 @@ const useStyles = makeStyles(theme => ({
     height: "100%",
     flexDirection: "column",
     overflowY: "hidden",
-    maxWidth: 534
+    // Zap Komunick: the list keeps a fixed width so the conversation gets the rest
+    [theme.breakpoints.up("md")]: {
+      flex: "0 0 380px",
+      maxWidth: 380
+    }
   },
   messagesWrapper: {
     overflow: "hidden",
@@ -35,7 +39,12 @@ const useStyles = makeStyles(theme => ({
     height: "100%",
     flexDirection: "column",
     flexGrow: 1,
-    maxWidth: "unset"
+    maxWidth: "unset",
+    [theme.breakpoints.up("md")]: {
+      flex: "1 1 0",
+      minWidth: 0,
+      maxWidth: "unset"
+    }
   },
   welcomeMsg: {
     display: "flex",
@@ -54,10 +63,10 @@ const TicketsCustom = () => {
     <div className={classes.chatContainer}>
       <div className={classes.chatPapper}>
         <Grid container spacing={0}>
-          <Grid item md={5} className={classes.contactsWrapper}>
+          <Grid item md className={classes.contactsWrapper}>
             <TicketsManager />
           </Grid>
-          <Grid item md={7} className={classes.messagesWrapper}>
+          <Grid item md className={classes.messagesWrapper}>
             {ticketId ? (
               <>
                 <Ticket />

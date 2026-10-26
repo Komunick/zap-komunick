@@ -236,8 +236,8 @@ const useStyles = makeStyles(theme => ({
     color: theme.komunick.sidebarText,
     backgroundColor: theme.komunick.sidebarHover,
     "&:hover": {
-      color: "#FFFFFF",
-      backgroundColor: "rgba(255, 255, 255, 0.12)"
+      color: theme.komunick.sidebarHoverText,
+      backgroundColor: theme.komunick.sidebarHover
     }
   },
   toolbarIcon: {
@@ -486,6 +486,45 @@ const useStyles = makeStyles(theme => ({
   appBarFoco: {
     marginLeft: 0
   },
+  // layout "Painel": compact light side menu, 224 px wide
+  appBarPainel: {
+    marginLeft: 224
+  },
+  contentPainel: {
+    left: 224
+  },
+  contentWarm: {
+    backgroundColor: "#F7F6F2"
+  },
+  drawerPainelOpen: {
+    width: 224
+  },
+  drawerCompact: {
+    "& .MuiListItem-root": {
+      minHeight: 36,
+      margin: "1px 0",
+      borderRadius: 8
+    },
+    "& .MuiListItemText-primary": {
+      fontSize: 14,
+      fontWeight: 600
+    },
+    "& .MuiListItemIcon-root": {
+      minWidth: 36
+    },
+    "& .MuiSvgIcon-root, & svg": {
+      fontSize: 20
+    }
+  },
+  sidebarTitle: {
+    flex: 1,
+    paddingLeft: 6,
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: "0.1em",
+    textTransform: "uppercase",
+    color: theme.komunick.sidebarMuted
+  },
   contentFlat: {
     top: 56,
     right: 0,
@@ -588,10 +627,15 @@ const LoggedInLayout = ({ children, themeToggle }) => {
 
   // Zap Komunick: two layouts, "workspace" (icon rail) and "foco" (top tabs)
   const [layoutMode, setLayoutMode] = useState(() =>
-    localStorage.getItem("layoutMode") === "foco" ? "foco" : "workspace"
+    ["foco", "painel"].includes(localStorage.getItem("layoutMode"))
+      ? localStorage.getItem("layoutMode")
+      : "workspace"
   );
   const [paletteOpen, setPaletteOpen] = useState(false);
   const focoDesktop = layoutMode === "foco" && drawerVariant !== "temporary";
+  const painelDesktop =
+    layoutMode === "painel" && drawerVariant !== "temporary";
+
 
   useEffect(() => {
     const onKeyDown = event => {
@@ -610,6 +654,27 @@ const LoggedInLayout = ({ children, themeToggle }) => {
   const { user } = useContext(AuthContext);
 
   const theme = useTheme();
+
+  // the light, warm side menu of the Painel layout (light theme only)
+  useEffect(() => {
+    const root = document.documentElement;
+    const vars = {
+      "--zk-sidebar": "#F7F6F2",
+      "--zk-sidebar-text": "#4E5C54",
+      "--zk-sidebar-text-active": "#1F7F1B",
+      "--zk-sidebar-hover": "rgba(2, 6, 5, 0.05)",
+      "--zk-sidebar-hover-text": "#020605",
+      "--zk-sidebar-active": "#FFFFFF",
+      "--zk-sidebar-border": "#E8E6DF",
+      "--zk-sidebar-muted": "#8A8F86"
+    };
+    const on = layoutMode === "painel" && theme.mode === "light";
+    Object.entries(vars).forEach(([name, value]) => {
+      if (on) root.style.setProperty(name, value);
+      else root.style.removeProperty(name);
+    });
+    return () => Object.keys(vars).forEach(name => root.style.removeProperty(name));
+  }, [layoutMode, theme.mode]);
   const greaterThenSm = useMediaQuery(theme.breakpoints.up("sm"));
   const { colorMode } = useContext(ColorModeContext);
 
@@ -855,7 +920,9 @@ const LoggedInLayout = ({ children, themeToggle }) => {
         classes={{
           paper: clsx(
             classes.drawerPaper,
-            !drawerOpen && classes.drawerPaperClose
+            !drawerOpen && classes.drawerPaperClose,
+            painelDesktop && drawerOpen && classes.drawerPainelOpen,
+            painelDesktop && classes.drawerCompact
           )
         }}
         open={drawerOpen}
@@ -866,6 +933,13 @@ const LoggedInLayout = ({ children, themeToggle }) => {
             !drawerOpen && classes.sidebarHeaderClosed
           )}
         >
+          {painelDesktop ? (
+            drawerOpen && (
+              <span className={classes.sidebarTitle}>
+                {i18n.t("layoutMode.menu")}
+              </span>
+            )
+          ) : (
           <div
             className={clsx(
               classes.sidebarLogo,
@@ -878,6 +952,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
               alt="logo"
             />
           </div>
+          )}
           {drawerVariant !== "temporary" && (
             <Tooltip
               title={
@@ -942,7 +1017,8 @@ const LoggedInLayout = ({ children, themeToggle }) => {
           classes.appBar,
           drawerVariant === "temporary" && classes.appBarMobile,
           drawerOpen && !focoDesktop && classes.appBarShift,
-          focoDesktop && classes.appBarFoco
+          focoDesktop && classes.appBarFoco,
+          painelDesktop && drawerOpen && classes.appBarPainel
         )}
         color="transparent"
       >
@@ -950,7 +1026,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
           variant="dense"
           className={clsx(classes.toolbar, classes.toolbarFlat)}
         >
-          {focoDesktop && (
+          {(focoDesktop || painelDesktop) && (
             <img
               className={classes.barLogo}
               alt="logo"
@@ -1113,6 +1189,12 @@ const LoggedInLayout = ({ children, themeToggle }) => {
               >
                 {i18n.t("layoutMode.title")}: {i18n.t("layoutMode.foco")}
               </MenuItem>
+              <MenuItem
+                selected={layoutMode === "painel"}
+                onClick={() => chooseLayout("painel")}
+              >
+                {i18n.t("layoutMode.title")}: {i18n.t("layoutMode.painel")}
+              </MenuItem>
               <NestedMenuItem
                 label={i18n.t("mainDrawer.appBar.user.language")}
                 parentMenuOpen={menuOpen}
@@ -1157,7 +1239,9 @@ const LoggedInLayout = ({ children, themeToggle }) => {
           drawerOpen && !focoDesktop && classes.contentShift,
           classes.content,
           classes.contentFlat,
-          focoDesktop && classes.contentFlatFoco
+          focoDesktop && classes.contentFlatFoco,
+          painelDesktop && drawerOpen && classes.contentPainel,
+          painelDesktop && theme.mode === "light" && classes.contentWarm
         )}
       >
         {children ? children : null}
