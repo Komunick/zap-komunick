@@ -133,6 +133,9 @@ de coluna troca a etiqueta dele.
 - O quadro mostra os atendimentos em aberto que o usuário pode ver na lista: o administrador vê todos; o atendente vê
   os seus e os aguardando das filas dele, e só move esses. Mostra até 500, os movimentados mais recentemente.
 - Além de arrastar, cada cartão tem o menu "Mover para" (teclado e leitores de tela).
+- Cada atendimento aparece como um post-it: papel na cor da etiqueta da coluna (amarelo em "Em aberto"), com fita, canto
+  dobrado e inclinação pequena e fixa. A coluna tem largura fixa de 290 px; a prévia da mensagem é de uma linha, sem marcas
+  de formatação.
 
 **Cenário de sucesso:**
 

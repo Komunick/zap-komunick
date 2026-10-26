@@ -41,6 +41,8 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   das colunas, avatares neutros e carteira em etiqueta verde em Contatos, selos de situação suaves no Painel de SLA.
 - Menu lateral maior e mais legível: itens de 48 px, ícones de 26 px, texto de 15,5 px, títulos de seção de 12,5 px e
   largura de 264 px (72 px só com ícones).
+- Kanban em formato de post-it: cada atendimento é uma nota na cor da etiqueta da coluna (amarelo na coluna "Em aberto"),
+  com fita no topo, canto dobrado, pequena inclinação fixa por atendimento e efeito ao passar o mouse.
 
 ### Corrigido
 
@@ -51,6 +53,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 - Os contadores das abas "Atendendo" e "Aguardando" não cobrem mais o texto da aba, e o botão "Aceitar" da lista de
   notificações não cobre mais o nome e o horário do atendimento.
 - Erro de console em todas as páginas: o `index.html` chamava um script (`/notificame-gateway.js`) que não existe no projeto.
+- Kanban: a coluna "Em aberto" esticava até 2.800 px com uma mensagem longa e escondia as outras colunas; agora fica em
+  290 px. A prévia da mensagem não mostra mais as marcas de formatação (como `*Admin:*`) e o contato sem nome aparece
+  com o número formatado, como na lista de atendimentos.
 
 ### Operação
 
