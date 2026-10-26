@@ -38,6 +38,7 @@ const pt = {
     listItems: {
       kanban: "Kanban",
       sla: "Painel de SLA",
+      onlineUsers: "Usuários online",
       closeReasons: "Motivos de finalização"
     }
   },
@@ -269,6 +270,39 @@ const pt = {
       p90: "90 dias"
     }
   },
+  onlineUsers: {
+    title: "Usuários online",
+    subtitle:
+      "Quem da equipe está conectado agora e quanto cada um tem em mãos.",
+    updatedAt: "Atualizado às {{time}}",
+    refresh: "Atualizar",
+    team: "Equipe",
+    showOffline: "Mostrar quem está offline",
+    nobody: "Ninguém online agora.",
+    noQueues: "Sem filas",
+    onlineNow: "Online agora",
+    onlineFor: "Online há {{time}}",
+    seenAgo: "Visto há {{time}}",
+    seenNow: "Saiu agora há pouco",
+    neverSeen: "Nunca entrou",
+    situation: {
+      online: "Online",
+      outsideHours: "Fora do horário de acesso",
+      offline: "Offline"
+    },
+    summary: {
+      online: "Online",
+      inService: "Em atendimento",
+      idle: "Online sem atendimento",
+      offline: "Offline",
+      outsideHours: "Fora do horário"
+    },
+    numbers: {
+      openCount: "em atendimento",
+      pausedCount: "pausados",
+      closedToday: "finalizados hoje"
+    }
+  },
   about: {
     licensesourcecode: "Código-fonte desta versão",
     basedOnTicketz: "Baseado no Ticketz (código original)"
@@ -461,6 +495,7 @@ const en = {
     listItems: {
       kanban: "Kanban",
       sla: "SLA panel",
+      onlineUsers: "Users online",
       closeReasons: "Close reasons"
     }
   },
@@ -690,6 +725,39 @@ const en = {
       p90: "90 days"
     }
   },
+  onlineUsers: {
+    title: "Users online",
+    subtitle:
+      "Who of the team is connected now and how much each one is handling.",
+    updatedAt: "Updated at {{time}}",
+    refresh: "Refresh",
+    team: "Team",
+    showOffline: "Show who is offline",
+    nobody: "Nobody online right now.",
+    noQueues: "No queues",
+    onlineNow: "Online now",
+    onlineFor: "Online for {{time}}",
+    seenAgo: "Seen {{time}} ago",
+    seenNow: "Just left",
+    neverSeen: "Never signed in",
+    situation: {
+      online: "Online",
+      outsideHours: "Outside access hours",
+      offline: "Offline"
+    },
+    summary: {
+      online: "Online",
+      inService: "In service",
+      idle: "Online without tickets",
+      offline: "Offline",
+      outsideHours: "Outside hours"
+    },
+    numbers: {
+      openCount: "in service",
+      pausedCount: "paused",
+      closedToday: "closed today"
+    }
+  },
   about: {
     licensesourcecode: "Source code of this version",
     basedOnTicketz: "Based on Ticketz (original code)"
@@ -882,6 +950,7 @@ const es = {
     listItems: {
       kanban: "Kanban",
       sla: "Panel de SLA",
+      onlineUsers: "Usuarios en línea",
       closeReasons: "Motivos de cierre"
     }
   },
@@ -1111,6 +1180,38 @@ const es = {
       p15: "15 días",
       p30: "30 días",
       p90: "90 días"
+    }
+  },
+  onlineUsers: {
+    title: "Usuarios en línea",
+    subtitle: "Quién del equipo está conectado ahora y cuánto tiene cada uno.",
+    updatedAt: "Actualizado a las {{time}}",
+    refresh: "Actualizar",
+    team: "Equipo",
+    showOffline: "Mostrar quién está desconectado",
+    nobody: "Nadie en línea ahora.",
+    noQueues: "Sin colas",
+    onlineNow: "En línea ahora",
+    onlineFor: "En línea hace {{time}}",
+    seenAgo: "Visto hace {{time}}",
+    seenNow: "Acaba de salir",
+    neverSeen: "Nunca entró",
+    situation: {
+      online: "En línea",
+      outsideHours: "Fuera del horario de acceso",
+      offline: "Desconectado"
+    },
+    summary: {
+      online: "En línea",
+      inService: "En atención",
+      idle: "En línea sin atenciones",
+      offline: "Desconectado",
+      outsideHours: "Fuera del horario"
+    },
+    numbers: {
+      openCount: "en atención",
+      pausedCount: "pausadas",
+      closedToday: "finalizadas hoy"
     }
   },
   about: {

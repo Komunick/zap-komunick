@@ -116,6 +116,11 @@ Stitch entra como tokens: `sidebar*` (menu preto, igual nos dois temas), `accent
   lista; `userIds` só vale para administrador; as etiquetas entram no mesmo cálculo das etiquetas da busca; SLA
   estourado = aberto ou aguardando, sem chatbot e `unansweredSince` mais antigo que o prazo. No frontend,
   `components/TicketsFilters` repete a regra para os eventos do socket. Sem tabela nova.
+- `GET /users/online` (administrador; RF-013): `OnlineUsersService` lê as sessões que o socket já grava em
+  `UserSocketSessions` (online = alguma ativa; desde = a mais antiga ativa; visto por último = maior `updatedAt`),
+  conta atendimentos `open` e `paused` de cada usuário e os finalizados hoje em `TicketTraking.finishedAt`, com as
+  filas; `helpers/OnlineUsers` classifica (fora do horário pelo `canAccessNow`), ordena e resume. A página escuta
+  `userOnlineChange` e `counter` (com espera de 2 s) e atualiza a cada minuto. Sem tabela nova.
 
 **Integridade:**
 - `unansweredSince` só muda com mensagem nova: `CreateMessageService` confere se a mensagem já existia antes do
