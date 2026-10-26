@@ -1,0 +1,41 @@
+# Zap Komunick: backend environment. Copy to ".env-backend-komunick" in the
+# repository root (docs/DEPLOY.md). Never commit the filled-in file.
+
+# Subdomain of the installation (the same in the frontend file)
+FRONTEND_HOST=atendimento.komunick.com
+# E-mail of the first administrator (created on the first start)
+EMAIL_ADDRESS=contato@komunick.com
+# Password of the first administrator. Change it again after the first login.
+ADMIN_PASSWORD=
+TZ=America/Sao_Paulo
+
+# Usually unchanged from here on
+
+BACKEND_PATH=/backend
+BACKEND_URL=https://${FRONTEND_HOST}${BACKEND_PATH}
+FRONTEND_URL=https://${FRONTEND_HOST}
+
+DB_DIALECT=postgres
+DB_HOST=postgres
+DB_PORT=5432
+DB_USER=ticketz
+DB_NAME=ticketz
+DB_TIMEZONE=-03:00
+# DB_PASS comes from POSTGRES_PASSWORD in ".env"
+
+REDIS_URI=redis://redis:6379
+REDIS_OPT_LIMITER_MAX=1
+REDIS_OPT_LIMITER_DURATION=3000
+
+USER_LIMIT=10000
+CONNECTIONS_LIMIT=100000
+CLOSED_SEND_BY_ME=true
+
+# Socket.IO admin panel: off in production
+SOCKET_ADMIN=false
+
+RECAPTCHA_SECRET_KEY=
+FACEBOOK_APP_ID=
+FACEBOOK_APP_SECRET=
+# Token of the Meta webhooks (only with official channels): random value
+VERIFY_TOKEN=

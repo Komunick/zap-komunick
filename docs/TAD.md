@@ -162,9 +162,16 @@ de pausa ficam no `UpdateTicketService`, não só na tela.
 relógio no painel, responder, mover no Kanban, contato com carteira abrindo direto no responsável, usuário fora do
 horário e um agendamento diário.
 
-**Publicação e observação:** não definido para o fork. O zap.komunick.com (produção) roda o Ticketz 1.0.132 por
-imagens Docker; o repositório traz o workflow de imagens do upstream (`.github/workflows/build-docker.yml`), que publica
-em `ghcr.io/ticketz-oss` e precisa ser adaptado antes de uso. Pendente de decisão (PRD, seção 5).
+**Publicação e observação:** guia em `docs/DEPLOY.md`, para um subdomínio novo de `komunick.com` ao lado do
+zap.komunick.com (que segue com o Ticketz 1.0.132; trocar é decisão do responsável, PRD seção 5). As imagens são
+montadas no próprio servidor a partir do código (`docker-compose-komunick.yaml`), com a aplicação só em
+`127.0.0.1:5480`, atrás do nginx do servidor (`deploy/nginx-host.conf.example`) ou do proxy com Let's Encrypt
+(`docker-compose-komunick-proxy.yaml`). Diferenças para os compose do upstream: banco com senha
+(`POSTGRES_PASSWORD`/`DB_PASS`), backend sem o socket do Docker (a autoatualização pela tela trocaria o fork pelas
+imagens do Ticketz), `SOCKET_ADMIN=false`, senha do primeiro administrador por `ADMIN_PASSWORD` e segredos do JWT por
+`crypto.randomBytes`, sem registro em log. Backup diário por `deploy/backup.sh` (banco e arquivos, 14 cópias).
+Observação: `docker compose logs` no servidor; não há monitoramento externo. O workflow do upstream
+(`.github/workflows/build-docker.yml`) publica em `ghcr.io/ticketz-oss` e não é usado.
 
 **Recuperação:** as migrações têm `down`; nenhuma apaga dados existentes (o `down` da `20261021130000` apaga os
 motivos cadastrados). Desligar `slaMinutes`, `walletAutoAssign` e `closeReasonRequired` devolve o comportamento original

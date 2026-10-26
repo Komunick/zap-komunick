@@ -1,0 +1,59 @@
+# Zap Komunick: optional reverse proxy with automatic Let's Encrypt HTTPS, for
+# a server where nothing else uses ports 80 and 443. Use it together with the
+# main file:
+#   docker compose -f docker-compose-komunick.yaml -f docker-compose-komunick-proxy.yaml up -d
+# The subdomain and e-mail come from .env-frontend-komunick (VIRTUAL_HOST,
+# LETSENCRYPT_HOST, LETSENCRYPT_EMAIL).
+
+networks:
+  proxy:
+
+volumes:
+  ngx_conf:
+  ngx_vhost:
+  ngx_html:
+  ngx_dhparam:
+  ngx_certs:
+  ngx_acme:
+
+services:
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy:1.6
+    container_name: zap-komunick-proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ngx_conf:/etc/nginx/conf.d
+      - ngx_vhost:/etc/nginx/vhost.d
+      - ngx_html:/usr/share/nginx/html
+      - ngx_dhparam:/etc/nginx/dhparam
+      - ngx_certs:/etc/nginx/certs:ro
+      - ./confs/nginx-ticketz.conf:/etc/nginx/conf.d/ticketz.conf:ro
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    networks:
+      - proxy
+
+  acme-companion:
+    image: nginxproxy/acme-companion:2.4
+    container_name: zap-komunick-acme
+    restart: always
+    depends_on:
+      - nginx-proxy
+    volumes:
+      - ngx_vhost:/etc/nginx/vhost.d
+      - ngx_html:/usr/share/nginx/html
+      - ngx_dhparam:/etc/nginx/dhparam:ro
+      - ngx_certs:/etc/nginx/certs
+      - ngx_acme:/etc/acme.sh
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - NGINX_PROXY_CONTAINER=zap-komunick-proxy
+    networks:
+      - proxy
+
+  frontend:
+    networks:
+      - zk
+      - proxy
