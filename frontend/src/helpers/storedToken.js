@@ -15,13 +15,9 @@ export function readStoredToken() {
   try {
     const token = JSON.parse(raw);
 
-    // only a string that decodes as a JWT with a user and a company is a token
-    if (typeof token === "string") {
-      const decoded = decodeToken(token);
-
-      if (decoded && decoded.userId !== undefined) {
-        return token;
-      }
+    // only a string that decodes as a JWT is a token (decodeToken gives null otherwise)
+    if (typeof token === "string" && decodeToken(token)) {
+      return token;
     }
   } catch (e) {
     // not JSON: falls through and is discarded
