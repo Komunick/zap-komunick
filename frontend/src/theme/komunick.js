@@ -207,6 +207,16 @@ export function komunickThemeOptions(mode) {
         },
         notchedOutline: { borderColor: t.borderStrong }
       },
+      // a long label wrapped to two lines and covered the value of the field
+      MuiInputLabel: {
+        root: {
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          maxWidth: "calc(100% - 24px)",
+          "&$shrink": { maxWidth: "calc(133% - 32px)" }
+        }
+      },
       MuiInputBase: {
         root: { fontSize: "0.92rem" }
       },

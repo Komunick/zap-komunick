@@ -154,6 +154,9 @@ const pt = {
     ownerHelper: "Atendente responsável por este cliente",
     none: "Sem responsável",
     myWallet: "Minha carteira",
+    emptyMine:
+      "Nenhum contato na sua carteira. O administrador define o responsável de cada contato.",
+    empty: "Nenhum contato encontrado.",
     column: "Carteira"
   },
   accessHours: {
@@ -445,6 +448,9 @@ const en = {
     ownerHelper: "Attendant responsible for this client",
     none: "No owner",
     myWallet: "My wallet",
+    emptyMine:
+      "No contacts in your wallet. An administrator sets the owner of each contact.",
+    empty: "No contacts found.",
     column: "Wallet"
   },
   accessHours: {
@@ -738,6 +744,9 @@ const es = {
     ownerHelper: "Agente responsable de este cliente",
     none: "Sin responsable",
     myWallet: "Mi cartera",
+    emptyMine:
+      "Ningún contacto en tu cartera. El administrador define el responsable de cada contacto.",
+    empty: "No se encontraron contactos.",
     column: "Cartera"
   },
   accessHours: {

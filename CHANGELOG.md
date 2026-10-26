@@ -56,6 +56,11 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 - Kanban: a coluna "Em aberto" esticava até 2.800 px com uma mensagem longa e escondia as outras colunas; agora fica em
   290 px. A prévia da mensagem não mostra mais as marcas de formatação (como `*Admin:*`) e o contato sem nome aparece
   com o número formatado, como na lista de atendimentos.
+- A janela de novo agendamento agora se chama "Novo Agendamento" (antes "Mensagem").
+- Contatos com "Minha carteira" ligada, ou com uma busca sem resultado, mostra uma mensagem em vez de uma tabela em branco.
+- Configurações: rótulos longos (como "Timeout para reabertura automática (minutos)") ficam em uma linha e não cobrem mais o
+  valor do campo.
+- O menu do usuário fecha ao trocar entre tema claro e escuro.
 
 ### Operação
 

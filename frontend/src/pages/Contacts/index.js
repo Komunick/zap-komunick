@@ -9,6 +9,7 @@ import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
 import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
+import Typography from "@material-ui/core/Typography";
 import Paper from "@material-ui/core/Paper";
 import Button from "@material-ui/core/Button";
 import Avatar from "@material-ui/core/Avatar";
@@ -536,6 +537,17 @@ const Contacts = () => {
                 </TableRow>
               ))}
               {loading && <TableRowSkeleton avatar columns={4} />}
+              {!loading && contacts.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} align="center">
+                    <Typography variant="body2" color="textSecondary">
+                      {onlyMyWallet
+                        ? i18n.t("wallet.emptyMine")
+                        : i18n.t("wallet.empty")}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              )}
             </>
           </TableBody>
         </Table>

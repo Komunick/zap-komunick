@@ -661,6 +661,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
 
   const toggleColorMode = () => {
     colorMode.toggleColorMode();
+    handleCloseProfileMenu();
   };
 
   const handleChooseLanguage = language => {
