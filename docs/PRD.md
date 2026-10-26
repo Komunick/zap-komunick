@@ -28,8 +28,8 @@ os atendimentos em etapas e controla quando cada atendente pode entrar; lembrete
 **Escopo descrito:** código-fonte acessível (RF-001), painel de SLA (RF-002), carteira de clientes (RF-003), Kanban por
 etiquetas (RF-004), horário de acesso por usuário (RF-005), agendamento recorrente (RF-006), pausar atendimento e motivo
 de finalização (RF-007), agendamento para vários contatos com anexo e dia útil (RF-008) e a identidade visual da
-Komunick (RF-009) o chat interno com conversas e contatos (RF-010) e as
-ações em lote nos atendimentos (RF-011), sobre o Ticketz como ele é hoje (filas, chatbot, etiquetas, agendamentos, perfis admin e usuário).
+Komunick (RF-009) o chat interno com conversas e contatos (RF-010) , as
+ações em lote nos atendimentos (RF-011) e os filtros completos da lista (RF-012), sobre o Ticketz como ele é hoje (filas, chatbot, etiquetas, agendamentos, perfis admin e usuário).
 A segunda entrega saiu da comparação com o ZapContábil feita em 21/10/2026 numa conta de cliente, só olhando, sem mudar
 nada nela.
 
@@ -344,6 +344,25 @@ regras de quando se trata um por um.
 Dado 12 atendimentos aguardando na fila Fiscal depois de um feriado,
 quando o atendente seleciona todos e escolhe "Aceitar",
 então os 12 passam para "Em atendimento" com ele, e o aviso mostra "12 atendimento(s) atualizado(s)".
+
+### RF-012 — Filtros completos na lista de atendimentos
+
+**Objetivo:** achar rápido os atendimentos de um recorte (uma conexão, um atendente, um cliente da carteira, os que
+estouraram o prazo) sem sair da visão em que se está.
+
+- Botão "Filtros" na lista (em todas as visões, inclusive na busca), com o número de filtros ativos. O painel tem:
+  conexão, atendente (só administradores), etiquetas (o atendimento ou o contato precisa ter todas), período de
+  abertura (de/até), carteira (todas, minha carteira, sem responsável), só com mensagens não lidas e só com SLA
+  estourado (pelo prazo da empresa; desligado quando o prazo está desligado).
+- Os filtros somam com a visão, os chips de fila e a busca; nunca mostram o que o usuário não poderia ver.
+- "Aplicar" vale para todas as visões; "Limpar" tira tudo. A escolha fica guardada no navegador.
+- Atendimentos que chegam em tempo real passam pelos mesmos filtros; o que deixa de atender a eles sai da lista.
+
+**Cenário de sucesso:**
+
+Dado uma atendente com a carteira de clientes dela,
+quando ela filtra "Minha carteira" e "Só com mensagens não lidas",
+então a lista mostra só os clientes dela que mandaram mensagem e ainda não foram lidos, e continua assim ao recarregar.
 
 ## 4. Restrições e cuidados
 
