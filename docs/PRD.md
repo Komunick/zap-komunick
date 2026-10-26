@@ -295,10 +295,13 @@ de finalização e a exigência de motivo são geridos só por administradores.
 sistema; nenhuma integração externa nova.
 
 **Privacidade:** o sistema não pede a localização do navegador e não envia IP, coordenadas nem dados de uso a terceiros por
-conta própria. O país do campo de telefone vem do idioma do navegador. Saem de cena a geolocalização e o `nominatim.openstreetmap.org`
-e o `ipinfo.io` (carregamento do app), o `ipapi.co` (Dashboard) e o Google Analytics com a tag do projeto Ticketz (superusuário).
-Seguem como chamadas externas herdadas do Ticketz, a decidir pelo responsável: lista de países (`cdn.jsdelivr.net`), blog e
-anúncio do Ticketz PRO (`pro.ticke.tz`), botão de doação (`paypalobjects.com`) e fontes do Google.
+conta própria. O país do campo de telefone vem do idioma do navegador. Saem de cena a geolocalização e o
+`nominatim.openstreetmap.org` e o `ipinfo.io` (carregamento do app), o `ipapi.co` (Dashboard), o Google Analytics com a tag
+do projeto Ticketz (superusuário), e do Dashboard o banner e o blog do Ticketz PRO, o pedido de doação (PIX, Mercado Pago,
+PayPal) e o cadastro da instalação no Ticketz. Seguem como chamadas externas herdadas do Ticketz, a decidir pelo
+responsável: lista de países (`cdn.jsdelivr.net`), fontes do Google e a consulta da versão do WhatsApp Web
+(`waversion.ticke.tz`, no backend, ao iniciar cada sessão). A tela "Sobre" mantém o crédito ao Ticketz e o link do código
+(licença AGPL-3.0).
 
 **Limites reais:** licença AGPL-3.0 (RF-001). O Ticketz PRO é fechado e não pode ter código copiado para cá.
 
