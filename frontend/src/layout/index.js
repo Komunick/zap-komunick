@@ -20,6 +20,7 @@ import {
 
 import MenuIcon from "@material-ui/icons/Menu";
 import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
+import ChevronRightIcon from "@material-ui/icons/ChevronRight";
 import AccountCircle from "@material-ui/icons/AccountCircle";
 import SettingsEthernetIcon from "@material-ui/icons/SettingsEthernet";
 import CachedIcon from "@material-ui/icons/Cached";
@@ -187,6 +188,52 @@ const useStyles = makeStyles(theme => ({
             color: `${theme.palette.text.secondary} !important`
           }
         })
+  },
+  // Zap Komunick: the collapse button lives in the sidebar, next to the logo
+  sidebarHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    minHeight: 68,
+    padding: "0 10px 0 14px",
+    borderBottom: `1px solid ${theme.komunick.sidebarBorder}`,
+    marginBottom: 6
+  },
+  sidebarHeaderClosed: {
+    flexDirection: "column",
+    justifyContent: "center",
+    padding: "12px 0 8px",
+    gap: 8
+  },
+  sidebarLogo: {
+    display: "flex",
+    alignItems: "center",
+    flex: "1 1 auto",
+    minWidth: 0,
+    cursor: "pointer",
+    "& img": {
+      margin: 0,
+      height: 40,
+      maxWidth: 156
+    }
+  },
+  sidebarLogoClosed: {
+    flex: "none",
+    "& img": {
+      width: 36,
+      height: 36
+    }
+  },
+  sidebarToggle: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    color: theme.komunick.sidebarText,
+    backgroundColor: theme.komunick.sidebarHover,
+    "&:hover": {
+      color: "#FFFFFF",
+      backgroundColor: "rgba(255, 255, 255, 0.12)"
+    }
   },
   toolbarIcon: {
     display: "flex",
@@ -695,14 +742,45 @@ const LoggedInLayout = ({ children, themeToggle }) => {
         open={drawerOpen}
       >
         <div
-          className={classes.toolbarIcon}
-          onClick={handleDrawerToggle}
-          style={{ cursor: "pointer" }}
+          className={clsx(
+            classes.sidebarHeader,
+            !drawerOpen && classes.sidebarHeaderClosed
+          )}
         >
-          <img
-            className={drawerOpen ? classes.logo : classes.logoIcon}
-            alt="logo"
-          />
+          <div
+            className={clsx(
+              classes.sidebarLogo,
+              !drawerOpen && classes.sidebarLogoClosed
+            )}
+            onClick={handleDrawerToggle}
+          >
+            <img
+              className={drawerOpen ? classes.logo : classes.logoIcon}
+              alt="logo"
+            />
+          </div>
+          {drawerVariant !== "temporary" && (
+            <Tooltip
+              title={
+                drawerOpen
+                  ? i18n.t("mainDrawer.collapseMenu")
+                  : i18n.t("mainDrawer.expandMenu")
+              }
+              placement="right"
+            >
+              <IconButton
+                aria-label={
+                  drawerOpen
+                    ? i18n.t("mainDrawer.collapseMenu")
+                    : i18n.t("mainDrawer.expandMenu")
+                }
+                className={classes.sidebarToggle}
+                onClick={handleDrawerToggle}
+              >
+                {drawerOpen ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+              </IconButton>
+            </Tooltip>
+          )}
         </div>
         <List
           className={
@@ -744,15 +822,17 @@ const LoggedInLayout = ({ children, themeToggle }) => {
         color="transparent"
       >
         <Toolbar variant="dense" className={classes.toolbar}>
-          <IconButton
-            edge="start"
-            variant="contained"
-            aria-label="open drawer"
-            onClick={handleDrawerToggle}
-            className={classes.menuButton}
-          >
-            {drawerOpen ? <ChevronLeftIcon /> : <MenuIcon />}
-          </IconButton>
+          {drawerVariant === "temporary" && (
+            <IconButton
+              edge="start"
+              variant="contained"
+              aria-label="open drawer"
+              onClick={handleDrawerToggle}
+              className={classes.menuButton}
+            >
+              {drawerOpen ? <ChevronLeftIcon /> : <MenuIcon />}
+            </IconButton>
+          )}
 
           <Typography
             component="h2"

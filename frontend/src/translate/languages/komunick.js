@@ -33,6 +33,8 @@ const pt = {
     }
   },
   mainDrawer: {
+    collapseMenu: "Recolher menu",
+    expandMenu: "Expandir menu",
     listItems: {
       kanban: "Kanban",
       sla: "Painel de SLA",
@@ -329,6 +331,8 @@ const en = {
     }
   },
   mainDrawer: {
+    collapseMenu: "Collapse menu",
+    expandMenu: "Expand menu",
     listItems: {
       kanban: "Kanban",
       sla: "SLA panel",
@@ -623,6 +627,8 @@ const es = {
     }
   },
   mainDrawer: {
+    collapseMenu: "Contraer menú",
+    expandMenu: "Expandir menú",
     listItems: {
       kanban: "Kanban",
       sla: "Panel de SLA",
