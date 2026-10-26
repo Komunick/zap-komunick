@@ -48,6 +48,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   (pt-BR vira Brasil), sem enviar coordenadas ao OpenStreetMap nem o endereço IP ao ipinfo.io.
 - O Dashboard não consulta mais o ipapi.co com o IP de quem abre, e o painel não carrega mais o Google Analytics do
   projeto Ticketz para superusuários.
+- Os contadores das abas "Atendendo" e "Aguardando" não cobrem mais o texto da aba, e o botão "Aceitar" da lista de
+  notificações não cobre mais o nome e o horário do atendimento.
+- Erro de console em todas as páginas: o `index.html` chamava um script (`/notificame-gateway.js`) que não existe no projeto.
 
 ### Operação
 

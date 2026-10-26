@@ -135,8 +135,21 @@ const useStyles = makeStyles(theme => ({
     borderRadius: 30
   },
 
+  // Zap Komunick: the count sits after the label, not over its last letters
   badge: {
-    right: "-10px"
+    alignItems: "center",
+    "& .MuiBadge-badge": {
+      position: "static",
+      transform: "none",
+      marginLeft: 8,
+      minWidth: 20,
+      height: 20,
+      borderRadius: 10,
+      fontWeight: 700
+    },
+    "& .MuiBadge-invisible": {
+      display: "none"
+    }
   },
   show: {
     display: "block"
