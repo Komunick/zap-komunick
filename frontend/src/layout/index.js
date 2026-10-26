@@ -51,8 +51,6 @@ import Brightness7Icon from "@material-ui/icons/Brightness7";
 import LanguageIcon from "@material-ui/icons/Language";
 import { getBackendURL } from "../services/config";
 import NestedMenuItem from "material-ui-nested-menu-item";
-import GoogleAnalytics from "../components/GoogleAnalytics";
-import OnlyForSuperUser from "../components/OnlyForSuperUser";
 import NewTicketModal from "../components/NewTicketModal/index.js";
 import { loadJSON } from "../helpers/loadJSON";
 
@@ -903,7 +901,6 @@ const LoggedInLayout = ({ children, themeToggle }) => {
           classes.content
         )}
       >
-        <OnlyForSuperUser user={currentUser} yes={() => <GoogleAnalytics />} />
         {children ? children : null}
       </main>
     </div>

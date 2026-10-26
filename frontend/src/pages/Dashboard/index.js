@@ -42,6 +42,7 @@ import config from "../../services/config.js";
 import { SocketContext } from "../../context/Socket/SocketContext.js";
 import { formatTimeInterval } from "../../helpers/formatTimeInterval.js";
 import TicketzProAd from "../../components/Dashboard/TicketzProAd";
+import { currentCountry } from "../../helpers/loadCountries";
 
 const gitinfo = loadJSON("/gitinfo.json");
 
@@ -304,16 +305,12 @@ const Dashboard = () => {
     window.open("https://pro.ticke.tz", "_blank");
   }
 
+  // Zap Komunick: no IP lookup at ipapi.co; the country comes from the browser language
   useEffect(() => {
-    fetch("https://ipapi.co/json/")
-      .then(res => res.json())
-      .then(data => {
-        if (data.country === "BR") {
-          setSupportPix(true);
-          setSupportIsBr(true);
-        }
-      })
-      .catch(() => {});
+    if (currentCountry === "BR") {
+      setSupportPix(true);
+      setSupportIsBr(true);
+    }
   }, []);
 
   useEffect(() => {

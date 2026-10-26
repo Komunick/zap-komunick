@@ -40,6 +40,13 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 - Telas internas no estilo da Direção B: títulos pretos, cabeçalho de tabela com faixa de fundo, Kanban sem painel atrás
   das colunas, avatares neutros e carteira em etiqueta verde em Contatos, selos de situação suaves no Painel de SLA.
 
+### Corrigido
+
+- O sistema não pede mais a localização do navegador ao abrir. O país do campo de telefone vem do idioma do navegador
+  (pt-BR vira Brasil), sem enviar coordenadas ao OpenStreetMap nem o endereço IP ao ipinfo.io.
+- O Dashboard não consulta mais o ipapi.co com o IP de quem abre, e o painel não carrega mais o Google Analytics do
+  projeto Ticketz para superusuários.
+
 ### Operação
 
 - Quatro migrações novas (`20261021120000` a `20261021120300`) rodam na subida do backend; nenhuma remove dados.
