@@ -28,7 +28,7 @@ os atendimentos em etapas e controla quando cada atendente pode entrar; lembrete
 **Escopo descrito:** código-fonte acessível (RF-001), painel de SLA (RF-002), carteira de clientes (RF-003), Kanban por
 etiquetas (RF-004), horário de acesso por usuário (RF-005), agendamento recorrente (RF-006), pausar atendimento e motivo
 de finalização (RF-007), agendamento para vários contatos com anexo e dia útil (RF-008) e a identidade visual da
-Komunick (RF-009), sobre o Ticketz como ele é hoje (filas, chatbot, etiquetas, agendamentos, perfis admin e usuário).
+Komunick (RF-009) e o chat interno com conversas e contatos (RF-010), sobre o Ticketz como ele é hoje (filas, chatbot, etiquetas, agendamentos, perfis admin e usuário).
 A segunda entrega saiu da comparação com o ZapContábil feita em 21/10/2026 numa conta de cliente, só olhando, sem mudar
 nada nela.
 
@@ -288,12 +288,39 @@ referências do Dribbble (painéis de atendimento e CRMs de 2025 e 2026).
 - Menu lateral legível: itens de 48 px, ícones de 26 px, texto de 15,5 px e títulos de seção de 12,5 px; largura de 264 px
   aberto e 72 px só com ícones (a lista rola quando não cabe na tela).
 - Login em duas colunas (formulário e painel da marca); no celular, só o formulário.
+- Português é o idioma padrão (o idioma do navegador não é mais adivinhado; a escolha do usuário no menu continua
+  valendo). O tema segue o claro ou escuro do sistema operacional, inclusive quando ele muda com a tela aberta; o
+  interruptor "Modo escuro" fixa uma escolha e "Tema do sistema (Windows)", no menu do usuário, volta a seguir o sistema.
+- Barra de digitar mensagem (atendimentos e chat interno) em tom próprio: campo arredondado que flutua sobre o fundo da
+  conversa, com contorno verde ao focar.
+- Dashboard: saudação com o nome, período em botões (personalizado, 3, 7, 15, 30 e 90 dias), cartões "Agora" (equipe
+  online, aguardando, em atendimento, cada um com rosca e as filas principais), indicadores do período com ícones,
+  gráfico nas cores da marca e tabela da equipe.
 
 **Cenário de sucesso:**
 
 Dado uma instalação nova, sem Whitelabel configurado,
 quando o usuário abre o login,
 então vê o logo da Komunick, o botão verde e o painel da marca, no tema claro ou escuro que escolheu.
+
+### RF-010 — Chat interno: conversas e contatos numa lista só
+
+**Objetivo:** abrir a tela e já ver com quem falar, sem precisar criar uma "conversa" com título antes.
+
+- Ao abrir, a lista mostra as conversas (grupos e conversas a dois, a mais recente primeiro, com a última mensagem e as
+  não lidas) e, abaixo, as pessoas da empresa com quem ainda não há conversa. Uma busca filtra as duas partes.
+- Clicar numa pessoa abre a conversa a dois com ela; se não existir, é criada na hora. Cada par de pessoas tem uma só
+  conversa a dois, que mostra para cada lado o nome do outro.
+- A conversa a dois não tem título, não muda de participantes e não pode ser excluída (apagaria o histórico dos dois).
+  Grupos continuam com nome, participantes editáveis e exclusão pelo dono, agora no cabeçalho da conversa.
+- A lista se atualiza em tempo real (mensagem nova sobe a conversa e soma não lidas; com a conversa aberta, ela é
+  marcada como lida). No celular, a lista e a conversa aparecem uma de cada vez, com botão de voltar.
+
+**Cenário de sucesso:**
+
+Dado um atendente que nunca conversou com a colega Ana,
+quando ele abre o Chat interno e clica em "Ana" na parte de contatos,
+então a conversa a dois abre vazia, e depois da primeira mensagem ela aparece no topo das conversas dos dois.
 
 ## 4. Restrições e cuidados
 

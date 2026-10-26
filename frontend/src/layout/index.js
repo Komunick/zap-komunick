@@ -548,7 +548,11 @@ const useStyles = makeStyles(theme => ({
     display: "flex",
     justifyContent: "center",
     minWidth: 0,
-    padding: "0 12px"
+    padding: "0 12px",
+    [theme.breakpoints.down("xs")]: {
+      flex: "none",
+      padding: "0 4px"
+    }
   },
   searchTrigger: {
     display: "flex",
@@ -565,6 +569,13 @@ const useStyles = makeStyles(theme => ({
     fontFamily: "inherit",
     fontSize: 14,
     textAlign: "left",
+    // on phones the search is just the magnifier button
+    [theme.breakpoints.down("xs")]: {
+      width: 36,
+      padding: 0,
+      justifyContent: "center",
+      "& > :not(svg)": { display: "none" }
+    },
     "&:hover": {
       borderColor: theme.komunick.borderStrong
     },
@@ -676,7 +687,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
     return () => Object.keys(vars).forEach(name => root.style.removeProperty(name));
   }, [layoutMode, theme.mode]);
   const greaterThenSm = useMediaQuery(theme.breakpoints.up("sm"));
-  const { colorMode } = useContext(ColorModeContext);
+  const { colorMode, themeMode } = useContext(ColorModeContext);
 
   const [currentLanguage, setCurrentLanguage] = useState(i18n.language);
 
@@ -1194,6 +1205,15 @@ const LoggedInLayout = ({ children, themeToggle }) => {
                 onClick={() => chooseLayout("painel")}
               >
                 {i18n.t("layoutMode.title")}: {i18n.t("layoutMode.painel")}
+              </MenuItem>
+              <MenuItem
+                selected={themeMode === "system"}
+                onClick={() => {
+                  colorMode.followSystem();
+                  handleCloseProfileMenu();
+                }}
+              >
+                {i18n.t("layoutMode.systemTheme")}
               </MenuItem>
               <NestedMenuItem
                 label={i18n.t("mainDrawer.appBar.user.language")}

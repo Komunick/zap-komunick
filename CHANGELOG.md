@@ -57,6 +57,16 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 - Ligações de voz pelo WhatsApp com o Wavoip (serviço de terceiros, escolha do responsável): o ícone do Wavoip volta à
   tela de Conexões para cadastrar o token de cada conexão, e o botão de ligar aparece no atendimento aberto de conexões
   com token. Só funciona em `https` ou `localhost` (o microfone exige). Sai o texto do cupom "TICKETZ" da janela do token.
+- Chat interno reorganizado: ao abrir a tela já aparecem as conversas (grupos e a dois, a mais recente primeiro) e as
+  pessoas da empresa, numa lista só com busca. Clicar numa pessoa abre (ou cria) a conversa a dois com ela; grupos
+  ganham o botão "Novo grupo" e a edição e exclusão no cabeçalho da conversa. A lista se atualiza em tempo real e, no
+  celular, mostra lista e conversa uma de cada vez.
+- Português como idioma padrão e tema que acompanha o claro ou escuro do Windows (também quando ele muda com a tela
+  aberta); o interruptor fixa uma escolha e "Tema do sistema (Windows)", no menu do usuário, volta a seguir o sistema.
+- Barra de digitar mensagem com tom próprio: campo arredondado flutuando sobre o fundo da conversa, nos atendimentos e
+  no chat interno.
+- Dashboard redesenhado: saudação, período em botões, cartões "Agora" com rosca e filas principais, indicadores do
+  período com ícones, gráfico nas cores da marca. No celular a busca do topo vira só o botão da lupa.
 - Kanban em formato de post-it: cada atendimento é uma nota na cor da etiqueta da coluna (amarelo na coluna "Em aberto"),
   com fita no topo, canto dobrado, pequena inclinação fixa por atendimento e efeito ao passar o mouse.
 

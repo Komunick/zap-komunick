@@ -184,23 +184,32 @@ export function TicketCountersChart({ ticketCounters }) {
             }
             cursor={true}
           />
+          {/* Zap Komunick: brand colors with soft gradients */}
+          <defs>
+            <linearGradient id="zkCreated" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#2F7FE0" stopOpacity={0.28} />
+              <stop offset="100%" stopColor="#2F7FE0" stopOpacity={0} />
+            </linearGradient>
+            <linearGradient id="zkClosed" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#35B62E" stopOpacity={0.3} />
+              <stop offset="100%" stopColor="#35B62E" stopOpacity={0} />
+            </linearGradient>
+          </defs>
           <Area
             type="monotone"
             dataKey="created"
-            stroke="blue"
-            strokeWidth={1}
-            fillOpacity={0.5}
-            fill="lightblue"
-            activeDot={{ r: 8 }}
+            stroke="#2F7FE0"
+            strokeWidth={2}
+            fill="url(#zkCreated)"
+            activeDot={{ r: 5 }}
           />
           <Area
             type="monotone"
             dataKey="closed"
-            stroke="green"
-            strokeWidth={1}
-            fillOpacity={0.5}
-            fill="lightgreen"
-            activeDot={{ r: 8 }}
+            stroke="#35B62E"
+            strokeWidth={2}
+            fill="url(#zkClosed)"
+            activeDot={{ r: 5 }}
           />
         </AreaChart>
       </ResponsiveContainer>

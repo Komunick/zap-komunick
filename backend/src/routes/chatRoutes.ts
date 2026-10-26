@@ -25,6 +25,8 @@ routes.post("/chats/:id/read", isAuth, ChatController.checkAsRead);
 
 routes.post("/chats", isAuth, ChatController.store);
 
+routes.post("/chats/direct", isAuth, ChatController.direct);
+
 routes.put("/chats/:id", isAuth, ChatController.update);
 
 routes.delete("/chats/:id", isAuth, ChatController.remove);

@@ -101,6 +101,10 @@ Stitch entra como tokens: `sidebar*` (menu preto, igual nos dois temas), `accent
 - `TicketTraking.closeReasonId` (FK `CloseReasons`, `ON DELETE SET NULL`) e `closeReasonNote` (texto).
 - `Schedules.mediaPath` e `mediaName` (texto, nulos) e `businessDaysOnly` (booleano, padrão falso).
 - `Tickets.status` ganha o valor `paused` (a coluna já é texto livre; não há migração).
+- `Chats.isDirect` (booleano, padrão falso; migração `20261026120000`): conversa a dois do chat interno (RF-010).
+  `POST /chats/direct` `{ userId }` acha ou cria a conversa entre o usuário logado e outro da mesma empresa
+  (`FindOrCreateDirectService`; 400 para si mesmo ou sem `userId`, 404 para usuário de outra empresa); editar ou excluir
+  uma conversa a dois responde 403 (`ERR_CHAT_DIRECT_READONLY`). A lista de conversas passa a vir por `updatedAt`.
 
 **Integridade:**
 - `unansweredSince` só muda com mensagem nova: `CreateMessageService` confere se a mensagem já existia antes do
