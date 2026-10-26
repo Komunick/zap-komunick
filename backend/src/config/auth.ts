@@ -1,3 +1,4 @@
+import { randomBytes } from "crypto";
 import { cacheLayer } from "../libs/cache";
 import { logger } from "../utils/logger";
 
@@ -11,15 +12,10 @@ type JwtConfig = {
 const CACHE_KEY_JWT_SECRET = "TICKETZ_JWT_SECRET";
 const CACHE_KEY_JWT_REFRESH_SECRET = "TICKETZ_JWT_REFRESH_SECRET";
 
+// Zap Komunick: the secrets sign every login token, so they come from the
+// cryptographic generator (Math.random is predictable) and are never logged
 function generateSecret(length: number): string {
-  const charset =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+";
-  let secret = "";
-  for (let i = 0; i < length; i += 1) {
-    const randomIndex = Math.floor(Math.random() * charset.length);
-    secret += charset[randomIndex];
-  }
-  return secret;
+  return randomBytes(length).toString("base64");
 }
 
 async function generateSecretIfNotExists(cacheKey: string): Promise<string> {
@@ -27,9 +23,9 @@ async function generateSecretIfNotExists(cacheKey: string): Promise<string> {
   if (!secret) {
     secret = generateSecret(32);
     await cacheLayer.set(cacheKey, secret);
-    logger.debug(`[auth.ts] Generated ${cacheKey}: ${secret}`);
+    logger.debug(`[auth.ts] Generated ${cacheKey}`);
   } else {
-    logger.debug(`[auth.ts] Loaded ${cacheKey}: ${secret}`);
+    logger.debug(`[auth.ts] Loaded ${cacheKey}`);
   }
   return secret;
 }

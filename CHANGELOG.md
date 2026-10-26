@@ -94,6 +94,12 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Operação
 
+- Publicação num subdomínio da Komunick (`docs/DEPLOY.md`): `docker-compose-komunick.yaml` (aplicação só em
+  `127.0.0.1:5480`, banco com senha, backend sem o socket do Docker), `docker-compose-komunick-proxy.yaml` (proxy com
+  HTTPS automático, opcional), modelos de ambiente e de nginx em `deploy/` e `deploy/backup.sh` (banco e arquivos, 14
+  cópias). A senha do primeiro administrador vem de `ADMIN_PASSWORD`; o painel do Socket.IO fica desligado.
+- Segredos que assinam o login gerados com `crypto.randomBytes` (antes `Math.random`) e fora do log.
+
 - Quatro migrações novas (`20261021120000` a `20261021120300`) rodam na subida do backend; nenhuma remove dados.
 - Mais duas migrações (`20261021130000` e `20261021130100`): tabela de motivos de finalização, motivo e observação no
   histórico do atendimento, anexo e dia útil nos agendamentos. Nenhuma remove dados.

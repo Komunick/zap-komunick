@@ -1,0 +1,21 @@
+# Zap Komunick: frontend environment. Copy to ".env-frontend-komunick" in the
+# repository root (docs/DEPLOY.md).
+# Attention: every variable here is published in /config.json, which anyone
+# can open. Never put a secret in this file.
+
+# Subdomain of the installation (the same in the backend file)
+FRONTEND_HOST=atendimento.komunick.com
+
+BACKEND_HOST=${FRONTEND_HOST}
+BACKEND_PATH=/backend
+
+RECAPTCHA_SITE_KEY=
+
+# Voice calls through Wavoip (third-party service): off
+WAVOIP_ENABLED=false
+
+# Only with the bundled proxy (docker-compose-komunick-proxy.yaml)
+VIRTUAL_HOST=${FRONTEND_HOST}
+VIRTUAL_PORT=80
+LETSENCRYPT_HOST=${FRONTEND_HOST}
+LETSENCRYPT_EMAIL=contato@komunick.com

@@ -1,3 +1,9 @@
 .docker
 *~
 /.project
+
+# Zap Komunick: filled-in deploy files (docs/DEPLOY.md)
+/.env
+/.env-backend-komunick
+/.env-frontend-komunick
+/backups/
