@@ -17,7 +17,7 @@ O HTML é só referência visual (Tailwind por CDN); o frontend é React + Mater
 - Foco: logo e abas de navegação no topo, com as páginas de administração no menu "Mais".
 - Conteúdo sem cartões flutuantes nem margens; no celular os dois usam a gaveta com o botão de hambúrguer.
 
-## Ainda não feito (do desenho)
+## Tela de Atendimentos
 
-Painel do cliente fixo à direita da conversa (carteira, SLA e etiquetas), visões "Meus / Aguardando / Pausados / Resolvidos"
-na lista e a lista com o cartão mais enxuto. Hoje a tela de Atendimentos mantém a lista e o painel de contato do Ticketz.
+Aplicado: visões "Em atendimento / Aguardando / Pausados / Resolvidos" em uma linha, filas em chips, lista enxuta e painel
+do cliente fixo à direita (a partir de 1400 px). Não feito: contadores nas visões Pausados e Resolvidos.

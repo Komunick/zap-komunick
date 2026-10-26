@@ -280,6 +280,10 @@ referências do Dribbble (painéis de atendimento e CRMs de 2025 e 2026).
   largo) e "Foco" (abas de navegação no topo, sem barra lateral). Barra do topo plana com busca global (Ctrl K: páginas e
   atendimentos que o usuário pode ver), interruptor de tema e usuário; conteúdo sem cartões flutuantes. No celular os dois
   usam a gaveta. Referências em `docs/design/stitch-layouts`.
+- Atendimentos: uma linha de visões com contadores (em atendimento ou meus, aguardando, pausados, resolvidos) mais a
+  busca; filas como chips que o usuário liga e desliga (sempre fica ao menos uma); cada atendimento em uma linha enxuta;
+  em telas de 1400 px ou mais, painel do cliente fixo à direita da conversa (carteira, fila, atendente, SLA, etiquetas,
+  notas e edição do contato); abaixo disso, o contato continua abrindo numa gaveta.
 - Menu lateral legível: itens de 48 px, ícones de 26 px, texto de 15,5 px e títulos de seção de 12,5 px; largura de 264 px
   aberto e 72 px só com ícones (a lista rola quando não cabe na tela).
 - Login em duas colunas (formulário e painel da marca); no celular, só o formulário.

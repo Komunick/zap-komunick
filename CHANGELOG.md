@@ -44,6 +44,10 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 - Dois layouts próprios, escolhidos no menu do usuário: "Workspace" (trilho de ícones à esquerda) e "Foco" (logo e abas de
   navegação no topo, sem barra lateral). Os dois têm barra do topo plana, conteúdo sem cartões flutuantes e busca global
   com `Ctrl K` (páginas e atendimentos). O trilho de ícones ganha dica com o nome de cada página.
+- Tela de Atendimentos redesenhada: as visões "Em atendimento (ou Meus)", "Aguardando", "Pausados" e "Resolvidos" ficam em
+  uma só linha de abas com contadores, as filas viram chips, e cada atendimento é uma linha enxuta (nome e hora, última
+  mensagem, fila, etiquetas e atendente; as ações extras aparecem ao passar o mouse). Em telas de 1400 px ou mais, o painel
+  do cliente fica fixo à direita da conversa, com carteira, fila, atendente, cronômetro do SLA, etiquetas e notas.
 - O botão de recolher o menu fica dentro da barra lateral, ao lado da logo (ou logo abaixo dela, no modo só ícones), em
   vez de solto na barra do topo; o botão de hambúrguer da barra do topo só aparece no celular.
 - Menu lateral maior e mais legível: itens de 48 px, ícones de 26 px, texto de 15,5 px, títulos de seção de 12,5 px e

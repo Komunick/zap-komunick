@@ -161,6 +161,23 @@ const pt = {
     empty: "Nenhum contato encontrado.",
     column: "Carteira"
   },
+  customerPanel: {
+    title: "Painel do cliente",
+    wallet: "Carteira",
+    noWallet: "Sem responsável",
+    queue: "Fila",
+    noQueue: "Sem fila",
+    attendant: "Atendente",
+    noAttendant: "Sem atendente",
+    sla: "SLA",
+    waiting: "Aguardando há {{time}}",
+    limit: "Prazo de {{minutes}} min",
+    answered: "Respondido",
+    tags: "Etiquetas",
+    noTags: "Sem etiquetas",
+    notes: "Notas",
+    edit: "Editar contato"
+  },
   layoutMode: {
     title: "Layout",
     workspace: "Workspace",
@@ -208,6 +225,13 @@ const pt = {
     basedOnTicketz: "Baseado no Ticketz (código original)"
   },
   tickets: {
+    views: {
+      label: "Visões dos atendimentos",
+      mine: "Meus",
+      inService: "Em atendimento",
+      waiting: "Aguardando",
+      queues: "Fila:"
+    },
     tabs: {
       paused: { title: "Pausados" }
     },
@@ -468,6 +492,23 @@ const en = {
     empty: "No contacts found.",
     column: "Wallet"
   },
+  customerPanel: {
+    title: "Customer panel",
+    wallet: "Wallet",
+    noWallet: "No owner",
+    queue: "Queue",
+    noQueue: "No queue",
+    attendant: "Attendant",
+    noAttendant: "No attendant",
+    sla: "SLA",
+    waiting: "Waiting for {{time}}",
+    limit: "Deadline of {{minutes}} min",
+    answered: "Answered",
+    tags: "Tags",
+    noTags: "No tags",
+    notes: "Notes",
+    edit: "Edit contact"
+  },
   layoutMode: {
     title: "Layout",
     workspace: "Workspace",
@@ -515,6 +556,13 @@ const en = {
     basedOnTicketz: "Based on Ticketz (original code)"
   },
   tickets: {
+    views: {
+      label: "Ticket views",
+      mine: "Mine",
+      inService: "In service",
+      waiting: "Waiting",
+      queues: "Queue:"
+    },
     tabs: {
       paused: { title: "Paused" }
     },
@@ -777,6 +825,23 @@ const es = {
     empty: "No se encontraron contactos.",
     column: "Cartera"
   },
+  customerPanel: {
+    title: "Panel del cliente",
+    wallet: "Cartera",
+    noWallet: "Sin responsable",
+    queue: "Cola",
+    noQueue: "Sin cola",
+    attendant: "Atendente",
+    noAttendant: "Sin atendente",
+    sla: "SLA",
+    waiting: "Esperando hace {{time}}",
+    limit: "Plazo de {{minutes}} min",
+    answered: "Respondido",
+    tags: "Etiquetas",
+    noTags: "Sin etiquetas",
+    notes: "Notas",
+    edit: "Editar contacto"
+  },
   layoutMode: {
     title: "Diseño",
     workspace: "Workspace",
@@ -824,6 +889,13 @@ const es = {
     basedOnTicketz: "Basado en Ticketz (código original)"
   },
   tickets: {
+    views: {
+      label: "Vistas de atenciones",
+      mine: "Míos",
+      inService: "En atención",
+      waiting: "En espera",
+      queues: "Cola:"
+    },
     tabs: {
       paused: { title: "Pausados" }
     },

@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { useHistory } from "react-router-dom";
+import clsx from "clsx";
 
 import { alpha, makeStyles } from "@material-ui/core/styles";
 import Paper from "@material-ui/core/Paper";
@@ -7,10 +8,6 @@ import SearchIcon from "@material-ui/icons/Search";
 import InputBase from "@material-ui/core/InputBase";
 import Tabs from "@material-ui/core/Tabs";
 import Tab from "@material-ui/core/Tab";
-import Badge from "@material-ui/core/Badge";
-import MoveToInboxIcon from "@material-ui/icons/MoveToInbox";
-import CheckBoxIcon from "@material-ui/icons/CheckBox";
-import PauseCircleOutlineIcon from "@material-ui/icons/PauseCircleOutline";
 
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Switch from "@material-ui/core/Switch";
@@ -22,12 +19,9 @@ import TabPanel from "../TabPanel";
 import { i18n } from "../../translate/i18n";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { Can } from "../Can";
-import TicketsQueueSelect from "../TicketsQueueSelect";
 import { Box, Button } from "@material-ui/core";
 import { TagsFilter } from "../TagsFilter";
 import { UsersFilter } from "../UsersFilter";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPeopleGroup } from "@fortawesome/free-solid-svg-icons";
 import useSettings from "../../hooks/useSettings";
 import { ContactSelect } from "../ContactSelect";
 
@@ -91,6 +85,93 @@ const useStyles = makeStyles(theme => ({
     }
   },
 
+  // Zap Komunick: one row of views (Meus, Aguardando, Pausados, Resolvidos)
+  visions: {
+    flex: "none",
+    minHeight: 44,
+    padding: "0 8px",
+    borderBottom: `1px solid ${theme.palette.divider}`,
+    "& .MuiTab-root": {
+      minWidth: 0,
+      minHeight: 44,
+      padding: "6px 12px",
+      textTransform: "none",
+      fontWeight: 600,
+      fontSize: 14,
+      color: theme.palette.text.secondary
+    },
+    "& .Mui-selected": {
+      color: theme.palette.text.primary
+    },
+    "& .MuiTabs-indicator": {
+      height: 2,
+      backgroundColor: theme.komunick.accent
+    }
+  },
+  visionSearch: {
+    minWidth: 44,
+    marginLeft: "auto"
+  },
+  count: {
+    marginLeft: 6,
+    minWidth: 20,
+    padding: "1px 6px",
+    borderRadius: 10,
+    fontSize: 11,
+    fontWeight: 700,
+    lineHeight: "16px",
+    textAlign: "center",
+    color: theme.palette.text.secondary,
+    backgroundColor: theme.komunick.tagBackground
+  },
+  countHot: {
+    color: "#FFFFFF",
+    backgroundColor: theme.palette.primary.main
+  },
+  queueRow: {
+    flex: "none",
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    padding: "0 12px 8px",
+    overflowX: "auto",
+    "&::-webkit-scrollbar": { height: 0 }
+  },
+  queueLabel: {
+    fontSize: 12,
+    fontWeight: 600,
+    color: theme.palette.text.secondary,
+    marginRight: 2
+  },
+  queueChip: {
+    flex: "none",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    height: 26,
+    padding: "0 10px",
+    borderRadius: 13,
+    border: `1px solid ${theme.palette.divider}`,
+    backgroundColor: "transparent",
+    color: theme.palette.text.secondary,
+    fontFamily: "inherit",
+    fontSize: 12,
+    fontWeight: 600,
+    cursor: "pointer",
+    "&:hover": {
+      borderColor: theme.komunick.borderStrong
+    }
+  },
+  queueChipOn: {
+    color: theme.palette.text.primary,
+    borderColor: theme.komunick.accent,
+    backgroundColor: theme.komunick.selectedRow
+  },
+  queueDot: {
+    width: 8,
+    height: 8,
+    borderRadius: "50%"
+  },
   settingsIcon: {
     alignSelf: "center",
     marginLeft: "auto",
@@ -228,6 +309,37 @@ const TicketsManagerTabs = () => {
     setTab(newValue);
   };
 
+  const view = tab === "open" ? (tabOpen === "open" ? "mine" : "waiting") : tab;
+
+  const handleChangeView = (e, newValue) => {
+    if (newValue === "mine" || newValue === "waiting") {
+      setTab("open");
+      setTabOpen(newValue === "mine" ? "open" : "pending");
+      return;
+    }
+    handleChangeTab(e, newValue);
+  };
+
+  const toggleQueue = queueId => {
+    setSelectedQueueIds(current => {
+      if (current.includes(queueId)) {
+        return current.length > 1 ? current.filter(id => id !== queueId) : current;
+      }
+      return [...current, queueId];
+    });
+  };
+
+  const visionLabel = (text, count, hot) => (
+    <span>
+      {text}
+      {count !== undefined && count > 0 && (
+        <span className={clsx(classes.count, hot && classes.countHot)}>
+          {count > 999 ? "999+" : count}
+        </span>
+      )}
+    </span>
+  );
+
   const handleChangeTabOpen = (e, newValue) => {
     setTabOpen(newValue);
   };
@@ -263,66 +375,45 @@ const TicketsManagerTabs = () => {
           handleCloseOrOpenTicket(ticket);
         }}
       />
-      <Paper elevation={0} square className={classes.tabsHeader}>
-        <Tabs
-          value={tab}
-          onChange={handleChangeTab}
-          variant="fullWidth"
-          indicatorColor="primary"
-          textColor="primary"
-          aria-label="icon label tabs example"
-        >
-          <Tab
-            value={"open"}
-            icon={<MoveToInboxIcon />}
-            label={i18n.t("tickets.tabs.open.title")}
-            classes={{
-              root: showTabGroups ? classes.tabWithGroups : classes.tab
-            }}
-          />
-
-          <Tab
-            value={"paused"}
-            icon={<PauseCircleOutlineIcon />}
-            label={i18n.t("tickets.tabs.paused.title")}
-            classes={{
-              root: showTabGroups ? classes.tabWithGroups : classes.tab
-            }}
-          />
-
-          {showTabGroups && (
-            <Tab
-              value={"groups"}
-              icon={
-                <FontAwesomeIcon
-                  className={classes.icon24}
-                  icon={faPeopleGroup}
-                />
-              }
-              label={i18n.t("tickets.tabs.groups.title")}
-              classes={{ root: classes.tabWithGroups }}
-            />
+      <Tabs
+        value={view}
+        onChange={handleChangeView}
+        variant="scrollable"
+        scrollButtons="off"
+        indicatorColor="primary"
+        textColor="primary"
+        className={classes.visions}
+        aria-label={i18n.t("tickets.views.label")}
+      >
+        <Tab
+          value="mine"
+          label={visionLabel(
+            showAllTickets
+              ? i18n.t("tickets.views.inService")
+              : i18n.t("tickets.views.mine"),
+            openCount
           )}
-
-          <Tab
-            value={"closed"}
-            icon={<CheckBoxIcon />}
-            label={i18n.t("tickets.tabs.closed.title")}
-            classes={{
-              root: showTabGroups ? classes.tabWithGroups : classes.tab
-            }}
-          />
-
-          <Tab
-            value={"search"}
-            icon={<SearchIcon />}
-            label={i18n.t("tickets.tabs.search.title")}
-            classes={{
-              root: showTabGroups ? classes.tabWithGroups : classes.tab
-            }}
-          />
-        </Tabs>
-      </Paper>
+        />
+        <Tab
+          value="waiting"
+          label={visionLabel(
+            i18n.t("tickets.views.waiting"),
+            pendingCount,
+            true
+          )}
+        />
+        <Tab value="paused" label={i18n.t("tickets.tabs.paused.title")} />
+        {showTabGroups && (
+          <Tab value="groups" label={i18n.t("tickets.tabs.groups.title")} />
+        )}
+        <Tab value="closed" label={i18n.t("tickets.tabs.closed.title")} />
+        <Tab
+          value="search"
+          className={classes.visionSearch}
+          icon={<SearchIcon fontSize="small" />}
+          aria-label={i18n.t("tickets.tabs.search.title")}
+        />
+      </Tabs>
       <Paper square elevation={0} className={classes.ticketOptionsBox}>
         {tab === "search" ? (
           <div className={classes.serachInputWrapper}>
@@ -369,49 +460,31 @@ const TicketsManagerTabs = () => {
             )}
           </>
         )}
-        <TicketsQueueSelect
-          style={{ marginLeft: 6 }}
-          selectedQueueIds={selectedQueueIds}
-          userQueues={user?.queues}
-          onChange={values => setSelectedQueueIds(values)}
-        />
       </Paper>
+      {(user?.queues || []).length > 0 && (
+        <div className={classes.queueRow}>
+          <span className={classes.queueLabel}>{i18n.t("tickets.views.queues")}</span>
+          {(user?.queues || []).map(queue => (
+            <button
+              key={queue.id}
+              type="button"
+              aria-pressed={selectedQueueIds.includes(queue.id)}
+              className={clsx(
+                classes.queueChip,
+                selectedQueueIds.includes(queue.id) && classes.queueChipOn
+              )}
+              onClick={() => toggleQueue(queue.id)}
+            >
+              <span
+                className={classes.queueDot}
+                style={{ backgroundColor: queue.color || "#7C7C7C" }}
+              />
+              {queue.name}
+            </button>
+          ))}
+        </div>
+      )}
       <TabPanel value={tab} name="open" className={classes.ticketsWrapper}>
-        <Tabs
-          value={tabOpen}
-          onChange={handleChangeTabOpen}
-          indicatorColor="primary"
-          textColor="primary"
-          variant="fullWidth"
-          className={classes.statusTabs}
-        >
-          <Tab
-            label={
-              <Badge
-                className={classes.badge}
-                badgeContent={openCount}
-                color="primary"
-                max={999}
-              >
-                {i18n.t("ticketsList.assignedHeader")}
-              </Badge>
-            }
-            value={"open"}
-          />
-          <Tab
-            label={
-              <Badge
-                className={classes.badge}
-                badgeContent={pendingCount}
-                color="secondary"
-                max={999}
-              >
-                {i18n.t("ticketsList.pendingHeader")}
-              </Badge>
-            }
-            value={"pending"}
-          />
-        </Tabs>
         <Paper className={classes.ticketsWrapper}>
           <TicketsList
             status="open"
