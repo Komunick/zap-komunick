@@ -31,6 +31,8 @@ import DoneIcon from "@material-ui/icons/Done";
 import ClearOutlinedIcon from "@material-ui/icons/ClearOutlined";
 import { generateColor } from "../../helpers/colorGenerator";
 import { getInitials } from "../../helpers/getInitials";
+import { BulkSelectionContext } from "../TicketsBulk";
+import CheckIcon from "@material-ui/icons/Check";
 import pastRelativeDate from "../../helpers/pastRelativeDate";
 
 import {
@@ -333,6 +335,23 @@ const useStyles = makeStyles(theme => ({
       color: theme.palette.text.secondary
     }
   },
+  rowCheck: {
+    flex: "none",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 40,
+    height: 40,
+    marginTop: 2,
+    borderRadius: "50%",
+    border: `2px solid ${theme.komunick.borderStrong}`,
+    fontSize: 22,
+    color: "#FFFFFF"
+  },
+  rowChecked: {
+    borderColor: theme.komunick.accent,
+    backgroundColor: theme.komunick.accent
+  },
   rowAccept: {
     padding: 4,
     fontSize: 16,
@@ -359,6 +378,10 @@ const TicketListItemCustom = ({
   const { ticketId } = useParams();
   const isMounted = useRef(true);
   const { setCurrentTicket } = useContext(TicketsContext);
+  // Zap Komunick: bulk selection (RF-011)
+  const bulk = useContext(BulkSelectionContext);
+  const selecting = !!bulk?.selecting;
+  const checked = selecting && bulk.isSelected(ticket.id);
   const { user } = useContext(AuthContext);
   const { profile } = user;
 
@@ -417,7 +440,8 @@ const TicketListItemCustom = ({
   const showActions = groupActionButtons || !ticket.isGroup;
   const canAccept = ticket.status === "pending" && showActions;
   const canClose =
-    ["open", "pending"].includes(ticket.status) && (showActions || ticket.status === "open");
+    ["open", "pending"].includes(ticket.status) &&
+    (showActions || ticket.status === "open");
   const unread = Number(ticket.unreadMessages) || 0;
   const rowTags = (ticket.tags || []).slice(0, 2);
   const extraTags = Math.max(0, (ticket.tags || []).length - rowTags.length);
@@ -444,6 +468,10 @@ const TicketListItemCustom = ({
         dense
         button
         onClick={e => {
+          if (selecting) {
+            bulk.toggle(ticket.id);
+            return;
+          }
           if (
             (groupActionButtons || !ticket.isGroup) &&
             ticket.status === "pending"
@@ -451,21 +479,34 @@ const TicketListItemCustom = ({
             return;
           handleSelectTicket(ticket);
         }}
+        aria-pressed={selecting ? checked : undefined}
         // Zap Komunick: the route carries the uuid, so compare it too
         selected={
-          !!ticketId && (ticketId === ticket.uuid || +ticketId === ticket.id)
+          selecting
+            ? checked
+            : !!ticketId &&
+              (ticketId === ticket.uuid || +ticketId === ticket.id)
         }
         className={clsx(classes.ticket, classes.row, {
           [classes.pendingTicket]: ticket.status === "pending"
         })}
       >
-        <Avatar
-          className={classes.rowAvatar}
-          style={{ backgroundColor: generateColor(ticket?.contact?.number) }}
-          src={ticket?.contact?.profilePicUrl}
-        >
-          {getInitials(ticket?.contact?.name || "")}
-        </Avatar>
+        {selecting ? (
+          <span
+            className={clsx(classes.rowCheck, checked && classes.rowChecked)}
+            aria-hidden="true"
+          >
+            {checked && <CheckIcon fontSize="inherit" />}
+          </span>
+        ) : (
+          <Avatar
+            className={classes.rowAvatar}
+            style={{ backgroundColor: generateColor(ticket?.contact?.number) }}
+            src={ticket?.contact?.profilePicUrl}
+          >
+            {getInitials(ticket?.contact?.name || "")}
+          </Avatar>
+        )}
         <div className={classes.rowBody}>
           <div className={classes.rowTop}>
             <Typography noWrap component="span" className={classes.rowName}>
@@ -549,7 +590,7 @@ const TicketListItemCustom = ({
               </Tooltip>
             )}
             <span className={classes.rowSpacer} />
-            {canAccept && (
+            {canAccept && !selecting && (
               <Tooltip title="Aceitar Conversa">
                 <IconButton
                   size="small"
@@ -563,7 +604,10 @@ const TicketListItemCustom = ({
                 </IconButton>
               </Tooltip>
             )}
-            <span className={classes.rowActions}>
+            <span
+              className={classes.rowActions}
+              style={selecting ? { display: "none" } : undefined}
+            >
               {profile === "admin" && showActions && (
                 <Tooltip title="Espiar Conversa">
                   <IconButton

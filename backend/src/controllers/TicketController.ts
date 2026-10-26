@@ -9,6 +9,11 @@ import ListTicketsService from "../services/TicketServices/ListTicketsService";
 import ShowTicketUUIDService from "../services/TicketServices/ShowTicketFromUUIDService";
 import ShowTicketService from "../services/TicketServices/ShowTicketService";
 import UpdateTicketService from "../services/TicketServices/UpdateTicketService";
+import AppError from "../errors/AppError";
+import {
+  BULK_FROM_STATUSES,
+  parseBulkRequest
+} from "../helpers/BulkTicketActions";
 import ListTicketsServiceKanban from "../services/TicketServices/ListTicketsServiceKanban";
 
 type IndexQuery = {
@@ -220,6 +225,53 @@ export const update = async (
   });
 
   return res.status(200).json(ticket);
+};
+
+// Zap Komunick: accept, transfer or close many tickets at once (RF-011). Each
+// one goes through UpdateTicketService; a failure does not stop the others.
+export const bulk = async (req: Request, res: Response): Promise<Response> => {
+  const { companyId } = req.user;
+  const reqUserId = Number(req.user.id);
+
+  const parsed = parseBulkRequest(req.body, reqUserId);
+  if (parsed.error) {
+    throw new AppError(parsed.error, 400);
+  }
+
+  const tickets = await Ticket.findAll({
+    where: { id: parsed.ticketIds, companyId },
+    attributes: ["id", "status"]
+  });
+  const statusById = new Map(tickets.map(t => [t.id, t.status]));
+  const allowed = BULK_FROM_STATUSES[parsed.action];
+
+  const done: number[] = [];
+  const failed: { id: number; error: string }[] = [];
+
+  // eslint-disable-next-line no-restricted-syntax
+  for (const ticketId of parsed.ticketIds) {
+    const status = statusById.get(ticketId);
+    if (!status) {
+      failed.push({ id: ticketId, error: "ERR_NO_TICKET_FOUND" });
+    } else if (!allowed.includes(status)) {
+      failed.push({ id: ticketId, error: "ERR_BULK_WRONG_STATUS" });
+    } else {
+      try {
+        await updateMutex.runExclusive(() =>
+          UpdateTicketService({
+            ticketData: { ...parsed.data },
+            ticketId,
+            reqUserId
+          })
+        );
+        done.push(ticketId);
+      } catch (err) {
+        failed.push({ id: ticketId, error: err?.message || "ERR_UNKNOWN" });
+      }
+    }
+  }
+
+  return res.status(200).json({ done, failed });
 };
 
 export const remove = async (

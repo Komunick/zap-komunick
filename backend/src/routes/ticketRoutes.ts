@@ -24,6 +24,8 @@ ticketRoutes.get(
 
 ticketRoutes.post("/tickets", isAuth, isCompliant, TicketController.store);
 
+ticketRoutes.post("/tickets/bulk", isAuth, isCompliant, TicketController.bulk);
+
 ticketRoutes.put(
   "/tickets/:ticketId",
   isAuth,

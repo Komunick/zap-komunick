@@ -12,6 +12,7 @@ import Paper from "@material-ui/core/Paper";
 
 import TicketListItem from "../TicketListItemCustom";
 import TicketsListSkeleton from "../TicketsListSkeleton";
+import { BulkSelectionContext } from "../TicketsBulk";
 
 import useTickets from "../../hooks/useTickets";
 import { i18n } from "../../translate/i18n";
@@ -476,6 +477,15 @@ const TicketsListCustom = props => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticketsList]);
+
+  // Zap Komunick: tell the bulk selection what this list shows (RF-011)
+  const bulk = useContext(BulkSelectionContext);
+  const bulkKey = isSearch ? "search" : groups ? "groups" : status;
+  const bulkRegister = bulk?.register;
+  useEffect(() => {
+    if (bulkRegister) bulkRegister(bulkKey, ticketsList);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticketsList, bulkKey]);
 
   const loadMore = () => {
     const lastTicket = ticketsList[ticketsList.length - 1];

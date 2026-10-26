@@ -105,6 +105,11 @@ Stitch entra como tokens: `sidebar*` (menu preto, igual nos dois temas), `accent
   `POST /chats/direct` `{ userId }` acha ou cria a conversa entre o usuário logado e outro da mesma empresa
   (`FindOrCreateDirectService`; 400 para si mesmo ou sem `userId`, 404 para usuário de outra empresa); editar ou excluir
   uma conversa a dois responde 403 (`ERR_CHAT_DIRECT_READONLY`). A lista de conversas passa a vir por `updatedAt`.
+- `POST /tickets/bulk` `{ action: accept|transfer|close, ticketIds, queueId?, userId?, closeReasonId?, closeReasonNote? }`
+  (RF-011): `helpers/BulkTicketActions` valida e monta a alteração (até 100 ids, sem repetidos; aceitar só de
+  `pending`, transferir e finalizar de `open`/`pending`/`paused`); o controlador confere a empresa e a situação de cada
+  um e chama `UpdateTicketService` em sequência, sob o mesmo mutex do `PUT /tickets/:id`. Resposta `{ done, failed }`
+  com o erro de cada id que não passou; uma falha não interrompe os demais. Sem tabela nova.
 
 **Integridade:**
 - `unansweredSince` só muda com mensagem nova: `CreateMessageService` confere se a mensagem já existia antes do

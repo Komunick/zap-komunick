@@ -58,6 +58,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   `WAVOIP_ENABLED=true` no ambiente do frontend. Ligadas, o ícone do Wavoip fica em Conexões para cadastrar o token de
   cada conexão e o botão de ligar aparece no atendimento aberto de conexões com token; só em `https` ou `localhost` (o
   microfone exige). Sai o texto do cupom "TICKETZ" da janela do token.
+- Ações em lote nos atendimentos: botão "Selecionar" na lista, caixas de marcar, "Marcar todos" e as ações Aceitar,
+  Transferir (fila e, se quiser, atendente) e Finalizar (com motivo e observação). Até 100 por vez, pelas mesmas regras
+  do atendimento individual (`POST /tickets/bulk`); o que não puder ser alterado é informado à parte.
 - Chat interno reorganizado: ao abrir a tela já aparecem as conversas (grupos e a dois, a mais recente primeiro) e as
   pessoas da empresa, numa lista só com busca. Clicar numa pessoa abre (ou cria) a conversa a dois com ela; grupos
   ganham o botão "Novo grupo" e a edição e exclusão no cabeçalho da conversa. A lista se atualiza em tempo real e, no

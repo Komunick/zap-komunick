@@ -274,6 +274,28 @@ const pt = {
     basedOnTicketz: "Baseado no Ticketz (código original)"
   },
   tickets: {
+    bulk: {
+      select: "Selecionar",
+      selected: "{{count}} selecionado(s)",
+      all: "Marcar todos ({{count}})",
+      none: "Desmarcar",
+      accept: "Aceitar",
+      acceptSome: "Aceitar {{count}}",
+      transfer: "Transferir",
+      close: "Finalizar",
+      cancel: "Cancelar",
+      transferTitle: "Transferir atendimentos",
+      queue: "Fila",
+      user: "Atendente",
+      userHint: "Sem atendente, eles voltam para a fila, aguardando.",
+      noUser: "Sem atendente (aguardando)",
+      closeTitle: "Finalizar {{count}} atendimento(s)",
+      closeHint:
+        "O motivo e a observação valem para todos. Os clientes não recebem a pesquisa de avaliação.",
+      done: "{{count}} atendimento(s) atualizado(s).",
+      failed:
+        "{{count}} não puderam ser alterados (situação mudou ou sem permissão)."
+    },
     views: {
       label: "Visões dos atendimentos",
       mine: "Meus",
@@ -654,6 +676,28 @@ const en = {
     basedOnTicketz: "Based on Ticketz (original code)"
   },
   tickets: {
+    bulk: {
+      select: "Select",
+      selected: "{{count}} selected",
+      all: "Select all ({{count}})",
+      none: "Clear",
+      accept: "Accept",
+      acceptSome: "Accept {{count}}",
+      transfer: "Transfer",
+      close: "Close",
+      cancel: "Cancel",
+      transferTitle: "Transfer tickets",
+      queue: "Queue",
+      user: "Attendant",
+      userHint: "Without an attendant they go back to the queue, waiting.",
+      noUser: "No attendant (waiting)",
+      closeTitle: "Close {{count}} ticket(s)",
+      closeHint:
+        "The reason and note apply to all of them. Clients do not get the rating survey.",
+      done: "{{count}} ticket(s) updated.",
+      failed:
+        "{{count}} could not be changed (status changed or no permission)."
+    },
     views: {
       label: "Ticket views",
       mine: "Mine",
@@ -1036,6 +1080,28 @@ const es = {
     basedOnTicketz: "Basado en Ticketz (código original)"
   },
   tickets: {
+    bulk: {
+      select: "Seleccionar",
+      selected: "{{count}} seleccionado(s)",
+      all: "Marcar todos ({{count}})",
+      none: "Desmarcar",
+      accept: "Aceptar",
+      acceptSome: "Aceptar {{count}}",
+      transfer: "Transferir",
+      close: "Finalizar",
+      cancel: "Cancelar",
+      transferTitle: "Transferir atenciones",
+      queue: "Cola",
+      user: "Atendente",
+      userHint: "Sin atendente, vuelven a la cola, esperando.",
+      noUser: "Sin atendente (esperando)",
+      closeTitle: "Finalizar {{count}} atención(es)",
+      closeHint:
+        "El motivo y la observación valen para todas. Los clientes no reciben la encuesta de evaluación.",
+      done: "{{count}} atención(es) actualizada(s).",
+      failed:
+        "{{count}} no se pudieron cambiar (la situación cambió o sin permiso)."
+    },
     views: {
       label: "Vistas de atenciones",
       mine: "Míos",
