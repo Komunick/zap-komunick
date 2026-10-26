@@ -339,8 +339,9 @@ responsável: lista de países (`cdn.jsdelivr.net`), fontes do Google e a consul
 (`waversion.ticke.tz`, no backend, ao iniciar cada sessão). A tela "Sobre" mantém o crédito ao Ticketz e o link do código
 (licença AGPL-3.0).
 
-**Ligações (opcional):** fazer ligação de voz pelo WhatsApp usa o Wavoip, serviço de terceiros (`wavoip.com`), com um token
-por conexão cadastrado em Conexões. Sem token a função não aparece e nada é enviado ao Wavoip. Ligações recebidas seguem
+**Ligações (opcional, desligadas):** fazer ligação de voz pelo WhatsApp usa o Wavoip, serviço de terceiros
+(`wavoip.com`), com um token por conexão cadastrado em Conexões. A Komunick decidiu não usar por enquanto: a função só
+aparece com `WAVOIP_ENABLED=true` no frontend, e sem token nada é enviado ao Wavoip. Ligações recebidas seguem
 só com a mensagem automática e o registro de chamada perdida.
 
 **Limites reais:** licença AGPL-3.0 (RF-001). O Ticketz PRO é fechado e não pode ter código copiado para cá.

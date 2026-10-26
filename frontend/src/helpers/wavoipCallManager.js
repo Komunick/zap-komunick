@@ -1,5 +1,6 @@
 import { CallingSound } from "./callingSound";
 import WavoipInstance from "wavoip-api";
+import config from "../services/config";
 
 function initializeWavoipCallManager() {
   window.wavoipCallingSound = window.wavoipCallingSound || new CallingSound();
@@ -68,9 +69,13 @@ export async function wavoipCall(ticket, disconnect) {
   return wavoipInstance;
 }
 
-// Zap Komunick: calls need the microphone, which browsers only allow on https
-// or localhost
+// Zap Komunick: Wavoip is a third-party service, off unless the installation
+// sets WAVOIP_ENABLED=true in the frontend environment (config.json). Calls
+// also need the microphone, which browsers only allow on https or localhost.
 export function wavoipAvailable() {
+  if (String(config.WAVOIP_ENABLED).toLowerCase() !== "true") {
+    return false;
+  }
   return (
     window.location.protocol === "https:" ||
     window.location.hostname === "localhost"

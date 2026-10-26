@@ -54,9 +54,10 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   vez de solto na barra do topo; o botão de hambúrguer da barra do topo só aparece no celular.
 - Menu lateral maior e mais legível: itens de 48 px, ícones de 26 px, texto de 15,5 px, títulos de seção de 12,5 px e
   largura de 264 px (72 px só com ícones).
-- Ligações de voz pelo WhatsApp com o Wavoip (serviço de terceiros, escolha do responsável): o ícone do Wavoip volta à
-  tela de Conexões para cadastrar o token de cada conexão, e o botão de ligar aparece no atendimento aberto de conexões
-  com token. Só funciona em `https` ou `localhost` (o microfone exige). Sai o texto do cupom "TICKETZ" da janela do token.
+- Ligações de voz pelo WhatsApp com o Wavoip (serviço de terceiros), desligadas por padrão: só aparecem com
+  `WAVOIP_ENABLED=true` no ambiente do frontend. Ligadas, o ícone do Wavoip fica em Conexões para cadastrar o token de
+  cada conexão e o botão de ligar aparece no atendimento aberto de conexões com token; só em `https` ou `localhost` (o
+  microfone exige). Sai o texto do cupom "TICKETZ" da janela do token.
 - Chat interno reorganizado: ao abrir a tela já aparecem as conversas (grupos e a dois, a mais recente primeiro) e as
   pessoas da empresa, numa lista só com busca. Clicar numa pessoa abre (ou cria) a conversa a dois com ela; grupos
   ganham o botão "Novo grupo" e a edição e exclusão no cabeçalho da conversa. A lista se atualiza em tempo real e, no
