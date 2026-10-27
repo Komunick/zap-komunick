@@ -2,9 +2,12 @@
 // validation fails. Keep those events out of remote error telemetry entirely.
 export const isCredentialRequest = (url?: string): boolean => {
   if (!url) return false;
-  let decoded = url;
+  // Express decodes route parameters independently of the query string. A bad
+  // query escape must not hide a valid, encoded credential path from this guard.
+  const path = url.split(/[?#]/, 1)[0];
+  let decoded = path;
   try {
-    decoded = decodeURIComponent(url);
+    decoded = decodeURIComponent(path);
   } catch {
     // A malformed URL should not prevent the application from handling errors.
   }

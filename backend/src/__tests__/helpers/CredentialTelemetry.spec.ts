@@ -11,6 +11,8 @@ describe("credential request telemetry", () => {
     "/settings/sciPartnerToken",
     "/settings/sciClientToken",
     "/settings/%6fpenAiKey",
+    "/settings/%6fpenAiKey?bad=%XX",
+    "/settings/%6fpenAiKey#bad=%XX",
     "/Credentials/openAiKey",
     "/SeTtInGs/openAiKey"
   ])("excludes requests that could contain a credential: %s", url => {

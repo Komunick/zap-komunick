@@ -17,7 +17,8 @@ describe("credential request errors before generic telemetry/logging", () => {
   it.each([
     "/credentials/openAiKey",
     "/Credentials/openAiKey",
-    "/settings/openAiKey"
+    "/settings/openAiKey",
+    "/settings/%6fpenAiKey?bad=%XX"
   ])("never logs the parser's original body or message: %s", url => {
     const err = Object.assign(new SyntaxError(`Invalid token: ${canary}`), {
       body: `{invalid:${canary}}`,
