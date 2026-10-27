@@ -30,7 +30,7 @@ etiquetas (RF-004), horário de acesso por usuário (RF-005), agendamento recorr
 de finalização (RF-007), agendamento para vários contatos com anexo e dia útil (RF-008) e a identidade visual da
 Komunick (RF-009) o chat interno com conversas e contatos (RF-010) , as
 ações em lote nos atendimentos (RF-011), os filtros completos da lista (RF-012), os usuários online (RF-013), a carteira em lote (RF-014), o painel de métricas
-(RF-015) e o histórico completo com contexto na transferência (RF-017), sobre o Ticketz como ele é hoje (filas, chatbot, etiquetas, agendamentos, perfis admin e usuário).
+(RF-015) o histórico completo com contexto na transferência (RF-017) e os clientes da agenda (RF-018), sobre o Ticketz como ele é hoje (filas, chatbot, etiquetas, agendamentos, perfis admin e usuário).
 A segunda entrega saiu da comparação com o ZapContábil feita em 21/10/2026 numa conta de cliente, só olhando, sem mudar
 nada nela.
 
@@ -451,6 +451,28 @@ Dado um cliente que pediu a folha de setembro no DP semana passada (atendimento 
 quando ele volta a escrever pedindo a guia do DAS e o atendente do DP transfere para o Fiscal com a nota "quer a guia
 do DAS de outubro; CNPJ conferido",
 então o Fiscal vê a nota destacada na conversa e as mensagens de hoje, e o cliente não recebe nenhum aviso.
+
+### RF-018 — Clientes aparecem antes de escrever
+
+**Problema relatado (27/10/2026):** "clientes não aparecem enquanto não manter contato" — em Contatos, para iniciar
+conversa e na lista de atendimentos. Causa: os contatos da agenda do WhatsApp ficavam só numa tabela interna do Baileys;
+um cliente só entrava em Contatos quando mandava mensagem ou pela importação manual.
+
+- A agenda do WhatsApp conectado entra em Contatos sozinha, sempre que o WhatsApp sincroniza os contatos (ao conectar
+  e quando a agenda muda). Só entram números que ainda não existem; o nome cadastrado pela equipe nunca é trocado.
+  Grupos, listas de transmissão, canais e IDs sem número ficam de fora. Configuração "Agenda do WhatsApp em Contatos"
+  (Configurações › SLA e carteira de clientes), ligada por padrão.
+- A paleta (Ctrl K) ganha o grupo "Clientes": escolher um cliente abre a janela de nova conversa já com ele, inclusive
+  quem nunca escreveu ou só tem atendimentos resolvidos.
+- A busca de Atendimentos mostra, acima dos resultados, os clientes encontrados pelo nome ou número com o botão
+  "Conversar". Conversas resolvidas continuam aparecendo na busca e reabrem pelo botão da conversa, agora com o histórico
+  completo (RF-017).
+
+**Cenário de sucesso:**
+
+Dado um escritório que conecta o WhatsApp com 300 clientes na agenda,
+quando a atendente procura "Padaria" na paleta,
+então encontra a Padaria Avenida mesmo que ela nunca tenha escrito e abre a conversa com um clique.
 
 ## 4. Restrições e cuidados
 

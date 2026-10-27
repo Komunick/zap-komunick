@@ -394,6 +394,16 @@ const pt = {
     transferFromTo: "{{from}} → {{to}}",
     internalOnly: "visível só para a equipe"
   },
+  clients: {
+    title: "Clientes",
+    talk: "Conversar",
+    talkTo: "{{number}} · abrir conversa",
+    syncSetting: "Agenda do WhatsApp em Contatos",
+    syncEnabled: "Importar automaticamente",
+    syncDisabled: "Não importar",
+    syncHelper:
+      "Os contatos da agenda do WhatsApp conectado entram em Contatos, sem trocar nomes já cadastrados."
+  },
   about: {
     licensesourcecode: "Código-fonte desta versão",
     basedOnTicketz: "Baseado no Ticketz (código original)"
@@ -939,6 +949,16 @@ const en = {
     transferNote: "Transfer note",
     transferFromTo: "{{from}} → {{to}}",
     internalOnly: "visible to the team only"
+  },
+  clients: {
+    title: "Clients",
+    talk: "Talk",
+    talkTo: "{{number}} · open conversation",
+    syncSetting: "WhatsApp address book in Contacts",
+    syncEnabled: "Import automatically",
+    syncDisabled: "Do not import",
+    syncHelper:
+      "Contacts of the connected WhatsApp address book are added to Contacts, without renaming existing ones."
   },
   about: {
     licensesourcecode: "Source code of this version",
@@ -1486,6 +1506,16 @@ const es = {
     transferNote: "Nota de transferencia",
     transferFromTo: "{{from}} → {{to}}",
     internalOnly: "visible solo para el equipo"
+  },
+  clients: {
+    title: "Clientes",
+    talk: "Conversar",
+    talkTo: "{{number}} · abrir conversación",
+    syncSetting: "Agenda de WhatsApp en Contactos",
+    syncEnabled: "Importar automáticamente",
+    syncDisabled: "No importar",
+    syncHelper:
+      "Los contactos de la agenda del WhatsApp conectado entran en Contactos, sin cambiar nombres ya registrados."
   },
   about: {
     licensesourcecode: "Código fuente de esta versión",
