@@ -44,7 +44,7 @@ export const buildNavItems = isAdmin => {
           { id: "settings", to: "/settings", label: t("settings") }
         ]
       : []),
-    { id: "tasks", to: "/todolist", label: t("tasks") },
+    // Zap Komunick: "Tarefas" hidden (27/10/2026); /todolist still works
     { id: "helps", to: "/helps", label: t("helps") }
   ];
 

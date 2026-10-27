@@ -145,13 +145,29 @@ const pt = {
   },
   tagModal: {
     form: {
-      kanban: "Usar como coluna do Kanban"
+      kanban: "Usar como coluna do Kanban",
+      queuesHelp:
+        "Sem setor, a etiqueta vale para todos. Com setores, só eles a veem e usam."
     }
   },
   tags: {
     table: {
-      kanban: "Kanban"
+      kanban: "Kanban",
+      queues: "Setores",
+      allQueues: "Todos os setores"
     }
+  },
+  tagPicker: {
+    action: "Etiquetar",
+    title: "Etiquetas",
+    empty: "Nenhuma etiqueta para este setor."
+  },
+  contactFilters: {
+    tags: "Etiquetas",
+    wallet: "Carteira",
+    all: "Todos",
+    mine: "Minha carteira",
+    none: "Sem responsável"
   },
   wallet: {
     owner: "Responsável (carteira)",
@@ -429,6 +445,10 @@ const pt = {
       apply: "Aplicar"
     },
     bulk: {
+      tag: "Etiquetar",
+      tagTitle: "Etiquetar {{count}} atendimento(s)",
+      tagHelp: "As etiquetas escolhidas se somam às que o atendimento já tem.",
+      tagConfirm: "Aplicar etiquetas",
       select: "Selecionar",
       selected: "{{count}} selecionado(s)",
       all: "Marcar todos ({{count}})",
@@ -533,6 +553,8 @@ const pt = {
     businessDaysTooltip: "Só em dia útil"
   },
   backendErrors: {
+    ERR_BULK_NO_TAGS: "Escolha ao menos uma etiqueta (no máximo 20).",
+    ERR_INVALID_TAG_FILTER: "Filtro de etiquetas inválido.",
     ERR_TICKET_PAUSE_NOT_OPEN: "Só dá para pausar um atendimento em andamento.",
     ERR_CLOSE_REASON_REQUIRED: "Escolha o motivo para finalizar o atendimento.",
     ERR_CLOSE_REASON_NOT_FOUND:
@@ -701,13 +723,29 @@ const en = {
   },
   tagModal: {
     form: {
-      kanban: "Use as a Kanban column"
+      kanban: "Use as a Kanban column",
+      queuesHelp:
+        "Without sectors the tag is for everyone. With sectors, only they see and use it."
     }
   },
   tags: {
     table: {
-      kanban: "Kanban"
+      kanban: "Kanban",
+      queues: "Sectors",
+      allQueues: "All sectors"
     }
+  },
+  tagPicker: {
+    action: "Tag",
+    title: "Tags",
+    empty: "No tags for this sector."
+  },
+  contactFilters: {
+    tags: "Tags",
+    wallet: "Wallet",
+    all: "All",
+    mine: "My wallet",
+    none: "No owner"
   },
   wallet: {
     owner: "Owner (wallet)",
@@ -985,6 +1023,10 @@ const en = {
       apply: "Apply"
     },
     bulk: {
+      tag: "Tag",
+      tagTitle: "Tag {{count}} ticket(s)",
+      tagHelp: "The chosen tags are added to the ones the ticket already has.",
+      tagConfirm: "Apply tags",
       select: "Select",
       selected: "{{count}} selected",
       all: "Select all ({{count}})",
@@ -1090,6 +1132,8 @@ const en = {
     businessDaysTooltip: "Business days only"
   },
   backendErrors: {
+    ERR_BULK_NO_TAGS: "Pick at least one tag (20 at most).",
+    ERR_INVALID_TAG_FILTER: "Invalid tag filter.",
     ERR_TICKET_PAUSE_NOT_OPEN: "Only an ongoing ticket can be paused.",
     ERR_CLOSE_REASON_REQUIRED: "Choose a reason to close the ticket.",
     ERR_CLOSE_REASON_NOT_FOUND: "Close reason not found or inactive.",
@@ -1259,13 +1303,29 @@ const es = {
   },
   tagModal: {
     form: {
-      kanban: "Usar como columna del Kanban"
+      kanban: "Usar como columna del Kanban",
+      queuesHelp:
+        "Sin sector, la etiqueta vale para todos. Con sectores, solo ellos la ven y la usan."
     }
   },
   tags: {
     table: {
-      kanban: "Kanban"
+      kanban: "Kanban",
+      queues: "Sectores",
+      allQueues: "Todos los sectores"
     }
+  },
+  tagPicker: {
+    action: "Etiquetar",
+    title: "Etiquetas",
+    empty: "Ninguna etiqueta para este sector."
+  },
+  contactFilters: {
+    tags: "Etiquetas",
+    wallet: "Cartera",
+    all: "Todos",
+    mine: "Mi cartera",
+    none: "Sin responsable"
   },
   wallet: {
     owner: "Responsable (cartera)",
@@ -1542,6 +1602,11 @@ const es = {
       apply: "Aplicar"
     },
     bulk: {
+      tag: "Etiquetar",
+      tagTitle: "Etiquetar {{count}} atención(es)",
+      tagHelp:
+        "Las etiquetas elegidas se suman a las que la atención ya tiene.",
+      tagConfirm: "Aplicar etiquetas",
       select: "Seleccionar",
       selected: "{{count}} seleccionado(s)",
       all: "Marcar todos ({{count}})",
@@ -1646,6 +1711,8 @@ const es = {
     businessDaysTooltip: "Solo en día hábil"
   },
   backendErrors: {
+    ERR_BULK_NO_TAGS: "Elija al menos una etiqueta (máximo 20).",
+    ERR_INVALID_TAG_FILTER: "Filtro de etiquetas no válido.",
     ERR_TICKET_PAUSE_NOT_OPEN: "Solo se puede pausar una atención en curso.",
     ERR_CLOSE_REASON_REQUIRED: "Elija el motivo para cerrar la atención.",
     ERR_CLOSE_REASON_NOT_FOUND: "Motivo de cierre no encontrado o inactivo.",

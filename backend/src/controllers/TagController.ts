@@ -10,6 +10,39 @@ import ShowService from "../services/TagServices/ShowService";
 import DeleteService from "../services/TagServices/DeleteService";
 import SimpleListService from "../services/TagServices/SimpleListService";
 import SyncTagService from "../services/TagServices/SyncTagsService";
+import Queue from "../models/Queue";
+import User from "../models/User";
+import { isTagVisible, normalizeQueueIds } from "../helpers/TagScope";
+
+// Zap Komunick: sectors of a tag, only queues of this company (RF-019)
+const companyQueueIds = async (
+  companyId: number,
+  raw: unknown
+): Promise<number[] | null | undefined> => {
+  if (raw === undefined) return undefined;
+  const ids = normalizeQueueIds(raw);
+  if (!ids) return null;
+  const queues = await Queue.findAll({
+    where: { id: ids, companyId },
+    attributes: ["id"]
+  });
+  const valid = queues.map(q => q.id);
+  return valid.length ? valid : null;
+};
+
+// who is looking at the tags: their sectors, and the ticket's sector when
+// tagging a ticket
+const tagViewer = async (req: Request) => {
+  const user = await User.findByPk(req.user.id, { include: ["queues"] });
+  return {
+    isAdmin: req.user.profile === "admin",
+    queueIds: (user?.queues || []).map(q => q.id),
+    ticketQueueId:
+      req.query.queueId === undefined
+        ? undefined
+        : Number(req.query.queueId) || null
+  };
+};
 
 type IndexQuery = {
   searchParam?: string;
@@ -21,15 +54,17 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
   const { pageNumber, searchParam } = req.query as IndexQuery;
   const { companyId } = req.user;
 
-  console.log(searchParam);
-
-  const { tags, count, hasMore } = await ListService({
+  const { tags, hasMore } = await ListService({
     searchParam,
     pageNumber,
     companyId
   });
 
-  return res.json({ tags, count, hasMore });
+  // Zap Komunick: each sector sees its own tags and the global ones (RF-019)
+  const viewer = { ...(await tagViewer(req)), ticketQueueId: undefined };
+  const visible = tags.filter(tag => isTagVisible(tag, viewer));
+
+  return res.json({ tags: visible, count: visible.length, hasMore });
 };
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
@@ -40,6 +75,7 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     name,
     color,
     kanban: kanban || null,
+    queueIds: await companyQueueIds(companyId, req.body.queueIds),
     companyId
   });
 
@@ -70,7 +106,10 @@ export const update = async (
 
   const { tagId } = req.params;
   const { companyId } = req.user;
-  const tagData = req.body;
+  const tagData = {
+    ...req.body,
+    queueIds: await companyQueueIds(companyId, req.body.queueIds)
+  };
 
   const tag = await UpdateService({ tagData, id: Number(tagId), companyId });
 
@@ -105,10 +144,13 @@ export const list = async (req: Request, res: Response): Promise<Response> => {
   const { searchParam } = req.query as IndexQuery;
   const { companyId } = req.user;
 
-  // console.log(searchParam);
   const tags = await SimpleListService({ searchParam, companyId });
 
-  return res.json(tags);
+  // Zap Komunick: only the tags of the user's sectors, or of the ticket's
+  // sector when tagging a ticket (RF-019)
+  const viewer = await tagViewer(req);
+
+  return res.json(tags.filter(tag => isTagVisible(tag, viewer)));
 };
 
 export const syncTags = async (

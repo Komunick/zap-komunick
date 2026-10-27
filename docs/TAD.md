@@ -1,6 +1,6 @@
 # TAD — Zap Komunick
 
-**Komunick Inteligência e Tecnologia** · **Atualizado em:** 21/10/2026
+**Komunick Inteligência e Tecnologia** · **Atualizado em:** 27/10/2026
 **Fonte oficial:** `docs/TAD.md` no repositório · **Comportamento:** `docs/PRD.md`
 
 Levantamento parcial: este documento cobre o que o fork acrescenta ao Ticketz. O restante do sistema segue o desenho do
@@ -24,6 +24,8 @@ do upstream para facilitar a mesclagem de novas versões.
   caminho do anexo): mais regras puras.
 - `backend/src/services/CloseReasonServices` (cadastro e relatório dos motivos) e
   `ScheduleServices/CreateService.ts` (`CreateSchedulesService`, um agendamento por destinatário numa transação).
+- `backend/src/helpers/TagScope.ts`: normalização de setores, visibilidade das etiquetas e seleção de ids da mesma
+  empresa; `TagServices/SyncTagsService` mantém a associação no atendimento ou contato conforme `tagsMode` (RF-019).
 - Rotas novas: `GET /sla` (admin), `GET /kanban`, `PUT /kanban/tickets/:ticketId`, `PUT /contacts/:contactId/wallet`
   (admin), `GET /close-reasons` (qualquer usuário: os ativos; `?all=true` para admin), `POST`, `PUT` e `DELETE
   /close-reasons/:closeReasonId` e `GET /close-reasons/report` (admin), `POST /schedules/media` (envio do anexo).
@@ -105,11 +107,15 @@ Stitch entra como tokens: `sidebar*` (menu preto, igual nos dois temas), `accent
   `POST /chats/direct` `{ userId }` acha ou cria a conversa entre o usuário logado e outro da mesma empresa
   (`FindOrCreateDirectService`; 400 para si mesmo ou sem `userId`, 404 para usuário de outra empresa); editar ou excluir
   uma conversa a dois responde 403 (`ERR_CHAT_DIRECT_READONLY`). A lista de conversas passa a vir por `updatedAt`.
-- `POST /tickets/bulk` `{ action: accept|transfer|close, ticketIds, queueId?, userId?, closeReasonId?, closeReasonNote? }`
+- `POST /tickets/bulk` `{ action: accept|transfer|close|tag, ticketIds, queueId?, userId?, closeReasonId?, closeReasonNote?, tagIds? }`
   (RF-011): `helpers/BulkTicketActions` valida e monta a alteração (até 100 ids, sem repetidos; aceitar só de
   `pending`, transferir e finalizar de `open`/`pending`/`paused`); o controlador confere a empresa e a situação de cada
   um e chama `UpdateTicketService` em sequência, sob o mesmo mutex do `PUT /tickets/:id`. Resposta `{ done, failed }`
   com o erro de cada id que não passou; uma falha não interrompe os demais. Sem tabela nova.
+  A ação `tag` (RF-019) recebe de 1 a 20 ids de etiquetas e aceita também `closed` pela API (a aba Resolvidos continua
+  sem seleção em lote); adiciona às associações atuais, sem duplicar, e usa `SyncTagsService`. Cada atendimento recebe
+  somente etiquetas compatíveis com seu setor; sem nenhuma compatível, vai para `failed`. Em `tagsMode=contact`,
+  altera `ContactTags`; em `ticket` ou `both`, altera `TicketTags`, preservando a semântica da sincronização da conversa.
 - `GET /tickets` ganha os filtros do painel (RF-012): `whatsappIds`, `userIds`, `filterTags` (listas JSON, até 50),
   `createdFrom`/`createdTo` (`AAAA-MM-DD`, dia inteiro no fuso do backend), `unread`, `slaBreached`, `wallet`
   (`mine`|`none`). `helpers/TicketFilters` valida (400 com `ERR_FILTER_*`) e monta as condições somadas com `AND` às da
@@ -133,12 +139,26 @@ Stitch entra como tokens: `sidebar*` (menu preto, igual nos dois temas), `accent
   `Tickets` (sem grupos; fila do atendimento), contando abertos por `createdAt`, finalizados por `finishedAt`, espera e
   "no prazo" por `startedAt` (`waitTime` até `slaMinutes`), dias e horas no fuso `TZ` do backend; novos contatos em
   `Contacts` e notas em `UserRatings`. Sem tabela nova.
+- `Tags.queueIds` (JSONB, nulo; migração `20261027130000-add-queue-ids-to-tags`): ids dos setores em que a etiqueta é
+  oferecida; `null` ou lista vazia significa todos os setores. `TagController` valida os ids contra `Queues.companyId`
+  antes de criar ou editar. `GET /tags` e `GET /tags/list` usam `TagScope.isTagVisible`: gerais e setores do usuário,
+  ou todas para administrador; `GET /tags/list?queueId=<id>` restringe às gerais e ao setor da conversa. `queueId=0`
+  representa uma conversa sem setor e oferece somente etiquetas gerais; a ausência do parâmetro mantém a listagem
+  conforme os setores do usuário.
+- `GET /contacts?tagIds=[1,2]` (RF-019): lista JSON com até 20 ids inteiros positivos, combinada com busca e carteira.
+  `ListContactsService` seleciona contatos com qualquer etiqueta em `ContactTags` ou em `TicketTags` de algum
+  atendimento, sem restrição de status, mantendo o filtro de empresa da listagem. O filtro vazio não restringe.
+  A contagem usa contatos distintos para que a associação com várias etiquetas não gere páginas extras.
 
 **Integridade:**
 - `unansweredSince` só muda com mensagem nova: `CreateMessageService` confere se a mensagem já existia antes do
   `upsert`, então edições e reações de mensagens antigas não reiniciam a espera.
 - O responsável da carteira é validado na mesma empresa e só pela rota de administrador; a edição comum de contato não
   grava `walletUserId`.
+- `SyncTagsService` busca atendimento e contato com `companyId` e só associa etiquetas da mesma empresa; ids enviados
+  pelo cliente não podem ligar entidades de empresas diferentes. A mesma proteção vale na ação de etiquetar em lote.
+  Novas associações respeitam o setor da conversa; etiquetas antigas de outro setor permanecem se vierem no pedido,
+  permitindo preservar o contexto após uma transferência sem impedir sua remoção explícita.
 - Kanban mexe só em etiquetas com `kanban = 1`; o atendente sem perfil admin só move o que vê.
 - A série recorrente guarda a âncora para não acumular desvio de datas; editar só o texto preserva a âncora.
 - O motivo de finalização é conferido na empresa e entre os ativos no servidor, com ou sem exigência; ids inválidos
@@ -155,10 +175,21 @@ instalação existente mantém o comportamento até o gestor ativar. As rotas e 
 ## 3. Telas, acesso e cuidados
 
 **Telas e navegação:** menu "Kanban" (atendimento), "Painel de SLA" (gerência, só admin) e "Motivos de finalização"
-(administração); coluna e chave de Kanban em Etiquetas; responsável e filtro "Minha carteira" em Contatos; horário de
+(administração); coluna e chave de Kanban em Etiquetas; responsável e filtros de carteira e etiquetas em Contatos; horário de
 acesso no formulário do usuário; "Repetir", contatos, etiqueta, anexo e "Enviar só em dia útil" no agendamento; grupo
 "SLA e carteira de clientes" e "Exigir motivo ao finalizar" em Configurações; aba "Pausados" e botões Transferir,
 Pausar, Retomar e Finalizar no atendimento.
+
+**Etiquetas por setor (RF-019):** `TagModal` usa `QueueSelect` com seleção múltipla e texto explicando que a seleção
+vazia vale para todos os setores; `pages/Tags` mostra a coluna "Setores". `components/TagPicker` reúne
+`useSectorTags`, `TagChecklist` e `TagPickerPopover`: a linha do atendimento abre o popover e salva por
+`POST /tags/sync`; `TagsContainer` recebe o setor da conversa, inclusive quando as etiquetas ficam no contato.
+`TicketsBulk` reutiliza a lista na janela de aplicação em lote. Em Contatos, `tagIds` combina com
+`walletUserId=me|none`; "Sem responsável" aparece para administradores. Textos ficam em
+`translate/languages/komunick.js`.
+
+**Tarefas (RF-009):** o item é omitido de `layout/MainListItems.js` e `layout/navItems.js`, cobrindo menu lateral,
+abas e paleta Ctrl K. A rota `/todolist` e sua página continuam registradas.
 
 **Interação:** o Kanban tem, além do arrastar, o menu "Mover para" em cada cartão (teclado e leitores de tela); o
 movimento aparece na hora e volta atrás se o servidor recusar. O painel de SLA avisa quando o prazo não foi definido e
@@ -177,7 +208,12 @@ de pausa ficam no `UpdateTicketService`, não só na tela.
 - Regras puras com Jest em `backend/src/__tests__/helpers/` (sem banco): limites do SLA, agregação do painel,
   carteira, Kanban, horário de acesso (inclusive virada da meia-noite), datas da série (fim de mês, bissexto, atrasos,
   data final), pausa e motivo, feriados e dia útil (Páscoa, Carnaval, Corpus Christi, Consciência Negra a partir de
-  2024) e destinatários e caminho do anexo do agendamento.
+  2024), destinatários e caminho do anexo do agendamento, normalização e visibilidade de etiquetas por setor e
+  validação da ação de etiquetar em lote.
+- Etiquetas por setor: exercitar cadastro e edição de setores, seletores da conversa e da linha, aplicação em lote
+  com preservação das associações, filtro de contatos por etiqueta em contato e atendimento, combinação com carteira
+  e isolamento por empresa. Incluir conversa sem setor, etiquetas anteriores após transferência e lote com setores
+  diferentes. Usar somente dados fictícios; os resultados de API e de tela ficam no PR.
 - Rotas e permissões exercitadas contra o ambiente de desenvolvimento (Postgres real) por chamadas HTTP; serviços que
   dependem de eventos do WhatsApp (`CreateMessageService`, `FindOrCreateTicketService`, `CreateNextOccurrenceService`)
   chamados direto dentro do contêiner do backend. Esses roteiros não estão no repositório; o resultado fica no PR.
@@ -225,10 +261,16 @@ desconhecido) reconecta com espera crescente de 2 s até 5 min, com até 20% de 
 Cada queda fica no log como `Socket <nome> closed: <motivo> -> <ação>`. Antes, toda queda que não fosse 401
 reconectava em 2 s fixos, inclusive 440, e o 403 apagava a sessão e ainda tentava reconectar.
 
-**Recuperação:** as migrações têm `down`; nenhuma apaga dados existentes (o `down` da `20261021130000` apaga os
-motivos cadastrados). Desligar `slaMinutes`, `walletAutoAssign` e `closeReasonRequired` devolve o comportamento original
+**Recuperação:** as migrações de avanço não removem dados existentes. As migrações têm `down`, mas a reversão pode
+perder dados (o `down` da `20261021130000` apaga os motivos cadastrados). Desligar `slaMinutes`, `walletAutoAssign` e
+`closeReasonRequired` devolve o comportamento original
 sem migração reversa. Antes de voltar a uma versão sem o status `paused`, retomar ou finalizar os atendimentos
 pausados: o Ticketz original não mostra esse status em nenhuma aba.
+
+Para voltar à aplicação sem etiquetas por setor, manter `Tags.queueIds` no banco preserva as restrições cadastradas
+para uma futura atualização; a versão anterior ignora esse campo. O `down` da migração `20261027130000` remove só a
+coluna, sem apagar etiquetas ou associações, mas perde a configuração de setores. Não é necessário executá-lo para
+recuar a aplicação.
 
 ## 5. Decisões e pendências
 

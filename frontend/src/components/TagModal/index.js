@@ -21,12 +21,14 @@ import { i18n } from "../../translate/i18n";
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import { AuthContext } from "../../context/Auth/AuthContext";
+import QueueSelect from "../QueueSelect";
 import {
   IconButton,
   InputAdornment,
   FormControl,
   FormControlLabel,
-  Switch
+  Switch,
+  Typography
 } from "@material-ui/core";
 
 const useStyles = makeStyles(theme => ({
@@ -76,12 +78,14 @@ const TagModal = ({ open, onClose, tagId, reload, kanban }) => {
   const classes = useStyles();
   const { user } = useContext(AuthContext);
   const [colorPickerModalOpen, setColorPickerModalOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
   //console.log(user);
 
   const initialState = {
     name: "",
     color: "",
-    kanban: kanban || 0
+    kanban: kanban || 0,
+    queueIds: []
   };
 
   const [tag, setTag] = useState(initialState);
@@ -94,7 +98,7 @@ const TagModal = ({ open, onClose, tagId, reload, kanban }) => {
         const { data } = await api.get(`/tags/${tagId}`);
         //console.log(data);
         setTag(prevState => {
-          return { ...prevState, ...data };
+          return { ...prevState, ...data, queueIds: data.queueIds || [] };
         });
       })();
     } catch (err) {
@@ -109,10 +113,13 @@ const TagModal = ({ open, onClose, tagId, reload, kanban }) => {
   };
 
   const handleSaveTag = async values => {
+    setSaving(true);
     const tagData = {
       ...values,
       userId: user.id,
-      kanban: values.kanban ? 1 : 0
+      kanban: values.kanban ? 1 : 0,
+      // Zap Komunick: no sector means every sector (RF-019)
+      queueIds: values.queueIds?.length ? values.queueIds : null
     };
     try {
       if (tagId) {
@@ -128,17 +135,19 @@ const TagModal = ({ open, onClose, tagId, reload, kanban }) => {
       if (typeof reload == "function") {
         reload();
       }
+      handleClose();
     } catch (err) {
       toastError(err);
+    } finally {
+      setSaving(false);
     }
-    handleClose();
   };
 
   return (
     <div className={classes.root}>
       <Dialog
         open={open}
-        onClose={handleClose}
+        onClose={saving ? undefined : handleClose}
         maxWidth="xs"
         fullWidth
         scroll="paper"
@@ -156,11 +165,9 @@ const TagModal = ({ open, onClose, tagId, reload, kanban }) => {
           initialValues={tag}
           enableReinitialize={true}
           validationSchema={TagSchema}
-          onSubmit={(values, actions) => {
-            setTimeout(() => {
-              handleSaveTag(values);
-              actions.setSubmitting(false);
-            }, 400);
+          onSubmit={async (values, actions) => {
+            await handleSaveTag(values);
+            actions.setSubmitting(false);
           }}
         >
           {({ touched, errors, isSubmitting, values, setFieldValue }) => (
@@ -175,9 +182,6 @@ const TagModal = ({ open, onClose, tagId, reload, kanban }) => {
                     helperText={touched.name && errors.name}
                     variant="outlined"
                     margin="dense"
-                    onChange={e =>
-                      setTag(prev => ({ ...prev, name: e.target.value }))
-                    }
                     fullWidth
                   />
                 </div>
@@ -225,12 +229,19 @@ const TagModal = ({ open, onClose, tagId, reload, kanban }) => {
                       onChange={e => {
                         const value = e.target.checked ? 1 : 0;
                         setFieldValue("kanban", value);
-                        setTag(prev => ({ ...prev, kanban: value }));
                       }}
                     />
                   }
                   label={i18n.t("tagModal.form.kanban")}
                 />
+
+                <QueueSelect
+                  selectedQueueIds={values.queueIds || []}
+                  onChange={ids => setFieldValue("queueIds", ids)}
+                />
+                <Typography variant="caption" color="textSecondary">
+                  {i18n.t("tagModal.form.queuesHelp")}
+                </Typography>
 
                 {colorPickerModalOpen && (
                   <div>
@@ -238,9 +249,9 @@ const TagModal = ({ open, onClose, tagId, reload, kanban }) => {
                       disableAlpha={true}
                       hslGradient={false}
                       style={{ margin: "20px auto 0" }}
-                      value={tag.color}
+                      value={values.color}
                       onChange={val => {
-                        setTag(prev => ({ ...prev, color: `#${val.hex}` }));
+                        setFieldValue("color", `#${val.hex}`);
                       }}
                     />
                   </div>

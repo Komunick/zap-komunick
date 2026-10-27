@@ -17,6 +17,10 @@ import {
 import { parseTicketFilters } from "../helpers/TicketFilters";
 import { parseTransferNote } from "../helpers/TransferNote";
 import CreateTransferNoteService from "../services/MessageServices/CreateTransferNoteService";
+import SyncTagService from "../services/TagServices/SyncTagsService";
+import Tag from "../models/Tag";
+import { GetCompanySetting } from "../helpers/CheckSettings";
+import { ticketTagIds } from "../helpers/TagScope";
 import ListTicketsServiceKanban from "../services/TicketServices/ListTicketsServiceKanban";
 
 type IndexQuery = {
@@ -280,6 +284,51 @@ export const bulk = async (req: Request, res: Response): Promise<Response> => {
   const done: number[] = [];
   const failed: { id: number; error: string }[] = [];
 
+  // Zap Komunick: tagging adds the chosen tags to the ones already there
+  // (RF-019), in the company's tag mode (on the ticket or on the contact)
+  let selectedTags: Tag[] = [];
+  let tagsMode = "ticket";
+  if (parsed.action === "tag") {
+    selectedTags = await Tag.findAll({
+      where: { id: parsed.data.tagIds as number[], companyId },
+      attributes: ["id", "queueIds"]
+    });
+    if (!selectedTags.length) {
+      throw new AppError("ERR_BULK_NO_TAGS", 400);
+    }
+    tagsMode = await GetCompanySetting(companyId, "tagsMode", "ticket");
+  }
+
+  const applyOne = async (ticketId: number) => {
+    if (parsed.action !== "tag") {
+      await updateMutex.runExclusive(() =>
+        UpdateTicketService({
+          ticketData: { ...parsed.data },
+          ticketId,
+          reqUserId
+        })
+      );
+      return;
+    }
+    const current = await ShowTicketService(ticketId, companyId);
+    const tagIds = ticketTagIds(
+      selectedTags,
+      selectedTags,
+      current.queueId || null
+    );
+    if (!tagIds.length) {
+      throw new AppError("ERR_BULK_NO_TAGS", 400);
+    }
+    const existing =
+      tagsMode === "contact" ? current.contact?.tags || [] : current.tags || [];
+    const union = Array.from(new Set([...existing.map(t => t.id), ...tagIds]));
+    await SyncTagService({
+      tags: union.map(id => ({ id })) as Tag[],
+      ticketId,
+      companyId
+    });
+  };
+
   // eslint-disable-next-line no-restricted-syntax
   for (const ticketId of parsed.ticketIds) {
     const status = statusById.get(ticketId);
@@ -289,13 +338,7 @@ export const bulk = async (req: Request, res: Response): Promise<Response> => {
       failed.push({ id: ticketId, error: "ERR_BULK_WRONG_STATUS" });
     } else {
       try {
-        await updateMutex.runExclusive(() =>
-          UpdateTicketService({
-            ticketData: { ...parsed.data },
-            ticketId,
-            reqUserId
-          })
-        );
+        await applyOne(ticketId);
         done.push(ticketId);
       } catch (err) {
         failed.push({ id: ticketId, error: err?.message || "ERR_UNKNOWN" });

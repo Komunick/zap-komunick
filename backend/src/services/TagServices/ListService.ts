@@ -59,6 +59,7 @@ const ListService = async ({
       "name",
       "color",
       "kanban",
+      "queueIds",
       "ticketsCount",
       "contactsCount"
     ]
