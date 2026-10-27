@@ -272,6 +272,60 @@ para uma futura atualização; a versão anterior ignora esse campo. O `down` da
 coluna, sem apagar etiquetas ou associações, mas perde a configuração de setores. Não é necessário executá-lo para
 recuar a aplicação.
 
+## Segurança da conta, IPs permitidos e auditoria (RF-016)
+
+- As migrações `20261027120000` e `20261027120100` criam `AuditLogs` e acrescentam `twoFactorEnabled`,
+  `twoFactorSecret`, `twoFactorPendingSecret` e `twoFactorRecoveryCodes` a `Users`. Contas existentes começam sem
+  2FA. O segredo TOTP fica no banco privado; o escopo padrão e `User.toJSON` o excluem das consultas e respostas,
+  inclusive associações. Serviços de autenticação/segurança carregam os campos privados explicitamente. Os códigos
+  de recuperação são armazenados como hashes bcrypt e apresentados ao usuário apenas ao ativar ou regenerar.
+- `helpers/Totp` implementa TOTP com HMAC-SHA1, período de 30 segundos, seis dígitos e tolerância de um período.
+  O cadastro começa com `POST /security/2fa/setup` (`secret`, URI `otpauth`); `POST /security/2fa/enable` confirma o
+  código e retorna oito códigos de recuperação. `POST /security/2fa/recovery-codes` exige um novo TOTP e invalida os
+  códigos anteriores. `POST /security/2fa/disable` exige senha e TOTP ou recuperação; `GET /security/me` expõe só
+  status, quantidade restante de códigos e IP reconhecido. Segredo/URI e códigos em claro ficam somente na memória
+  da página; a opção de baixar os códigos gera o arquivo apenas por ação do usuário.
+- `AuthUserService` mantém o login normal para contas sem 2FA. Com 2FA, senha válida retorna
+  `{ twoFactorRequired: true, challenge }`, sem sessão. `POST /auth/2fa` recebe `{ challenge, code }` e somente a
+  confirmação válida emite token/cookie. O desafio é HS256, tem propósito/chave próprios, identificador aleatório,
+  `tokenVersion` e validade de cinco minutos; não serve como access token. Redis faz a reserva atômica de desafios
+  e períodos TOTP consumidos e controla cinco tentativas por janela fixa de dez minutos, contada da primeira tentativa
+  (`429`, `Retry-After: 600` como espera máxima conservadora). A recuperação
+  usa atualização condicional no banco para impedir consumo concorrente duplicado.
+- Ativar, desativar e redefinir 2FA incrementa `tokenVersion`; operações condicionais impedem reativar uma configuração
+  invalidada por reset concorrente. A sessão atual recebe novo refresh cookie ao ativar/desativar; outras renovações
+  e desafios antigos ficam inválidos. O access token anterior continua sujeito ao TTL existente de quinze minutos.
+  `DELETE /users/:userId/2fa` é administrativo, confere empresa e privilégio de superusuário, e não permite reset da
+  própria conta. `ListUsersService` expõe `twoFactorEnabled` e `super` para indicação e disponibilidade da ação.
+- `helpers/IpAllowlist` valida IPv4/IPv6 e CIDR; aceita uma entrada por linha, separadores vírgula/ponto e vírgula e
+  comentários `#`. `GET/PUT /security/ip-allowlist` são administrativos. A gravação exige entradas válidas, até 100,
+  lista não vazia quando ativa e inclusão do IP do administrador (superusuário é a exceção de recuperação).
+  `IpAllowlistService` persiste `ipAllowlist` e `ipAllowlistEnabled` em uma transação, serializando edições da empresa;
+  consulta ambas juntas para aplicar a restrição no login, 2FA e refresh. A rota genérica de settings recusa essas chaves.
+- `TRUST_PROXY` vem desligado por padrão. Antes de ativar IPs permitidos atrás de um proxy, configurar explicitamente
+  os proxies conhecidos (por exemplo `loopback` quando o proxy está no mesmo host, ou os CIDRs da rede do proxy),
+  garantindo que acesso direto e cabeçalhos `X-Forwarded-For` não possam forjar o IP. A tela mostra o IP usado pelo
+  servidor para essa conferência. `TWO_FACTOR_ISSUER` personaliza o nome do autenticador (padrão `Zap Komunick`).
+- `RecordAuditService` registra as famílias `auth.`, `security.`, `user.` e `setting.` com empresa, usuário, entidade,
+  data, IP e user-agent limitado a 512 caracteres. Falha de gravação é registrada no log sem interromper a ação.
+  `GET /audit-logs` é administrativo e filtra a empresa autenticada, período (`from`, `to`), usuário e ação/família;
+  páginas de 50 registros, ordem por data/id decrescentes. Filtros inválidos são recusados. Não existem rotas de
+  alteração da trilha. Alterações de usuário/configuração guardam metadados, sem senha, valor de configuração,
+  códigos ou tokens; o trace HTTP registra método/caminho, sem body, query ou cabeçalhos de autenticação.
+- Frontend: `/account-security` no menu do perfil e paleta; `/ip-allowlist` e `/audit-logs` no menu administrativo e
+  paleta; Usuários mostra 2FA e o reset com confirmação. `Login/TwoFactorForm` mantém o desafio só em estado local,
+  limpa a senha, oferece autenticador/recuperação, mostra expiração e ignora respostas de uma tentativa cancelada.
+  Falhas de senha/código nos formulários autenticados preservam a sessão para correção dos dados.
+
+**Verificação prevista:** testes dos helpers e serviços de segurança, concorrência/replay, expiração e limites;
+API com PostgreSQL/Redis reais para autenticação, cookies, autorização, IPs, filtros e privacidade da auditoria;
+percurso de tela com contas fictícias para ativar, recuperar, desativar, redefinir e consultar registros. Nunca incluir
+segredo, QR ou códigos de recuperação em logs ou prints de evidência. Os resultados executados ficam no PR.
+
+**Recuperação:** manter as colunas e a tabela ao recuar a aplicação preserva os dados. Os `down` removem configuração
+2FA e trilha de auditoria e não são necessários para recuar o código; não usá-los como procedimento padrão. Uma versão
+anterior sem 2FA/allowlist deixa de aplicar essas proteções e requer decisão operacional humana antes de ser publicada.
+
 ## 5. Decisões e pendências
 
 **Escolhas que precisam de explicação:**

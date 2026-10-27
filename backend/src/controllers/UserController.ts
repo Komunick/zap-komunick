@@ -11,6 +11,7 @@ import DeleteUserService from "../services/UserServices/DeleteUserService";
 import SimpleListService from "../services/UserServices/SimpleListService";
 import OnlineUsersService from "../services/UserServices/OnlineUsersService";
 import User from "../models/User";
+import { auditRequest } from "../services/AuditServices/RecordAuditService";
 
 type IndexQuery = {
   searchParam: string;
@@ -72,6 +73,7 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     queueIds,
     accessHours
   });
+  auditRequest(req, "user.created", "user", user.id);
 
   const io = getIO();
   io.emit(`company-${userCompanyId}-user`, {
@@ -103,6 +105,18 @@ export const update = async (
     userId,
     requestUserId: +requestUserId
   });
+  auditRequest(req, "user.updated", "user", userId, {
+    fields: Object.keys(userData).filter(key =>
+      [
+        "name",
+        "email",
+        "password",
+        "profile",
+        "queueIds",
+        "accessHours"
+      ].includes(key)
+    )
+  });
 
   const io = getIO();
   io.emit(`company-${companyId}-user`, {
@@ -129,6 +143,7 @@ export const remove = async (
   }
 
   await DeleteUserService(userId, req.user.id);
+  auditRequest(req, "user.deleted", "user", userId);
 
   const io = getIO();
   io.emit(`company-${companyId}-user`, {

@@ -13,7 +13,8 @@ import {
   HasMany,
   BelongsToMany,
   ForeignKey,
-  BelongsTo
+  BelongsTo,
+  DefaultScope
 } from "sequelize-typescript";
 import { v4 as uuidv4 } from "uuid";
 import { hash, compare } from "bcryptjs";
@@ -24,6 +25,15 @@ import Company from "./Company";
 import QuickMessage from "./QuickMessage";
 import UserSocketSession from "./UserSocketSession"; // Importação da nova model
 
+@DefaultScope(() => ({
+  attributes: {
+    exclude: [
+      "twoFactorSecret",
+      "twoFactorPendingSecret",
+      "twoFactorRecoveryCodes"
+    ]
+  }
+}))
 @Table
 class User extends Model<User> {
   @PrimaryKey
@@ -68,6 +78,20 @@ class User extends Model<User> {
   @Column(DataType.JSONB)
   accessHours: { weekdays: number[]; start: string; end: string } | null;
 
+  // Zap Komunick: two-factor sign-in (docs/PRD.md, RF-016)
+  @Default(false)
+  @Column
+  twoFactorEnabled: boolean;
+
+  @Column
+  twoFactorSecret: string;
+
+  @Column
+  twoFactorPendingSecret: string;
+
+  @Column(DataType.JSONB)
+  twoFactorRecoveryCodes: string[] | null;
+
   @CreatedAt
   createdAt: Date;
 
@@ -111,6 +135,20 @@ class User extends Model<User> {
   public checkPassword = async (password: string): Promise<boolean> => {
     return compare(password, this.getDataValue("passwordHash"));
   };
+
+  // Zap Komunick: the password hash and the two-factor secrets never go out
+  // in an API response, whatever query loaded the user
+  toJSON(): object {
+    const values = {
+      ...(super.toJSON() as unknown as Record<string, unknown>)
+    };
+    delete values.passwordHash;
+    delete values.password;
+    delete values.twoFactorSecret;
+    delete values.twoFactorPendingSecret;
+    delete values.twoFactorRecoveryCodes;
+    return values;
+  }
 }
 
 export default User;

@@ -433,6 +433,41 @@ quando o gestor abre "Métricas" com 30 dias e a fila Fiscal,
 então vê quantos foram finalizados, quanto tempo os clientes esperaram em média, quantos foram respondidos no prazo e
 quem finalizou mais, e baixa a planilha para a reunião.
 
+### RF-016 — Segurança da conta, IPs permitidos e auditoria
+
+**Escopo retomado em 27/10/2026:** concluir o trabalho de segurança preservado: verificação em duas etapas no login,
+Segurança da conta, IPs permitidos, consulta de auditoria e indicação/reset de 2FA em Usuários.
+
+- Cada usuário pode ativar 2FA por aplicativo autenticador, lendo o QR ou informando a chave e confirmando um código.
+  A ativação apresenta oito códigos de recuperação, de uso único e mostrados somente nesse momento. Gerar novos
+  códigos invalida os anteriores. Desativar exige a senha e um segundo fator válido.
+- Depois da senha correta, contas com 2FA só recebem sessão após confirmar o código do aplicativo ou de recuperação.
+  O desafio expira em cinco minutos; o segundo fator aceita até cinco tentativas por janela de dez minutos. Ao esgotar
+  o limite, é necessário aguardar o fim da janela. Desafios e códigos
+  consumidos não podem ser reutilizados. Voltar permite trocar de conta sem preservar a senha ou o desafio.
+- Administradores veem a indicação de 2FA em Usuários e podem redefini-la para outro usuário da própria empresa que
+  perdeu o autenticador, com confirmação. A conta própria usa o fluxo de desativação com senha e código.
+- Administradores configuram IPs ou redes CIDR permitidos da empresa (IPv4/IPv6), com um endereço/rede por linha.
+  A restrição vem desligada. A tela mostra o IP reconhecido pelo servidor; lista ativa vazia, entradas inválidas e
+  mudanças que bloqueiem o próprio administrador são recusadas. Superusuários mantêm acesso de recuperação.
+- A restrição de IP vale no login, na confirmação de 2FA e na renovação de sessão. Ativar, desativar ou redefinir 2FA
+  invalida desafios e renovações anteriores; ativar/desativar preserva a sessão atual com um novo cookie de renovação.
+  Tokens de acesso já emitidos mantêm a validade de até quinze minutos.
+- Administradores consultam a auditoria da própria empresa, com período, usuário, ação e paginação. São registrados
+  eventos de autenticação, alterações de 2FA, da lista de IPs, de usuários e de configurações, com data, autor, ação e IP.
+  Senhas, códigos, segredos de autenticador e tokens não aparecem na auditoria nem nos logs de requisição.
+
+**Cenários de aceite:**
+
+Dada uma conta com 2FA ativo, quando a senha é aceita, a tela pede o segundo fator sem abrir a sessão. Um código
+válido conclui o acesso; um código incorreto mantém a etapa com erro; um código de recuperação usado é recusado.
+
+Dado um administrador configurando IPs permitidos, quando tenta ativar uma lista vazia, inválida ou que exclua seu
+próprio IP, recebe o motivo e a configuração anterior permanece. Uma lista válida pode ser salva e desativada.
+
+Dado um administrador na auditoria, quando filtra por usuário e ação de segurança, encontra os eventos da empresa
+correspondentes, sem valores secretos; um atendente não acessa essa consulta nem a configuração de IPs.
+
 ### RF-017 — Histórico completo do cliente e contexto na transferência
 
 **Problema relatado (27/10/2026):** mensagens antigas de conversas resolvidas não aparecem em alguns contatos, e ao

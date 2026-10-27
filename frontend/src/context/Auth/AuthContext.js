@@ -7,9 +7,12 @@ const AuthContext = createContext();
 const AuthProvider = ({ children }) => {
   const {
     loading,
+    authenticating,
     user,
     isAuth,
     handleLogin,
+    handleVerifyTwoFactor,
+    cancelLogin,
     handleImpersonate,
     handleLogout
   } = useAuth();
@@ -18,9 +21,12 @@ const AuthProvider = ({ children }) => {
     <AuthContext.Provider
       value={{
         loading,
+        authenticating,
         user,
         isAuth,
         handleLogin,
+        handleVerifyTwoFactor,
+        cancelLogin,
         handleImpersonate,
         handleLogout
       }}

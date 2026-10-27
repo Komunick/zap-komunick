@@ -99,7 +99,8 @@ const UpdateUserService = async ({
     profile: user.profile,
     companyId: user.companyId,
     company,
-    queues: user.queues
+    queues: user.queues,
+    twoFactorEnabled: user.twoFactorEnabled
   };
 
   return serializedUser;

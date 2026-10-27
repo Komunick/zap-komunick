@@ -37,6 +37,9 @@ import Sla from "../pages/Sla/";
 import OnlineUsers from "../pages/OnlineUsers/";
 import Metrics from "../pages/Metrics/";
 import CloseReasons from "../pages/CloseReasons/";
+import AccountSecurity from "../pages/AccountSecurity";
+import IpAllowlist from "../pages/IpAllowlist";
+import AuditLogs from "../pages/AuditLogs";
 
 const Routes = () => {
   const [showCampaigns, setShowCampaigns] = useState(false);
@@ -87,6 +90,24 @@ const Routes = () => {
                 <Route exact path="/kanban" component={Kanban} isPrivate />
                 <Route exact path="/sla" component={Sla} isPrivate />
                 <Route exact path="/metrics" component={Metrics} isPrivate />
+                <Route
+                  exact
+                  path="/account-security"
+                  component={AccountSecurity}
+                  isPrivate
+                />
+                <Route
+                  exact
+                  path="/ip-allowlist"
+                  component={IpAllowlist}
+                  isPrivate
+                />
+                <Route
+                  exact
+                  path="/audit-logs"
+                  component={AuditLogs}
+                  isPrivate
+                />
                 <Route
                   exact
                   path="/users-online"
