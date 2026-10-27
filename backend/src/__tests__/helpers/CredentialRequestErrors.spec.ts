@@ -87,6 +87,9 @@ describe("credential request errors before generic telemetry/logging", () => {
     "/tickets/301/acessorias/links",
     "/Tickets/301/Acessorias/status",
     "/tickets/301/%61cessorias/links?bad=%XX",
+    "/tickets/1%2Fextra/acessorias/links",
+    "/tickets/1%2Fextra/%61cessorias/links?bad=%XX",
+    "/tickets/1%XX/%61cessorias/links",
     "/settings/acessoriasEnabled"
   ])(
     "rejects malformed Acessorias bodies without logging customer data: %s",
@@ -118,6 +121,9 @@ describe("credential request errors before generic telemetry/logging", () => {
     "/tickets/301/assistant",
     "/Tickets/301/Assistant",
     "/tickets/301/%61ssistant?bad=%XX",
+    "/tickets/1%2Fextra/assistant",
+    "/tickets/1%2Fextra/%61ssistant?bad=%XX",
+    "/tickets/1%XX/%61ssistant",
     "/settings/aiAssistantEnabled"
   ])(
     "rejects malformed assistant JSON without logging conversation bodies: %s",

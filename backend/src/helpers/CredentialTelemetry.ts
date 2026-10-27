@@ -5,13 +5,17 @@ const decodedPath = (url?: string): string => {
   // Express decodes route parameters independently of the query string. A bad
   // query escape must not hide a valid, encoded credential path from this guard.
   const path = url.split(/[?#]/, 1)[0];
-  let decoded = path;
-  try {
-    decoded = decodeURIComponent(path);
-  } catch {
-    // A malformed URL should not prevent the application from handling errors.
-  }
-  return decoded;
+  return path
+    .split("/")
+    .map(segment => {
+      try {
+        return decodeURIComponent(segment);
+      } catch {
+        // One invalid parameter must not hide a separately encoded sensitive endpoint.
+        return segment;
+      }
+    })
+    .join("/");
 };
 
 export const isCredentialRequest = (url?: string): boolean => {
@@ -25,12 +29,14 @@ export const isCredentialRequest = (url?: string): boolean => {
 };
 
 // P1: even rejected bodies may contain conversation data supplied by a caller.
+// Privacy classification tolerates separators inside a decoded ticket parameter.
+// The router and authorization service retain responsibility for accepting IDs.
 export const isAssistantRequest = (url?: string): boolean =>
-  /\/tickets\/[^/]+\/assistant(?:[/?#]|$)/i.test(decodedPath(url)) ||
+  /\/tickets\/[\s\S]+\/assistant(?:[/?#]|$)/i.test(decodedPath(url)) ||
   /\/settings\/aiAssistantEnabled(?:[/?#]|$)/i.test(decodedPath(url));
 
 export const isAcessoriasRequest = (url?: string): boolean =>
-  /\/tickets\/[^/]+\/acessorias(?:[/?#]|$)/i.test(decodedPath(url)) ||
+  /\/tickets\/[\s\S]+\/acessorias(?:[/?#]|$)/i.test(decodedPath(url)) ||
   /\/settings\/acessoriasEnabled(?:[/?#]|$)/i.test(decodedPath(url));
 
 export const isSensitiveRequest = (url?: string): boolean =>
