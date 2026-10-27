@@ -2438,6 +2438,139 @@ const credentialErrors = {
   Object.assign(target.backendErrors, credentialErrors[language]);
 });
 
+// Zap Komunick P1: mock assistance always requires human review.
+pt.assistant = {
+  settingConflict:
+    "Há configurações divergentes. O assistente permanece desativado; salve a opção desejada para regularizar.",
+  composerDraft: "Rascunho da mensagem",
+  button: "Assistente",
+  open: "Abrir assistente deste atendimento",
+  title: "Assistente deste atendimento",
+  simulation: "Simulação",
+  scope:
+    "Usa somente as mensagens de texto deste atendimento. Não consulta notas, anexos ou sistemas externos.",
+  reviewRequired:
+    "Conteúdo simulado. Revise as referências e confirme as informações antes de usar. Nenhuma mensagem será enviada automaticamente.",
+  summary: "Resumir atendimento",
+  reply: "Sugerir resposta",
+  draft: "Rascunho para revisão",
+  useDraft: "Usar no rascunho",
+  appendHint:
+    "O texto será acrescentado ao rascunho atual. Revise antes de enviar.",
+  cancel: "Cancelar",
+  loading: "Processando solicitação…",
+  references: "Mensagens de referência",
+  noReferences: "Nenhuma mensagem de referência disponível.",
+  partial:
+    "Contexto parcial: somente parte das mensagens deste atendimento foi considerada.",
+  insufficient:
+    "As mensagens disponíveis não confirmam todas as informações necessárias. Confira com o cliente.",
+  noMessages:
+    "Não há mensagens de texto disponíveis para fundamentar a solicitação.",
+  disabled: "O assistente está desabilitado para esta empresa ou ambiente.",
+  contextChanged:
+    "O atendimento mudou durante a solicitação. Gere uma nova versão.",
+  invalidOutput: "O resultado recebido não pôde ser validado. Tente novamente.",
+  unavailable: "O assistente está indisponível. Tente novamente mais tarde.",
+  noPermission: "Você não tem acesso ao contexto deste atendimento.",
+  requestError:
+    "Não foi possível concluir a solicitação. Seu rascunho foi preservado.",
+  timeout: "A solicitação demorou além do limite. Seu rascunho foi preservado.",
+  composerBlocked: "Volte ao modo de mensagem de texto para usar a sugestão.",
+  settingsTitle: "Assistente de resumo e rascunho (simulação)",
+  settingsHint:
+    "Disponibiliza o assistente simulado para esta empresa no ambiente autorizado. As sugestões exigem revisão humana e nunca são enviadas automaticamente.",
+  settingError:
+    "Não foi possível alterar o assistente. A configuração anterior foi preservada."
+};
+en.assistant = {
+  settingConflict:
+    "Conflicting settings exist. The assistant remains disabled; save the desired option to resolve them.",
+  composerDraft: "Message draft",
+  button: "Assistant",
+  open: "Open assistant for this conversation",
+  title: "Assistant for this conversation",
+  simulation: "Simulation",
+  scope:
+    "Uses only text messages in this conversation. Notes, attachments and external systems are excluded.",
+  reviewRequired:
+    "Simulated content. Review the references and verify the information before use. No message is sent automatically.",
+  summary: "Summarize conversation",
+  reply: "Suggest a reply",
+  draft: "Draft for review",
+  useDraft: "Use in draft",
+  appendHint:
+    "Text will be added to your current draft. Review it before sending.",
+  cancel: "Cancel",
+  loading: "Processing request…",
+  references: "Reference messages",
+  noReferences: "No reference messages available.",
+  partial:
+    "Partial context: only some messages in this conversation were considered.",
+  insufficient:
+    "Available messages do not confirm all required information. Check with the customer.",
+  noMessages: "No text messages are available to support this request.",
+  disabled: "The assistant is disabled for this company or environment.",
+  contextChanged:
+    "The conversation changed during the request. Generate a new version.",
+  invalidOutput:
+    "The received result could not be validated. Please try again.",
+  unavailable: "The assistant is unavailable. Please try again later.",
+  noPermission: "You cannot access this conversation's context.",
+  requestError: "The request could not be completed. Your draft was preserved.",
+  timeout: "The request timed out. Your draft was preserved.",
+  composerBlocked: "Return to text message mode to use the suggestion.",
+  settingsTitle: "Summary and draft assistant (simulation)",
+  settingsHint:
+    "Enables the simulated assistant for this company in the authorized environment. Suggestions require human review and are never sent automatically.",
+  settingError:
+    "Unable to change the assistant. The previous setting was preserved."
+};
+es.assistant = {
+  settingConflict:
+    "Hay configuraciones distintas. El asistente sigue desactivado; guarda la opción deseada para resolverlas.",
+  composerDraft: "Borrador del mensaje",
+  button: "Asistente",
+  open: "Abrir asistente de esta conversación",
+  title: "Asistente de esta conversación",
+  simulation: "Simulación",
+  scope:
+    "Solo usa mensajes de texto de esta conversación. No consulta notas, archivos ni sistemas externos.",
+  reviewRequired:
+    "Contenido simulado. Revisa las referencias y confirma la información antes de usarlo. Ningún mensaje se envía automáticamente.",
+  summary: "Resumir conversación",
+  reply: "Sugerir respuesta",
+  draft: "Borrador para revisión",
+  useDraft: "Usar en el borrador",
+  appendHint:
+    "El texto se añadirá al borrador actual. Revísalo antes de enviarlo.",
+  cancel: "Cancelar",
+  loading: "Procesando solicitud…",
+  references: "Mensajes de referencia",
+  noReferences: "No hay mensajes de referencia disponibles.",
+  partial:
+    "Contexto parcial: solo se consideró parte de los mensajes de esta conversación.",
+  insufficient:
+    "Los mensajes disponibles no confirman toda la información necesaria. Consulta con el cliente.",
+  noMessages: "No hay mensajes de texto para fundamentar la solicitud.",
+  disabled: "El asistente está desactivado para esta empresa o entorno.",
+  contextChanged:
+    "La conversación cambió durante la solicitud. Genera una nueva versión.",
+  invalidOutput:
+    "No se pudo validar el resultado recibido. Inténtalo de nuevo.",
+  unavailable: "El asistente no está disponible. Inténtalo más tarde.",
+  noPermission: "No tienes acceso al contexto de esta conversación.",
+  requestError: "No se pudo completar la solicitud. Tu borrador se conservó.",
+  timeout: "Se agotó el tiempo de la solicitud. Tu borrador se conservó.",
+  composerBlocked:
+    "Vuelve al modo de mensaje de texto para usar la sugerencia.",
+  settingsTitle: "Asistente de resumen y borrador (simulación)",
+  settingsHint:
+    "Habilita el asistente simulado para esta empresa en el entorno autorizado. Las sugerencias requieren revisión humana y nunca se envían automáticamente.",
+  settingError:
+    "No se pudo cambiar el asistente. Se conservó la configuración anterior."
+};
+
 export const komunickMessages = {
   pt: { translations: pt },
   pt_PT: { translations: pt },

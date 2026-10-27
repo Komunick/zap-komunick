@@ -13,6 +13,7 @@ interface Request {
 // keys that can be accessed by non-admin users
 // with respective default values
 export const safeSettingsKeys = {
+  aiAssistantEnabled: "disabled",
   groupsTab: "disabled",
   CheckMsgIsGroup: "disabled",
   soundGroupNotifications: "disabled",

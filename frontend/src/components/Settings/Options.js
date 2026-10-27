@@ -27,6 +27,7 @@ import { SocketContext } from "../../context/Socket/SocketContext";
 import api from "../../services/api";
 import { getBackendURL } from "../../services/config";
 import CompanyCredentialSettings from "../CompanyCredentialSettings";
+import AssistantSettings from "../AssistantSettings";
 
 const useStyles = makeStyles(theme => ({
   container: {
@@ -1359,6 +1360,12 @@ export default function Options(props) {
         <Grid xs={12} sm={12} md={8} item>
           <CompanyCredentialSettings />
         </Grid>
+
+        {currentUser.profile === "admin" && (
+          <Grid xs={12} item>
+            <AssistantSettings settings={settings} />
+          </Grid>
+        )}
 
         <Grid xs={12} sm={6} md={4} item>
           <FormControl className={classes.selectContainer}>
