@@ -137,6 +137,7 @@ export default function Options(props) {
   const [slaMinutes, setSlaMinutes] = useState("0");
   const [slaOldTicketHours, setSlaOldTicketHours] = useState("72");
   const [walletAutoAssign, setWalletAutoAssign] = useState("disabled");
+  const [syncPhoneContacts, setSyncPhoneContacts] = useState("enabled");
   const [closeReasonRequired, setCloseReasonRequired] = useState("disabled");
 
   const [queues, setQueues] = useState([]);
@@ -337,6 +338,10 @@ export default function Options(props) {
         s => s.key === "walletAutoAssign"
       );
       setWalletAutoAssign(walletAutoAssignSetting?.value || "disabled");
+      const syncPhoneContactsSetting = settings.find(
+        s => s.key === "syncPhoneContacts"
+      );
+      setSyncPhoneContacts(syncPhoneContactsSetting?.value || "enabled");
       const closeReasonRequiredSetting = settings.find(
         s => s.key === "closeReasonRequired"
       );
@@ -1019,6 +1024,33 @@ export default function Options(props) {
                 {i18n.t("settings.wallet.options.enabled")}
               </MenuItem>
             </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid xs={12} sm={6} md={4} item>
+          <FormControl className={classes.selectContainer}>
+            <InputLabel id="sync-phone-contacts-label">
+              {i18n.t("clients.syncSetting")}
+            </InputLabel>
+            <Select
+              labelId="sync-phone-contacts-label"
+              value={syncPhoneContacts}
+              onChange={async e => {
+                handleSetting(
+                  "syncPhoneContacts",
+                  e.target.value,
+                  setSyncPhoneContacts
+                );
+              }}
+            >
+              <MenuItem value={"enabled"}>
+                {i18n.t("clients.syncEnabled")}
+              </MenuItem>
+              <MenuItem value={"disabled"}>
+                {i18n.t("clients.syncDisabled")}
+              </MenuItem>
+            </Select>
+            <FormHelperText>{i18n.t("clients.syncHelper")}</FormHelperText>
           </FormControl>
         </Grid>
 

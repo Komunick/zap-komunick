@@ -12,6 +12,7 @@ import { _t } from "../TranslationServices/i18nService";
 import { Session } from "../../libs/wbot";
 import { cacheLayer } from "../../libs/cache";
 import { GetCompanySetting } from "../../helpers/CheckSettings";
+import SyncAgendaContactsService from "../ContactServices/SyncAgendaContactsService";
 
 const contactMutex = new Mutex();
 
@@ -97,6 +98,10 @@ const wbotMonitor = async (
           whatsappId: whatsapp.id,
           contacts
         });
+        // Zap Komunick: the address book also becomes clients (RF-018)
+        await SyncAgendaContactsService(companyId, contacts).catch(err =>
+          logger.error({ err: err?.message }, "address book sync failed")
+        );
       });
     });
 
