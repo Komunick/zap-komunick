@@ -178,6 +178,8 @@ O recorte P0 autorizado separadamente está definido no PRD RF-020 e em
 continuam propostos.
 O P1 autorizado posteriormente usa apenas provedor simulado, conforme RF-021 e
 [`docs/specs/p1-assistente-revisao.md`](specs/p1-assistente-revisao.md); nenhum provedor de IA real é conectado.
+O P2 autorizado usa somente catálogo/pendências fictícios, conforme RF-022 e
+[`docs/specs/p2-acessorias-consultas.md`](specs/p2-acessorias-consultas.md), sem conexão ao Acessórias real.
 
 **Compatibilidade:** todas as colunas novas são opcionais e as configurações novas começam desligadas, então uma
 instalação existente mantém o comportamento até o gestor ativar. As rotas e payloads existentes só ganharam campos.
@@ -417,6 +419,43 @@ rascunhos preservados, em claro/escuro e desktop/celular. Resultados executados 
 **Operação e recuperação:** guia `DEPLOY.md`, seção 10. Sem migração de esquema ou chave de modelo; desligar a
 configuração da empresa e/ou o modo do backend desativa o percurso. Nenhum dado de atendimento precisa ser revertido.
 Provedor real, bases internas aprovadas, políticas de dados e avaliação de modelo/custo continuam para outro recorte.
+
+## Consultas Acessórias — P2 simulado (RF-022)
+
+- `ACESSORIAS_MODE=mock` e `acessoriasEnabled=enabled` na empresa são condições independentes; ambos começam desligados.
+  O mock é local, sem HTTP/SDK/MCP, credencial, fila, cache compartilhado ou dependência nova. Os DTOs são internos e
+  fictícios, sem promessa de compatibilidade com a API do fornecedor. P1/IA não recebe os dados desse painel.
+- As rotas `/tickets/:ticketId/acessorias` reutilizam autenticação/compliance e autorização contextual P0. `status`
+  informa disponibilidade/capacidade administrativa; `clients` lista só vínculos do contato; `catalog` é administrativo.
+  POST `links` recebe somente `{externalClientId}`; DELETE `links/:externalClientId` remove apenas o vínculo local.
+  A empresa/contato/provedor vêm do servidor. Consulta usa `clients/:externalClientId?page=N`, com página de cinco itens.
+- O vínculo persistido é único por empresa/contato/provedor/ID externo, e permite múltiplos clientes por contato.
+  `ContactExternalClientLinks` é criada pela migração `20261027160000-create-contact-external-client-links`, com
+  chaves estrangeiras e unicidade composta; alterações locais são serializadas por contato em transação. A guarda
+  contextual e a leitura da flag usam essa mesma conexão dentro do CRUD, evitando espera por conexões retidas por
+  transações que aguardam o contato.
+  IDs externos iguais em empresas diferentes não compartilham estado. Duplicar/remover é idempotente; remoção local
+  administrativa independe de modo/credencial de fornecedor. Verificar autorização atual antes da alteração.
+- Consultas validam entrada, saída, fonte/horários e paginação, e conferem novamente acesso/configuração e versão do
+  vínculo após aguardar o provedor. Remover/recriar o mesmo ID não preserva a autorização antiga. O adaptador mock possui
+  casos explícitos de vazio, desatualizado, erro funcional HTTP 200, autorização recusada, limite e timeout.
+- Evento `company-<id>-acessorias-links`, na sala da própria empresa, contém somente `{contactId}` e invalida o painel
+  desse contato. Não transporta documento/ID externo/pendências. É uma notificação de invalidação, não cache de dados;
+  desconexão de eventos não substitui a revalidação de toda consulta no servidor.
+- Interface responsiva mantém seleção explícita e resultados somente em memória. Cancelamento/timeout/identidade da
+  solicitação e mudanças de seleção/ticket/vínculo impedem respostas antigas. Origem, consulta, atualização da fonte e
+  `stale` são exibidos; erro limpa resultado anterior. Vínculo local tem confirmação e não modifica cadastro externo.
+- Auditoria contém somente ação/identificadores/metadados. Erros de provedor/ORM são normalizados; corpos inválidos de
+  rotas do painel e de sua flag passam pelo handler seguro antes de logger/Sentry. Não registrar cadastros ou pendências.
+
+**Verificação prevista:** regras e serviços com mocks, autorização/saída/paginação/falhas/revalidação de vínculos;
+API com duas empresas fictícias, IDs externos repetidos, vínculos múltiplos e snapshots de negócio; UI em claro/escuro,
+desktop/celular com vínculo, seleção, consulta, paginação, vazio/erro/stale, cancelamento e troca de contexto. Sem rede
+do fornecedor, leitura de chaves, envio de mensagens ou dados reais. Evidências executadas ficam no PR.
+
+**Configuração e recuperação:** `DEPLOY.md`, seção 11. Desligar modo/flag interrompe consulta sem apagar mapeamentos.
+Manter a tabela ao recuar preserva vínculos; não executar uma reversão que destrua o cadastro local como rotina.
+Contrato/licença, acesso ao fornecedor real, sincronização, documentos e uso pela IA continuam fora deste recorte.
 
 ## 5. Decisões e pendências
 

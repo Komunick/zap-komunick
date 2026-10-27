@@ -14,6 +14,7 @@ interface Request {
 // with respective default values
 export const safeSettingsKeys = {
   aiAssistantEnabled: "disabled",
+  acessoriasEnabled: "disabled",
   groupsTab: "disabled",
   CheckMsgIsGroup: "disabled",
   soundGroupNotifications: "disabled",

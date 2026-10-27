@@ -84,6 +84,37 @@ describe("credential request errors before generic telemetry/logging", () => {
   });
 
   it.each([
+    "/tickets/301/acessorias/links",
+    "/Tickets/301/Acessorias/status",
+    "/tickets/301/%61cessorias/links?bad=%XX",
+    "/settings/acessoriasEnabled"
+  ])(
+    "rejects malformed Acessorias bodies without logging customer data: %s",
+    url => {
+      const err = Object.assign(new SyntaxError(canary), {
+        body: canary,
+        status: 400
+      });
+      const res = response();
+      const next = jest.fn();
+      credentialErrorHandler(
+        err,
+        { originalUrl: url } as Request,
+        res as unknown as Response,
+        next
+      );
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        error: "ERR_ACESSORIAS_INVALID_REQUEST"
+      });
+      expect(next).not.toHaveBeenCalled();
+      expect(
+        JSON.stringify((logger.warn as jest.Mock).mock.calls)
+      ).not.toContain(canary);
+    }
+  );
+
+  it.each([
     "/tickets/301/assistant",
     "/Tickets/301/Assistant",
     "/tickets/301/%61ssistant?bad=%XX",

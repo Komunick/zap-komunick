@@ -44,6 +44,7 @@ import Wavoip from "../models/Wavoip";
 import CloseReason from "../models/CloseReason";
 import AuditLog from "../models/AuditLog";
 import CompanyCredential from "../models/CompanyCredential";
+import ContactExternalClientLink from "../models/ContactExternalClientLink";
 
 const dbConfig = require("../config/database");
 
@@ -100,7 +101,8 @@ const models = [
   Wavoip,
   CloseReason,
   AuditLog,
-  CompanyCredential
+  CompanyCredential,
+  ContactExternalClientLink
 ];
 
 sequelize.addModels(models);

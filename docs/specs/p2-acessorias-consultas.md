@@ -28,6 +28,8 @@ O [plano da rodada 3](rodada-3-ia-integracoes.md) orienta a direção. Este reco
 - Falha, indisponibilidade, vazio e desatualização têm estados distintos. Erro não deixa dados antigos parecerem uma
   consulta atual. Cancelamento, troca de ticket/cliente ou revogação do vínculo impedem inserir resposta atrasada no
   contexto errado. Dados consultados ficam apenas na memória do painel, sem cache compartilhado ou exportação.
+  Evento na própria empresa transmite apenas o identificador do contato para invalidar o painel correspondente;
+  sem entrega do evento, o snapshot já recebido não tem revogação visual instantânea e toda nova consulta revalida acesso.
 - Backend verifica sessão, compliance, empresa/cliente/setor e vínculo antes e depois de consulta assíncrona. Uma
   remoção/recriação do mesmo vínculo durante a consulta não reaproveita a autorização antiga. O navegador fornece
   somente seleção/página ou ID externo para vínculo, sem escolher empresa/contato/provedor.

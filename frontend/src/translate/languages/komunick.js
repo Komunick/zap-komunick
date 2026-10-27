@@ -2571,6 +2571,211 @@ es.assistant = {
     "No se pudo cambiar el asistente. Se conservó la configuración anterior."
 };
 
+pt.acessorias = {
+  button: "Acessórias",
+  open: "Abrir Acessórias deste atendimento",
+  title: "Acessórias deste atendimento",
+  simulation: "Simulação",
+  scope:
+    "Dados fictícios locais. Esta consulta não comprova situação fiscal, cumprimento de obrigação ou prazo real. Nenhum dado é enviado ao Acessórias.",
+  refreshLinks: "Atualizar vínculos",
+  linkClient: "Vincular cliente",
+  loading: "Consultando simulação…",
+  noLinks: "Este contato ainda não tem clientes vinculados.",
+  selectedClient: "Cliente vinculado",
+  chooseClient: "Escolha um cliente vinculado",
+  localLinks: "Vínculos locais do contato",
+  catalog: "Catálogo simulado da empresa",
+  linkNamed: "Vincular {{name}}",
+  unlinkNamed: "Desvincular {{name}}",
+  link: "Vincular",
+  unlink: "Desvincular",
+  alreadyLinked: "Já vinculado",
+  registration: "Cadastro do cliente",
+  pending: "Pendências simuladas",
+  noPending: "Nenhuma pendência nesta simulação.",
+  previous: "Página anterior",
+  next: "Próxima página",
+  page: "Página {{page}}",
+  retry: "Tentar novamente",
+  source: "Origem e atualização",
+  updatedAt: "Atualizado em {{date}}",
+  fetchedAt: "Consultado em {{date}}",
+  stale:
+    "Dados desatualizados: esta simulação usa uma versão antiga. Confirme as informações antes de usar.",
+  close: "Fechar",
+  cancelQuery: "Cancelar consulta",
+  cancel: "Cancelar",
+  confirmLinkTitle: "Confirmar vínculo local",
+  confirmUnlinkTitle: "Confirmar desvinculação local",
+  confirmLink: "Confirmar vínculo",
+  confirmUnlink: "Confirmar desvinculação",
+  localOnly:
+    "Esta ação altera somente o vínculo local deste contato. Não modifica o cadastro nem as pendências no fornecedor.",
+  disabled:
+    "A consulta Acessórias está desabilitada para esta empresa ou ambiente.",
+  permission: "Você não tem permissão para esta consulta ou ação.",
+  notLinked:
+    "O cliente não está mais vinculado a este contato. Atualize os vínculos.",
+  notFound: "O cliente simulado não foi encontrado.",
+  contextChanged:
+    "O atendimento ou vínculo mudou durante a consulta. Atualize os vínculos.",
+  functionalError:
+    "A simulação informou uma falha na consulta. Nenhum resultado foi aproveitado.",
+  invalidOutput: "O resultado recebido não pôde ser validado.",
+  upstreamUnauthorized:
+    "A simulação de autorização do fornecedor recusou a consulta.",
+  rateLimited:
+    "A simulação atingiu o limite de consultas. Tente novamente mais tarde.",
+  timeout:
+    "A consulta demorou além do limite. Nenhum resultado foi aproveitado.",
+  unavailable:
+    "A consulta simulada está indisponível. Tente novamente mais tarde.",
+  requestError:
+    "Não foi possível concluir a consulta. Nenhum resultado anterior será apresentado como atualizado.",
+  settingsTitle: "Consultas Acessórias (simulação)",
+  settingsHint:
+    "Habilita consultas fictícias e vínculos locais por empresa no ambiente autorizado. Não conecta o fornecedor nem habilita IA ou envio de mensagens.",
+  settingError:
+    "Não foi possível alterar a configuração. O valor anterior foi preservado.",
+  settingConflict:
+    "Há configurações divergentes. A consulta permanece desativada; salve a opção desejada para regularizar."
+};
+en.acessorias = {
+  button: "Acessórias",
+  open: "Open Acessórias for this conversation",
+  title: "Acessórias for this conversation",
+  simulation: "Simulation",
+  scope:
+    "Local fictitious data. This query does not confirm tax status, completed obligations or real deadlines. No data is sent to Acessórias.",
+  refreshLinks: "Refresh links",
+  linkClient: "Link client",
+  loading: "Loading simulation…",
+  noLinks: "This contact has no linked clients yet.",
+  selectedClient: "Linked client",
+  chooseClient: "Choose a linked client",
+  localLinks: "Contact's local links",
+  catalog: "Company's simulated catalog",
+  linkNamed: "Link {{name}}",
+  unlinkNamed: "Unlink {{name}}",
+  link: "Link",
+  unlink: "Unlink",
+  alreadyLinked: "Already linked",
+  registration: "Client registration",
+  pending: "Simulated pending items",
+  noPending: "No pending items in this simulation.",
+  previous: "Previous page",
+  next: "Next page",
+  page: "Page {{page}}",
+  retry: "Try again",
+  source: "Source and freshness",
+  updatedAt: "Updated on {{date}}",
+  fetchedAt: "Retrieved on {{date}}",
+  stale:
+    "Outdated data: this simulation uses an old version. Verify the information before use.",
+  close: "Close",
+  cancelQuery: "Cancel query",
+  cancel: "Cancel",
+  confirmLinkTitle: "Confirm local link",
+  confirmUnlinkTitle: "Confirm local unlink",
+  confirmLink: "Confirm link",
+  confirmUnlink: "Confirm unlink",
+  localOnly:
+    "This action only changes this contact's local link. It does not modify provider registration or pending items.",
+  disabled: "Acessórias queries are disabled for this company or environment.",
+  permission: "You do not have permission for this query or action.",
+  notLinked:
+    "This client is no longer linked to this contact. Refresh the links.",
+  notFound: "The simulated client was not found.",
+  contextChanged:
+    "The conversation or link changed during the query. Refresh the links.",
+  functionalError:
+    "The simulation reported a query failure. No result was used.",
+  invalidOutput: "The received result could not be validated.",
+  upstreamUnauthorized:
+    "The simulated provider authorization denied the query.",
+  rateLimited: "The simulation reached its query limit. Try again later.",
+  timeout: "The query timed out. No result was used.",
+  unavailable: "The simulated query is unavailable. Try again later.",
+  requestError:
+    "The query could not be completed. Previous results will not be shown as up to date.",
+  settingsTitle: "Acessórias queries (simulation)",
+  settingsHint:
+    "Enables fictitious queries and local links for this company in the authorized environment. It does not connect to the provider or enable AI or messaging.",
+  settingError:
+    "Unable to change the setting. The previous value was preserved.",
+  settingConflict:
+    "Conflicting settings exist. Queries remain disabled; save the desired option to resolve them."
+};
+es.acessorias = {
+  button: "Acessórias",
+  open: "Abrir Acessórias de esta conversación",
+  title: "Acessórias de esta conversación",
+  simulation: "Simulación",
+  scope:
+    "Datos ficticios locales. Esta consulta no confirma situación fiscal, obligaciones cumplidas ni plazos reales. No se envían datos a Acessórias.",
+  refreshLinks: "Actualizar vínculos",
+  linkClient: "Vincular cliente",
+  loading: "Consultando simulación…",
+  noLinks: "Este contacto aún no tiene clientes vinculados.",
+  selectedClient: "Cliente vinculado",
+  chooseClient: "Elige un cliente vinculado",
+  localLinks: "Vínculos locales del contacto",
+  catalog: "Catálogo simulado de la empresa",
+  linkNamed: "Vincular {{name}}",
+  unlinkNamed: "Desvincular {{name}}",
+  link: "Vincular",
+  unlink: "Desvincular",
+  alreadyLinked: "Ya vinculado",
+  registration: "Registro del cliente",
+  pending: "Pendientes simulados",
+  noPending: "No hay pendientes en esta simulación.",
+  previous: "Página anterior",
+  next: "Página siguiente",
+  page: "Página {{page}}",
+  retry: "Intentar de nuevo",
+  source: "Origen y actualización",
+  updatedAt: "Actualizado el {{date}}",
+  fetchedAt: "Consultado el {{date}}",
+  stale:
+    "Datos desactualizados: esta simulación usa una versión antigua. Confirma la información antes de usarla.",
+  close: "Cerrar",
+  cancelQuery: "Cancelar consulta",
+  cancel: "Cancelar",
+  confirmLinkTitle: "Confirmar vínculo local",
+  confirmUnlinkTitle: "Confirmar desvinculación local",
+  confirmLink: "Confirmar vínculo",
+  confirmUnlink: "Confirmar desvinculación",
+  localOnly:
+    "Esta acción solo cambia el vínculo local de este contacto. No modifica el registro ni los pendientes del proveedor.",
+  disabled:
+    "Las consultas Acessórias están desactivadas para esta empresa o entorno.",
+  permission: "No tienes permiso para esta consulta o acción.",
+  notLinked:
+    "El cliente ya no está vinculado a este contacto. Actualiza los vínculos.",
+  notFound: "No se encontró el cliente simulado.",
+  contextChanged:
+    "La conversación o el vínculo cambió durante la consulta. Actualiza los vínculos.",
+  functionalError:
+    "La simulación informó un fallo en la consulta. No se utilizó ningún resultado.",
+  invalidOutput: "No se pudo validar el resultado recibido.",
+  upstreamUnauthorized:
+    "La autorización simulada del proveedor rechazó la consulta.",
+  rateLimited:
+    "La simulación alcanzó el límite de consultas. Inténtalo más tarde.",
+  timeout: "Se agotó el tiempo de consulta. No se utilizó ningún resultado.",
+  unavailable: "La consulta simulada no está disponible. Inténtalo más tarde.",
+  requestError:
+    "No se pudo completar la consulta. No se mostrarán datos anteriores como actualizados.",
+  settingsTitle: "Consultas Acessórias (simulación)",
+  settingsHint:
+    "Habilita consultas ficticias y vínculos locales para esta empresa en el entorno autorizado. No conecta con el proveedor ni habilita IA o mensajes.",
+  settingError:
+    "No se pudo cambiar la configuración. Se conservó el valor anterior.",
+  settingConflict:
+    "Hay configuraciones distintas. La consulta sigue desactivada; guarda la opción deseada para resolverlas."
+};
+
 export const komunickMessages = {
   pt: { translations: pt },
   pt_PT: { translations: pt },

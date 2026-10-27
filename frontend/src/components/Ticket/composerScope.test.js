@@ -40,6 +40,9 @@ jest.mock("../MessageInputCustom/", () => ({ ticket }) => (
   </div>
 ));
 jest.mock("../../errors/toastError", () => jest.fn());
+jest.mock("../AcessoriasPanel", () => ({ ticketId }) => (
+  <div data-testid="acessorias-action" data-ticket-id={ticketId} />
+));
 
 const deferred = () => {
   let resolve;
@@ -61,6 +64,7 @@ test("hides composer while initial ticket is unresolved and mounts only the matc
   api.get.mockReturnValue(pending.promise);
   render(<Ticket />);
   expect(screen.queryByTestId("composer")).not.toBeInTheDocument();
+  expect(screen.queryByTestId("acessorias-action")).not.toBeInTheDocument();
   await act(async () => jest.advanceTimersByTime(501));
   expect(api.get).toHaveBeenCalledWith(
     "/tickets/u/fixture-a",

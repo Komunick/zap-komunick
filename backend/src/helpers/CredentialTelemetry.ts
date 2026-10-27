@@ -29,5 +29,11 @@ export const isAssistantRequest = (url?: string): boolean =>
   /\/tickets\/[^/]+\/assistant(?:[/?#]|$)/i.test(decodedPath(url)) ||
   /\/settings\/aiAssistantEnabled(?:[/?#]|$)/i.test(decodedPath(url));
 
+export const isAcessoriasRequest = (url?: string): boolean =>
+  /\/tickets\/[^/]+\/acessorias(?:[/?#]|$)/i.test(decodedPath(url)) ||
+  /\/settings\/acessoriasEnabled(?:[/?#]|$)/i.test(decodedPath(url));
+
 export const isSensitiveRequest = (url?: string): boolean =>
-  isCredentialRequest(url) || isAssistantRequest(url);
+  isCredentialRequest(url) ||
+  isAssistantRequest(url) ||
+  isAcessoriasRequest(url);

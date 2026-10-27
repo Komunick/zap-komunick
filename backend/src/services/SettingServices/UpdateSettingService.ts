@@ -25,6 +25,9 @@ const UpdateSettingService = async ({
   ) {
     throw new AppError("ERR_ASSISTANT_INVALID_REQUEST", 400);
   }
+  if (key === "acessoriasEnabled" && !["enabled", "disabled"].includes(value)) {
+    throw new AppError("ERR_ACESSORIAS_INVALID_REQUEST", 400);
+  }
   const [setting] = await Setting.findOrCreate({
     where: {
       key,
@@ -48,7 +51,7 @@ const UpdateSettingService = async ({
   await setting.update({ value });
 
   // P1: legacy Settings allows duplicate keys. A successful toggle must converge them.
-  if (key === "aiAssistantEnabled") {
+  if (["aiAssistantEnabled", "acessoriasEnabled"].includes(key)) {
     await Setting.update({ value }, { where: { companyId, key } });
   }
 

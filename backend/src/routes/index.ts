@@ -1,6 +1,7 @@
 import { Router } from "express";
 import credentialRoutes from "./credentialRoutes";
 import assistantRoutes from "./assistantRoutes";
+import acessoriasRoutes from "./acessoriasRoutes";
 
 import userRoutes from "./userRoutes";
 import authRoutes from "./authRoutes";
@@ -86,5 +87,6 @@ routes.use(kanbanRoutes);
 routes.use(closeReasonRoutes);
 routes.use(credentialRoutes);
 routes.use(assistantRoutes);
+routes.use(acessoriasRoutes);
 
 export default routes;

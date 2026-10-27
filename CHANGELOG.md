@@ -6,6 +6,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Adicionado
 
+- Painel Acessórias simulado com cadastro fictício, pendências paginadas, origem/atualização e aviso de desatualização.
+  Clientes exigem vínculo local explícito por empresa/contato, administrado com confirmação e seleção entre múltiplos
+  vínculos. Começa desligado e não conecta fornecedor, credenciais reais, documentos ou IA.
 - Assistente simulado para resumir texto do atendimento atual e sugerir resposta com referências e revisão humana.
   A sugestão pode ser editada e anexada ao rascunho sem substituir o texto existente nem enviar automaticamente.
   Começa desligado por empresa e exige modo `mock` no backend; não usa chave nem provedor de IA real.

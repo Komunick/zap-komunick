@@ -215,3 +215,37 @@ ser devolvida. O usuário continua responsável por revisar qualquer texto já a
 
 Conectar um provedor real exige outro recorte autorizado: modelo, conteúdo/base interna, dados permitidos, orçamento,
 política do fornecedor e avaliação com casos aprovados. Trocar o valor de uma variável não conecta esse provedor.
+
+## 11. Clientes e pendências Acessórias — P2 simulado (RF-022)
+
+Este recorte usa somente um provedor mock local. Não configura token, não consulta Acessórias real e não aprova o
+plano/licença/API do escritório. Os dados e campos apresentados são fictícios; não são confirmação de prazo fiscal,
+entrega, pagamento ou cumprimento de obrigação.
+
+Para validar no desenvolvimento, usando apenas uma empresa e contatos inteiramente fictícios:
+
+1. Definir `ACESSORIAS_MODE=mock` no backend de teste e reiniciar nesse ambiente autorizado. O compose de dev recebe
+   a variável do executor/arquivo de ambiente; o modelo de publicação mantém `ACESSORIAS_MODE=disabled`.
+2. Administrador habilita `acessoriasEnabled=enabled` em Configurações da empresa fictícia. Modo e flag são barreiras
+   independentes, desligadas por padrão. Habilitar A não habilita B; valores desconhecidos não conectam serviço real.
+3. Abrir um atendimento fictício autorizado e o painel Acessórias. O administrador escolhe no catálogo mock e confirma
+   o vínculo **local** daquele contato. Um contato pode ter mais de um cliente externo; a seleção de consulta é explícita.
+   Nenhum nome/telefone/CNPJ de mensagem cria vínculo ou libera cadastro automaticamente.
+4. Consultar cadastro/pendências, páginas, fonte/horários e avisos. O catálogo inclui casos fictícios de dados vazios,
+   desatualizados, erro funcional, acesso recusado, limite e timeout; esses casos não provam o contrato do fornecedor real.
+5. Para remover, confirmar a desvinculação local. Isso não exclui o cliente nem altera pendências no fornecedor.
+   Uma notificação sem conteúdo cadastral invalida o painel desse contato quando entregue; após desconexão, a próxima
+   consulta sempre valida novamente o vínculo e as permissões.
+
+Dados consultados ficam somente em memória do painel. Sem exportação, download, sincronização, cache compartilhado,
+integração com IA ou envio de mensagem. O rascunho e os dados do atendimento não são alterados pela consulta.
+
+Para desativar, desligar flag da empresa ou voltar `ACESSORIAS_MODE=disabled`. Isso bloqueia clients/catalog/consultas,
+inclusive para administrador; a UI fica indisponível. DELETE `/tickets/:ticketId/acessorias/links/:externalClientId`
+continua disponível à administração autorizada para revogar **um vínculo local conhecido**, sem depender do provedor.
+Não há um catálogo irrestrito ou consulta de cadastro liberado por essa exceção.
+
+A migração de esquema cria apenas o cadastro de vínculos. Ao recuar a aplicação, manter essa tabela preserva os
+mapeamentos; não executar reversão destrutiva como recuperação padrão. A chave mestra P0 e as configurações P1 são
+independentes desse modo. Conexão real, token, contrato/licença, ambiente autorizado, quotas e documentos exigem outro
+recorte; mudar uma variável não implementa o conector real.
