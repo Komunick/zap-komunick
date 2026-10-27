@@ -1,7 +1,14 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState
+} from "react";
 import { Link as RouterLink } from "react-router-dom";
 
 import Button from "@material-ui/core/Button";
+import CircularProgress from "@material-ui/core/CircularProgress";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import TextField from "@material-ui/core/TextField";
 import Link from "@material-ui/core/Link";
@@ -34,6 +41,7 @@ import { getBackendURL } from "../../services/config";
 import ColorModeContext from "../../layout/themeContext";
 import { loadJSON } from "../../helpers/loadJSON";
 import { BRAND_BLACK, BRAND_GREEN } from "../../theme/komunick";
+import TwoFactorForm from "./TwoFactorForm";
 
 // Zap Komunick: two column sign in (form + brand panel), following the
 // authentication layout of the Komunick Patterns. Whitelabel side image and
@@ -404,8 +412,30 @@ const Login = () => {
   const [loginLinks, setLoginLinks] = useState([]);
   const [sidePanelImage, setSidePanelImage] = useState("");
   const [backgroundContent, setBackgroundContent] = useState("");
+  const [secondFactor, setSecondFactor] = useState(null);
+  const mounted = useRef(true);
 
-  const { handleLogin } = useContext(AuthContext);
+  const { handleLogin, handleVerifyTwoFactor, cancelLogin, authenticating } =
+    useContext(AuthContext);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      cancelLogin();
+    };
+  }, [cancelLogin]);
+
+  const invalidateSecondFactor = useCallback(() => {
+    cancelLogin();
+    setSecondFactor(current => current && { ...current, challenge: null });
+  }, [cancelLogin]);
+
+  const backToPassword = () => {
+    cancelLogin();
+    setSecondFactor(null);
+    setUser(current => ({ ...current, password: "" }));
+  };
 
   const handleChangeInput = event => {
     setUser(prevUser => ({
@@ -414,9 +444,15 @@ const Login = () => {
     }));
   };
 
-  const handlSubmit = event => {
+  const handlSubmit = async event => {
     event.preventDefault();
-    handleLogin(user);
+    if (authenticating) return;
+    const result = await handleLogin(user);
+    if (mounted.current && result.twoFactorRequired) {
+      setUser(current => ({ ...current, password: "" }));
+      setShowPassword(false);
+      setSecondFactor(result);
+    }
   };
 
   useEffect(() => {
@@ -543,90 +579,119 @@ const Login = () => {
         <div className={classes.formCenter}>
           <div className={classes.formBox}>
             <Typography component="h1" className={classes.title}>
-              {i18n.t("login.welcome")}
+              {i18n.t(secondFactor ? "login2fa.title" : "login.welcome")}
             </Typography>
             <Typography className={classes.subtitle}>
-              {i18n.t("login.welcomeSubtitle")}
-            </Typography>
-            <form noValidate onSubmit={handlSubmit}>
-              <label className={classes.label} htmlFor="email">
-                {i18n.t("login.form.email")}
-              </label>
-              <TextField
-                variant="outlined"
-                required
-                fullWidth
-                id="email"
-                name="email"
-                value={user.email}
-                onChange={handleChangeInput}
-                autoComplete="email"
-                autoFocus
-                inputProps={{ "aria-label": i18n.t("login.form.email") }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <MailOutlineIcon className={classes.inputIcon} />
-                    </InputAdornment>
-                  )
-                }}
-              />
-              <label className={classes.label} htmlFor="password">
-                {i18n.t("login.form.password")}
-              </label>
-              <TextField
-                variant="outlined"
-                required
-                fullWidth
-                name="password"
-                type={showPassword ? "text" : "password"}
-                id="password"
-                value={user.password}
-                onChange={handleChangeInput}
-                autoComplete="current-password"
-                inputProps={{ "aria-label": i18n.t("login.form.password") }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <LockOutlinedIcon className={classes.inputIcon} />
-                    </InputAdornment>
-                  ),
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        aria-label={
-                          showPassword
-                            ? i18n.t("common.hidePassword")
-                            : i18n.t("common.showPassword")
-                        }
-                        onClick={() => setShowPassword(!showPassword)}
-                        onMouseDown={event => event.preventDefault()}
-                        edge="end"
-                      >
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  )
-                }}
-              />
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                color="primary"
-                className={classes.submit}
-              >
-                {i18n.t("login.buttons.submit")}
-              </Button>
-              {allowSignup && (
-                <Typography className={classes.signup}>
-                  {i18n.t("login.noAccount")}{" "}
-                  <Link component={RouterLink} to="/signup">
-                    {i18n.t("login.buttons.register")}
-                  </Link>
-                </Typography>
+              {i18n.t(
+                secondFactor ? "login2fa.subtitle" : "login.welcomeSubtitle"
               )}
-            </form>
+            </Typography>
+            {secondFactor ? (
+              <TwoFactorForm
+                challenge={secondFactor.challenge}
+                expiresAt={secondFactor.expiresAt}
+                busy={authenticating}
+                onVerify={handleVerifyTwoFactor}
+                onCancel={backToPassword}
+                onInvalidate={invalidateSecondFactor}
+              />
+            ) : (
+              <form
+                noValidate
+                onSubmit={handlSubmit}
+                aria-busy={authenticating}
+              >
+                <label className={classes.label} htmlFor="email">
+                  {i18n.t("login.form.email")}
+                </label>
+                <TextField
+                  variant="outlined"
+                  required
+                  fullWidth
+                  id="email"
+                  name="email"
+                  value={user.email}
+                  onChange={handleChangeInput}
+                  disabled={authenticating}
+                  autoComplete="email"
+                  autoFocus
+                  inputProps={{ "aria-label": i18n.t("login.form.email") }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <MailOutlineIcon className={classes.inputIcon} />
+                      </InputAdornment>
+                    )
+                  }}
+                />
+                <label className={classes.label} htmlFor="password">
+                  {i18n.t("login.form.password")}
+                </label>
+                <TextField
+                  variant="outlined"
+                  required
+                  fullWidth
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  value={user.password}
+                  onChange={handleChangeInput}
+                  disabled={authenticating}
+                  autoComplete="current-password"
+                  inputProps={{ "aria-label": i18n.t("login.form.password") }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <LockOutlinedIcon className={classes.inputIcon} />
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label={
+                            showPassword
+                              ? i18n.t("common.hidePassword")
+                              : i18n.t("common.showPassword")
+                          }
+                          onClick={() => setShowPassword(!showPassword)}
+                          onMouseDown={event => event.preventDefault()}
+                          edge="end"
+                        >
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    )
+                  }}
+                />
+                <Button
+                  type="submit"
+                  fullWidth
+                  variant="contained"
+                  color="primary"
+                  className={classes.submit}
+                  disabled={authenticating}
+                  startIcon={
+                    authenticating ? (
+                      <CircularProgress size={18} color="inherit" />
+                    ) : null
+                  }
+                >
+                  {i18n.t(
+                    authenticating
+                      ? "login2fa.signingIn"
+                      : "login.buttons.submit"
+                  )}
+                </Button>
+                {allowSignup && (
+                  <Typography className={classes.signup}>
+                    {i18n.t("login.noAccount")}{" "}
+                    <Link component={RouterLink} to="/signup">
+                      {i18n.t("login.buttons.register")}
+                    </Link>
+                  </Typography>
+                )}
+              </form>
+            )}
             {loginLinks.length > 0 && (
               <div className={classes.linksContainer}>
                 {loginLinks.map((link, index) => (

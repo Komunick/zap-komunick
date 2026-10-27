@@ -1740,6 +1740,589 @@ const es = {
   }
 };
 
+// Zap Komunick: security screens (RF-016).
+const securityMessages = {
+  pt: {
+    securityIp: {
+      title: "IPs permitidos",
+      subtitle:
+        "Restrinja o acesso da empresa aos IPs ou redes informados. O superusuário da instalação mantém acesso.",
+      enabled: "Restringir acesso aos IPs da lista",
+      listLabel: "IPs e redes permitidos",
+      listHelp:
+        "Um IP (IPv4 ou IPv6) ou uma rede CIDR por linha. Até 100 entradas. Inclua seu IP para manter o acesso.",
+      currentIp: "Seu IP atual: {{ip}}",
+      unknownIp: "não identificado",
+      addCurrent: "Adicionar meu IP",
+      save: "Salvar",
+      saving: "Salvando…",
+      saved: "Lista de IPs permitidos salva.",
+      loading: "Carregando configurações…",
+      loadError: "Não foi possível carregar os IPs permitidos.",
+      saveError: "Não foi possível salvar. Confira a lista e tente novamente.",
+      retry: "Tentar novamente",
+      onlyAdmin: "Somente administradores podem gerenciar os IPs permitidos."
+    },
+    audit: {
+      title: "Auditoria",
+      subtitle:
+        "Consulte os acessos e as alterações de segurança e configurações da empresa.",
+      from: "Data inicial",
+      to: "Data final",
+      user: "Usuário",
+      action: "Ação",
+      all: "Todos",
+      apply: "Filtrar",
+      clear: "Limpar",
+      refresh: "Atualizar",
+      loading: "Carregando registros…",
+      loadError: "Não foi possível carregar a auditoria. Tente atualizar.",
+      usersError:
+        "Não foi possível carregar os usuários do filtro. Os outros filtros continuam disponíveis.",
+      empty: "Nenhum registro encontrado para estes filtros.",
+      invalidDates: "A data final deve ser igual ou posterior à inicial.",
+      total: "Registros: {{count}}",
+      previous: "Anterior",
+      next: "Próxima",
+      page: "Página {{page}}",
+      details: "Detalhes",
+      openDetails: "Ver detalhes do registro {{id}}",
+      close: "Fechar",
+      noUser: "Não identificado",
+      userId: "Usuário #{{id}}",
+      unavailable: "Não informado",
+      noDetails: "Sem detalhes adicionais.",
+      date: "Data e hora",
+      ip: "IP",
+      entity: "Registro afetado",
+      userAgent: "Navegador",
+      onlyAdmin: "Somente administradores podem consultar a auditoria.",
+      families: {
+        auth: "Acessos",
+        security: "Segurança",
+        user: "Usuários",
+        setting: "Configurações"
+      },
+      entities: {
+        user: "Usuário",
+        company: "Empresa",
+        setting: "Configuração"
+      },
+      actions: {
+        auth_login: "Entrada na conta",
+        auth_login_failed: "Tentativa de entrada recusada",
+        auth_logout: "Saída da conta",
+        auth_ip_blocked: "Acesso bloqueado por IP",
+        auth_2fa_failed: "Verificação em duas etapas recusada",
+        auth_impersonate: "Acesso por superusuário",
+        security_2fa_enabled: "Verificação em duas etapas ativada",
+        security_2fa_disabled: "Verificação em duas etapas desativada",
+        security_2fa_reset: "Verificação em duas etapas redefinida",
+        security_2fa_recovery_codes: "Códigos de recuperação renovados",
+        security_ip_allowlist_updated: "IPs permitidos atualizados",
+        user_created: "Usuário criado",
+        user_updated: "Usuário alterado",
+        user_deleted: "Usuário excluído",
+        setting_updated: "Configuração alterada"
+      }
+    },
+    usersTwoFactor: {
+      column: "Verificação em duas etapas",
+      enabled: "Ativada",
+      disabled: "Desativada",
+      unknown: "Não informado",
+      reset: "Redefinir verificação em duas etapas",
+      resetFor: "Redefinir verificação em duas etapas de {{name}}",
+      resetTitle: "Redefinir verificação em duas etapas?",
+      resetMessage:
+        "A verificação em duas etapas de {{name}} será desativada e os códigos de recuperação deixarão de funcionar. A pessoa precisará configurá-la novamente em Segurança da conta.",
+      cancel: "Cancelar",
+      confirm: "Redefinir",
+      resetting: "Redefinindo…",
+      resetDone: "Verificação em duas etapas redefinida.",
+      resetError: "Não foi possível redefinir. Tente novamente."
+    },
+    accountSecurity: {
+      title: "Segurança da conta",
+      loading: "Carregando segurança…",
+      twoFactorTitle: "Verificação em duas etapas",
+      description:
+        "Proteja sua conta com um código do aplicativo autenticador, além da senha.",
+      enabled: "Ativada",
+      disabled: "Desativada",
+      remaining: "Códigos de recuperação restantes: {{count}}",
+      freshCode:
+        "Use um novo código do aplicativo a cada confirmação. Códigos já utilizados não são aceitos.",
+      start: "Configurar verificação em duas etapas",
+      scan: "Leia este QR no seu aplicativo autenticador ou informe a chave manualmente.",
+      qrLabel: "QR para configurar o autenticador",
+      secret: "Chave de configuração",
+      secretHelp:
+        "Esta chave permite gerar códigos de acesso. Não compartilhe nem publique o QR.",
+      code: "Código do autenticador",
+      confirm: "Confirmar",
+      cancel: "Cancelar",
+      regenerate: "Gerar novos códigos de recuperação",
+      disable: "Desativar verificação em duas etapas",
+      disableHelp:
+        "Confirme sua senha e um código do aplicativo ou de recuperação para desativar.",
+      regenerateHelp:
+        "Confirme com um código novo do aplicativo. Os códigos de recuperação anteriores serão invalidados.",
+      password: "Senha atual",
+      secondFactor: "Código do aplicativo ou de recuperação",
+      recoveryTitle: "Guarde seus códigos de recuperação",
+      recoveryHelp:
+        "Cada código funciona uma vez. Eles são mostrados somente agora. Guarde em um local seguro antes de continuar.",
+      download: "Baixar códigos",
+      saved: "Guardei os códigos",
+      requestError: "Não foi possível concluir a solicitação. Tente novamente.",
+      retry: "Tentar novamente"
+    },
+    login2fa: {
+      title: "Verificação em duas etapas",
+      subtitle: "Confirme sua identidade para concluir o acesso.",
+      code: "Código do autenticador",
+      codeHelp: "Digite os 6 dígitos exibidos no seu aplicativo.",
+      recoveryCode: "Código de recuperação",
+      recoveryHelp:
+        "Use um dos códigos salvos ao ativar a verificação. Cada código funciona uma vez.",
+      verify: "Confirmar e entrar",
+      verifying: "Verificando…",
+      signingIn: "Entrando…",
+      useRecovery: "Usar código de recuperação",
+      useAuthenticator: "Usar aplicativo autenticador",
+      back: "Voltar / trocar conta",
+      expiresIn: "Esta verificação expira em {{time}}.",
+      errors: {
+        invalid: "Código inválido ou já utilizado. Confira e tente novamente.",
+        expired:
+          "A verificação expirou. Volte e entre com sua senha novamente.",
+        locked:
+          "Limite de tentativas atingido. Aguarde {{minutes}} minutos e entre novamente.",
+        unavailable: "Não foi possível verificar o código. Tente novamente.",
+        ip: "Este endereço IP não tem permissão para acessar.",
+        hours: "O acesso não está permitido neste horário.",
+        codeFormat: "Digite um código de 6 dígitos.",
+        recoveryFormat: "Digite um código de recuperação completo (XXXX-XXXX)."
+      }
+    },
+    backendErrors: {
+      ERR_2FA_ALREADY_ENABLED: "A verificação em duas etapas já está ativada.",
+      ERR_2FA_CHALLENGE_EXPIRED:
+        "A verificação expirou. Entre com sua senha novamente.",
+      ERR_2FA_INVALID_CODE:
+        "Código inválido ou já utilizado. Aguarde um novo código e tente novamente.",
+      ERR_2FA_NOT_ENABLED: "A verificação em duas etapas não está ativada.",
+      ERR_2FA_NOT_STARTED: "Inicie a configuração do autenticador novamente.",
+      ERR_2FA_TOO_MANY_ATTEMPTS:
+        "Limite de tentativas atingido. Aguarde dez minutos.",
+      ERR_2FA_USE_SELF_DISABLE:
+        "Para sua própria conta, desative a verificação em Segurança da conta.",
+      ERR_IP_ALLOWLIST_EMPTY:
+        "Inclua ao menos um IP ou rede antes de ativar a restrição.",
+      ERR_IP_ALLOWLIST_INVALID: "A lista contém um IP ou uma rede inválida.",
+      ERR_IP_ALLOWLIST_LOCKOUT:
+        "A lista precisa permitir seu IP atual para manter seu acesso.",
+      ERR_IP_ALLOWLIST_TOO_MANY: "A lista permite no máximo 100 entradas.",
+      ERR_IP_NOT_ALLOWED:
+        "Este IP não tem permissão de acesso. Fale com o administrador.",
+      ERR_AUDIT_INVALID_DATE: "Informe um período válido para a auditoria.",
+      ERR_AUDIT_INVALID_FILTER: "Filtro de auditoria inválido.",
+      ERR_USE_SECURITY_ROUTE:
+        "Altere os IPs permitidos na página própria de segurança."
+    }
+  },
+  en: {
+    securityIp: {
+      title: "Allowed IPs",
+      subtitle:
+        "Restrict company access to the listed IP addresses or networks. The installation superuser retains access.",
+      enabled: "Restrict access to the listed IPs",
+      listLabel: "Allowed IP addresses and networks",
+      listHelp:
+        "One IPv4 or IPv6 address or CIDR network per line. Up to 100 entries. Include your IP to keep access.",
+      currentIp: "Your current IP: {{ip}}",
+      unknownIp: "unidentified",
+      addCurrent: "Add my IP",
+      save: "Save",
+      saving: "Saving…",
+      saved: "Allowed IP list saved.",
+      loading: "Loading settings…",
+      loadError: "Could not load allowed IPs.",
+      saveError: "Could not save. Check the list and try again.",
+      retry: "Try again",
+      onlyAdmin: "Only administrators can manage allowed IPs."
+    },
+    audit: {
+      title: "Audit log",
+      subtitle: "Review sign-ins and changes to company security and settings.",
+      from: "Start date",
+      to: "End date",
+      user: "User",
+      action: "Action",
+      all: "All",
+      apply: "Filter",
+      clear: "Clear",
+      refresh: "Refresh",
+      loading: "Loading records…",
+      loadError: "Could not load the audit log. Try refreshing.",
+      usersError:
+        "Could not load the user filter. The other filters are still available.",
+      empty: "No records found for these filters.",
+      invalidDates: "The end date must be on or after the start date.",
+      total: "Records: {{count}}",
+      previous: "Previous",
+      next: "Next",
+      page: "Page {{page}}",
+      details: "Details",
+      openDetails: "View details of record {{id}}",
+      close: "Close",
+      noUser: "Unidentified",
+      userId: "User #{{id}}",
+      unavailable: "Not provided",
+      noDetails: "No additional details.",
+      date: "Date and time",
+      ip: "IP",
+      entity: "Affected record",
+      userAgent: "Browser",
+      onlyAdmin: "Only administrators can view the audit log.",
+      families: {
+        auth: "Access",
+        security: "Security",
+        user: "Users",
+        setting: "Settings"
+      },
+      entities: {
+        user: "User",
+        company: "Company",
+        setting: "Setting"
+      },
+      actions: {
+        auth_login: "Signed in",
+        auth_login_failed: "Sign-in attempt rejected",
+        auth_logout: "Signed out",
+        auth_ip_blocked: "Access blocked by IP",
+        auth_2fa_failed: "Two-factor verification rejected",
+        auth_impersonate: "Superuser access",
+        security_2fa_enabled: "Two-factor verification enabled",
+        security_2fa_disabled: "Two-factor verification disabled",
+        security_2fa_reset: "Two-factor verification reset",
+        security_2fa_recovery_codes: "Recovery codes regenerated",
+        security_ip_allowlist_updated: "Allowed IPs updated",
+        user_created: "User created",
+        user_updated: "User updated",
+        user_deleted: "User deleted",
+        setting_updated: "Setting updated"
+      }
+    },
+    usersTwoFactor: {
+      column: "Two-factor verification",
+      enabled: "Enabled",
+      disabled: "Disabled",
+      unknown: "Not provided",
+      reset: "Reset two-factor verification",
+      resetFor: "Reset two-factor verification for {{name}}",
+      resetTitle: "Reset two-factor verification?",
+      resetMessage:
+        "Two-factor verification for {{name}} will be disabled and their recovery codes will stop working. They will need to set it up again in Account security.",
+      cancel: "Cancel",
+      confirm: "Reset",
+      resetting: "Resetting…",
+      resetDone: "Two-factor verification reset.",
+      resetError: "Could not reset two-factor verification. Try again."
+    },
+    accountSecurity: {
+      title: "Account security",
+      loading: "Loading security…",
+      twoFactorTitle: "Two-step verification",
+      description:
+        "Protect your account with an authenticator app code as well as your password.",
+      enabled: "Enabled",
+      disabled: "Disabled",
+      remaining: "Recovery codes remaining: {{count}}",
+      freshCode:
+        "Use a new app code for each confirmation. Previously used codes are not accepted.",
+      start: "Set up two-step verification",
+      scan: "Scan this QR in your authenticator app or enter the key manually.",
+      qrLabel: "QR for authenticator setup",
+      secret: "Setup key",
+      secretHelp:
+        "This key can generate sign-in codes. Do not share it or publish the QR.",
+      code: "Authenticator code",
+      confirm: "Confirm",
+      cancel: "Cancel",
+      regenerate: "Generate new recovery codes",
+      disable: "Disable two-step verification",
+      disableHelp:
+        "Confirm your password and an app or recovery code to disable verification.",
+      regenerateHelp:
+        "Confirm with a new app code. Previous recovery codes will be invalidated.",
+      password: "Current password",
+      secondFactor: "App or recovery code",
+      recoveryTitle: "Save your recovery codes",
+      recoveryHelp:
+        "Each code works once. They are shown only now. Store them safely before continuing.",
+      download: "Download codes",
+      saved: "I saved the codes",
+      requestError: "Could not complete the request. Please try again.",
+      retry: "Try again"
+    },
+    login2fa: {
+      title: "Two-step verification",
+      subtitle: "Confirm your identity to finish signing in.",
+      code: "Authenticator code",
+      codeHelp: "Enter the 6 digits shown in your app.",
+      recoveryCode: "Recovery code",
+      recoveryHelp:
+        "Use one of the codes saved when you enabled verification. Each code works once.",
+      verify: "Verify and sign in",
+      verifying: "Verifying…",
+      signingIn: "Signing in…",
+      useRecovery: "Use a recovery code",
+      useAuthenticator: "Use authenticator app",
+      back: "Back / switch account",
+      expiresIn: "This verification expires in {{time}}.",
+      errors: {
+        invalid: "Invalid or already used code. Check it and try again.",
+        expired:
+          "Verification expired. Go back and sign in with your password again.",
+        locked:
+          "Too many attempts. Wait {{minutes}} minutes and sign in again.",
+        unavailable: "Could not verify the code. Please try again.",
+        ip: "This IP address is not allowed to sign in.",
+        hours: "Sign-in is not allowed at this time.",
+        codeFormat: "Enter a 6-digit code.",
+        recoveryFormat: "Enter a complete recovery code (XXXX-XXXX)."
+      }
+    },
+    backendErrors: {
+      ERR_2FA_ALREADY_ENABLED: "Two-step verification is already enabled.",
+      ERR_2FA_CHALLENGE_EXPIRED:
+        "Verification expired. Sign in with your password again.",
+      ERR_2FA_INVALID_CODE:
+        "Invalid or already used code. Wait for a new code and try again.",
+      ERR_2FA_NOT_ENABLED: "Two-step verification is not enabled.",
+      ERR_2FA_NOT_STARTED: "Start authenticator setup again.",
+      ERR_2FA_TOO_MANY_ATTEMPTS: "Too many attempts. Wait ten minutes.",
+      ERR_2FA_USE_SELF_DISABLE:
+        "Disable verification for your own account in Account security.",
+      ERR_IP_ALLOWLIST_EMPTY:
+        "Add at least one IP or network before enabling restrictions.",
+      ERR_IP_ALLOWLIST_INVALID:
+        "The list contains an invalid IP address or network.",
+      ERR_IP_ALLOWLIST_LOCKOUT:
+        "The list must allow your current IP to keep access.",
+      ERR_IP_ALLOWLIST_TOO_MANY: "The list allows up to 100 entries.",
+      ERR_IP_NOT_ALLOWED: "This IP is not allowed. Contact your administrator.",
+      ERR_AUDIT_INVALID_DATE: "Enter a valid audit date range.",
+      ERR_AUDIT_INVALID_FILTER: "Invalid audit filter.",
+      ERR_USE_SECURITY_ROUTE:
+        "Change allowed IPs on the dedicated security page."
+    }
+  },
+  es: {
+    securityIp: {
+      title: "IP permitidas",
+      subtitle:
+        "Restrinja el acceso de la empresa a las direcciones IP o redes indicadas. El superusuario de la instalación conserva el acceso.",
+      enabled: "Restringir el acceso a las IP de la lista",
+      listLabel: "Direcciones IP y redes permitidas",
+      listHelp:
+        "Una dirección IPv4 o IPv6 o red CIDR por línea. Hasta 100 entradas. Incluya su IP para conservar el acceso.",
+      currentIp: "Su IP actual: {{ip}}",
+      unknownIp: "no identificada",
+      addCurrent: "Añadir mi IP",
+      save: "Guardar",
+      saving: "Guardando…",
+      saved: "Lista de IP permitidas guardada.",
+      loading: "Cargando configuración…",
+      loadError: "No se pudieron cargar las IP permitidas.",
+      saveError: "No se pudo guardar. Revise la lista e inténtelo de nuevo.",
+      retry: "Reintentar",
+      onlyAdmin: "Solo los administradores pueden gestionar las IP permitidas."
+    },
+    audit: {
+      title: "Auditoría",
+      subtitle:
+        "Consulte los accesos y los cambios de seguridad y configuración de la empresa.",
+      from: "Fecha inicial",
+      to: "Fecha final",
+      user: "Usuario",
+      action: "Acción",
+      all: "Todos",
+      apply: "Filtrar",
+      clear: "Limpiar",
+      refresh: "Actualizar",
+      loading: "Cargando registros…",
+      loadError: "No se pudo cargar la auditoría. Intente actualizar.",
+      usersError:
+        "No se pudieron cargar los usuarios del filtro. Los otros filtros siguen disponibles.",
+      empty: "No se encontraron registros con estos filtros.",
+      invalidDates: "La fecha final debe ser igual o posterior a la inicial.",
+      total: "Registros: {{count}}",
+      previous: "Anterior",
+      next: "Siguiente",
+      page: "Página {{page}}",
+      details: "Detalles",
+      openDetails: "Ver detalles del registro {{id}}",
+      close: "Cerrar",
+      noUser: "No identificado",
+      userId: "Usuario #{{id}}",
+      unavailable: "No informado",
+      noDetails: "Sin detalles adicionales.",
+      date: "Fecha y hora",
+      ip: "IP",
+      entity: "Registro afectado",
+      userAgent: "Navegador",
+      onlyAdmin: "Solo los administradores pueden consultar la auditoría.",
+      families: {
+        auth: "Accesos",
+        security: "Seguridad",
+        user: "Usuarios",
+        setting: "Configuración"
+      },
+      entities: {
+        user: "Usuario",
+        company: "Empresa",
+        setting: "Configuración"
+      },
+      actions: {
+        auth_login: "Inicio de sesión",
+        auth_login_failed: "Intento de acceso rechazado",
+        auth_logout: "Cierre de sesión",
+        auth_ip_blocked: "Acceso bloqueado por IP",
+        auth_2fa_failed: "Verificación en dos pasos rechazada",
+        auth_impersonate: "Acceso del superusuario",
+        security_2fa_enabled: "Verificación en dos pasos activada",
+        security_2fa_disabled: "Verificación en dos pasos desactivada",
+        security_2fa_reset: "Verificación en dos pasos restablecida",
+        security_2fa_recovery_codes: "Códigos de recuperación renovados",
+        security_ip_allowlist_updated: "IP permitidas actualizadas",
+        user_created: "Usuario creado",
+        user_updated: "Usuario modificado",
+        user_deleted: "Usuario eliminado",
+        setting_updated: "Configuración modificada"
+      }
+    },
+    usersTwoFactor: {
+      column: "Verificación en dos pasos",
+      enabled: "Activada",
+      disabled: "Desactivada",
+      unknown: "No informado",
+      reset: "Restablecer verificación en dos pasos",
+      resetFor: "Restablecer la verificación en dos pasos de {{name}}",
+      resetTitle: "¿Restablecer la verificación en dos pasos?",
+      resetMessage:
+        "Se desactivará la verificación en dos pasos de {{name}} y sus códigos de recuperación dejarán de funcionar. La persona deberá configurarla de nuevo en Seguridad de la cuenta.",
+      cancel: "Cancelar",
+      confirm: "Restablecer",
+      resetting: "Restableciendo…",
+      resetDone: "Verificación en dos pasos restablecida.",
+      resetError: "No se pudo restablecer. Inténtelo de nuevo."
+    },
+    accountSecurity: {
+      title: "Seguridad de la cuenta",
+      loading: "Cargando seguridad…",
+      twoFactorTitle: "Verificación en dos pasos",
+      description:
+        "Protege tu cuenta con un código de la aplicación autenticadora, además de la contraseña.",
+      enabled: "Activada",
+      disabled: "Desactivada",
+      remaining: "Códigos de recuperación restantes: {{count}}",
+      freshCode:
+        "Usa un código nuevo de la aplicación en cada confirmación. No se aceptan códigos ya utilizados.",
+      start: "Configurar verificación en dos pasos",
+      scan: "Escanea este QR con la aplicación autenticadora o introduce la clave manualmente.",
+      qrLabel: "QR para configurar el autenticador",
+      secret: "Clave de configuración",
+      secretHelp:
+        "Esta clave permite generar códigos de acceso. No la compartas ni publiques el QR.",
+      code: "Código del autenticador",
+      confirm: "Confirmar",
+      cancel: "Cancelar",
+      regenerate: "Generar nuevos códigos de recuperación",
+      disable: "Desactivar verificación en dos pasos",
+      disableHelp:
+        "Confirma tu contraseña y un código de la aplicación o de recuperación para desactivarla.",
+      regenerateHelp:
+        "Confirma con un código nuevo de la aplicación. Se invalidarán los códigos de recuperación anteriores.",
+      password: "Contraseña actual",
+      secondFactor: "Código de la aplicación o de recuperación",
+      recoveryTitle: "Guarda tus códigos de recuperación",
+      recoveryHelp:
+        "Cada código funciona una vez. Solo se muestran ahora. Guárdalos en un lugar seguro antes de continuar.",
+      download: "Descargar códigos",
+      saved: "He guardado los códigos",
+      requestError: "No se pudo completar la solicitud. Inténtalo de nuevo.",
+      retry: "Reintentar"
+    },
+    login2fa: {
+      title: "Verificación en dos pasos",
+      subtitle: "Confirma tu identidad para completar el acceso.",
+      code: "Código del autenticador",
+      codeHelp: "Introduce los 6 dígitos que aparecen en tu aplicación.",
+      recoveryCode: "Código de recuperación",
+      recoveryHelp:
+        "Usa uno de los códigos guardados al activar la verificación. Cada código funciona una vez.",
+      verify: "Verificar y entrar",
+      verifying: "Verificando…",
+      signingIn: "Entrando…",
+      useRecovery: "Usar código de recuperación",
+      useAuthenticator: "Usar aplicación autenticadora",
+      back: "Volver / cambiar cuenta",
+      expiresIn: "Esta verificación caduca en {{time}}.",
+      errors: {
+        invalid:
+          "Código no válido o ya utilizado. Revísalo e inténtalo de nuevo.",
+        expired:
+          "La verificación ha caducado. Vuelve e introduce tu contraseña de nuevo.",
+        locked:
+          "Demasiados intentos. Espera {{minutes}} minutos e inicia sesión de nuevo.",
+        unavailable: "No se pudo verificar el código. Inténtalo de nuevo.",
+        ip: "Esta dirección IP no tiene permiso para acceder.",
+        hours: "No se permite acceder en este horario.",
+        codeFormat: "Introduce un código de 6 dígitos.",
+        recoveryFormat:
+          "Introduce un código de recuperación completo (XXXX-XXXX)."
+      }
+    },
+    backendErrors: {
+      ERR_2FA_ALREADY_ENABLED: "La verificación en dos pasos ya está activada.",
+      ERR_2FA_CHALLENGE_EXPIRED:
+        "La verificación ha caducado. Introduce tu contraseña de nuevo.",
+      ERR_2FA_INVALID_CODE:
+        "Código no válido o ya utilizado. Espera un código nuevo e inténtalo de nuevo.",
+      ERR_2FA_NOT_ENABLED: "La verificación en dos pasos no está activada.",
+      ERR_2FA_NOT_STARTED: "Inicia la configuración del autenticador de nuevo.",
+      ERR_2FA_TOO_MANY_ATTEMPTS: "Demasiados intentos. Espera diez minutos.",
+      ERR_2FA_USE_SELF_DISABLE:
+        "Desactiva la verificación de tu propia cuenta en Seguridad de la cuenta.",
+      ERR_IP_ALLOWLIST_EMPTY:
+        "Añade al menos una IP o red antes de activar la restricción.",
+      ERR_IP_ALLOWLIST_INVALID: "La lista contiene una IP o red no válida.",
+      ERR_IP_ALLOWLIST_LOCKOUT:
+        "La lista debe permitir tu IP actual para conservar el acceso.",
+      ERR_IP_ALLOWLIST_TOO_MANY: "La lista permite un máximo de 100 entradas.",
+      ERR_IP_NOT_ALLOWED:
+        "Esta IP no tiene permiso de acceso. Contacta con el administrador.",
+      ERR_AUDIT_INVALID_DATE: "Introduce un período válido para la auditoría.",
+      ERR_AUDIT_INVALID_FILTER: "Filtro de auditoría no válido.",
+      ERR_USE_SECURITY_ROUTE:
+        "Modifica las IP permitidas en la página específica de seguridad."
+    }
+  }
+};
+
+[
+  ["pt", pt],
+  ["en", en],
+  ["es", es]
+].forEach(([language, target]) => {
+  const { backendErrors, ...screens } = securityMessages[language];
+  Object.assign(target, screens);
+  Object.assign(target.backendErrors, backendErrors);
+});
+
 export const komunickMessages = {
   pt: { translations: pt },
   pt_PT: { translations: pt },

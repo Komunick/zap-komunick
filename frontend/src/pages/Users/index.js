@@ -13,9 +13,19 @@ import IconButton from "@material-ui/core/IconButton";
 import SearchIcon from "@material-ui/icons/Search";
 import TextField from "@material-ui/core/TextField";
 import InputAdornment from "@material-ui/core/InputAdornment";
+import Chip from "@material-ui/core/Chip";
+import CircularProgress from "@material-ui/core/CircularProgress";
+import Dialog from "@material-ui/core/Dialog";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogContentText from "@material-ui/core/DialogContentText";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import Tooltip from "@material-ui/core/Tooltip";
+import { Alert } from "@material-ui/lab";
 
 import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
 import EditIcon from "@material-ui/icons/Edit";
+import LockOpenOutlinedIcon from "@material-ui/icons/LockOpenOutlined";
 
 import MainContainer from "../../components/MainContainer";
 import MainHeader from "../../components/MainHeader";
@@ -29,8 +39,16 @@ import UserModal from "../../components/UserModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import toastError from "../../errors/toastError";
 import { SocketContext } from "../../context/Socket/SocketContext";
+import { AuthContext } from "../../context/Auth/AuthContext";
 
 const reducer = (state, action) => {
+  // Zap Komunick: reset only the security flag, preserving current list data.
+  if (action.type === "RESET_TWO_FACTOR") {
+    return state.map(user =>
+      user.id === action.payload ? { ...user, twoFactorEnabled: false } : user
+    );
+  }
+
   if (action.type === "LOAD_USERS") {
     const users = action.payload;
     const newUsers = [];
@@ -85,6 +103,8 @@ const useStyles = makeStyles(theme => ({
 
 const Users = () => {
   const classes = useStyles();
+  const { user: currentUser } = useContext(AuthContext);
+  const isAdmin = currentUser?.profile === "admin";
 
   const [loading, setLoading] = useState(false);
   const [pageNumber, setPageNumber] = useState(1);
@@ -95,6 +115,9 @@ const Users = () => {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [searchParam, setSearchParam] = useState("");
   const [users, dispatch] = useReducer(reducer, []);
+  const [resetTarget, setResetTarget] = useState(null);
+  const [resetting, setResetting] = useState(false);
+  const [resetError, setResetError] = useState("");
 
   const socketManager = useContext(SocketContext);
 
@@ -175,6 +198,27 @@ const Users = () => {
     setPageNumber(1);
   };
 
+  // Zap Komunick: administrators can help another user who lost their 2FA.
+  // Disabling one's own 2FA belongs to Account Security (password + code).
+  const handleResetTwoFactor = async () => {
+    if (!resetTarget || resetting || resetTarget.id === currentUser?.id) return;
+    setResetting(true);
+    setResetError("");
+    try {
+      await api.delete(`/users/${resetTarget.id}/2fa`);
+      dispatch({ type: "RESET_TWO_FACTOR", payload: resetTarget.id });
+      toast.success(i18n.t("usersTwoFactor.resetDone"));
+      setResetTarget(null);
+    } catch (err) {
+      const key = `backendErrors.${err.response?.data?.error}`;
+      setResetError(
+        i18n.exists(key) ? i18n.t(key) : i18n.t("usersTwoFactor.resetError")
+      );
+    } finally {
+      setResetting(false);
+    }
+  };
+
   const loadMore = () => {
     setPageNumber(prevState => prevState + 1);
   };
@@ -189,6 +233,46 @@ const Users = () => {
 
   return (
     <MainContainer>
+      <Dialog
+        open={!!resetTarget}
+        onClose={() => {
+          if (!resetting) setResetTarget(null);
+        }}
+        maxWidth="xs"
+        fullWidth
+        aria-labelledby="reset-two-factor-title"
+        aria-describedby="reset-two-factor-description"
+      >
+        <DialogTitle id="reset-two-factor-title">
+          {i18n.t("usersTwoFactor.resetTitle")}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="reset-two-factor-description">
+            {i18n.t("usersTwoFactor.resetMessage", {
+              name: resetTarget?.name || ""
+            })}
+          </DialogContentText>
+          {resetError && <Alert severity="error">{resetError}</Alert>}
+        </DialogContent>
+        <DialogActions>
+          <Button disabled={resetting} onClick={() => setResetTarget(null)}>
+            {i18n.t("usersTwoFactor.cancel")}
+          </Button>
+          <Button
+            color="primary"
+            variant="contained"
+            disabled={resetting}
+            onClick={handleResetTwoFactor}
+            startIcon={
+              resetting ? <CircularProgress color="inherit" size={16} /> : null
+            }
+          >
+            {i18n.t(
+              resetting ? "usersTwoFactor.resetting" : "usersTwoFactor.confirm"
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
       <ConfirmationModal
         title={
           deletingUser &&
@@ -249,6 +333,11 @@ const Users = () => {
               <TableCell align="center">
                 {i18n.t("users.table.profile")}
               </TableCell>
+              {isAdmin && (
+                <TableCell align="center">
+                  {i18n.t("usersTwoFactor.column")}
+                </TableCell>
+              )}
               <TableCell align="center">
                 {i18n.t("users.table.actions")}
               </TableCell>
@@ -262,7 +351,42 @@ const Users = () => {
                   <TableCell align="center">{user.name}</TableCell>
                   <TableCell align="center">{user.email}</TableCell>
                   <TableCell align="center">{user.profile}</TableCell>
+                  {isAdmin && (
+                    <TableCell align="center">
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        color={user.twoFactorEnabled ? "primary" : "default"}
+                        label={i18n.t(
+                          typeof user.twoFactorEnabled !== "boolean"
+                            ? "usersTwoFactor.unknown"
+                            : user.twoFactorEnabled
+                              ? "usersTwoFactor.enabled"
+                              : "usersTwoFactor.disabled"
+                        )}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell align="center">
+                    {isAdmin &&
+                      user.twoFactorEnabled &&
+                      user.id !== currentUser.id &&
+                      (!user.super || currentUser.super) && (
+                        <Tooltip title={i18n.t("usersTwoFactor.reset")}>
+                          <IconButton
+                            size="small"
+                            aria-label={i18n.t("usersTwoFactor.resetFor", {
+                              name: user.name
+                            })}
+                            onClick={() => {
+                              setResetError("");
+                              setResetTarget(user);
+                            }}
+                          >
+                            <LockOpenOutlinedIcon />
+                          </IconButton>
+                        </Tooltip>
+                      )}
                     <IconButton
                       size="small"
                       onClick={() => handleEditUser(user)}
@@ -282,7 +406,7 @@ const Users = () => {
                   </TableCell>
                 </TableRow>
               ))}
-              {loading && <TableRowSkeleton columns={4} />}
+              {loading && <TableRowSkeleton columns={isAdmin ? 6 : 5} />}
             </>
           </TableBody>
         </Table>

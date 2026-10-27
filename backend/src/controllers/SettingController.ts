@@ -7,6 +7,8 @@ import ListSettingsService from "../services/SettingServices/ListSettingsService
 import GetPublicSettingService from "../services/SettingServices/GetPublicSettingService";
 import { GetSettingService } from "../services/SettingServices/GetSettingService";
 import { triggerGracefulShutdown } from "../utils/shutdown";
+import { auditRequest } from "../services/AuditServices/RecordAuditService";
+import { IP_ALLOWLIST_KEYS } from "../services/SecurityServices/IpAllowlistService";
 
 type LogoRequest = {
   mode: string;
@@ -40,10 +42,20 @@ export const update = async (
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
 
+  // Zap Komunick: the IP allowlist only goes through its own route, which
+  // checks that the administrator is not locking himself out (RF-016)
+  if (IP_ALLOWLIST_KEYS.includes(key)) {
+    throw new AppError("ERR_USE_SECURITY_ROUTE", 400);
+  }
+
   const setting = await UpdateSettingService({
     key,
     value,
     companyId
+  });
+
+  auditRequest(req, "setting.updated", "setting", key, {
+    changed: true
   });
 
   return res.status(200).json(setting);

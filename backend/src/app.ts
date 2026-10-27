@@ -23,6 +23,10 @@ Sentry.init({ dsn: process.env.SENTRY_DSN });
 
 const app = express();
 
+// Zap Komunick: the real client IP (audit trail and IP allowlist, RF-016)
+// trusts forwarded headers only when the deployment explicitly names its proxies.
+app.set("trust proxy", process.env.TRUST_PROXY || false);
+
 app.set("queues", {
   messageQueue,
   sendScheduledMessages
@@ -87,11 +91,8 @@ app.get("/public/*", (req, res) => {
 });
 
 app.use((req, _res, next) => {
-  const { method, url, query, body, headers } = req;
-  logger.trace(
-    { method, url, query, body, headers },
-    `Incoming request: ${req.method} ${req.url}`
-  );
+  const { method, path: requestPath } = req;
+  logger.trace({ method, path: requestPath }, "Incoming request");
   next();
 });
 
@@ -100,6 +101,9 @@ app.use(routes);
 app.use(Sentry.Handlers.errorHandler());
 app.use(async (err: Error, req: Request, res: Response, _: NextFunction) => {
   if (err instanceof AppError) {
+    if (err.message === "ERR_2FA_TOO_MANY_ATTEMPTS") {
+      res.setHeader("Retry-After", "600");
+    }
     logger[err.level](err);
     return res.status(err.statusCode).json({ error: err.message });
   }

@@ -647,7 +647,6 @@ const LoggedInLayout = ({ children, themeToggle }) => {
   const painelDesktop =
     layoutMode === "painel" && drawerVariant !== "temporary";
 
-
   useEffect(() => {
     const onKeyDown = event => {
       if (
@@ -684,7 +683,8 @@ const LoggedInLayout = ({ children, themeToggle }) => {
       if (on) root.style.setProperty(name, value);
       else root.style.removeProperty(name);
     });
-    return () => Object.keys(vars).forEach(name => root.style.removeProperty(name));
+    return () =>
+      Object.keys(vars).forEach(name => root.style.removeProperty(name));
   }, [layoutMode, theme.mode]);
   const greaterThenSm = useMediaQuery(theme.breakpoints.up("sm"));
   const { colorMode, themeMode } = useContext(ColorModeContext);
@@ -924,90 +924,93 @@ const LoggedInLayout = ({ children, themeToggle }) => {
   return (
     <div className={classes.root}>
       {!focoDesktop && (
-      <Drawer
-        variant={drawerVariant}
-        className={drawerOpen ? classes.drawerPaper : classes.drawerPaperClose}
-        onClose={drawerClose}
-        classes={{
-          paper: clsx(
-            classes.drawerPaper,
-            !drawerOpen && classes.drawerPaperClose,
-            painelDesktop && drawerOpen && classes.drawerPainelOpen,
-            painelDesktop && classes.drawerCompact
-          )
-        }}
-        open={drawerOpen}
-      >
-        <div
-          className={clsx(
-            classes.sidebarHeader,
-            !drawerOpen && classes.sidebarHeaderClosed
-          )}
-        >
-          {painelDesktop ? (
-            drawerOpen && (
-              <span className={classes.sidebarTitle}>
-                {i18n.t("layoutMode.menu")}
-              </span>
+        <Drawer
+          variant={drawerVariant}
+          className={
+            drawerOpen ? classes.drawerPaper : classes.drawerPaperClose
+          }
+          onClose={drawerClose}
+          classes={{
+            paper: clsx(
+              classes.drawerPaper,
+              !drawerOpen && classes.drawerPaperClose,
+              painelDesktop && drawerOpen && classes.drawerPainelOpen,
+              painelDesktop && classes.drawerCompact
             )
-          ) : (
+          }}
+          open={drawerOpen}
+        >
           <div
             className={clsx(
-              classes.sidebarLogo,
-              !drawerOpen && classes.sidebarLogoClosed
+              classes.sidebarHeader,
+              !drawerOpen && classes.sidebarHeaderClosed
             )}
-            onClick={handleDrawerToggle}
           >
-            <img
-              className={drawerOpen ? classes.logo : classes.logoIcon}
-              alt="logo"
-            />
-          </div>
-          )}
-          {drawerVariant !== "temporary" && (
-            <Tooltip
-              title={
-                drawerOpen
-                  ? i18n.t("mainDrawer.collapseMenu")
-                  : i18n.t("mainDrawer.expandMenu")
-              }
-              placement="right"
-            >
-              <IconButton
-                aria-label={
+            {painelDesktop ? (
+              drawerOpen && (
+                <span className={classes.sidebarTitle}>
+                  {i18n.t("layoutMode.menu")}
+                </span>
+              )
+            ) : (
+              <div
+                className={clsx(
+                  classes.sidebarLogo,
+                  !drawerOpen && classes.sidebarLogoClosed
+                )}
+                onClick={handleDrawerToggle}
+              >
+                <img
+                  className={drawerOpen ? classes.logo : classes.logoIcon}
+                  alt="logo"
+                />
+              </div>
+            )}
+            {drawerVariant !== "temporary" && (
+              <Tooltip
+                title={
                   drawerOpen
                     ? i18n.t("mainDrawer.collapseMenu")
                     : i18n.t("mainDrawer.expandMenu")
                 }
-                className={classes.sidebarToggle}
-                onClick={handleDrawerToggle}
+                placement="right"
               >
-                {drawerOpen ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-              </IconButton>
-            </Tooltip>
-          )}
-        </div>
-        <List
-          className={
-            drawerOpen
-              ? classes.containerWideWithScroll
-              : classes.containerNarrowWithScroll
-          }
-        >
-          <MainListItems
-            drawerClose={drawerClose}
-            drawerOpen={drawerOpen}
-            collapsed={!drawerOpen}
-          />
-        </List>
-        {drawerOpen && gitinfo.commitHash !== "N/A" && (
-          <div className={classes.versionBox}>
-            <Typography className={classes.version}>
-              {gitinfo.tagName || `${gitinfo.branchName} ${gitinfo.commitHash}`}
-            </Typography>
+                <IconButton
+                  aria-label={
+                    drawerOpen
+                      ? i18n.t("mainDrawer.collapseMenu")
+                      : i18n.t("mainDrawer.expandMenu")
+                  }
+                  className={classes.sidebarToggle}
+                  onClick={handleDrawerToggle}
+                >
+                  {drawerOpen ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+                </IconButton>
+              </Tooltip>
+            )}
           </div>
-        )}
-      </Drawer>
+          <List
+            className={
+              drawerOpen
+                ? classes.containerWideWithScroll
+                : classes.containerNarrowWithScroll
+            }
+          >
+            <MainListItems
+              drawerClose={drawerClose}
+              drawerOpen={drawerOpen}
+              collapsed={!drawerOpen}
+            />
+          </List>
+          {drawerOpen && gitinfo.commitHash !== "N/A" && (
+            <div className={classes.versionBox}>
+              <Typography className={classes.version}>
+                {gitinfo.tagName ||
+                  `${gitinfo.branchName} ${gitinfo.commitHash}`}
+              </Typography>
+            </div>
+          )}
+        </Drawer>
       )}
       <UserModal
         open={userModalOpen}
@@ -1182,6 +1185,14 @@ const LoggedInLayout = ({ children, themeToggle }) => {
               <Divider />
               <MenuItem onClick={handleOpenUserModal}>
                 {i18n.t("mainDrawer.appBar.user.profile")}
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  handleCloseProfileMenu();
+                  history.push("/account-security");
+                }}
+              >
+                {i18n.t("accountSecurity.title")}
               </MenuItem>
               <MenuItem onClick={toggleColorMode}>
                 {theme.mode === "dark"

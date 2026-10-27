@@ -46,6 +46,8 @@ import AlarmIcon from "@material-ui/icons/Alarm";
 import InsertChartOutlinedIcon from "@material-ui/icons/InsertChartOutlined";
 import SupervisedUserCircleOutlinedIcon from "@material-ui/icons/SupervisedUserCircleOutlined";
 import AssignmentTurnedInOutlinedIcon from "@material-ui/icons/AssignmentTurnedInOutlined";
+import SecurityOutlinedIcon from "@material-ui/icons/SecurityOutlined";
+import HistoryOutlinedIcon from "@material-ui/icons/HistoryOutlined";
 import { i18n } from "../translate/i18n";
 import { WhatsAppsContext } from "../context/WhatsApp/WhatsAppsContext";
 import { AuthContext } from "../context/Auth/AuthContext";
@@ -473,6 +475,18 @@ const MainListItems = props => {
                 to="/users-online"
                 primary={i18n.t("mainDrawer.listItems.onlineUsers")}
                 icon={<SupervisedUserCircleOutlinedIcon />}
+              />
+              <ListItemLink
+                small
+                to="/ip-allowlist"
+                primary={i18n.t("securityIp.title")}
+                icon={<SecurityOutlinedIcon />}
+              />
+              <ListItemLink
+                small
+                to="/audit-logs"
+                primary={i18n.t("audit.title")}
+                icon={<HistoryOutlinedIcon />}
               />
             </>
           )}
