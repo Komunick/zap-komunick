@@ -65,6 +65,8 @@ services:
       # Backend-only master keys; leave empty to refuse new credential writes.
       - CREDENTIALS_MASTER_KEY=${CREDENTIALS_MASTER_KEY:-}
       - CREDENTIALS_PREVIOUS_MASTER_KEY=${CREDENTIALS_PREVIOUS_MASTER_KEY:-}
+      # P1 pilot: only disabled or the local simulated provider, never a real API.
+      - AI_ASSISTANT_MODE=${AI_ASSISTANT_MODE:-disabled}
     command: >
       sh -c "npm ci --no-audit --no-fund
       && npm run generate:i18nkeys

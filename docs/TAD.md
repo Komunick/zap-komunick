@@ -176,6 +176,8 @@ OpenAI/Groq. Antes de novas chaves, o plano prevê separar credenciais de `Setti
 O recorte P0 autorizado separadamente está definido no PRD RF-020 e em
 [`docs/specs/p0-credenciais-isolamento.md`](specs/p0-credenciais-isolamento.md); os demais usos de IA e conectores
 continuam propostos.
+O P1 autorizado posteriormente usa apenas provedor simulado, conforme RF-021 e
+[`docs/specs/p1-assistente-revisao.md`](specs/p1-assistente-revisao.md); nenhum provedor de IA real é conectado.
 
 **Compatibilidade:** todas as colunas novas são opcionais e as configurações novas começam desligadas, então uma
 instalação existente mantém o comportamento até o gestor ativar. As rotas e payloads existentes só ganharam campos.
@@ -380,6 +382,39 @@ Nenhuma chamada ao WhatsApp/fornecedores, segredo real ou captura de tela com cr
 perdê-la impede decifrar as credenciais. Não executar `down` para recuar a aplicação: manter a tabela preserva os
 envelopes. Código anterior ao P0 não lê esse armazenamento e volta a expor configurações herdadas; o retorno exige
 decisão operacional e recadastro seguro, sem restaurar automaticamente os valores em texto comum.
+
+## Assistente com revisão humana — P1 simulado (RF-021)
+
+- `AI_ASSISTANT_MODE` só permite `mock`; ausente, `disabled` ou valor desconhecido mantém a geração desligada.
+  `aiAssistantEnabled` é uma configuração administrativa por empresa, desligada por padrão. São duas condições
+  independentes; a chave de transcrição herdada e seu provedor não são lidos nem alterados por este assistente.
+- `GET /tickets/:ticketId/assistant/status` e `POST /tickets/:ticketId/assistant` usam autenticação e a autorização
+  contextual do P0. O POST aceita somente `{kind: "summary" | "reply"}`; empresa, contato e texto vêm do servidor.
+  Conferir acesso antes de consultar o contexto e novamente antes de devolver a geração.
+- O contexto seleciona até 30 mensagens de texto elegíveis do ticket atual, limitado a 12.000 caracteres. Não passa
+  objetos completos do Sequelize, segredos, URLs de mídia, anexos, notas ou outros atendimentos. Referências incluem
+  apenas ID e trecho das mensagens selecionadas. A saída informa `simulated`, `requiresReview`, limites e avisos.
+- O provedor mock é determinístico e local: resumo extrativo e sugestão neutra para revisão. Conteúdo não confiável
+  é apenas citado; o resumo mostra até seis mensagens recentes da janela, sem ser uma avaliação de um modelo real.
+  Não é executado como instrução e não tem ferramentas. O contrato/validador recusa saída malformada ou referência
+  fora do contexto. Revalidação impede devolver referência editada/excluída ou acesso perdido durante a geração.
+- Sem persistência de prompt/resultado, fila, cache compartilhado ou conexão externa. Auditoria guarda somente
+  tipo, provedor, identificadores e metadados. Erros de assistant, inclusive JSON inválido/extras, usam tratamento
+  seguro anterior ao logger/Sentry; corpos com texto indevido não entram na telemetria.
+- O diálogo do assistente usa texto simples, mostra a simulação, referências e contexto parcial, e permite editar a
+  sugestão. Cancelamento/timeout e identidade da solicitação invalidam respostas atrasadas. Anexar ao composer é uma
+  ação humana separada, que preserva texto atual e não chama envio; o rascunho aceito segue a persistência local herdada.
+  O campo de revisão fica bloqueado enquanto a autorização do aceite está pendente, evitando inserir uma versão
+  anterior à última edição. O hook de rascunho vincula estado/chave ao ticket e ignora setters de conversas antigas.
+
+**Verificação prevista:** testes de montagem/validação do contexto, provedor simulado, autorização/revalidação e
+privacidade sem chamadas de rede; API com duas empresas e mensagens fictícias e snapshots de leitura/SLA/estado;
+interface com revisão/edição/anexo explícito, cancelamento, erro, timeout, troca de conversa, resposta atrasada e
+rascunhos preservados, em claro/escuro e desktop/celular. Resultados executados ficam no PR.
+
+**Operação e recuperação:** guia `DEPLOY.md`, seção 10. Sem migração de esquema ou chave de modelo; desligar a
+configuração da empresa e/ou o modo do backend desativa o percurso. Nenhum dado de atendimento precisa ser revertido.
+Provedor real, bases internas aprovadas, políticas de dados e avaliação de modelo/custo continuam para outro recorte.
 
 ## 5. Decisões e pendências
 

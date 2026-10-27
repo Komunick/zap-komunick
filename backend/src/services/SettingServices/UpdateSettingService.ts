@@ -19,6 +19,12 @@ const UpdateSettingService = async ({
   if (isCredentialKey(key)) {
     throw new AppError("ERR_USE_CREDENTIALS_ROUTE", 400);
   }
+  if (
+    key === "aiAssistantEnabled" &&
+    !["enabled", "disabled"].includes(value)
+  ) {
+    throw new AppError("ERR_ASSISTANT_INVALID_REQUEST", 400);
+  }
   const [setting] = await Setting.findOrCreate({
     where: {
       key,
@@ -40,6 +46,11 @@ const UpdateSettingService = async ({
   }
 
   await setting.update({ value });
+
+  // P1: legacy Settings allows duplicate keys. A successful toggle must converge them.
+  if (key === "aiAssistantEnabled") {
+    await Setting.update({ value }, { where: { companyId, key } });
+  }
 
   if (setting.key === "defaultLanguage" && companyId === 1) {
     updateDefaultLanguage(value);

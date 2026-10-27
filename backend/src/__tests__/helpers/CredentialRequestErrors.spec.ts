@@ -82,4 +82,35 @@ describe("credential request errors before generic telemetry/logging", () => {
     expect(next).toHaveBeenCalledWith(err);
     expect(logger.warn).not.toHaveBeenCalled();
   });
+
+  it.each([
+    "/tickets/301/assistant",
+    "/Tickets/301/Assistant",
+    "/tickets/301/%61ssistant?bad=%XX",
+    "/settings/aiAssistantEnabled"
+  ])(
+    "rejects malformed assistant JSON without logging conversation bodies: %s",
+    url => {
+      const err = Object.assign(new SyntaxError(canary), {
+        body: canary,
+        status: 400
+      });
+      const res = response();
+      const next = jest.fn();
+      credentialErrorHandler(
+        err,
+        { originalUrl: url } as Request,
+        res as unknown as Response,
+        next
+      );
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        error: "ERR_ASSISTANT_INVALID_REQUEST"
+      });
+      expect(next).not.toHaveBeenCalled();
+      expect(
+        JSON.stringify((logger.warn as jest.Mock).mock.calls)
+      ).not.toContain(canary);
+    }
+  );
 });

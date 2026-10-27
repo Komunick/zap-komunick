@@ -56,6 +56,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignature } from "@fortawesome/free-solid-svg-icons";
 import { isMobile } from "../../helpers/isMobile";
 import { SocketContext } from "../../context/Socket/SocketContext";
+import TicketAssistant from "../TicketAssistant";
+import useTicketDraft from "../../hooks/useTicketDraft";
 
 const Mp3Recorder = new MicRecorder({ bitRate: 128 });
 
@@ -675,6 +677,10 @@ const CustomInput = props => {
               <InputBase
                 {...params.InputProps}
                 {...rest}
+                inputProps={{
+                  ...params.inputProps,
+                  "aria-label": i18n.t("assistant.composerDraft")
+                }}
                 disabled={disableOption}
                 inputRef={input => setInputRef(input)}
                 placeholder={renderPlaceholder()}
@@ -816,17 +822,47 @@ const MessageInputCustom = props => {
   const classes = useStyles();
 
   const [medias, setMedias] = useState([]);
-  const [inputMessage, setInputMessage] = useState("");
+  const [inputMessage, setInputMessage] = useTicketDraft(ticketId);
   const [showEmoji, setShowEmoji] = useState(false);
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(false);
   const [percentLoading, setPercentLoading] = useState(0);
+  const assistantComposer = useRef(null);
 
   const inputRef = useRef();
   const { setReplyingMessage, replyingMessage } =
     useContext(ReplyMessageContext);
   const { setEditingMessage, editingMessage } = useContext(EditMessageContext);
   const { user } = useContext(AuthContext);
+  assistantComposer.current = {
+    ticketId,
+    blocked:
+      loading ||
+      recording ||
+      medias.length > 0 ||
+      !!replyingMessage ||
+      !!editingMessage ||
+      ticketStatus === "closed" ||
+      ticketStatus === "paused"
+  };
+
+  const useAssistantDraft = (text, sourceTicketId) => {
+    if (
+      Number(assistantComposer.current.ticketId) !== Number(sourceTicketId) ||
+      assistantComposer.current.blocked
+    )
+      return false;
+    setInputMessage(previous => {
+      if (
+        Number(assistantComposer.current.ticketId) !== Number(sourceTicketId) ||
+        assistantComposer.current.blocked
+      )
+        return previous;
+      return previous ? `${previous}\n\n${text}` : text;
+    });
+    inputRef.current?.focus();
+    return true;
+  };
 
   const [signMessage, setSignMessage] = useLocalStorage("signOption", true);
 
@@ -834,21 +870,6 @@ const MessageInputCustom = props => {
   const [socket, setSocket] = useState(null);
   const [currentPresence, setCurrentPresence] = useState(null);
   const [presenceTimeout, setPresenceTimeout] = useState(null);
-
-  useEffect(() => {
-    if (!inputMessage) {
-      sessionStorage.removeItem("messageDraft-" + ticketId);
-      return;
-    }
-    sessionStorage.setItem("messageDraft-" + ticketId, inputMessage);
-  }, [inputMessage]);
-
-  useEffect(() => {
-    const draftMessage = sessionStorage.getItem("messageDraft-" + ticketId);
-    if (draftMessage) {
-      setInputMessage(draftMessage);
-    }
-  }, [ticketId]);
 
   useEffect(() => {
     const socket = socketManager.GetSocket();
@@ -883,7 +904,6 @@ const MessageInputCustom = props => {
       setMedias([]);
       setReplyingMessage(null);
       setEditingMessage(null);
-      setInputMessage("");
     };
   }, [ticketId]);
 
@@ -1187,6 +1207,12 @@ const MessageInputCustom = props => {
   else {
     return (
       <Paper square elevation={0} className={classes.mainWrapper}>
+        <TicketAssistant
+          key={`${ticketId}:${ticket.contactId}:${ticket.queueId}:${ticket.userId}:${ticketStatus}`}
+          ticketId={ticketId}
+          disabled={assistantComposer.current.blocked}
+          onUseDraft={useAssistantDraft}
+        />
         {(replyingMessage && renderReplyingMessage(replyingMessage)) ||
           (editingMessage && renderReplyingMessage(editingMessage))}
         <div className={classes.newMessageBox}>

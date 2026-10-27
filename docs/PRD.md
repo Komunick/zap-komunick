@@ -46,6 +46,8 @@ nem promove os recursos a entregues. A transcrição opcional herdada já existe
 atual não foram verificadas. O novo uso de mensagens/dados externos exige definir o piloto e o tratamento dos dados.
 O [P0 de credenciais e isolamento](specs/p0-credenciais-isolamento.md) foi autorizado separadamente em 27/10/2026;
 seu comportamento está definido em RF-020, sem habilitar os demais recursos propostos.
+O [P1 de resumos e sugestões](specs/p1-assistente-revisao.md) foi autorizado depois, com provedor simulado e dados
+fictícios (RF-021). Esse percurso não habilita um modelo real nem os conectores.
 
 **Fluxo principal:** o cliente escreve → o atendimento entra na fila (ou direto no responsável da carteira) → o painel
 de SLA mostra a espera e destaca o que passou do prazo → o atendente responde e move o atendimento pelas colunas do
@@ -597,6 +599,39 @@ também é recusada. O usuário sem setor não recebe contexto restrito.
 Dada uma chave fictícia cadastrada pela empresa A, quando A entra, renova a sessão ou consulta configurações, recebe
 somente estado. B não obtém nem substitui a chave de A. Substituir/remover/migrar funciona no escopo correto; falha ou
 chave mestra incorreta não destrói a configuração anterior.
+
+### RF-021 — Resumos e sugestões com revisão humana (simulação)
+
+**Pedido (27/10/2026):** implementar o P1 com mocks e dados fictícios, conforme
+[especificação](specs/p1-assistente-revisao.md). Não exige chave/faturamento de IA nem envia contexto a fornecedor.
+
+- O administrador habilita o assistente por empresa; ele começa desligado e só funciona quando o servidor também
+  permite o provedor simulado. A interface identifica **Simulação**; modo desconhecido não ativa um modelo real.
+- O atendente pede **resumo** ou **sugestão de resposta** no atendimento autorizado. O assistente usa somente mensagens
+  de texto elegíveis daquele atendimento, até 30 mensagens/12.000 caracteres; informa quando o contexto é parcial.
+  Não inclui histórico de outros atendimentos, notas, anexos, áudios, reações ou mensagens excluídas.
+- O resumo simulado extrai relatos com referências às mensagens, sem confirmar fatos externos. A sugestão simula um
+  texto neutro para esclarecer/conferir informações, sem inventar valor, prazo ou parecer. Falta de informação é
+  sinalizada. Texto recebido não altera instruções, permissões ou ferramentas.
+- A pessoa pode editar a sugestão antes de usar. **Usar no rascunho** anexa o texto ao que já foi escrito e não envia.
+  Cancelar, erro, timeout ou troca de atendimento não apagam o rascunho nem inserem uma resposta atrasada em outro
+  editor. Modos de edição/resposta/mídia/gravação não recebem inserção indevida.
+- Empresa, cliente e setor seguem RF-020. O backend monta o contexto e revalida acesso/configuração e referências
+  depois da geração. O pedido não aceita texto/contexto/empresa/contato fornecidos pelo navegador. Saída inválida ou
+  referências fora do contexto são recusadas.
+- Resumo e sugestão não viram mensagem ou nota automaticamente e não alteram leitura, SLA, responsável ou estado.
+  Resultados não aceitos ficam só em memória. Depois do aceite, o texto é um rascunho comum do composer e segue a
+  persistência local existente; só o envio normal, decidido pela pessoa, envia a mensagem.
+
+**Cenários de aceite:**
+
+Dado um atendimento fictício com texto e um rascunho já escrito, quando a pessoa pede sugestão, edita e usa no
+rascunho, o texto anterior permanece e nenhuma mensagem é enviada. Ao cancelar ou trocar de atendimento antes de a
+resposta chegar, o resultado não entra no editor da outra conversa.
+
+Dadas duas empresas e clientes distintos, quando alguém solicita resumo de atendimento fora da autorização, a API
+recusa sem fornecer texto/referências. Um atendimento vazio mostra falta de informação; um contexto grande informa
+seu limite. Mensagens excluídas, anexos, notas e outro atendimento do mesmo cliente não entram no resumo.
 
 ## 4. Restrições e cuidados
 
