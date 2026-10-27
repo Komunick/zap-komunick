@@ -59,6 +59,13 @@ const useStyles = makeStyles(theme => ({
     }),
     marginRight: 0
   },
+  attachmentToolbar: {
+    display: "flex",
+    justifyContent: "flex-end",
+    flexWrap: "wrap",
+    padding: theme.spacing(0.5, 2),
+    minWidth: 0
+  },
   drawerShade: {
     display: "none",
     [theme.breakpoints.down(1400)]: {
@@ -272,15 +279,17 @@ const Ticket = () => {
         ></div>
         <TicketHeader loading={loading}>
           {renderTicketInfo()}
-          {attachmentContextReady && (
-            <AttachmentsPanel
-              ticketId={ticket.id}
-              contextKey={attachmentContextKey}
-            />
-          )}
           <TicketActionButtons ticket={ticket} showTabGroups={showTabGroups} />
         </TicketHeader>
         <Paper>
+          {attachmentContextReady && (
+            <div className={classes.attachmentToolbar}>
+              <AttachmentsPanel
+                ticketId={ticket.id}
+                contextKey={attachmentContextKey}
+              />
+            </div>
+          )}
           {!loading &&
             Number.isSafeInteger(Number(ticket.id)) &&
             Number(ticket.id) > 0 &&
