@@ -84,6 +84,66 @@ describe("credential request errors before generic telemetry/logging", () => {
   });
 
   it.each([
+    "/tickets/301/attachments",
+    "/tickets/301/attachments/302/fixture-message/content",
+    "/Tickets/301/Attachments",
+    "/tickets/301/%61ttachments?bad=%XX",
+    "/tickets/301%2Fextra/%61ttachments/302/fixture-message/content",
+    "/tickets/301%XX/%61ttachments"
+  ])("does not forward a malformed attachment body: %s", url => {
+    const err = Object.assign(new SyntaxError(canary), {
+      body: canary,
+      status: 400
+    });
+    const res = response();
+    const next = jest.fn();
+    credentialErrorHandler(
+      err,
+      { originalUrl: url } as Request,
+      res as unknown as Response,
+      next
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      error: "ERR_ATTACHMENT_INVALID_REQUEST"
+    });
+    expect(next).not.toHaveBeenCalled();
+    expect(JSON.stringify((logger.warn as jest.Mock).mock.calls)).not.toContain(
+      canary
+    );
+  });
+
+  it("masks raw attachment failures while preserving safe application codes", () => {
+    const res = response();
+    const req = {
+      originalUrl: "/tickets/301/attachments/302/fixture-message/content"
+    } as Request;
+    credentialErrorHandler(
+      new Error(canary),
+      req,
+      res as unknown as Response,
+      jest.fn()
+    );
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({
+      error: "ERR_ATTACHMENT_UNAVAILABLE"
+    });
+    credentialErrorHandler(
+      new AppError("ERR_ATTACHMENT_NOT_FOUND", 404),
+      req,
+      res as unknown as Response,
+      jest.fn()
+    );
+    expect(res.status).toHaveBeenLastCalledWith(404);
+    expect(res.json).toHaveBeenLastCalledWith({
+      error: "ERR_ATTACHMENT_NOT_FOUND"
+    });
+    expect(JSON.stringify((logger.warn as jest.Mock).mock.calls)).not.toContain(
+      canary
+    );
+  });
+
+  it.each([
     "/tickets/301/acessorias/links",
     "/Tickets/301/Acessorias/status",
     "/tickets/301/%61cessorias/links?bad=%XX",

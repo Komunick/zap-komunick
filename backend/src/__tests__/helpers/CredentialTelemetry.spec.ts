@@ -34,6 +34,30 @@ describe("credential request telemetry", () => {
   );
 });
 
+describe("attachment request telemetry", () => {
+  it.each([
+    "/tickets/301/attachments",
+    "/tickets/301/attachments?kind=pdf&cursor=fictitious",
+    "/tickets/301/attachments/302/fixture-message/content",
+    "/Tickets/301/Attachments/302/fixture-message",
+    "/tickets/301/%61ttachments?bad=%XX",
+    "/tickets/301%2Fextra/%61ttachments/302/fixture-message/content",
+    "/tickets/301%XX/%61ttachments",
+    "https://example.invalid/backend/tickets/301/attachments"
+  ])("keeps rejected attachment data out of telemetry: %s", url => {
+    expect(isSensitiveRequest(url)).toBe(true);
+  });
+
+  it.each([
+    undefined,
+    "/tickets/301",
+    "/tickets/301/attachments-other",
+    "/contacts"
+  ])("preserves unrelated diagnostics: %s", url =>
+    expect(isSensitiveRequest(url)).toBe(false)
+  );
+});
+
 describe("Acessorias request telemetry", () => {
   it.each([
     "/tickets/301/acessorias/status",

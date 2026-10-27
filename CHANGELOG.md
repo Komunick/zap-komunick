@@ -6,6 +6,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Adicionado
 
+- Área de arquivos da conversa com filtros, paginação e busca nos itens carregados. Imagens, vídeos e PDFs abrem
+  dentro do aplicativo, com zoom/rotação, reprodução e controles de página. Prévias locais de até 25 MiB usam a nova
+  API autenticada; os links públicos legados de entrega permanecem disponíveis. Sem alteração do envio ou armazenamento.
 - Painel Acessórias simulado com cadastro fictício, pendências paginadas, origem/atualização e aviso de desatualização.
   Clientes exigem vínculo local explícito por empresa/contato, administrado com confirmação e seleção entre múltiplos
   vínculos. Começa desligado e não conecta fornecedor, credenciais reais, documentos ou IA.
