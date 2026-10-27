@@ -35,6 +35,7 @@ import i18nRoutes from "./i18nRoutes";
 import wavoipRoutes from "./wavoipRoutes";
 import dockerRoutes from "./dockerRoutes";
 import slaRoutes from "./slaRoutes";
+import metricsRoutes from "./metricsRoutes";
 import kanbanRoutes from "./kanbanRoutes";
 import closeReasonRoutes from "./closeReasonRoutes";
 
@@ -76,6 +77,7 @@ routes.use(i18nRoutes);
 routes.use(wavoipRoutes);
 routes.use(dockerRoutes);
 routes.use(slaRoutes);
+routes.use(metricsRoutes);
 routes.use(kanbanRoutes);
 routes.use(closeReasonRoutes);
 
