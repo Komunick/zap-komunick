@@ -88,6 +88,11 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- Reconexão do WhatsApp: quedas de rede reconectam com espera crescente (2 s até 5 min) em vez de 2 s fixos; uma
+  sessão aberta por outro cliente com as mesmas credenciais (código 440) para e avisa os administradores, em vez de
+  ficar derrubando a outra; o bloqueio (403) não tenta mais reconectar depois de apagar a sessão. O log registra o
+  motivo de cada queda.
+
 - O sistema não pede mais a localização do navegador ao abrir. O país do campo de telefone vem do idioma do navegador
   (pt-BR vira Brasil), sem enviar coordenadas ao OpenStreetMap nem o endereço IP ao ipinfo.io.
 - O Dashboard não consulta mais o ipapi.co com o IP de quem abre, e o painel não carrega mais o Google Analytics do
