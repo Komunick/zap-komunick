@@ -406,6 +406,8 @@ decisão operacional e recadastro seguro, sem restaurar automaticamente os valor
   ação humana separada, que preserva texto atual e não chama envio; o rascunho aceito segue a persistência local herdada.
   O campo de revisão fica bloqueado enquanto a autorização do aceite está pendente, evitando inserir uma versão
   anterior à última edição. O hook de rascunho vincula estado/chave ao ticket e ignora setters de conversas antigas.
+  O pai `Ticket` monta o editor somente após carregar ID/UUID coerentes com a rota; cancela e ignora fetches antigos.
+  Composer, assistente e hook também recusam IDs inválidos, impedindo solicitação ou rascunho com proprietário ausente.
 
 **Verificação prevista:** testes de montagem/validação do contexto, provedor simulado, autorização/revalidação e
 privacidade sem chamadas de rede; API com duas empresas e mensagens fictícias e snapshots de leitura/SLA/estado;

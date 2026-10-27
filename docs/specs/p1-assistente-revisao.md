@@ -27,6 +27,8 @@ O [P0](p0-credenciais-isolamento.md) fornece a autorização por empresa/cliente
 - A pessoa revisa a sugestão em campo editável e usa uma ação separada para anexar ao rascunho. Não há envio por essa
   ação. Texto existente é preservado; cancelar, erro, timeout, trocar atendimento ou receber resposta atrasada não
   apagam nem inserem conteúdo no editor errado. Edição/resposta/mídia/gravação não recebem inserção indevida.
+  Editor/assistente só ficam disponíveis com ID válido e contexto da rota carregado; não criar rascunho sem dono nem
+  deixar uma resposta antiga de carregamento substituir o atendimento selecionado.
 - Resultados ficam apenas em memória durante o percurso. Depois do aceite, o texto passa a ser um rascunho normal do
   composer, com a persistência local herdada. Não gravar resumo/sugestão/prompt completo em mensagens, notas, jobs,
   auditoria ou logs. Auditoria guarda apenas identificadores, tipo, provedor e metadados de execução.

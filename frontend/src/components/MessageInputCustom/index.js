@@ -1268,4 +1268,11 @@ const MessageInputCustom = props => {
   }
 };
 
-export default withWidth()(MessageInputCustom);
+// Zap Komunick: loading placeholders must never own an interactive draft.
+const ScopedMessageInput = props => {
+  const id = Number(props.ticket?.id);
+  if (!Number.isSafeInteger(id) || id <= 0) return null;
+  return <MessageInputCustom {...props} />;
+};
+
+export default withWidth()(ScopedMessageInput);

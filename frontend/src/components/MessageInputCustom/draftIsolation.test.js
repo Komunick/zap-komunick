@@ -93,6 +93,19 @@ test("keeps ticket-owned drafts through A/B/A switches", async () => {
   expect(sessionStorage.getItem("messageDraft-302")).toBe("Human B");
 });
 
+test("an unresolved ticket has no composer and loads the real ticket draft when ready", async () => {
+  sessionStorage.setItem("messageDraft-301", "Human A");
+  const view = render(viewOf(undefined));
+  expect(
+    screen.queryByPlaceholderText("messagesInput.placeholderOpen")
+  ).not.toBeInTheDocument();
+  expect(screen.queryByText("Use assistant fixture")).not.toBeInTheDocument();
+  expect(sessionStorage.getItem("messageDraft-undefined")).toBeNull();
+  view.rerender(viewOf(301));
+  await waitFor(() => expect(field()).toHaveValue("Human A"));
+  expect(sessionStorage.getItem("messageDraft-undefined")).toBeNull();
+});
+
 test("accepting appends through the actual composer without sending", async () => {
   sessionStorage.setItem("messageDraft-301", "Human A");
   render(viewOf(301));

@@ -61,3 +61,15 @@ test("ignores an old ticket setter after switching and does not erase another dr
   expect(sessionStorage.getItem("messageDraft-301")).toBe("Human A");
   expect(sessionStorage.getItem("messageDraft-302")).toBe("Human B");
 });
+
+test("an unresolved ticket cannot create or load an undefined draft owner", () => {
+  sessionStorage.setItem("messageDraft-301", "Human A");
+  const view = render(<Composer ticketId={undefined} />);
+  fireEvent.change(screen.getByLabelText("Human draft"), {
+    target: { value: "Before load" }
+  });
+  expect(screen.getByLabelText("Human draft")).toHaveValue("");
+  expect(sessionStorage.getItem("messageDraft-undefined")).toBeNull();
+  view.rerender(<Composer ticketId={301} />);
+  expect(screen.getByLabelText("Human draft")).toHaveValue("Human A");
+});

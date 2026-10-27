@@ -616,6 +616,9 @@ chave mestra incorreta não destrói a configuração anterior.
 - A pessoa pode editar a sugestão antes de usar. **Usar no rascunho** anexa o texto ao que já foi escrito e não envia.
   Cancelar, erro, timeout ou troca de atendimento não apagam o rascunho nem inserem uma resposta atrasada em outro
   editor. Modos de edição/resposta/mídia/gravação não recebem inserção indevida.
+- Editor e assistente aguardam um atendimento válido, correspondente à conversa selecionada. Durante o carregamento
+  ou troca de conversa não aceitam entrada sem proprietário nem pedidos com ID ausente; respostas antigas de
+  carregamento não substituem a conversa atual.
 - Empresa, cliente e setor seguem RF-020. O backend monta o contexto e revalida acesso/configuração e referências
   depois da geração. O pedido não aceita texto/contexto/empresa/contato fornecidos pelo navegador. Saída inválida ou
   referências fora do contexto são recusadas.

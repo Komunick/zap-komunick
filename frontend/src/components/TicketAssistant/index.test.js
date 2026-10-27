@@ -67,6 +67,23 @@ test("disabled company hides the action and never generates", async () => {
   expect(api.post).not.toHaveBeenCalled();
 });
 
+test("an unresolved ticket never requests status or becomes interactive before a valid ticket arrives", async () => {
+  const view = render(
+    <TicketAssistant ticketId={undefined} onUseDraft={jest.fn()} />
+  );
+  expect(
+    screen.queryByRole("button", { name: "assistant.open" })
+  ).not.toBeInTheDocument();
+  expect(api.get).not.toHaveBeenCalled();
+  view.rerender(<TicketAssistant ticketId={301} onUseDraft={jest.fn()} />);
+  await waitFor(() => expect(button("open")).toBeEnabled());
+  expect(api.get).toHaveBeenCalledTimes(1);
+  expect(api.get).toHaveBeenCalledWith(
+    "/tickets/301/assistant/status",
+    expect.anything()
+  );
+});
+
 test("summary is requested on demand, displays simulation and references, and never inserts", async () => {
   const accept = jest.fn();
   api.post.mockResolvedValue({ data: result("summary") });

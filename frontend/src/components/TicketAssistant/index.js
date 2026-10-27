@@ -95,11 +95,7 @@ const validResult = (data, ticketId, kind) =>
   data.warnings.includes("SIMULATED") &&
   data.warnings.includes("REVIEW_REQUIRED");
 
-export default function TicketAssistant({
-  ticketId,
-  disabled = false,
-  onUseDraft
-}) {
+function TicketAssistantContent({ ticketId, disabled = false, onUseDraft }) {
   const classes = useStyles();
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("xs"));
@@ -445,4 +441,10 @@ export default function TicketAssistant({
       </Dialog>
     </>
   );
+}
+
+export default function TicketAssistant(props) {
+  const id = Number(props.ticketId);
+  if (!Number.isSafeInteger(id) || id <= 0) return null;
+  return <TicketAssistantContent {...props} />;
 }

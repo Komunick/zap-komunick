@@ -107,11 +107,16 @@ const Ticket = () => {
   }, []);
 
   useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
     setLoading(true);
     const delayDebounceFn = setTimeout(() => {
       const fetchTicket = async () => {
         try {
-          const { data } = await api.get("/tickets/u/" + ticketId);
+          const { data } = await api.get("/tickets/u/" + ticketId, {
+            signal: controller.signal
+          });
+          if (!active) return;
           const { queueId } = data;
           const { queues, profile } = user;
 
@@ -126,21 +131,34 @@ const Ticket = () => {
           setTicket(data);
           setLoading(false);
         } catch (err) {
+          if (!active || controller.signal.aborted) return;
           setLoading(false);
           toastError(err);
         }
       };
       fetchTicket();
     }, 500);
-    return () => clearTimeout(delayDebounceFn);
+    return () => {
+      active = false;
+      controller.abort();
+      clearTimeout(delayDebounceFn);
+    };
   }, [ticketId, user, history]);
 
   useEffect(() => {
     const companyId = localStorage.getItem("companyId");
 
     const socket = socketManager.GetSocket(companyId);
+    let active = true;
 
     const onConnectTicket = () => {
+      if (
+        !active ||
+        !Number.isSafeInteger(Number(ticket.id)) ||
+        Number(ticket.id) <= 0 ||
+        ticket.uuid !== ticketId
+      )
+        return;
       socket.emit("joinChatBox", `${ticket.id}`);
     };
 
@@ -171,6 +189,7 @@ const Ticket = () => {
     socket.on(`company-${companyId}-contact`, onCompanyContact);
 
     return () => {
+      active = false;
       socket.disconnect();
     };
   }, [ticketId, ticket, history, socketManager]);
@@ -204,7 +223,12 @@ const Ticket = () => {
           isGroup={ticket.isGroup}
           markAsRead={true}
         ></MessagesList>
-        <MessageInput ticket={ticket} showTabGroups />
+        {!loading &&
+          Number.isSafeInteger(Number(ticket.id)) &&
+          Number(ticket.id) > 0 &&
+          ticket.uuid === ticketId && (
+            <MessageInput ticket={ticket} showTabGroups />
+          )}
       </>
     );
   };
