@@ -114,6 +114,10 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Operação
 
+- Histórico completo do cliente na conversa: as mensagens de atendimentos anteriores (inclusive resolvidos)
+  aparecem com uma divisória por atendimento, respeitando a privacidade por fila nos atendimentos anteriores.
+- Contexto na transferência: nota interna e mensagens destacadas para o setor que recebe, mostradas num cartão na
+  conversa; o cliente não recebe nada.
 - Endereço de publicação definido: `superchat.komunick.com`. Modelos de ambiente e do nginx já vêm com ele, e o guia
   explica o registro de DNS no Cloudflare (onde está o `komunick.com`).
 - Publicação num subdomínio da Komunick (`docs/DEPLOY.md`): `docker-compose-komunick.yaml` (aplicação só em

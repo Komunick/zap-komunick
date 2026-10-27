@@ -395,6 +395,53 @@ const useStyles = makeStyles(theme => ({
       theme.mode === "light" ? "0 1px 1px #b3b3b3" : "0 1px 1px #000000"
   },
 
+  // Zap Komunick: history of the client and transfer notes (RF-017)
+  ticketDivider: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    margin: "18px 16px 6px",
+    fontSize: 12,
+    fontWeight: 700,
+    color: theme.palette.text.secondary,
+    "&::before, &::after": {
+      content: '""',
+      flex: 1,
+      height: 1,
+      backgroundColor: theme.palette.divider
+    }
+  },
+  transferNote: {
+    alignSelf: "center",
+    width: "min(560px, calc(100% - 32px))",
+    margin: "10px 16px",
+    padding: "10px 14px",
+    borderRadius: 12,
+    border: "1px dashed #D98A00",
+    backgroundColor:
+      theme.mode === "light" ? "#FFF7E6" : "rgba(217, 138, 0, 0.12)",
+    color: theme.palette.text.primary,
+    fontSize: 13
+  },
+  transferNoteHead: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 6,
+    fontSize: 12,
+    fontWeight: 700,
+    color: "#A86A00",
+    marginBottom: 6
+  },
+  transferNoteText: { whiteSpace: "pre-wrap", marginBottom: 6 },
+  transferNoteQuote: {
+    margin: "4px 0",
+    padding: "4px 8px",
+    borderLeft: "3px solid #D98A00",
+    fontSize: 12,
+    whiteSpace: "pre-wrap"
+  },
+  transferNoteMeta: { fontSize: 11, color: theme.palette.text.secondary },
+
   dailyTimestamp: {
     alignItems: "center",
     textAlign: "center",
@@ -1263,6 +1310,57 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     }
   };
 
+  // Zap Komunick: a line where the messages of another ticket of the same
+  // client start (RF-017)
+  const renderTicketDivider = (message, index) => {
+    const previous = index > 0 ? messagesList[index - 1] : null;
+    if (previous && previous.ticketId === message.ticketId) return null;
+    if (!previous && message.ticketId === ticket?.id) return null;
+    const current = message.ticketId === ticket?.id;
+    return (
+      <div className={classes.ticketDivider} key={`ticket-${message.id}`}>
+        {current
+          ? i18n.t("history.currentTicket", { id: message.ticketId })
+          : i18n.t("history.previousTicket", { id: message.ticketId })}
+      </div>
+    );
+  };
+
+  const renderTransferNote = (message, data) => {
+    const info = data?.transferNote || {};
+    const from = info.from?.queue?.name || info.from?.user?.name;
+    const to = info.to?.queue?.name || info.to?.user?.name;
+    return (
+      <div className={classes.transferNote} id={message.id}>
+        <div className={classes.transferNoteHead}>
+          <span>{i18n.t("history.transferNote")}</span>
+          {from && to && (
+            <span>{i18n.t("history.transferFromTo", { from, to })}</span>
+          )}
+        </div>
+        {info.note && (
+          <div className={classes.transferNoteText}>{info.note}</div>
+        )}
+        {(info.quotes || []).map(quote => (
+          <div key={quote.id} className={classes.transferNoteQuote}>
+            <strong>
+              {quote.fromMe
+                ? i18n.t("transferContext.us")
+                : quote.senderName || i18n.t("transferContext.client")}
+              :
+            </strong>{" "}
+            {quote.body}
+          </div>
+        ))}
+        <div className={classes.transferNoteMeta}>
+          {info.author?.name ? `${info.author.name} · ` : ""}
+          {format(parseISO(message.createdAt), "dd/MM/yyyy HH:mm")} ·{" "}
+          {i18n.t("history.internalOnly")}
+        </div>
+      </div>
+    );
+  };
+
   const renderMessageDivider = (message, index) => {
     if (index < messagesList.length && index > 0) {
       let messageUser = messagesList[index].fromMe;
@@ -1805,12 +1903,24 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
       }
 
       const data = JSON.parse(message.dataJson);
+
+      if (message.mediaType === "transferNote") {
+        return (
+          <React.Fragment key={message.id}>
+            {renderTicketDivider(message, index)}
+            {renderDailyTimestamps(message, index)}
+            {renderTransferNote(message, data)}
+          </React.Fragment>
+        );
+      }
+
       const dataContext = getDataContextInfo(data);
       const messageError = getMessageErrorData(message);
       const isSticker = data?.message && "stickerMessage" in data.message;
       if (!message.fromMe) {
         const messageFragment = (
           <React.Fragment key={message.id}>
+            {renderTicketDivider(message, index)}
             {renderDailyTimestamps(message, index)}
             {renderMessageDivider(message, index)}
             <div
@@ -1930,6 +2040,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
       } else {
         return (
           <React.Fragment key={message.id}>
+            {renderTicketDivider(message, index)}
             {renderDailyTimestamps(message, index)}
             {renderMessageDivider(message, index)}
             <div
