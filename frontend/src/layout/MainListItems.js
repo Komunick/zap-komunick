@@ -47,7 +47,6 @@ import InsertChartOutlinedIcon from "@material-ui/icons/InsertChartOutlined";
 import SupervisedUserCircleOutlinedIcon from "@material-ui/icons/SupervisedUserCircleOutlined";
 import AssignmentTurnedInOutlinedIcon from "@material-ui/icons/AssignmentTurnedInOutlined";
 import { i18n } from "../translate/i18n";
-import BorderColorIcon from "@material-ui/icons/BorderColor";
 import { WhatsAppsContext } from "../context/WhatsApp/WhatsAppsContext";
 import { AuthContext } from "../context/Auth/AuthContext";
 import { Can } from "../components/Can";
@@ -387,11 +386,8 @@ const MainListItems = props => {
                   primary={i18n.t("mainDrawer.listItems.kanban")}
                   icon={<ViewColumnIcon />}
                 />
-                <ListItemLink
-                  to="/todolist"
-                  primary={i18n.t("mainDrawer.listItems.tasks")}
-                  icon={<BorderColorIcon />}
-                />
+                {/* Zap Komunick: "Tarefas" hidden from the menu (27/10/2026);
+                    the page still opens at /todolist */}
                 <ListItemLink
                   to="/quick-messages"
                   primary={i18n.t("mainDrawer.listItems.quickMessages")}
