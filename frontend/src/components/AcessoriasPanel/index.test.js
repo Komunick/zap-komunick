@@ -7,6 +7,7 @@ import {
   waitFor
 } from "@testing-library/react";
 import "@testing-library/jest-dom";
+import i18next from "i18next";
 import AcessoriasPanel, { ACESSORIAS_TIMEOUT_MS } from "./index";
 import api from "../../services/api";
 import { SocketContext } from "../../context/Socket/SocketContext";
@@ -110,6 +111,41 @@ beforeEach(() => {
   api.get.mockImplementation(respond);
 });
 afterEach(() => jest.restoreAllMocks());
+
+test("source dates remain readable with real i18next without changing global escaping", async () => {
+  const translator = i18next.createInstance();
+  await translator.init({
+    lng: "pt",
+    resources: {
+      pt: {
+        translation: {
+          acessorias: {
+            updatedAt: "Atualizado em {{date}}",
+            fetchedAt: "Consultado em {{date}}"
+          },
+          untouched: "Valor {{text}}"
+        }
+      }
+    }
+  });
+  jest
+    .spyOn(i18n, "t")
+    .mockImplementation((key, options) => translator.t(key, options));
+  render(panel());
+  await openPanel();
+  await screen.findByText(
+    `Atualizado em ${new Date(source.updatedAt).toLocaleString("pt-BR")}`
+  );
+  expect(
+    screen.getByText(
+      `Consultado em ${new Date(source.fetchedAt).toLocaleString("pt-BR")}`
+    )
+  ).toBeVisible();
+  expect(screen.queryByText(/&#x2F;/)).not.toBeInTheDocument();
+  expect(translator.t("untouched", { text: "<b>fictício</b>" })).toBe(
+    "Valor &lt;b&gt;fictício&lt;&#x2F;b&gt;"
+  );
+});
 
 test("unresolved ticket does not request status or expose an action", async () => {
   const view = render(panel({ ticketId: undefined }));

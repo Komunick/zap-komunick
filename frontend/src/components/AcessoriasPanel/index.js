@@ -604,12 +604,14 @@ function Panel({ ticketId, contactId, companyId }) {
               <Typography variant="body2">{source.label}</Typography>
               <Typography variant="body2">
                 {i18n.t("acessorias.updatedAt", {
-                  date: date(source.updatedAt)
+                  date: date(source.updatedAt),
+                  interpolation: { escapeValue: false }
                 })}
               </Typography>
               <Typography variant="body2">
                 {i18n.t("acessorias.fetchedAt", {
-                  date: date(source.fetchedAt)
+                  date: date(source.fetchedAt),
+                  interpolation: { escapeValue: false }
                 })}
               </Typography>
               {source.stale && (
