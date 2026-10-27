@@ -127,6 +127,12 @@ Stitch entra como tokens: `sidebar*` (menu preto, igual nos dois temas), `accent
   empresa, ignora grupos e faz um `UPDATE` só nos contatos da empresa; cada contato alterado sai no evento
   `company-<id>-contact`. `GET /contacts?walletUserId=none` lista os contatos sem responsável (sem grupos). Resposta
   `{ updated, skippedGroups }`. Sem tabela nova.
+- `GET /metrics?from&to&queueId&userId` (administrador; RF-015): `helpers/Metrics` valida o período (padrão: 30 dias até
+  hoje; até 366; 400 com `ERR_METRICS_*`), preenche os dias vazios e monta o mapa 7×24. `MetricsService` faz consultas
+  SQL com parâmetros sobre `TicketTraking` (um ciclo por linha; `waitTime` e `serviceTime` são colunas geradas) junto de
+  `Tickets` (sem grupos; fila do atendimento), contando abertos por `createdAt`, finalizados por `finishedAt`, espera e
+  "no prazo" por `startedAt` (`waitTime` até `slaMinutes`), dias e horas no fuso `TZ` do backend; novos contatos em
+  `Contacts` e notas em `UserRatings`. Sem tabela nova.
 
 **Integridade:**
 - `unansweredSince` só muda com mensagem nova: `CreateMessageService` confere se a mensagem já existia antes do
