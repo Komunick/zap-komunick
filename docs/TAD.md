@@ -190,8 +190,8 @@ de pausa ficam no `UpdateTicketService`, não só na tela.
 relógio no painel, responder, mover no Kanban, contato com carteira abrindo direto no responsável, usuário fora do
 horário e um agendamento diário.
 
-**Publicação e observação:** guia em `docs/DEPLOY.md`, para um subdomínio novo de `komunick.com` ao lado do
-zap.komunick.com (que segue com o Ticketz 1.0.132; trocar é decisão do responsável, PRD seção 5). As imagens são
+**Publicação e observação:** guia em `docs/DEPLOY.md`, para `superchat.komunick.com` (DNS no Cloudflare, registro
+`A` somente DNS na primeira subida), ao lado do zap.komunick.com (que segue com o Ticketz 1.0.132; trocar é decisão do responsável, PRD seção 5). As imagens são
 montadas no próprio servidor a partir do código (`docker-compose-komunick.yaml`), com a aplicação só em
 `127.0.0.1:5480`, atrás do nginx do servidor (`deploy/nginx-host.conf.example`) ou do proxy com Let's Encrypt
 (`docker-compose-komunick-proxy.yaml`). Diferenças para os compose do upstream: banco com senha

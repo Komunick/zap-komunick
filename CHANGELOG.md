@@ -109,6 +109,8 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Operação
 
+- Endereço de publicação definido: `superchat.komunick.com`. Modelos de ambiente e do nginx já vêm com ele, e o guia
+  explica o registro de DNS no Cloudflare (onde está o `komunick.com`).
 - Publicação num subdomínio da Komunick (`docs/DEPLOY.md`): `docker-compose-komunick.yaml` (aplicação só em
   `127.0.0.1:5480`, banco com senha, backend sem o socket do Docker), `docker-compose-komunick-proxy.yaml` (proxy com
   HTTPS automático, opcional), modelos de ambiente e de nginx em `deploy/` e `deploy/backup.sh` (banco e arquivos, 14
