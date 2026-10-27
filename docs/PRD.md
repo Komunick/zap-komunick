@@ -1,7 +1,7 @@
 # PRD — Zap Komunick
 
 **Komunick Inteligência e Tecnologia**
-**Responsável:** Jailson (Komunick) · **Atualizado em:** 21/10/2026
+**Responsável:** Jailson (Komunick) · **Atualizado em:** 27/10/2026
 **Fonte oficial:** `docs/PRD.md` no repositório
 **Validado por:** Pendente
 
@@ -30,7 +30,9 @@ etiquetas (RF-004), horário de acesso por usuário (RF-005), agendamento recorr
 de finalização (RF-007), agendamento para vários contatos com anexo e dia útil (RF-008) e a identidade visual da
 Komunick (RF-009) o chat interno com conversas e contatos (RF-010) , as
 ações em lote nos atendimentos (RF-011), os filtros completos da lista (RF-012), os usuários online (RF-013), a carteira em lote (RF-014), o painel de métricas
-(RF-015) o histórico completo com contexto na transferência (RF-017) e os clientes da agenda (RF-018), sobre o Ticketz como ele é hoje (filas, chatbot, etiquetas, agendamentos, perfis admin e usuário).
+(RF-015), o histórico completo com contexto na transferência (RF-017), os clientes da agenda (RF-018) e as etiquetas
+por setor com filtros de contatos (RF-019), sobre o Ticketz como ele é hoje (filas, chatbot, etiquetas, agendamentos,
+perfis admin e usuário).
 A segunda entrega saiu da comparação com o ZapContábil feita em 21/10/2026 numa conta de cliente, só olhando, sem mudar
 nada nela.
 
@@ -108,7 +110,7 @@ direto para ele. Inspiração: "Carteira de clientes" do ZapContábil.
   responsável".
 - Ligada, o atendimento novo ou reaberto do contato fica aguardando com o responsável atribuído, sem passar pelo
   chatbot, na primeira fila do responsável atendida pela conexão (ou na primeira fila dele).
-- A tela de contatos mostra a coluna "Carteira" e o filtro "Minha carteira".
+- A tela de contatos mostra a coluna "Carteira" e o filtro de carteira descrito no RF-019, incluindo "Minha carteira".
 
 **Cenário de sucesso:**
 
@@ -289,6 +291,8 @@ referências do Dribbble (painéis de atendimento e CRMs de 2025 e 2026).
   notas e edição do contato); abaixo disso, o contato continua abrindo numa gaveta.
 - Menu lateral legível: itens de 48 px, ícones de 26 px, texto de 15,5 px e títulos de seção de 12,5 px; largura de 264 px
   aberto e 72 px só com ícones (a lista rola quando não cabe na tela).
+- "Tarefas" fica oculto no menu lateral, nas abas de navegação e na paleta Ctrl K. A página continua acessível pelo
+  endereço `/todolist`.
 - Login em duas colunas (formulário e painel da marca); no celular, só o formulário.
 - Português é o idioma padrão (o idioma do navegador não é mais adivinhado; a escolha do usuário no menu continua
   valendo). O tema segue o claro ou escuro do sistema operacional, inclusive quando ele muda com a tela aberta; o
@@ -336,6 +340,7 @@ regras de quando se trata um por um.
   direto para ele, sem atendente volta à fila aguardando, como na transferência de um atendimento) e **Finalizar**
   (motivo e observação valem para todos; o motivo é exigido quando há motivos cadastrados; o cliente não recebe a
   pesquisa de avaliação).
+- A ação adicional **Etiquetar** segue as regras do RF-019.
 - Até 100 atendimentos por vez. Cada um passa pelas mesmas permissões e regras do atendimento individual; o que não
   puder ser alterado (situação mudou, sem permissão, falta de motivo) é contado à parte e os demais seguem.
 - Trocar de visão ou concluir a ação sai da seleção.
@@ -473,6 +478,48 @@ um cliente só entrava em Contatos quando mandava mensagem ou pela importação 
 Dado um escritório que conecta o WhatsApp com 300 clientes na agenda,
 quando a atendente procura "Padaria" na paleta,
 então encontra a Padaria Avenida mesmo que ela nunca tenha escrito e abre a conversa com um clique.
+
+### RF-019 — Etiquetas por setor e filtros
+
+**Pedido (27/10/2026):** aplicar etiquetas na conversa e na lista de atendimentos, filtrar contatos por etiqueta e
+organizar as etiquetas por setor. Etiquetas automáticas ficam fora desta entrega.
+
+**Regras importantes:**
+- O cadastro de etiqueta permite escolher um ou mais setores da própria empresa. Sem seleção, a etiqueta vale para
+  todos; a tabela de Etiquetas mostra os setores ou "Todos os setores". Etiquetas anteriores continuam gerais até
+  que seu cadastro seja alterado.
+- Nas listas de etiquetas, o administrador vê todas as da empresa; os demais usuários veem as gerais e as dos seus
+  setores. Ao etiquetar uma conversa, as opções são as etiquetas desse setor e as gerais; sem setor, somente as gerais.
+  A mesma restrição vale para novas associações pelo servidor. Etiquetas anteriores de outro setor podem permanecer
+  após uma transferência e ser removidas explicitamente.
+- O botão "Etiquetar" nas ações da linha permite marcar e desmarcar etiquetas sem abrir a conversa. A seleção salva
+  a cada alteração e segue a mesma configuração de etiquetas do contato ou do atendimento usada na conversa.
+- Na seleção de atendimentos, "Etiquetar" adiciona de 1 a 20 etiquetas a até 100 atendimentos por vez, preservando
+  as que já estavam associadas. Cada atendimento recebe apenas as etiquetas escolhidas compatíveis com seu setor.
+  Se nenhuma for compatível, a falha é informada para aquele atendimento, sem impedir os demais.
+- Em Contatos, o filtro "Etiquetas" aceita múltipla escolha: entra o contato que tenha qualquer uma das etiquetas
+  escolhidas, diretamente ou em algum de seus atendimentos, inclusive resolvidos. Combina com a busca e com o filtro
+  "Carteira": "Todos", "Minha carteira" e, para administradores, "Sem responsável". Sem etiqueta escolhida, não há
+  restrição por etiqueta.
+- Etiquetas, setores, contatos e atendimentos usados nas operações devem pertencer à mesma empresa.
+
+**Cenários de aceite:**
+
+Dadas as etiquetas "Fiscal" no setor Fiscal, "DP" no setor DP e "Geral" sem setor,
+quando alguém abre o seletor de etiquetas de uma conversa do Fiscal,
+então pode escolher "Fiscal" e "Geral", sem receber "DP" como opção.
+
+Dado dois atendimentos com etiquetas anteriores diferentes,
+quando o usuário seleciona ambos e aplica a etiqueta geral "Revisar" em lote,
+então os dois recebem "Revisar" e mantêm as etiquetas anteriores.
+
+Dado um atendimento Fiscal e outro DP selecionados,
+quando o usuário aplica somente uma etiqueta restrita ao Fiscal,
+então o Fiscal recebe a etiqueta e o DP é informado como não alterado, mantendo suas etiquetas anteriores.
+
+Dado um cliente com a etiqueta "Revisar" apenas em um atendimento resolvido e com responsável definido,
+quando o administrador filtra Contatos por "Revisar",
+então encontra o cliente; ao combinar com "Sem responsável", ele deixa de aparecer.
 
 ## 4. Restrições e cuidados
 

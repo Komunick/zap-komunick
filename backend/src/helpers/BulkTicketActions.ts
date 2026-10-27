@@ -4,7 +4,7 @@
 
 export const BULK_MAX_TICKETS = 100;
 
-export type BulkAction = "accept" | "transfer" | "close";
+export type BulkAction = "accept" | "transfer" | "close" | "tag";
 
 export interface BulkRequest {
   action: BulkAction;
@@ -13,6 +13,7 @@ export interface BulkRequest {
   userId?: number | null;
   closeReasonId?: number | null;
   closeReasonNote?: string | null;
+  tagIds?: number[];
 }
 
 export interface ParsedBulk {
@@ -26,7 +27,9 @@ export interface ParsedBulk {
 export const BULK_FROM_STATUSES: Record<BulkAction, string[]> = {
   accept: ["pending"],
   transfer: ["open", "pending", "paused"],
-  close: ["open", "pending", "paused"]
+  close: ["open", "pending", "paused"],
+  // Zap Komunick: tag many tickets at once (RF-019), also resolved ones
+  tag: ["open", "pending", "paused", "closed"]
 };
 
 const positiveInt = (value: unknown): number | null => {
@@ -57,6 +60,16 @@ export function parseBulkRequest(
   const ticketIds = Array.from(new Set(ids as number[]));
   if (ticketIds.length > BULK_MAX_TICKETS) {
     return { error: "ERR_BULK_TOO_MANY" };
+  }
+
+  if (action === "tag") {
+    const tagIds = Array.isArray(body.tagIds)
+      ? Array.from(new Set(body.tagIds.map(positiveInt).filter(Boolean)))
+      : [];
+    if (!tagIds.length || tagIds.length > 20) {
+      return { error: "ERR_BULK_NO_TAGS" };
+    }
+    return { action, ticketIds, data: { tagIds } };
   }
 
   if (action === "accept") {
