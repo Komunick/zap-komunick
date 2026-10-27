@@ -26,6 +26,7 @@ import {
   buildTicketFilterWhere,
   TicketFilters
 } from "../../helpers/TicketFilters";
+import { loadTicketViewer } from "./AuthorizeTicketContextService";
 
 interface Request {
   isSearch?: boolean;
@@ -102,6 +103,7 @@ const ListTicketsService = async ({
     (await GetCompanySetting(companyId, "groupsTab", "disabled")) === "enabled";
 
   const user = await ShowUserService(userId);
+  const viewer = await loadTicketViewer({ userId, companyId });
 
   const andedOrs: WhereOptions<Ticket>[] = [
     {
@@ -125,27 +127,40 @@ const ListTicketsService = async ({
     {
       model: Contact,
       as: "contact",
-      include: ["tags", "extraInfo"],
+      where: { companyId },
+      required: true,
+      include: [
+        { model: Tag, as: "tags", where: { companyId }, required: false },
+        "extraInfo"
+      ],
       attributes: ["id", "name", "number", "email", "profilePicUrl", "presence"]
     },
     {
       model: Queue,
       as: "queue",
+      where: { companyId },
+      required: false,
       attributes: ["id", "name", "color"]
     },
     {
       model: User,
       as: "user",
+      where: { companyId },
+      required: false,
       attributes: ["id", "name"]
     },
     {
       model: Tag,
       as: "tags",
+      where: { companyId },
+      required: false,
       attributes: ["id", "name", "color"]
     },
     {
       model: Whatsapp,
       as: "whatsapp",
+      where: { companyId },
+      required: false,
       attributes: ["id", "name"]
     }
   ];
@@ -178,6 +193,7 @@ const ListTicketsService = async ({
         as: "messages",
         attributes: ["id", "body"],
         where: {
+          companyId,
           body: where(
             fn("LOWER", col("body")),
             "LIKE",
@@ -360,8 +376,11 @@ const ListTicketsService = async ({
   }
 
   whereCondition = {
-    ...whereCondition,
-    companyId
+    companyId,
+    [Op.and]: [
+      whereCondition,
+      ...(viewer.isAdmin ? [] : [{ queueId: { [Op.in]: viewer.queueIds } }])
+    ]
   };
 
   const tickets = await Ticket.findAll({

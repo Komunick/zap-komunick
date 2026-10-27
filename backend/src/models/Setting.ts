@@ -11,6 +11,7 @@ import {
 } from "sequelize-typescript";
 
 import Company from "./Company";
+import { publicSettingData } from "../helpers/CredentialRules";
 
 @Table
 class Setting extends Model<Setting> {
@@ -37,6 +38,10 @@ class Setting extends Model<Setting> {
 
   @BelongsTo(() => Company)
   company: Company;
+
+  toJSON(): object {
+    return publicSettingData(super.toJSON() as Setting);
+  }
 }
 
 export default Setting;

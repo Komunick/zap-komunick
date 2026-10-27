@@ -1,16 +1,19 @@
 import * as Yup from "yup";
 import AppError from "../../errors/AppError";
 import TicketNote from "../../models/TicketNote";
+import AuthorizeTicketContextService, {
+  ContextActor
+} from "../TicketServices/AuthorizeTicketContextService";
 
 interface TicketNoteData {
   note: string;
-  userId: number;
   contactId: number;
   ticketId: number;
 }
 
 const CreateTicketNoteService = async (
-  ticketNoteData: TicketNoteData
+  ticketNoteData: TicketNoteData,
+  actor: ContextActor
 ): Promise<TicketNote> => {
   const { note } = ticketNoteData;
 
@@ -26,7 +29,17 @@ const CreateTicketNoteService = async (
     throw new AppError(err.message);
   }
 
-  const ticketNote = await TicketNote.create(ticketNoteData);
+  const { ticket } = await AuthorizeTicketContextService(
+    ticketNoteData.ticketId,
+    actor,
+    ticketNoteData.contactId
+  );
+  const ticketNote = await TicketNote.create({
+    note,
+    userId: Number(actor.userId),
+    contactId: ticket.contactId,
+    ticketId: ticket.id
+  });
 
   return ticketNote;
 };

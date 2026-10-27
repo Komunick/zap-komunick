@@ -8,6 +8,7 @@ import formatBody from "../../helpers/Mustache";
 import User from "../../models/User";
 import { getIO } from "../../libs/socket";
 import Contact from "../../models/Contact";
+import { emitTicketContext } from "../SocketServices/TicketContextSocketService";
 
 interface Request {
   messageId: string;
@@ -83,16 +84,23 @@ const EditWhatsAppMessage = async ({
 
     const io = getIO();
 
-    io.to(ticket.id.toString())
-      .to(`company-${companyId}-${ticket.status}`)
-      .to(`company-${companyId}-notification`)
-      .to(`queue-${ticket.queueId}-${ticket.status}`)
-      .to(`queue-${ticket.queueId}-notification`)
-      .emit(`company-${ticket.companyId}-ticket`, {
+    await emitTicketContext(
+      io,
+      ticket.id,
+      `company-${ticket.companyId}-ticket`,
+      {
         action: "update",
         ticket,
         ticketId: ticket.id
-      });
+      },
+      [
+        ticket.id.toString(),
+        `company-${companyId}-${ticket.status}`,
+        `company-${companyId}-notification`,
+        `queue-${ticket.queueId}-${ticket.status}`,
+        `queue-${ticket.queueId}-notification`
+      ]
+    );
 
     const savedMessage = await Message.findOne({
       where: {

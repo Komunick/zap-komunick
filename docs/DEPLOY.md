@@ -134,3 +134,54 @@ docker compose -f docker-compose-komunick.yaml up -d
 - Chamadas externas que continuam (herdadas do Ticketz): lista de países em `cdn.jsdelivr.net`, fontes do Google e a
   consulta da versão do WhatsApp Web em `waversion.ticke.tz` (backend). As imagens base do Docker vêm de
   `ghcr.io/ticketz-oss`.
+
+## 9. Credenciais protegidas — P0 (RF-020)
+
+Esta configuração prepara o armazenamento; não conecta IA, Acessórias ou SCI. Aplicação em produção depende de
+autorização de publicação. Na validação local, usar somente credenciais fictícias e empresas de teste.
+
+### Configurar antes de cadastrar ou migrar
+
+1. Gerar uma chave criptograficamente aleatória de **32 bytes, codificada em base64**, com ferramenta de segredos da
+   infraestrutura. Configurar como `CREDENTIALS_MASTER_KEY` no ambiente exclusivo do backend (`.env-backend-komunick`
+   ou cofre do servidor), com permissão restrita. Não copiar para banco, Redis, frontend, Git, chat, prints ou logs.
+2. Guardar cópia segura dessa chave separadamente do backup do banco. Ela será necessária para restaurar o acesso aos
+   valores cifrados. Não gerar uma chave diferente a cada reinicialização. Deixar `CREDENTIALS_PREVIOUS_MASTER_KEY`
+   vazio fora de uma rotação controlada.
+3. Aplicar a configuração/reinicialização somente no ambiente autorizado. O compose de desenvolvimento recebe as
+   duas variáveis do ambiente do executor ou de `--env-file`; o compose da Komunick usa `.env-backend-komunick`.
+   Nenhum valor secreto pertence a `deploy/env-backend.example`.
+4. Administrador da própria empresa confere o estado em Configurações. A nova chave de IA é digitada em campo vazio
+   e salva explicitamente; uma chave salva nunca volta para a tela. Sem chave mestra válida, gravação/migração são
+   recusadas. Remoção local continua disponível e não revoga o token no fornecedor.
+
+### Configuração herdada e falhas
+
+A migração de esquema cria o armazenamento sem mover automaticamente valores de `Settings`. Enquanto houver legado,
+o estado indica migração pendente; o valor não é retornado ao navegador. A transcrição existente pode continuar
+resolvendo esse valor apenas no backend até a migração.
+
+Depois de configurar a chave mestra, usar **Proteger chave existente** (IA) ou `POST /credentials/migrate`, autenticado
+como administrador da empresa. O serviço move o legado e remove a cópia legível na mesma transação. Conferir o estado
+de cada empresa; não considerar que migrar uma migrou todas. Conflitos ou falhas não autorizam apagar o valor antigo.
+
+Não substituir uma chave mestra perdida para tentar recuperar envelopes: isso não recupera os dados. Restaurar a
+chave correta a partir da cópia segura ou remover/recadastrar a credencial com pessoa autorizada. Falha de decifragem
+ou fornecedor deve bloquear somente a operação dependente; o recebimento normal de áudio continua funcionando.
+
+### Substituição, remoção e rotação
+
+- **Token do fornecedor:** gerar um substituto no fornecedor, salvar via PUT `/credentials/:key` com `{value}` e
+  confirmar o estado. Revogar o token antigo no fornecedor por seu fluxo próprio; DELETE remove somente a cópia local.
+  Os identificadores aceitos são `openAiKey`, `acessoriasApiToken`, `sciPartnerToken` e `sciClientToken`. As rotas usam
+  a empresa da sessão administrativa, sem parâmetro para escolher outra empresa, e não devolvem o valor.
+- **Chave mestra:** planejar janela e backup; colocar a chave ativa anterior em `CREDENTIALS_PREVIOUS_MASTER_KEY` e
+  uma nova chave aleatória em `CREDENTIALS_MASTER_KEY`. Aplicar ambas juntas ao backend autorizado, executar a migração
+  administrativa de cada empresa e conferir a recifragem antes de retirar a anterior. Não perder nenhuma das duas
+  durante uma rotação parcial. Tratar erro antes de avançar, sem descartar envelopes indecifráveis.
+- **Recuo de aplicação:** manter `CompanyCredentials` e as chaves preserva os dados; não executar `down` como rotina
+  de recuperação. Código anterior ao P0 não lê o novo armazenamento e pode voltar a expor configurações herdadas.
+  Não restaurar automaticamente credenciais em texto comum nem tratar o recuo como compatível sem avaliação.
+
+Tokens locais de API, pagamentos, certificados, 2FA e sessões WhatsApp mantêm os mecanismos dos respectivos módulos.
+O P0 não é uma migração global de todos os segredos herdados. Consulte o TAD para autorização do contexto e limites.

@@ -28,6 +28,9 @@ import { verifyMessage } from "../services/WbotServices/wbotMessageListener";
 import { getJidOf } from "../services/WbotServices/getJidOf";
 import ShowContactService from "../services/ContactServices/ShowContactService";
 import { verifyContact } from "../services/WbotServices/verifyContact";
+import AuthorizeTicketContextService from "../services/TicketServices/AuthorizeTicketContextService";
+import AuthorizeMessageContextService from "../services/MessageServices/AuthorizeMessageContextService";
+import { emitTicketContext } from "../services/SocketServices/TicketContextSocketService";
 
 type IndexQuery = {
   nextId?: string;
@@ -45,17 +48,7 @@ type ForwardData = {
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const { ticketId } = req.params;
   const { nextId, markAsRead, minUpdatedAt } = req.query as IndexQuery;
-  const { companyId, profile } = req.user;
-  const queues: number[] = [];
-
-  if (profile !== "admin") {
-    const user = await User.findByPk(req.user.id, {
-      include: [{ model: Queue, as: "queues" }]
-    });
-    user.queues.forEach(queue => {
-      queues.push(queue.id);
-    });
-  }
+  const { companyId } = req.user;
 
   const {
     count,
@@ -67,7 +60,7 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     nextId,
     ticketId,
     companyId,
-    queues,
+    userId: req.user.id,
     minUpdatedAt
   });
 
@@ -113,9 +106,10 @@ export const historyByMessageId = async (
 
   const ticket = message.ticket as Ticket;
 
-  if (ticket.companyId !== companyId) {
-    throw new AppError("ERR_NO_PERMISSION", 403);
-  }
+  await AuthorizeTicketContextService(ticket.id, {
+    userId: req.user.id,
+    companyId
+  });
 
   const oldMessages = await OldMessage.findAll({
     where: {
@@ -134,6 +128,17 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   const { companyId } = req.user;
   const userId = Number(req.user.id) || null;
 
+  await AuthorizeTicketContextService(ticketId, {
+    userId: req.user.id,
+    companyId
+  });
+  if (quotedMsg) {
+    await AuthorizeMessageContextService(
+      quotedMsg.id,
+      { userId: req.user.id, companyId },
+      ticketId
+    );
+  }
   const ticket = await ShowTicketService(ticketId, companyId);
   const { channel } = ticket;
   if (channel === "whatsapp") {
@@ -172,10 +177,15 @@ export const react = async (req: Request, res: Response): Promise<Response> => {
   const { companyId } = req.user;
   const { ticketId, emoji } = req.body;
 
+  await AuthorizeMessageContextService(messageId, {
+    userId: req.user.id,
+    companyId
+  });
   const message = await Message.findOne({
     where: {
       id: messageId,
-      ticketId
+      ticketId,
+      companyId
     }
   });
 
@@ -213,6 +223,10 @@ export const edit = async (req: Request, res: Response): Promise<Response> => {
   const userId = Number(req.user.id) || null;
   const { body }: MessageData = req.body;
 
+  await AuthorizeMessageContextService(messageId, {
+    userId: req.user.id,
+    companyId
+  });
   const { ticketId, message } = await EditWhatsAppMessage({
     messageId,
     companyId,
@@ -221,10 +235,16 @@ export const edit = async (req: Request, res: Response): Promise<Response> => {
   });
 
   const io = getIO();
-  io.to(ticketId.toString()).emit(`company-${companyId}-appMessage`, {
-    action: "update",
-    message
-  });
+  await emitTicketContext(
+    io,
+    ticketId,
+    `company-${companyId}-appMessage`,
+    {
+      action: "update",
+      message
+    },
+    [ticketId.toString()]
+  );
 
   return res.send();
 };
@@ -236,13 +256,23 @@ export const remove = async (
   const { messageId } = req.params;
   const { companyId } = req.user;
 
+  await AuthorizeMessageContextService(messageId, {
+    userId: req.user.id,
+    companyId
+  });
   const message = await DeleteWhatsAppMessage(messageId);
 
   const io = getIO();
-  io.to(message.ticketId.toString()).emit(`company-${companyId}-appMessage`, {
-    action: "update",
-    message
-  });
+  await emitTicketContext(
+    io,
+    message.ticketId,
+    `company-${companyId}-appMessage`,
+    {
+      action: "update",
+      message
+    },
+    [message.ticketId.toString()]
+  );
 
   return res.send();
 };
@@ -254,6 +284,10 @@ export const forward = async (
   const { contactId, ticketId, messageId, queueId }: ForwardData = req.body;
   const { companyId } = req.user;
 
+  await AuthorizeMessageContextService(messageId, {
+    userId: req.user.id,
+    companyId
+  });
   const user = await User.findByPk(req.user.id, {
     include: [{ model: Queue, as: "queues" }]
   });
@@ -269,7 +303,8 @@ export const forward = async (
   const message = await Message.findOne({
     where: {
       id: messageId,
-      ticketId
+      ticketId,
+      companyId
     },
     include: [
       {

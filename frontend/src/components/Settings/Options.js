@@ -26,6 +26,7 @@ import { SelectLanguage } from "../SelectLanguage";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import api from "../../services/api";
 import { getBackendURL } from "../../services/config";
+import CompanyCredentialSettings from "../CompanyCredentialSettings";
 
 const useStyles = makeStyles(theme => ({
   container: {
@@ -112,7 +113,6 @@ export default function Options(props) {
     useState("disabled");
   const [groupsTab, setGroupsTab] = useState("disabled");
   const [apiToken, setApiToken] = useState("");
-  const [openAiKey, setOpenAiKey] = useState("");
   const [aiProvider, setAiProvider] = useState("openai");
   const [audioTranscriptions, setAudioTranscriptions] = useState("disabled");
   const [useMultiThreadedWbot, setUseMultiThreadedWbot] = useState("disabled");
@@ -254,9 +254,6 @@ export default function Options(props) {
 
       const apiToken = settings.find(s => s.key === "apiToken");
       setApiToken(apiToken?.value || "");
-
-      const openAiKey = settings.find(s => s.key === "openAiKey");
-      setOpenAiKey(openAiKey?.value || "");
 
       const aiProvider = settings.find(s => s.key === "aiProvider");
       setAiProvider(aiProvider?.value || "openai");
@@ -1360,20 +1357,7 @@ export default function Options(props) {
         </Grid>
 
         <Grid xs={12} sm={12} md={8} item>
-          <FormControl className={classes.selectContainer}>
-            <TextField
-              id="openai-key-field"
-              label="AI Key"
-              variant="standard"
-              value={openAiKey}
-              onChange={e => {
-                setOpenAiKey(e.target.value);
-              }}
-              onBlur={async _ => {
-                await handleSetting("openAiKey", openAiKey);
-              }}
-            />
-          </FormControl>
+          <CompanyCredentialSettings />
         </Grid>
 
         <Grid xs={12} sm={6} md={4} item>
