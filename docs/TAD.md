@@ -169,6 +169,11 @@ Stitch entra como tokens: `sidebar*` (menu preto, igual nos dois temas), `accent
 
 **Integrações:** nenhuma nova. O envio continua pelo WhatsApp do Ticketz (Baileys).
 
+**Proposta da rodada 3:** ver [`docs/specs/rodada-3-ia-integracoes.md`](specs/rodada-3-ia-integracoes.md) para o plano
+de IA assistida e Acessórias/SCI, ainda sem implementação ou conexão. O código herdado já contém transcrição por
+OpenAI/Groq. Antes de novas chaves, o plano prevê separar credenciais de `Settings` e impedir sua serialização em
+`Company.settings`, além de conferir autorização do contexto e a proteção de documentos externos.
+
 **Compatibilidade:** todas as colunas novas são opcionais e as configurações novas começam desligadas, então uma
 instalação existente mantém o comportamento até o gestor ativar. As rotas e payloads existentes só ganharam campos.
 

@@ -40,6 +40,11 @@ nada nela.
 Ticketz PRO, que é fechado), integrações financeiras e contábeis (Asaas, Omie, Nibo, G-Click, Conta Azul), PABX
 próprio, aplicativo móvel, IA, alerta sonoro ou pop-up de SLA e relatórios exportáveis.
 
+**Rodada 3 em planejamento:** o pedido de 27/10/2026 para IA e Acessórias/SCI está registrado como proposta em
+[`docs/specs/rodada-3-ia-integracoes.md`](specs/rodada-3-ia-integracoes.md). O planejamento não habilita integrações
+nem promove os recursos a entregues. A transcrição opcional herdada já existe no código; sua ativação e credencial
+atual não foram verificadas. O novo uso de mensagens/dados externos exige definir o piloto e o tratamento dos dados.
+
 **Fluxo principal:** o cliente escreve → o atendimento entra na fila (ou direto no responsável da carteira) → o painel
 de SLA mostra a espera e destaca o que passou do prazo → o atendente responde e move o atendimento pelas colunas do
 Kanban → lembretes recorrentes continuam saindo nas datas da série.
