@@ -15,6 +15,22 @@ import {
 } from "../../helpers/attachments";
 jest.mock("../../services/api", () => ({ get: jest.fn(), head: jest.fn() }));
 const mockListeners = new Map();
+const originalResizeObserver = window.ResizeObserver;
+let mockImageObservers = [];
+const loadImage = (image, width = 1200, height = 800) => {
+  Object.defineProperties(image, {
+    naturalWidth: { configurable: true, value: width },
+    naturalHeight: { configurable: true, value: height }
+  });
+  fireEvent.load(image);
+};
+const resizeImageViewport = (width, height) => {
+  act(() =>
+    mockImageObservers[mockImageObservers.length - 1].callback([
+      { contentRect: { width, height } }
+    ])
+  );
+};
 const mockSocket = {
   on: jest.fn((event, handler) => mockListeners.set(event, handler)),
   off: jest.fn(event => mockListeners.delete(event)),
@@ -68,7 +84,18 @@ const button = key =>
   screen.getByRole("button", { name: "attachments." + key, exact: true });
 beforeEach(() => {
   jest.clearAllMocks();
+  jest.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => {});
+  jest.spyOn(HTMLMediaElement.prototype, "load").mockImplementation(() => {});
   mockListeners.clear();
+  mockImageObservers = [];
+  window.ResizeObserver = class {
+    constructor(callback) {
+      this.callback = callback;
+      this.observe = jest.fn();
+      this.disconnect = jest.fn();
+      mockImageObservers.push(this);
+    }
+  };
   mockSocket.on.mockImplementation((event, handler) =>
     mockListeners.set(event, handler)
   );
@@ -83,6 +110,7 @@ beforeEach(() => {
   }));
 });
 afterEach(() => {
+  window.ResizeObserver = originalResizeObserver;
   jest.restoreAllMocks();
   jest.useRealTimers();
 });
@@ -107,9 +135,13 @@ test("reauthorizes metadata and bounded authenticated bytes before displaying, t
     path(a) + "/content",
     expect.objectContaining({ responseType: "blob" })
   );
+  loadImage(image);
+  resizeImageViewport(600, 400);
   fireEvent.click(button("zoomIn"));
   fireEvent.click(button("rotateRight"));
-  expect(image.style.transform).toBe("rotate(90deg) scale(1.25)");
+  expect(image.style.transform).toBe(
+    "translate(-50%, -50%) rotate(90deg) scale(1.25)"
+  );
   view.rerender(<AttachmentViewer {...props({ open: false })} />);
   expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:fixture-preview");
   expect(window.open).not.toHaveBeenCalled();
@@ -340,4 +372,114 @@ test("selected message invalidation aborts pending bytes and ignores their late 
   await act(async () => pending.resolve({ data: blob }));
   expect(URL.createObjectURL).not.toHaveBeenCalled();
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+});
+
+test("loaded image dimensions and viewport resize reserve the full positive rotated stage", async () => {
+  const view = render(<AttachmentViewer {...props()} />);
+  const image = await screen.findByRole("img", { name: a.fileName });
+  const stage = screen.getByTestId("attachment-image-stage");
+  loadImage(image);
+  resizeImageViewport(600, 400);
+  expect(stage).toHaveStyle({ width: "600px", height: "400px" });
+  expect(image).toHaveStyle({ width: "600px", height: "400px" });
+  fireEvent.click(button("rotateRight"));
+  expect(stage).toHaveStyle({ width: "267px", height: "400px" });
+  resizeImageViewport(300, 200);
+  expect(stage).toHaveStyle({ width: "134px", height: "200px" });
+  fireEvent.click(button("zoomIn"));
+  expect(stage).toHaveStyle({ width: "167px", height: "250px" });
+  const observer = mockImageObservers[0];
+  view.unmount();
+  expect(observer.disconnect).toHaveBeenCalledTimes(1);
+  expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:fixture-preview");
+});
+test("without ResizeObserver, resize fallback works and invalid natural sizes remain safe", async () => {
+  window.ResizeObserver = undefined;
+  let width = 632;
+  let height = 432;
+  jest
+    .spyOn(HTMLElement.prototype, "clientWidth", "get")
+    .mockImplementation(() => width);
+  jest
+    .spyOn(HTMLElement.prototype, "clientHeight", "get")
+    .mockImplementation(() => height);
+  const removed = jest.spyOn(window, "removeEventListener");
+  const view = render(<AttachmentViewer {...props()} />);
+  const image = await screen.findByRole("img", { name: a.fileName });
+  const stage = screen.getByTestId("attachment-image-stage");
+  loadImage(image, 0, 0);
+  expect(stage.style.width).toBe("");
+  loadImage(image);
+  expect(stage).toHaveStyle({ width: "600px", height: "400px" });
+  width = 332;
+  height = 232;
+  fireEvent(window, new Event("resize"));
+  expect(stage).toHaveStyle({ width: "300px", height: "200px" });
+  view.unmount();
+  expect(removed).toHaveBeenCalledWith("resize", expect.any(Function));
+});
+
+test("closing the video viewer pauses, removes src and releases the decoder before close", async () => {
+  const video = item("fixture-video", { kind: "video", mimeType: "video/mp4" });
+  api.get.mockImplementation(async url => ({
+    data: url.endsWith("/content")
+      ? new Blob(["test"], { type: "video/mp4" })
+      : video
+  }));
+  const p = props({
+    selection: { ...video, contextKey: "context-a" },
+    items: [video]
+  });
+  render(<AttachmentViewer {...p} />);
+  const element = await screen.findByLabelText(video.fileName, {
+    selector: "video"
+  });
+  fireEvent.click(button("closeViewer"));
+  expect(HTMLMediaElement.prototype.pause).toHaveBeenCalledTimes(1);
+  expect(element).not.toHaveAttribute("src");
+  expect(HTMLMediaElement.prototype.load).toHaveBeenCalledTimes(1);
+  expect(p.onClose).toHaveBeenCalledTimes(1);
+});
+test("selection changes pause and release the captured video before its Blob URL is revoked", async () => {
+  const first = item("fixture-video-a", {
+    kind: "video",
+    mimeType: "video/mp4"
+  });
+  const second = item("fixture-video-b", {
+    kind: "video",
+    mimeType: "video/mp4"
+  });
+  api.get.mockImplementation(async url => ({
+    data: url.endsWith("/content")
+      ? new Blob(["test"], { type: "video/mp4" })
+      : url.endsWith(first.messageId)
+        ? first
+        : second
+  }));
+  const p = props({
+    selection: { ...first, contextKey: "context-a" },
+    items: [first, second]
+  });
+  const view = render(<AttachmentViewer {...p} />);
+  const original = await screen.findByLabelText(first.fileName, {
+    selector: "video"
+  });
+  view.rerender(
+    <AttachmentViewer
+      {...p}
+      selection={{ ...second, contextKey: "context-a" }}
+    />
+  );
+  await screen.findByLabelText(second.fileName, { selector: "video" });
+  expect(HTMLMediaElement.prototype.pause).toHaveBeenCalledTimes(1);
+  expect(HTMLMediaElement.prototype.pause.mock.instances[0]).toBe(original);
+  expect(original).not.toHaveAttribute("src");
+  expect(
+    HTMLMediaElement.prototype.pause.mock.invocationCallOrder[0]
+  ).toBeLessThan(URL.revokeObjectURL.mock.invocationCallOrder[0]);
+  expect(
+    HTMLMediaElement.prototype.load.mock.invocationCallOrder[0]
+  ).toBeLessThan(URL.revokeObjectURL.mock.invocationCallOrder[0]);
+  view.unmount();
+  expect(HTMLMediaElement.prototype.pause).toHaveBeenCalledTimes(2);
 });

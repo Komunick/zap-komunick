@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Button, makeStyles } from "@material-ui/core";
 import { Description, CropFree } from "@material-ui/icons";
 import { Alert } from "@material-ui/lab";
@@ -37,6 +37,11 @@ export default function MessageAttachment({
   const local = useStyles();
   const [failed, setFailed] = useState(false);
   const kind = classifyMessageAttachment(message, data);
+  const videoRef = useRef(null);
+  useEffect(() => {
+    const video = videoRef.current;
+    return () => video?.pause();
+  }, [message.mediaUrl, kind]);
   const disabled = !canView || !!message.isDeleted;
   const document =
     data?.message?.documentMessage ||
@@ -97,6 +102,7 @@ export default function MessageAttachment({
     return (
       <>
         <video
+          ref={videoRef}
           className={classes.videoPreviewMedia}
           src={message.mediaUrl}
           controls
@@ -111,7 +117,10 @@ export default function MessageAttachment({
         <Button
           startIcon={<CropFree />}
           disabled={disabled}
-          onClick={() => onView(message)}
+          onClick={() => {
+            videoRef.current?.pause();
+            onView(message);
+          }}
         >
           {i18n.t("attachments.expand")}
         </Button>

@@ -1,4 +1,10 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState
+} from "react";
 import {
   Button,
   CircularProgress,
@@ -25,6 +31,7 @@ import { SocketContext } from "../../context/Socket/SocketContext";
 import { i18n } from "../../translate/i18n";
 import PdfAttachmentView from "../PdfAttachmentView";
 import useAttachmentRequest from "../../hooks/useAttachmentRequest";
+import { attachmentImageLayout } from "../../helpers/attachmentImageLayout";
 import {
   MAX_ATTACHMENT_BYTES,
   attachmentError,
@@ -54,15 +61,23 @@ const useStyles = makeStyles(theme => ({
   },
   viewport: {
     overflow: "auto",
-    maxHeight: "65vh",
-    padding: theme.spacing(2),
-    textAlign: "center"
+    height: "55vh",
+    padding: theme.spacing(2)
   },
+  imageStage: { position: "relative", overflow: "hidden", margin: "0 auto" },
   image: {
+    position: "absolute",
+    display: "block",
+    left: "50%",
+    top: "50%",
+    transformOrigin: "center"
+  },
+  imageFallback: {
+    display: "block",
     maxWidth: "100%",
     maxHeight: "55vh",
-    objectFit: "contain",
-    transformOrigin: "center"
+    margin: "0 auto",
+    objectFit: "contain"
   },
   video: { width: "100%", maxHeight: "65vh", display: "block" },
   loading: {
@@ -83,7 +98,6 @@ function ViewerSession({ ticketId, selection, items, onSelect, onClose }) {
   const { run, cancel } = useAttachmentRequest(attachmentIdentity(selection));
   const socketManager = useContext(SocketContext);
   const closeRef = useRef(onClose);
-  closeRef.current = onClose;
   const [invalidated, setInvalidated] = useState(false);
   const activeSession = useRef(true);
   useEffect(
@@ -98,7 +112,33 @@ function ViewerSession({ ticketId, selection, items, onSelect, onClose }) {
   const [mediaError, setMediaError] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
+  const imageViewportRef = useRef(null);
+  const [imageSize, setImageSize] = useState(null);
+  const [imageViewport, setImageViewport] = useState(null);
   const [url, setUrl] = useState(null);
+  const videoCleanup = useRef(null);
+  const releaseVideo = useCallback(() => {
+    const cleanup = videoCleanup.current;
+    videoCleanup.current = null;
+    cleanup?.();
+  }, []);
+  const captureVideo = useCallback(
+    video => {
+      if (!video || !url) return;
+      // Capture the node: React detaches its ref before passive cleanup runs.
+      videoCleanup.current = () => {
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
+      };
+    },
+    [url]
+  );
+  const closeViewer = useCallback(() => {
+    releaseVideo();
+    onClose();
+  }, [releaseVideo, onClose]);
+  closeRef.current = closeViewer;
   const path = attachmentPath(ticketId, selection);
   useEffect(() => {
     let active = true;
@@ -165,8 +205,11 @@ function ViewerSession({ ticketId, selection, items, onSelect, onClose }) {
     if (!result?.blob) return;
     const objectUrl = URL.createObjectURL(result.blob);
     setUrl(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [result]);
+    return () => {
+      releaseVideo();
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [result, releaseVideo]);
   useEffect(() => {
     if (!socketManager?.GetSocket) return;
     const companyId = localStorage.getItem("companyId");
@@ -193,6 +236,49 @@ function ViewerSession({ ticketId, selection, items, onSelect, onClose }) {
       socket.disconnect();
     };
   }, [socketManager, selection.messageId, selection.sourceTicketId, cancel]);
+
+  useEffect(() => {
+    const element = imageViewportRef.current;
+    if (!element) return;
+    let active = true;
+    const measure = () => {
+      if (!active) return;
+      const style = window.getComputedStyle(element);
+      const width =
+        element.clientWidth -
+        (parseFloat(style.paddingLeft) || 0) -
+        (parseFloat(style.paddingRight) || 0);
+      const height =
+        element.clientHeight -
+        (parseFloat(style.paddingTop) || 0) -
+        (parseFloat(style.paddingBottom) || 0);
+      setImageViewport({ width, height });
+    };
+    measure();
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(entries => {
+            const box = entries[0]?.contentRect;
+            if (active && box)
+              setImageViewport({ width: box.width, height: box.height });
+          });
+    if (observer) observer.observe(element);
+    else window.addEventListener("resize", measure);
+    return () => {
+      active = false;
+      observer?.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [url, result?.item.kind]);
+  const imageLayout = attachmentImageLayout({
+    naturalWidth: imageSize?.width,
+    naturalHeight: imageSize?.height,
+    viewportWidth: imageViewport?.width,
+    viewportHeight: imageViewport?.height,
+    zoom,
+    rotation
+  });
 
   const openOriginal = async () => {
     setBusy(true);
@@ -253,7 +339,7 @@ function ViewerSession({ ticketId, selection, items, onSelect, onClose }) {
   return (
     <Dialog
       open
-      onClose={onClose}
+      onClose={closeViewer}
       fullWidth
       maxWidth="lg"
       fullScreen={fullScreen}
@@ -268,7 +354,7 @@ function ViewerSession({ ticketId, selection, items, onSelect, onClose }) {
         >
           {result?.item.fileName || selection.fileName || t("title")}
         </Typography>
-        <IconButton onClick={onClose} aria-label={t("closeViewer")}>
+        <IconButton onClick={closeViewer} aria-label={t("closeViewer")}>
           <Close />
         </IconButton>
       </DialogTitle>
@@ -325,22 +411,60 @@ function ViewerSession({ ticketId, selection, items, onSelect, onClose }) {
                     <RotateRight />
                   </IconButton>
                 </div>
-                <div className={classes.viewport}>
-                  <img
-                    className={classes.image}
-                    src={url}
-                    alt={result.item.fileName}
-                    style={{
-                      transform:
-                        "rotate(" + rotation + "deg) scale(" + zoom + ")"
-                    }}
-                    onError={() => setMediaError(true)}
-                  />
+                <div
+                  className={classes.viewport}
+                  ref={imageViewportRef}
+                  data-testid="attachment-image-viewport"
+                >
+                  <div
+                    className={classes.imageStage}
+                    data-testid="attachment-image-stage"
+                    style={
+                      imageLayout
+                        ? {
+                            width: imageLayout.stageWidth,
+                            height: imageLayout.stageHeight
+                          }
+                        : undefined
+                    }
+                  >
+                    <img
+                      className={
+                        imageLayout ? classes.image : classes.imageFallback
+                      }
+                      src={url}
+                      alt={result.item.fileName}
+                      style={
+                        imageLayout
+                          ? {
+                              width: imageLayout.imageWidth,
+                              height: imageLayout.imageHeight,
+                              transform:
+                                "translate(-50%, -50%) rotate(" +
+                                rotation +
+                                "deg) scale(" +
+                                zoom +
+                                ")"
+                            }
+                          : undefined
+                      }
+                      onLoad={event => {
+                        if (!activeSession.current) return;
+                        const image = event.currentTarget;
+                        setImageSize({
+                          width: image.naturalWidth,
+                          height: image.naturalHeight
+                        });
+                      }}
+                      onError={() => setMediaError(true)}
+                    />
+                  </div>
                 </div>
               </>
             )}
             {result.item.kind === "video" && url && (
               <video
+                ref={captureVideo}
                 className={classes.video}
                 src={url}
                 controls
@@ -360,13 +484,19 @@ function ViewerSession({ ticketId, selection, items, onSelect, onClose }) {
       </DialogContent>
       <DialogActions className={classes.footer}>
         <Button
-          onClick={() => onSelect(items[index - 1])}
+          onClick={() => {
+            releaseVideo();
+            onSelect(items[index - 1]);
+          }}
           disabled={index <= 0 || busy}
         >
           {t("previous")}
         </Button>
         <Button
-          onClick={() => onSelect(items[index + 1])}
+          onClick={() => {
+            releaseVideo();
+            onSelect(items[index + 1]);
+          }}
           disabled={index < 0 || index >= items.length - 1 || busy}
         >
           {t("next")}
@@ -385,7 +515,7 @@ function ViewerSession({ ticketId, selection, items, onSelect, onClose }) {
             {t("download")}
           </Button>
         )}
-        <Button onClick={onClose}>{t("close")}</Button>
+        <Button onClick={closeViewer}>{t("close")}</Button>
       </DialogActions>
     </Dialog>
   );
