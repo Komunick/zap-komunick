@@ -1,7 +1,6 @@
 import * as Sentry from "@sentry/node";
 import makeWASocketSingleProcess, {
   WASocket,
-  DisconnectReason,
   isJidBroadcast,
   CacheStore,
   WAMessageKey,
@@ -32,6 +31,7 @@ import Ticket from "../models/Ticket";
 import { GitInfo } from "../gitinfo";
 import GetPublicSettingService from "../services/SettingServices/GetPublicSettingService";
 import waVersion from "../waversion.json";
+import { decideReconnect } from "../helpers/ReconnectPolicy";
 import Message from "../models/Message";
 import OutOfTicketMessage from "../models/OutOfTicketMessages";
 import BaileysKeys from "../models/BaileysKeys";
@@ -81,6 +81,8 @@ export type Session = WASocket & {
 const sessions: Session[] = [];
 
 const retriesQrCodeMap = new Map<number, number>();
+// Zap Komunick: reconnections in a row per connection, for the backoff
+const reconnectAttempts = new Map<number, number>();
 
 export const getWbot = (whatsappId: number): Session => {
   const sessionIndex = sessions.findIndex(s => s.id === whatsappId);
@@ -417,8 +419,28 @@ export const initWASocket = async (
             );
 
             if (connection === "close") {
-              if ((lastDisconnect?.error as Boom)?.output?.statusCode === 403) {
-                // disconnected from whatsapp
+              // Zap Komunick: one decision per close code (helpers/ReconnectPolicy):
+              // network hiccups reconnect with growing delays, a session taken by
+              // another client is not fought over, a dead session asks for a QR
+              const statusCode = (lastDisconnect?.error as Boom)?.output
+                ?.statusCode;
+              const attempt = reconnectAttempts.get(id) || 0;
+              const decision = decideReconnect(statusCode, attempt);
+              logger.warn(
+                { statusCode, attempt, decision },
+                `Socket ${name} closed: ${decision.reason} -> ${decision.action}`
+              );
+
+              const notifySession = () =>
+                io
+                  .to(`company-${whatsapp.companyId}-admin`)
+                  .emit(`company-${whatsapp.companyId}-whatsappSession`, {
+                    action: "update",
+                    session: whatsapp
+                  });
+
+              if (decision.action === "logout") {
+                reconnectAttempts.delete(id);
                 await removeWbot(id);
                 await whatsapp.update({
                   status: "DISCONNECTED",
@@ -426,29 +448,28 @@ export const initWASocket = async (
                   qrcode: ""
                 });
                 await DeleteBaileysService(whatsapp.id);
-                io.to(`company-${whatsapp.companyId}-admin`).emit(
-                  `company-${whatsapp.companyId}-whatsappSession`,
-                  {
-                    action: "update",
-                    session: whatsapp
-                  }
-                );
-              }
-              if (
-                (lastDisconnect?.error as Boom)?.output?.statusCode !==
-                DisconnectReason.loggedOut
-              ) {
-                // connection dropped without logging out
+                notifySession();
+              } else if (decision.action === "stop") {
+                // keep the credentials: "try again" in Connections takes it back
+                reconnectAttempts.delete(id);
+                await removeWbot(id, false);
+                await whatsapp.update({ status: "DISCONNECTED", qrcode: "" });
+                notifySession();
+                io.to(`company-${whatsapp.companyId}-admin`)
+                  .to("role-connections")
+                  .emit("error", {
+                    message: `Session ${name} was opened by another client (same WhatsApp credentials in another server or browser). It was stopped instead of fighting over it.`
+                  });
+              } else {
+                reconnectAttempts.set(id, attempt + 1);
                 await whatsapp.update({ status: "PENDING" });
-                io.to(`company-${whatsapp.companyId}-admin`).emit(
-                  `company-${whatsapp.companyId}-whatsappSession`,
-                  {
-                    action: "update",
-                    session: whatsapp
-                  }
-                );
+                notifySession();
                 removeWbot(id, false).then(() => {
-                  logger.info(`Reconnecting ${name} in 2 seconds`);
+                  logger.info(
+                    `Reconnecting ${name} in ${decision.delayMs} ms (attempt ${
+                      attempt + 1
+                    })`
+                  );
                   setTimeout(async () => {
                     await whatsapp.reload();
                     await StartWhatsAppSession(
@@ -456,28 +477,13 @@ export const initWASocket = async (
                       whatsapp.companyId,
                       true
                     );
-                  }, 2000);
+                  }, decision.delayMs);
                 });
-              } else {
-                // logged out
-                await removeWbot(id);
-                await whatsapp.update({
-                  status: "DISCONNECTED",
-                  session: "",
-                  qrcode: ""
-                });
-                await DeleteBaileysService(whatsapp.id);
-                io.to(`company-${whatsapp.companyId}-admin`).emit(
-                  `company-${whatsapp.companyId}-whatsappSession`,
-                  {
-                    action: "update",
-                    session: whatsapp
-                  }
-                );
               }
             }
 
             if (connection === "open") {
+              reconnectAttempts.delete(id);
               wsocket.fetchAccountReachoutTimelock().then(timelock => {
                 handleReachoutTimelock(timelock, { timelock });
               });
