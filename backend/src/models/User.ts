@@ -24,6 +24,7 @@ import UserQueue from "./UserQueue";
 import Company from "./Company";
 import QuickMessage from "./QuickMessage";
 import UserSocketSession from "./UserSocketSession"; // Importação da nova model
+import { publicCompanyData } from "../helpers/CredentialRules";
 
 @DefaultScope(() => ({
   attributes: {
@@ -147,6 +148,7 @@ class User extends Model<User> {
     delete values.twoFactorSecret;
     delete values.twoFactorPendingSecret;
     delete values.twoFactorRecoveryCodes;
+    if (values.company) values.company = publicCompanyData(values.company);
     return values;
   }
 }

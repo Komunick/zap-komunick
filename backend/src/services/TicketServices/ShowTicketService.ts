@@ -14,12 +14,16 @@ const ShowTicketService = async (
 ): Promise<Ticket> => {
   const ticket = await Ticket.findOne({
     where: {
-      id
+      id,
+      ...(companyId === undefined ? {} : { companyId })
     },
     include: [
       {
         model: Contact,
         as: "contact",
+        ...(companyId === undefined
+          ? {}
+          : { where: { companyId }, required: true }),
         attributes: [
           "id",
           "name",
@@ -31,11 +35,23 @@ const ShowTicketService = async (
           "disableBot",
           "language"
         ],
-        include: ["tags", "extraInfo"]
+        include: [
+          {
+            model: Tag,
+            as: "tags",
+            ...(companyId === undefined
+              ? {}
+              : { where: { companyId }, required: false })
+          },
+          "extraInfo"
+        ]
       },
       {
         model: User,
         as: "user",
+        ...(companyId === undefined
+          ? {}
+          : { where: { companyId }, required: false }),
         attributes: ["id", "name"],
         include: [
           {
@@ -49,11 +65,17 @@ const ShowTicketService = async (
       {
         model: Queue,
         as: "queue",
+        ...(companyId === undefined
+          ? {}
+          : { where: { companyId }, required: false }),
         attributes: ["id", "name", "color"]
       },
       {
         model: Whatsapp,
         as: "whatsapp",
+        ...(companyId === undefined
+          ? {}
+          : { where: { companyId }, required: false }),
         attributes: [
           "name",
           "status",
@@ -71,6 +93,9 @@ const ShowTicketService = async (
       {
         model: Tag,
         as: "tags",
+        ...(companyId === undefined
+          ? {}
+          : { where: { companyId }, required: false }),
         attributes: ["id", "name", "color"]
       }
     ]

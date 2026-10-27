@@ -1,5 +1,6 @@
 import AppError from "../../errors/AppError";
 import Setting from "../../models/Setting";
+import { isCredentialKey } from "../../helpers/CredentialRules";
 
 interface Request {
   key: string;
@@ -27,6 +28,8 @@ export const GetSettingService = async ({
   if (user.profile !== "admin" && !(key in safeSettingsKeys)) {
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
+
+  if (isCredentialKey(key)) return "";
 
   const setting = await Setting.findOne({
     where: {

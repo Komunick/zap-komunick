@@ -44,6 +44,8 @@ próprio, aplicativo móvel, IA, alerta sonoro ou pop-up de SLA e relatórios ex
 [`docs/specs/rodada-3-ia-integracoes.md`](specs/rodada-3-ia-integracoes.md). O planejamento não habilita integrações
 nem promove os recursos a entregues. A transcrição opcional herdada já existe no código; sua ativação e credencial
 atual não foram verificadas. O novo uso de mensagens/dados externos exige definir o piloto e o tratamento dos dados.
+O [P0 de credenciais e isolamento](specs/p0-credenciais-isolamento.md) foi autorizado separadamente em 27/10/2026;
+seu comportamento está definido em RF-020, sem habilitar os demais recursos propostos.
 
 **Fluxo principal:** o cliente escreve → o atendimento entra na fila (ou direto no responsável da carteira) → o painel
 de SLA mostra a espera e destaca o que passou do prazo → o atendente responde e move o atendimento pelas colunas do
@@ -560,6 +562,41 @@ então o Fiscal recebe a etiqueta e o DP é informado como não alterado, manten
 Dado um cliente com a etiqueta "Revisar" apenas em um atendimento resolvido e com responsável definido,
 quando o administrador filtra Contatos por "Revisar",
 então encontra o cliente; ao combinar com "Sem responsável", ele deixa de aparecer.
+
+### RF-020 — Credenciais protegidas e isolamento do contexto
+
+**Recorte autorizado (27/10/2026):** P0 da rodada 3, conforme
+[especificação](specs/p0-credenciais-isolamento.md), usando dados fictícios. Não inclui IA assistida nem chamadas a
+Acessórias/SCI.
+
+- As credenciais de IA e dos futuros conectores ficam cifradas no backend, separadas por empresa. O navegador recebe
+  somente o estado da configuração. Login, renovação de sessão, configurações gerais, eventos, auditoria e jobs não
+  devolvem o valor nem o envelope cifrado. Segredos conhecidos também são retirados do payload geral da empresa.
+- Administradores gerenciam somente as credenciais da empresa autenticada. Em Configurações, a chave de IA aparece
+  como configurada, ausente ou pendente de migração, com campo vazio para substituição e gravação explícita. Remover
+  exige confirmação; a remoção local não revoga a chave no fornecedor. Atendentes não gerenciam credenciais.
+- Sem armazenamento protegido configurado no servidor, novas gravações/migrações são recusadas. Configuração herdada
+  permanece privada e pode ser migrada de modo explícito, sem perder o valor por falha ou manter duplicata legível.
+  A transcrição opcional herdada continua usando a credencial somente no backend; uma falha não impede registrar áudio.
+- Notas, leitura de atendimento por ID/UUID e histórico exigem empresa, cliente e setor autorizados. Administrador
+  acessa os atendimentos da própria empresa; atendente precisa do setor permitido, e ausência de setores não libera
+  acesso geral. Edição de nota não troca autor, cliente ou atendimento por campos enviados na requisição.
+- Eventos em tempo real aplicam a mesma autorização; atribuição do atendimento e assinaturas antigas não liberam
+  contexto fora do setor. Transferência ou remoção de permissão retiram acesso. Alterar/excluir um atendimento ou
+  mensagem também exige contexto autorizado antes de executar a operação.
+- A agenda geral da empresa continua conforme RF-018. A privacidade do histórico e o contexto do atendimento recebido
+  por transferência continuam conforme RF-017. Consultar sem solicitar marcação de leitura não muda leitura, SLA ou
+  estado do atendimento e não envia mensagens.
+
+**Cenários de aceite:**
+
+Dadas duas empresas com clientes e usuários distintos, quando alguém de A usa um ID/UUID, cursor ou referência de
+mensagem de B, a API recusa ou exclui o registro sem revelar seu conteúdo. Uma nota com cliente diferente do atendimento
+também é recusada. O usuário sem setor não recebe contexto restrito.
+
+Dada uma chave fictícia cadastrada pela empresa A, quando A entra, renova a sessão ou consulta configurações, recebe
+somente estado. B não obtém nem substitui a chave de A. Substituir/remover/migrar funciona no escopo correto; falha ou
+chave mestra incorreta não destrói a configuração anterior.
 
 ## 4. Restrições e cuidados
 

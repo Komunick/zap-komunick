@@ -6,6 +6,7 @@ import OldMessage from "../../models/OldMessage";
 import Ticket from "../../models/Ticket";
 import Whatsapp from "../../models/Whatsapp";
 import { logger } from "../../utils/logger";
+import { emitTicketContext } from "../SocketServices/TicketContextSocketService";
 
 interface MessageData {
   id: string;
@@ -27,19 +28,28 @@ interface Request {
   skipWebsocket?: boolean;
 }
 
-export const websocketCreateMessage = (message: Message) => {
+export const websocketCreateMessage = async (
+  message: Message
+): Promise<void> => {
   const io = getIO();
-  io.to(message.ticketId.toString())
-    .to(`company-${message.companyId}-${message.ticket.status}`)
-    .to(`company-${message.companyId}-notification`)
-    .to(`queue-${message.ticket.queueId}-${message.ticket.status}`)
-    .to(`queue-${message.ticket.queueId}-notification`)
-    .emit(`company-${message.companyId}-appMessage`, {
+  await emitTicketContext(
+    io,
+    message.ticketId,
+    `company-${message.companyId}-appMessage`,
+    {
       action: "create",
       message,
       ticket: message.ticket,
       contact: message.ticket.contact
-    });
+    },
+    [
+      message.ticketId.toString(),
+      `company-${message.companyId}-${message.ticket.status}`,
+      `company-${message.companyId}-notification`,
+      `queue-${message.ticket.queueId}-${message.ticket.status}`,
+      `queue-${message.ticket.queueId}-notification`
+    ]
+  );
 };
 
 /**
@@ -141,7 +151,7 @@ const CreateMessageService = async ({
   const io = getIO();
 
   if (!skipWebsocket) {
-    websocketCreateMessage(message);
+    await websocketCreateMessage(message);
   }
 
   io.to(`company-${companyId}-mainchannel`).emit(

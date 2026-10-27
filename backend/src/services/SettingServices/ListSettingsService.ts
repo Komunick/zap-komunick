@@ -1,6 +1,6 @@
 import { Op, WhereOptions } from "sequelize";
 import Setting from "../../models/Setting";
-import User from "../../models/User";
+import { publicSettingData } from "../../helpers/CredentialRules";
 
 interface Request {
   isSuper: boolean;
@@ -22,7 +22,7 @@ const ListSettingsService = async ({
     where
   });
 
-  return settings;
+  return settings.map(publicSettingData);
 };
 
 export default ListSettingsService;

@@ -3,6 +3,7 @@ import { getIO } from "../../libs/socket";
 import Setting from "../../models/Setting";
 import { updateDefaultLanguage } from "../TranslationServices/i18nService";
 import { safeSettingsKeys } from "./GetSettingService";
+import { isCredentialKey } from "../../helpers/CredentialRules";
 
 interface Request {
   key: string;
@@ -15,6 +16,9 @@ const UpdateSettingService = async ({
   value,
   companyId
 }: Request): Promise<Setting | undefined> => {
+  if (isCredentialKey(key)) {
+    throw new AppError("ERR_USE_CREDENTIALS_ROUTE", 400);
+  }
   const [setting] = await Setting.findOrCreate({
     where: {
       key,

@@ -1,7 +1,13 @@
 import { Sequelize, Op } from "sequelize";
 import TicketNote from "../../models/TicketNote";
+import {
+  ContextActor,
+  loadTicketViewer
+} from "../TicketServices/AuthorizeTicketContextService";
+import { ticketNoteScope } from "./TicketNoteScope";
 
 interface Request {
+  actor: ContextActor;
   searchParam?: string;
   pageNumber?: string;
 }
@@ -14,8 +20,10 @@ interface Response {
 
 const ListTicketNotesService = async ({
   searchParam = "",
-  pageNumber = "1"
+  pageNumber = "1",
+  actor
 }: Request): Promise<Response> => {
+  const viewer = await loadTicketViewer(actor);
   const whereCondition = {
     [Op.or]: [
       {
@@ -32,6 +40,8 @@ const ListTicketNotesService = async ({
 
   const { count, rows: ticketNotes } = await TicketNote.findAndCountAll({
     where: whereCondition,
+    include: ticketNoteScope(viewer),
+    distinct: true,
     limit,
     offset,
     order: [["createdAt", "DESC"]]

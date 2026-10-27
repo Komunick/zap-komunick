@@ -3,6 +3,9 @@
 **Data:** 27/10/2026. **Estado:** proposta para definição do piloto; não implementada.
 **Base examinada:** `6682e92b2303dcbcdc79427f47a3ddab789235aa`, PR #17 de segurança, sobre a pilha existente.
 
+Registro da proposta inicial. O pedido posterior para executar somente o P0 está delimitado em
+[P0 — credenciais e isolamento do contexto](p0-credenciais-isolamento.md); as demais etapas continuam propostas.
+
 O pedido desta etapa é preparar o plano e identificar credenciais/acessos. Ele não autoriza chamadas com dados reais,
 contratação, publicação, envio de mensagens ou operações de escrita nos fornecedores. Não há prazo, orçamento ou modelo
 de IA aprovado. A edição/instalação da SCI e o plano do Acessórias ainda precisam ser confirmados.
