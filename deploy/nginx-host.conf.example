@@ -1,13 +1,13 @@
 # Zap Komunick: site for the server's own nginx, in front of the app on
-# 127.0.0.1:5480 (ZK_HTTP_PORT). Replace the subdomain, save it as
+# 127.0.0.1:5480 (ZK_HTTP_PORT) for superchat.komunick.com. Save it as
 # /etc/nginx/sites-available/zap-komunick, enable it and get the certificate:
 #   sudo ln -s /etc/nginx/sites-available/zap-komunick /etc/nginx/sites-enabled/
 #   sudo nginx -t && sudo systemctl reload nginx
-#   sudo certbot --nginx -d atendimento.komunick.com
+#   sudo certbot --nginx -d superchat.komunick.com
 
 server {
     listen 80;
-    server_name atendimento.komunick.com;
+    server_name superchat.komunick.com;
 
     # attachments and voice notes
     client_max_body_size 64m;

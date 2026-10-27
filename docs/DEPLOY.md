@@ -1,7 +1,8 @@
-# Publicação — Zap Komunick num subdomínio da Komunick
+# Publicação — Zap Komunick em superchat.komunick.com
 
-Como colocar o Zap Komunick no ar num endereço como `atendimento.komunick.com`. Os arquivos ficam na raiz do
-repositório (`docker-compose-komunick.yaml`, `docker-compose-komunick-proxy.yaml`) e em `deploy/`.
+Como colocar o Zap Komunick no ar em **`superchat.komunick.com`** (endereço escolhido em 27/10/2026). Os arquivos ficam
+na raiz do repositório (`docker-compose-komunick.yaml`, `docker-compose-komunick-proxy.yaml`) e em `deploy/`; os
+modelos de ambiente e do nginx já vêm com esse endereço.
 
 > **Antes de publicar:** o `zap.komunick.com` roda hoje o Ticketz 1.0.132 (com backup do Ticketz PRO em
 > `Komunick/ticketz-pro`). Este guia sobe o Zap Komunick num **subdomínio novo**, ao lado do atual. Trocar o
@@ -11,11 +12,28 @@ repositório (`docker-compose-komunick.yaml`, `docker-compose-komunick-proxy.yam
 
 - Um servidor Linux com Docker e o plugin `docker compose` (2 vCPU e 4 GB de memória atendem uma empresa pequena;
   a montagem das imagens usa mais memória que o uso diário).
-- Um subdomínio de `komunick.com` com registro **A** apontando para o IP do servidor (no painel de DNS do domínio).
+- O registro de DNS `superchat` em `komunick.com` apontando para o IP do servidor (seção 2).
 - Portas 80 e 443 liberadas no firewall do servidor e, se houver, no da nuvem (Oracle, AWS etc.).
 - Um número de WhatsApp para conectar depois do primeiro acesso.
 
-## 2. Escolha do modo
+## 2. DNS no Cloudflare
+
+O DNS de `komunick.com` fica no **Cloudflare** (servidores `jason` e `sara.ns.cloudflare.com`). Em 27/10/2026
+`superchat.komunick.com` ainda não existia. No painel do Cloudflare, em `komunick.com` › DNS › Records:
+
+| Tipo | Nome | Conteúdo | Proxy | TTL |
+| --- | --- | --- | --- | --- |
+| `A` | `superchat` | IP público do servidor | **Somente DNS** (nuvem cinza) na primeira subida | Auto |
+
+- Com a nuvem cinza, o certificado do Let's Encrypt (certbot no modo A, acme-companion no modo B) sai direto do
+  servidor. Depois de o site abrir com HTTPS, dá para ligar o proxy (nuvem laranja); nesse caso, em SSL/TLS deixe o
+  modo **Full (strict)**, para o Cloudflare só aceitar o certificado válido do servidor. O tempo real (WebSocket) e os
+  anexos de até 64 MB passam pelo proxy do Cloudflare sem ajuste.
+- Se o servidor tiver IPv6, crie também o registro `AAAA` com o mesmo nome.
+- Conferir antes de subir: `nslookup superchat.komunick.com` precisa devolver o IP do servidor (com a nuvem laranja,
+  devolve IPs do Cloudflare, e isso também está certo).
+
+## 3. Escolha do modo
 
 | Modo | Quando usar | Como sobe |
 | --- | --- | --- |
@@ -24,7 +42,7 @@ repositório (`docker-compose-komunick.yaml`, `docker-compose-komunick-proxy.yam
 
 Nos dois, a aplicação responde só em `127.0.0.1:5480` (porta em `ZK_HTTP_PORT`); banco e Redis não ficam expostos.
 
-## 3. Passo a passo
+## 4. Passo a passo
 
 ```bash
 # 1. código (na pasta escolhida, por exemplo /opt/zap-komunick)
@@ -44,19 +62,19 @@ openssl rand -hex 16           # cole em VERIFY_TOKEN, no .env-backend-komunick
 Edite os três arquivos:
 
 - `.env`: `POSTGRES_PASSWORD` (obrigatório) e, se a porta 5480 estiver ocupada, `ZK_HTTP_PORT`.
-- `.env-backend-komunick`: `FRONTEND_HOST` (o subdomínio), `EMAIL_ADDRESS` (login do primeiro administrador) e
-  `ADMIN_PASSWORD`.
-- `.env-frontend-komunick`: `FRONTEND_HOST` (o mesmo subdomínio) e, no modo B, `LETSENCRYPT_EMAIL`. Tudo o que está
-  neste arquivo fica público em `/config.json`: nada de senha aqui.
+- `.env-backend-komunick`: `FRONTEND_HOST` já vem `superchat.komunick.com`; preencher `EMAIL_ADDRESS` (login do
+  primeiro administrador) e `ADMIN_PASSWORD`.
+- `.env-frontend-komunick`: `FRONTEND_HOST` já vem `superchat.komunick.com`; no modo B, confira `LETSENCRYPT_EMAIL`.
+  Tudo o que está neste arquivo fica público em `/config.json`: nada de senha aqui.
 
 ```bash
 # 3a. modo A: sobe a aplicação e configura o nginx do servidor
 docker compose -f docker-compose-komunick.yaml up -d --build
 sudo cp deploy/nginx-host.conf.example /etc/nginx/sites-available/zap-komunick
-sudo nano /etc/nginx/sites-available/zap-komunick      # troque o subdomínio (e a porta, se mudou)
+sudo nano /etc/nginx/sites-available/zap-komunick      # só se a porta mudou
 sudo ln -s /etc/nginx/sites-available/zap-komunick /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
-sudo certbot --nginx -d atendimento.komunick.com
+sudo certbot --nginx -d superchat.komunick.com
 
 # 3b. modo B: sobe a aplicação com o proxy e o certificado automático
 docker compose -f docker-compose-komunick.yaml -f docker-compose-komunick-proxy.yaml up -d --build
@@ -65,15 +83,15 @@ docker compose -f docker-compose-komunick.yaml -f docker-compose-komunick-proxy.
 A primeira subida demora (monta as imagens, cria o banco e roda as migrações). Acompanhe com
 `docker compose -f docker-compose-komunick.yaml logs -f backend` até aparecer `Server is listening on port: 3000`.
 
-## 4. Primeiro acesso
+## 5. Primeiro acesso
 
-1. Abra `https://<subdomínio>` e entre com `EMAIL_ADDRESS` e `ADMIN_PASSWORD`.
+1. Abra `https://superchat.komunick.com` e entre com `EMAIL_ADDRESS` e `ADMIN_PASSWORD`.
 2. Troque a senha do administrador no perfil e apague `ADMIN_PASSWORD` do `.env-backend-komunick` (ela só vale na
    criação do banco).
 3. Em **Conexões**, adicione o WhatsApp e leia o QR Code com o aparelho.
 4. Cadastre filas, usuários (com horário de acesso, se for o caso), motivos de finalização e o prazo de SLA.
 
-## 5. Atualizar
+## 6. Atualizar
 
 ```bash
 cd /opt/zap-komunick
@@ -88,7 +106,7 @@ mesma subida e, se uma migração tiver mudado dados, restaurar o backup.
 A atualização automática pela tela (herdada do Ticketz) fica **desligada**: o backend não recebe o Docker do
 servidor, porque ela trocaria este fork pelas imagens do Ticketz original.
 
-## 6. Backup e restauração
+## 7. Backup e restauração
 
 `./deploy/backup.sh` grava em `backups/<data>/` o banco (`banco.sql.gz`) e os arquivos (`arquivos.tar.gz`: mídias,
 anexos e sessões do WhatsApp) e mantém os 14 últimos. Agende no cron (exemplo no topo do script) e copie a pasta
@@ -105,7 +123,7 @@ docker compose -f docker-compose-komunick.yaml run --rm --no-deps -T --entrypoin
 docker compose -f docker-compose-komunick.yaml up -d
 ```
 
-## 7. Cuidados de segurança
+## 8. Cuidados de segurança
 
 - Senhas fortes em `POSTGRES_PASSWORD` e `ADMIN_PASSWORD`; os arquivos `.env*` preenchidos nunca vão para o Git
   (estão no `.gitignore`).
