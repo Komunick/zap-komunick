@@ -249,3 +249,24 @@ A migração de esquema cria apenas o cadastro de vínculos. Ao recuar a aplica�
 mapeamentos; não executar reversão destrutiva como recuperação padrão. A chave mestra P0 e as configurações P1 são
 independentes desse modo. Conexão real, token, contrato/licença, ambiente autorizado, quotas e documentos exigem outro
 recorte; mudar uma variável não implementa o conector real.
+
+## 12. Visualizadores de arquivos da conversa — RF-023
+
+A melhoria usa o armazenamento existente e não requer chave, provedor externo, variável nova ou migração de banco.
+Publicar frontend/backend compatíveis para disponibilizar a área **Arquivos** e a nova API de anexos. O percurso é
+iniciado pela pessoa no atendimento autorizado; IA/Acessórias permanecem independentes e não recebem os arquivos.
+
+Prévias locais de PDF, JPEG, PNG, GIF, WebP, MP4 e WebM têm limite de 25 MiB, uma ativa por vez. O navegador carrega
+bytes pela API autenticada, sem token em URL; PDF usa canvas e controles de página/zoom. Vídeo depende de codecs do
+navegador. Arquivo ausente, inválido/com senha, grande ou incompatível mostra seu estado. Download/Abrir original é
+ação explícita; erro de acesso não abre automaticamente uma URL alternativa.
+
+Os links legados `/public/*` no Express, o alias nginx e os links enviados ao destinatário continuam públicos.
+Esta entrega não privatiza esses arquivos. Não bloquear apenas uma rota esperando proteção completa: também há
+entrega direta pelo nginx e compatibilidade com o envio de arquivos grandes. Migração para armazenamento privado,
+URLs temporárias e alteração de envio precisam de plano próprio.
+
+Para validar no dev, usar somente duas empresas, mensagens e arquivos novos/fictícios, sem WhatsApp pessoal ou envio.
+Conferir paginação e acesso por empresa/cliente/setor, HEAD/Range/download, PDF com duas páginas, imagens e vídeos,
+falhas e troca de contexto; remover apenas IDs e diretório rastreados das fixtures. Preservar a master P0 e os modos
+IA/Acessórias desligados. Recuar o código não exige apagar arquivos nem reverter dados.

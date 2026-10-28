@@ -2776,6 +2776,217 @@ es.acessorias = {
     "Hay configuraciones distintas. La consulta sigue desactivada; guarda la opción deseada para resolverlas."
 };
 
+pt.attachments = {
+  refresh: "Atualizar",
+  open: "Arquivos",
+  title: "Arquivos da conversa",
+  file: "Arquivo",
+  scope:
+    "Arquivos disponíveis no contexto deste atendimento. A busca considera apenas os arquivos carregados.",
+  filter: "Tipo de arquivo",
+  search: "Buscar nos arquivos carregados",
+  kinds: {
+    all: "Todos",
+    pdf: "PDFs",
+    image: "Imagens",
+    video: "Vídeos",
+    other: "Outros arquivos"
+  },
+  loading: "Carregando arquivo…",
+  empty: "Nenhum arquivo disponível.",
+  noMatches: "Nenhum arquivo carregado corresponde à busca.",
+  unknownSize: "Tamanho não informado",
+  view: "Visualizar / baixar",
+  viewNamed: "Visualizar {{name}}",
+  viewPdf: "Visualizar PDF",
+  viewImage: "Ampliar imagem",
+  image: "Imagem da mensagem",
+  video: "Vídeo da mensagem",
+  sticker: "Figurinha",
+  expand: "Ampliar vídeo",
+  loadMore: "Carregar mais",
+  retry: "Tentar novamente",
+  close: "Fechar",
+  closeViewer: "Fechar visualizador",
+  previous: "Arquivo anterior",
+  next: "Próximo arquivo",
+  openOriginal: "Abrir original",
+  download: "Baixar arquivo",
+  zoomIn: "Aumentar zoom",
+  zoomOut: "Diminuir zoom",
+  rotateLeft: "Girar à esquerda",
+  rotateRight: "Girar à direita",
+  codec:
+    "O navegador não conseguiu reproduzir este vídeo. Você pode baixar o arquivo pelo visualizador.",
+  access: "Arquivo indisponível ou acesso não permitido. Atualize a conversa.",
+  failed: "Não foi possível carregar este arquivo.",
+  timeout: "O carregamento demorou demais. Feche e tente novamente.",
+  tooLarge: "Este arquivo excede o limite de prévia de 25 MiB.",
+  reason: {
+    available: "Arquivo disponível.",
+    too_large:
+      "Arquivo maior que o limite de prévia de 25 MiB. Use Abrir original se desejar continuar.",
+    unsupported:
+      "Este tipo de arquivo não possui prévia. Use Abrir original se desejar continuar.",
+    external: "Arquivo externo. Abrir original acessará o endereço informado.",
+    missing: "O arquivo não está mais disponível."
+  },
+  pdf: {
+    previous: "Página anterior",
+    next: "Próxima página",
+    zoomIn: "Aumentar zoom do PDF",
+    zoomOut: "Diminuir zoom do PDF",
+    fit: "Ajustar à largura",
+    page: "Página",
+    loading: "Carregando PDF…",
+    failed: "Não foi possível exibir este PDF.",
+    password:
+      "Este PDF exige uma senha. Baixe o arquivo para abri-lo em um leitor compatível.",
+    pageCount: "Página {{page}} de {{count}}"
+  }
+};
+
+en.attachments = {
+  refresh: "Refresh",
+  open: "Files",
+  title: "Conversation files",
+  file: "File",
+  scope:
+    "Files available in this conversation's authorized context. Search covers loaded files only.",
+  filter: "File type",
+  search: "Search loaded files",
+  kinds: {
+    all: "All",
+    pdf: "PDFs",
+    image: "Images",
+    video: "Videos",
+    other: "Other files"
+  },
+  loading: "Loading file…",
+  empty: "No files available.",
+  noMatches: "No loaded files match this search.",
+  unknownSize: "Unknown size",
+  view: "View / download",
+  viewNamed: "View {{name}}",
+  viewPdf: "View PDF",
+  viewImage: "Enlarge image",
+  image: "Message image",
+  video: "Message video",
+  sticker: "Sticker",
+  expand: "Enlarge video",
+  loadMore: "Load more",
+  retry: "Try again",
+  close: "Close",
+  closeViewer: "Close viewer",
+  previous: "Previous file",
+  next: "Next file",
+  openOriginal: "Open original",
+  download: "Download file",
+  zoomIn: "Zoom in",
+  zoomOut: "Zoom out",
+  rotateLeft: "Rotate left",
+  rotateRight: "Rotate right",
+  codec:
+    "The browser could not play this video. You can download it from the viewer.",
+  access: "File unavailable or access denied. Refresh the conversation.",
+  failed: "Unable to load this file.",
+  timeout: "Loading timed out. Close and try again.",
+  tooLarge: "This file exceeds the 25 MiB preview limit.",
+  reason: {
+    available: "File available.",
+    too_large:
+      "File exceeds the 25 MiB preview limit. Use Open original to continue.",
+    unsupported:
+      "This file type has no preview. Use Open original to continue.",
+    external: "External file. Open original will access the provided address.",
+    missing: "The file is no longer available."
+  },
+  pdf: {
+    previous: "Previous page",
+    next: "Next page",
+    zoomIn: "Zoom PDF in",
+    zoomOut: "Zoom PDF out",
+    fit: "Fit width",
+    page: "Page",
+    loading: "Loading PDF…",
+    failed: "Unable to display this PDF.",
+    password:
+      "This PDF requires a password. Download it to open in a compatible reader.",
+    pageCount: "Page {{page}} of {{count}}"
+  }
+};
+
+es.attachments = {
+  refresh: "Actualizar",
+  open: "Archivos",
+  title: "Archivos de la conversación",
+  file: "Archivo",
+  scope:
+    "Archivos disponibles en el contexto autorizado de esta conversación. La búsqueda solo considera los archivos cargados.",
+  filter: "Tipo de archivo",
+  search: "Buscar en los archivos cargados",
+  kinds: {
+    all: "Todos",
+    pdf: "PDFs",
+    image: "Imágenes",
+    video: "Vídeos",
+    other: "Otros archivos"
+  },
+  loading: "Cargando archivo…",
+  empty: "No hay archivos disponibles.",
+  noMatches: "Ningún archivo cargado coincide con la búsqueda.",
+  unknownSize: "Tamaño no informado",
+  view: "Ver / descargar",
+  viewNamed: "Ver {{name}}",
+  viewPdf: "Ver PDF",
+  viewImage: "Ampliar imagen",
+  image: "Imagen del mensaje",
+  video: "Vídeo del mensaje",
+  sticker: "Sticker",
+  expand: "Ampliar vídeo",
+  loadMore: "Cargar más",
+  retry: "Intentar de nuevo",
+  close: "Cerrar",
+  closeViewer: "Cerrar visor",
+  previous: "Archivo anterior",
+  next: "Archivo siguiente",
+  openOriginal: "Abrir original",
+  download: "Descargar archivo",
+  zoomIn: "Acercar",
+  zoomOut: "Alejar",
+  rotateLeft: "Girar a la izquierda",
+  rotateRight: "Girar a la derecha",
+  codec:
+    "El navegador no pudo reproducir este vídeo. Puedes descargarlo desde el visor.",
+  access: "Archivo no disponible o acceso denegado. Actualiza la conversación.",
+  failed: "No se pudo cargar este archivo.",
+  timeout: "Se agotó el tiempo de carga. Cierra e inténtalo de nuevo.",
+  tooLarge: "Este archivo supera el límite de vista previa de 25 MiB.",
+  reason: {
+    available: "Archivo disponible.",
+    too_large:
+      "El archivo supera el límite de vista previa de 25 MiB. Usa Abrir original para continuar.",
+    unsupported:
+      "Este tipo de archivo no tiene vista previa. Usa Abrir original para continuar.",
+    external:
+      "Archivo externo. Abrir original accederá a la dirección indicada.",
+    missing: "El archivo ya no está disponible."
+  },
+  pdf: {
+    previous: "Página anterior",
+    next: "Página siguiente",
+    zoomIn: "Acercar PDF",
+    zoomOut: "Alejar PDF",
+    fit: "Ajustar al ancho",
+    page: "Página",
+    loading: "Cargando PDF…",
+    failed: "No se pudo mostrar este PDF.",
+    password:
+      "Este PDF requiere una contraseña. Descárgalo para abrirlo en un lector compatible.",
+    pageCount: "Página {{page}} de {{count}}"
+  }
+};
+
 export const komunickMessages = {
   pt: { translations: pt },
   pt_PT: { translations: pt },

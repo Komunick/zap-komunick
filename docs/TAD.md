@@ -457,6 +457,40 @@ do fornecedor, leitura de chaves, envio de mensagens ou dados reais. Evidências
 Manter a tabela ao recuar preserva vínculos; não executar uma reversão que destrua o cadastro local como rotina.
 Contrato/licença, acesso ao fornecedor real, sincronização, documentos e uso pela IA continuam fora deste recorte.
 
+## Arquivos da conversa — RF-023
+
+- [Recorte](specs/anexos-visualizadores.md) sobre o P2: reutiliza armazenamento e mensagens existentes, sem migração.
+  GET `/tickets/:ticketId/attachments` pagina o histórico RF-017 autorizado por cursor de criação/id/ticket de origem.
+  O cursor não autoriza acesso. GET `/:sourceTicketId/:messageId` devolve metadados mínimos, sem body/dataJson/caminho
+  físico. Filtros são no servidor; busca por nome opera explicitamente nos itens carregados no cliente.
+- HEAD/GET `/:sourceTicketId/:messageId/content` usa Bearer e autenticação/compliance/P0 atuais. Lookup inclui a PK
+  composta da mensagem e o contexto aberto. Arquivo precisa ser local, regular e ter caminho real contido em public;
+  prefixo de mídia de outra empresa é negado. Não faz proxy/fetch de URL externa. Revalida após filesystem antes dos
+  headers; exclusão, troca de arquivo ou perda de acesso durante a operação impedem resposta no contexto antigo.
+- Assinaturas/MIME permitem PDF/JPEG/PNG/GIF/WebP/MP4/WebM, até 25 MiB. Conteúdo usa HEAD, Range simples 206/416,
+  nome seguro em Content-Disposition, `private, no-store` e `nosniff`. Outros tipos têm ação explícita pelo legado,
+  sem interpretação HTML/iframe e sem fallback automático após falha de autorização. Erros têm códigos constantes;
+  corpos, URLs, nomes e caminhos físicos não entram no diagnóstico da nova API.
+- Frontend compartilha o visualizador entre mensagem e área de arquivos. Usa o cliente api autenticado para Blob,
+  uma prévia por vez, tamanho limitado, AbortController/identidade/timeout e Object URL revogada no encerramento.
+  Contexto inclui ticket/contato/setor/responsável/status e sessão; durante carga/UUID divergente não abre arquivo antigo.
+- PDF usa o pdfjs-dist existente em canvas, uma página por vez, orçamento de pixels e controles próprios. Não renderiza
+  scripts, XFA, formulários ou links/annotations; `isEvalSupported: false` é aplicado na carga conforme a
+  [orientação oficial de segurança](https://github.com/mozilla/pdf.js/security/advisories/GHSA-wgrm-67xf-hhpq).
+  Imagem permite zoom/rotação; vídeo usa controles nativos sem autoplay. Compatibilidade de codec é do navegador.
+- **Compatibilidade/limite:** `/public/*` no Express e o alias nginx continuam públicos; arquivos grandes também são
+  entregues ao destinatário por links legados. Não confundir nova API autorizada com privatização global desses bytes.
+  Mudar somente Express não elimina o caminho nginx. Migração de armazenamento e entrega é decisão separada.
+
+**Verificação prevista:** regras/classificação/cursor/Range e serviços com duas empresas, IDs compostos repetidos,
+histórico e troca de acesso; filesystem local com arquivo ausente, assinatura divergente, limite e escape/symlink;
+API real HEAD/GET/206/416 e download por hash; UI com PDF de duas páginas, imagem/vídeo fictícios, teclado/foco,
+erros, cancelamento/resposta tardia e rascunho preservado em claro/escuro e desktop/celular. Provar regressões antes/depois.
+Runners usam somente fixtures rastreadas e não enviam mensagens. Resultados executados ficam no PR.
+
+**Recuperação:** voltar o código preserva todos os arquivos e registros; não há DDL nem migração/remoção de mídia.
+Configuração e limites estão em DEPLOY, seção 12. Nenhuma mudança de credencial, IA ou fornecedor faz parte do percurso.
+
 ## 5. Decisões e pendências
 
 **Escolhas que precisam de explicação:**

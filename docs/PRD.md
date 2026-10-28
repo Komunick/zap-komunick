@@ -672,6 +672,30 @@ seus dados não são devolvidos. Atendente fora do setor ou sem setor é recusad
 Dado um resultado em andamento, quando o vínculo é removido/recriado ou a conversa muda, o resultado antigo não entra
 no cliente errado. Falha ou dado desatualizado fica explícito, sem confirmação de prazo fiscal ou obrigação cumprida.
 
+### RF-023 — Arquivos e visualizadores na conversa
+
+**Pedido:** ampliar a integração de arquivos e visualizar PDF, imagens e vídeos dentro do chat, conforme
+[especificação](specs/anexos-visualizadores.md). A interação do WhatsApp serve como referência.
+
+- **Arquivos** abre o histórico de anexos permitido do contato no atendimento atual, com filtros, paginação própria
+  e busca por nome nos arquivos já carregados. A listagem não se limita ao lote de mensagens visível no chat.
+- A mensagem e a área de arquivos usam o mesmo visualizador: imagem com zoom/rotação, vídeo com controles e PDF com
+  páginas/zoom. Não abre serviço externo de visualização. PDF sem metadados específicos do WhatsApp continua documento;
+  tipo desconhecido não é tratado como vídeo. Mensagem excluída não recebe novo acesso ao visualizador.
+- Uma prévia de até 25 MiB fica ativa por vez. Cancelar, fechar ou trocar contexto libera o conteúdo local e impede
+  resposta antiga no arquivo errado. Carregamento, vazio, formato/codec não suportado, arquivo ausente, PDF inválido/com
+  senha e limite são comunicados. Abrir arquivo não envia mensagem nem altera rascunho, leitura ou SLA.
+- A nova API verifica empresa, contato, setor, histórico e a identidade composta da mensagem. Conteúdo local é
+  carregado com autenticação; erro de acesso não provoca abertura automática de URL pública. Download é explícito.
+- Arquivos externos/grandes podem manter a ação **Abrir original** pelo mecanismo existente. Os caminhos públicos
+  legados do Express/nginx e da entrega ao destinatário continuam públicos; esta entrega não promete privatizá-los
+  nem altera uploads, armazenamento, envio ou retenção dos arquivos.
+
+**Aceite:** dado um atendimento autorizado com PDF de duas páginas, imagens e vídeo, a pessoa abre pela mensagem ou
+pela área de arquivos, muda página/ampliação, reproduz/pausa e baixa por ação explícita, em desktop/celular e ambos os
+temas. Outra empresa/cliente/setor proibido não recebe metadados nem bytes pela nova API, mesmo com ID/cursor conhecido.
+Troca de contexto durante carga encerra o visualizador anterior; falha não abre silenciosamente o arquivo legado.
+
 ## 4. Restrições e cuidados
 
 **Uso e acesso:** navegador, perfis do Ticketz (admin e usuário). Painel de SLA, carteira, horário de acesso, motivos

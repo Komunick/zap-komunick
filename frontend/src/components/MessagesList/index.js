@@ -30,25 +30,28 @@ import {
   Done,
   DoneAll,
   ExpandMore,
-  GetApp,
   Facebook,
   Instagram,
-  Description,
   Forward,
   Launch,
   Reply,
-  LocationOn,
-  PlayArrow,
-  Pause,
-  CropFree
+  LocationOn
 } from "@material-ui/icons";
 
 import WhatsMarked from "react-whatsmarked";
-import PdfPreview from "../PdfPreview";
+import AttachmentViewer from "../AttachmentViewer";
+import MessageAttachment from "../MessageAttachment";
+import {
+  attachmentIdentity,
+  buildMessageAttachments,
+  validTicketId
+} from "../../helpers/attachments";
 import MessageOptionsMenu from "../MessageOptionsMenu";
-import MediaGalleryLightbox, {
-  buildMediaGalleryData
-} from "../MediaGalleryLightbox";
+import {
+  messageIdentity,
+  messageListReducer,
+  newMessagesForRefresh
+} from "../../helpers/messageListState";
 
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
@@ -57,7 +60,6 @@ import { i18n } from "../../translate/i18n";
 import vCard from "vcard-parser";
 import { generateColor } from "../../helpers/colorGenerator";
 import { getInitials } from "../../helpers/getInitials";
-import { downloadFile } from "../../helpers/downloadFile";
 import { Mutex } from "async-mutex";
 
 const loadPageMutex = new Mutex();
@@ -314,38 +316,11 @@ const useStyles = makeStyles(theme => ({
     borderBottomLeftRadius: 8,
     borderBottomRightRadius: 8
   },
-  videoPreviewWrapper: {
-    width: 250,
-    maxHeight: 445,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-    borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 8,
-    overflow: "hidden",
-    position: "relative",
-    backgroundColor: "#000"
-  },
   videoPreviewMedia: {
     width: "100%",
     maxHeight: 445,
     display: "block"
   },
-  videoPreviewActions: {
-    position: "absolute",
-    right: 8,
-    bottom: 8,
-    display: "flex",
-    gap: 8,
-    zIndex: 1
-  },
-  videoPreviewActionButton: {
-    backgroundColor: "rgba(15, 23, 42, 0.65)",
-    color: "#fff",
-    "&:hover": {
-      backgroundColor: "rgba(15, 23, 42, 0.82)"
-    }
-  },
-
   messageMedia: {
     objectFit: "cover",
     width: "100%",
@@ -354,10 +329,6 @@ const useStyles = makeStyles(theme => ({
     borderTopRightRadius: 8,
     borderBottomLeftRadius: 8,
     borderBottomRightRadius: 8
-  },
-
-  messageMediaClickable: {
-    cursor: "pointer"
   },
 
   messageMediaSticker: {
@@ -678,91 +649,18 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-const reducer = (state, action) => {
-  if (action.type === "LOAD_MESSAGES") {
-    const messages = action.payload;
-    const newMessages = [];
-
-    messages.forEach(message => {
-      const messageIndex = state.findIndex(m => m.id === message.id);
-      if (messageIndex !== -1) {
-        state[messageIndex] = message;
-      } else {
-        newMessages.push(message);
-      }
-    });
-
-    return [...newMessages, ...state];
-  }
-
-  if (action.type === "ADD_MESSAGE") {
-    const newMessage = action.payload;
-    const messageIndex = state.findIndex(m => m.id === newMessage.id);
-
-    if (messageIndex !== -1) {
-      state[messageIndex] = newMessage;
-    } else {
-      state.push(newMessage);
-    }
-
-    if (newMessage.mediaType === "reactionMessage") {
-      const reactionIndex = state.findIndex(
-        m => m.id === newMessage.quotedMsgId
-      );
-      if (reactionIndex !== -1) {
-        state[reactionIndex].replies = state[reactionIndex].replies || [];
-        state[reactionIndex].replies.push(newMessage);
-      }
-    }
-
-    return [...state];
-  }
-
-  if (action.type === "RESET_STICKY") {
-    state.forEach(message => {
-      delete message.bottomStick;
-    });
-    return [...state];
-  }
-
-  if (action.type === "UPDATE_MESSAGE") {
-    const messageToUpdate = action.payload;
-    const messageIndex = state.findIndex(m => m.id === messageToUpdate.id);
-
-    if (messageIndex !== -1) {
-      state[messageIndex] = messageToUpdate;
-    }
-
-    return [...state];
-  }
-
-  if (action.type === "MERGE_MESSAGES") {
-    const messages = action.payload;
-
-    messages.forEach(message => {
-      const messageIndex = state.findIndex(m => m.id === message.id);
-      if (messageIndex !== -1) {
-        state[messageIndex] = message;
-      } else {
-        const idx = state.findIndex(
-          m => new Date(m.createdAt) > new Date(message.createdAt)
-        );
-        state.splice(idx < 0 ? state.length : idx, 0, message);
-      }
-    });
-
-    return [...state];
-  }
-
-  if (action.type === "RESET") {
-    return [];
-  }
-};
-
-const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
+const MessagesList = ({
+  ticket,
+  ticketId,
+  isGroup,
+  markAsRead,
+  readOnly,
+  attachmentContextReady = true,
+  attachmentContextKey
+}) => {
   const classes = useStyles();
 
-  const [messagesList, dispatch] = useReducer(reducer, []);
+  const [messagesList, dispatch] = useReducer(messageListReducer, []);
   const messagesListRef = useRef(messagesList);
   useEffect(() => {
     messagesListRef.current = messagesList;
@@ -772,13 +670,20 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef();
   const stickedRef = useRef();
-  const previewVideoRefs = useRef({});
 
   const [selectedMessage, setSelectedMessage] = useState({});
   const [selectedMessageData, setSelectedMessageData] = useState({});
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [previewVideoPlayingById, setPreviewVideoPlayingById] = useState({});
+  const [attachmentSelection, setAttachmentSelection] = useState(null);
+  const attachmentScope =
+    attachmentContextKey ||
+    [
+      ticketId,
+      ticket?.contactId,
+      ticket?.queueId,
+      ticket?.userId,
+      ticket?.status
+    ].join(":");
+  const attachmentsReady = attachmentContextReady && validTicketId(ticketId);
   const [anchorEl, setAnchorEl] = useState(null);
   const messageOptionsMenuOpen = Boolean(anchorEl);
   const currentTicketId = useRef(ticketId);
@@ -904,9 +809,9 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                 params: { minUpdatedAt: maxUpdatedAt }
               }
             );
-            const currentIds = new Set(currentList.map(m => m.id));
-            const newMessages = data.messages.filter(
-              m => !currentIds.has(m.id)
+            const newMessages = newMessagesForRefresh(
+              currentList,
+              data.messages
             );
             let isAtBottom = false;
             let newestMessage = null;
@@ -1029,233 +934,39 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     setAnchorEl(null);
   };
 
-  const lightboxMedia = useMemo(() => {
-    return buildMediaGalleryData(messagesList);
-  }, [messagesList]);
+  // Zap Komunick: previews are reauthorized through the selected ticket context.
+  const attachmentItems = useMemo(
+    () => buildMessageAttachments(messagesList, attachmentScope),
+    [messagesList, attachmentScope]
+  );
 
-  const openLightboxForMessage = messageId => {
-    const index = lightboxMedia.byMessageId[messageId];
-    if (index === undefined) {
-      return;
-    }
-
-    setLightboxIndex(index);
-    setLightboxOpen(true);
+  useEffect(() => {
+    setAttachmentSelection(null);
+  }, [attachmentScope, attachmentsReady]);
+  const selectAttachment = item => {
+    if (!attachmentsReady) return;
+    const current = attachmentItems.find(
+      candidate => attachmentIdentity(candidate) === attachmentIdentity(item)
+    );
+    if (current)
+      setAttachmentSelection({ ...current, contextKey: attachmentScope });
   };
-
-  const closeLightbox = () => {
-    setLightboxOpen(false);
-  };
-
-  const handleVideoPreviewPlayClick = (event, messageId) => {
-    event.stopPropagation();
-
-    const previewVideo = previewVideoRefs.current[messageId];
-    if (!previewVideo) {
-      return;
-    }
-
-    if (previewVideo.paused) {
-      previewVideo.play().catch(() => {});
-      return;
-    }
-
-    previewVideo.pause();
-  };
-
-  const pausePreviewVideo = messageId => {
-    const previewVideo = previewVideoRefs.current[messageId];
-    if (!previewVideo) {
-      return;
-    }
-
-    previewVideo.pause();
-  };
-
-  const checkMessageMedia = (message, data, isSticker = false) => {
-    const document =
-      data?.message?.documentMessage ||
-      data?.message?.documentWithCaptionMessage?.message?.documentMessage;
-    if (isSticker) {
-      return (
-        <img
-          className={clsx(classes.messageMedia, {
-            [classes.messageMediaDeleted]: message.isDeleted
-          })}
-          src={message.mediaUrl}
-          alt="sticker"
-        />
-      );
-    }
-
-    if (!document && message.mediaType === "image") {
-      return (
-        <>
-          <img
-            className={clsx(
-              classes.messageMedia,
-              classes.messageMediaClickable,
-              {
-                [classes.messageMediaDeleted]: message.isDeleted
-              }
-            )}
-            src={message.mediaUrl}
-            alt="midia da mensagem"
-            onClick={() => openLightboxForMessage(message.id)}
-          />
-          <>
-            <div
-              className={[
-                clsx({
-                  [classes.textContentItemDeleted]: message.isDeleted,
-                  [classes.textContentItem]: !message.isDeleted
-                })
-              ]}
-            >
-              {message.body && (
-                <>
-                  <WhatsMarked>{message.body}</WhatsMarked>
-                </>
-              )}
-            </div>
-          </>
-        </>
-      );
-    }
-    if (!document && message.mediaType === "audio") {
-      return (
-        <>
-          <audio className={classes.audioBottom} controls>
-            <source src={message.mediaUrl} type="audio/ogg"></source>
-          </audio>
-          {message.body && !["🔊", "Áudio"].includes(message.body) && (
-            <div className={classes.mediaDescription}>{message.body}</div>
-          )}
-        </>
-      );
-    }
-
-    if (!document || message.mediaType === "video") {
-      return (
-        <>
-          <div
-            className={clsx(classes.videoPreviewWrapper, {
-              [classes.messageMediaDeleted]: message.isDeleted
-            })}
-          >
-            <video
-              ref={element => {
-                if (element) {
-                  previewVideoRefs.current[message.id] = element;
-                } else {
-                  delete previewVideoRefs.current[message.id];
-                }
-              }}
-              className={classes.videoPreviewMedia}
-              src={message.mediaUrl}
-              preload="metadata"
-              playsInline
-              onPlay={() => {
-                setPreviewVideoPlayingById(previous => ({
-                  ...previous,
-                  [message.id]: true
-                }));
-              }}
-              onPause={() => {
-                setPreviewVideoPlayingById(previous => ({
-                  ...previous,
-                  [message.id]: false
-                }));
-              }}
-              onEnded={() => {
-                setPreviewVideoPlayingById(previous => ({
-                  ...previous,
-                  [message.id]: false
-                }));
-              }}
-            />
-            <div className={classes.videoPreviewActions}>
-              <IconButton
-                className={classes.videoPreviewActionButton}
-                aria-label="play preview"
-                onClick={event =>
-                  handleVideoPreviewPlayClick(event, message.id)
-                }
-              >
-                {previewVideoPlayingById[message.id] ? (
-                  <Pause />
-                ) : (
-                  <PlayArrow />
-                )}
-              </IconButton>
-              <IconButton
-                className={classes.videoPreviewActionButton}
-                aria-label="open video lightbox"
-                onClick={event => {
-                  event.stopPropagation();
-                  pausePreviewVideo(message.id);
-                  openLightboxForMessage(message.id);
-                }}
-              >
-                <CropFree />
-              </IconButton>
-            </div>
-          </div>
-          <div
-            className={[
-              clsx({
-                [classes.textContentItemDeleted]: message.isDeleted,
-                [classes.textContentItem]: !message.isDeleted
-              })
-            ]}
-          >
-            {message.body && (
-              <>
-                <WhatsMarked>{message.body}</WhatsMarked>
-              </>
-            )}
-          </div>
-        </>
-      );
-    } else {
-      const fileName = document?.fileName || message.body || "";
-      const isPdf =
-        fileName.toLowerCase().endsWith(".pdf") ||
-        (document?.mimetype || "").toLowerCase().includes("pdf") ||
-        (message.mediaUrl || "").toLowerCase().includes(".pdf");
-      return (
-        <>
-          {isPdf && message.mediaUrl && (
-            <PdfPreview url={message.mediaUrl} fileName={fileName} />
-          )}
-          <div className={classes.downloadMedia}>
-            <Button
-              startIcon={<Description />}
-              endIcon={<GetApp />}
-              color="primary"
-              variant="outlined"
-              onClick={() => downloadFile(message.mediaUrl)}
-            >
-              {document?.fileName || message.body}
-            </Button>
-          </div>
-          {message.body !== document?.fileName && (
-            <>
-              <div
-                className={[
-                  clsx({
-                    [classes.textContentItemDeleted]: message.isDeleted
-                  })
-                ]}
-              >
-                <WhatsMarked>{message.body}</WhatsMarked>
-              </div>
-            </>
-          )}
-        </>
-      );
-    }
-  };
+  const checkMessageMedia = (message, data, isSticker = false) => (
+    <MessageAttachment
+      message={message}
+      data={data}
+      isSticker={isSticker}
+      classes={classes}
+      canView={attachmentsReady}
+      onView={() =>
+        selectAttachment({
+          messageId: message.id,
+          sourceTicketId: message.ticketId,
+          fileName: message.body
+        })
+      }
+    />
+  );
 
   const renderMessageAck = message => {
     if (message.ack === -1) {
@@ -1283,7 +994,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
       return (
         <span
           className={classes.dailyTimestamp}
-          key={`timestamp-${message.id}`}
+          key={`timestamp-${messageIdentity(message)}`}
         >
           <div className={classes.dailyTimestampText}>
             {format(parseISO(messagesList[index].createdAt), "dd/MM/yyyy")}
@@ -1299,7 +1010,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
         return (
           <span
             className={classes.dailyTimestamp}
-            key={`timestamp-${message.id}`}
+            key={`timestamp-${messageIdentity(message)}`}
           >
             <div className={classes.dailyTimestampText}>
               {format(parseISO(messagesList[index].createdAt), "dd/MM/yyyy")}
@@ -1318,7 +1029,10 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     if (!previous && message.ticketId === ticket?.id) return null;
     const current = message.ticketId === ticket?.id;
     return (
-      <div className={classes.ticketDivider} key={`ticket-${message.id}`}>
+      <div
+        className={classes.ticketDivider}
+        key={`ticket-${messageIdentity(message)}`}
+      >
         {current
           ? i18n.t("history.currentTicket", { id: message.ticketId })
           : i18n.t("history.previousTicket", { id: message.ticketId })}
@@ -1342,7 +1056,10 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
           <div className={classes.transferNoteText}>{info.note}</div>
         )}
         {(info.quotes || []).map(quote => (
-          <div key={quote.id} className={classes.transferNoteQuote}>
+          <div
+            key={messageIdentity(quote)}
+            className={classes.transferNoteQuote}
+          >
             <strong>
               {quote.fromMe
                 ? i18n.t("transferContext.us")
@@ -1368,7 +1085,10 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
 
       if (messageUser !== previousMessageUser) {
         return (
-          <span style={{ marginTop: 16 }} key={`divider-${message.id}`}></span>
+          <span
+            style={{ marginTop: 16 }}
+            key={`divider-${messageIdentity(message)}`}
+          ></span>
         );
       }
     }
@@ -1445,10 +1165,10 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
         .map(reply => {
           return reply.contact?.name ? (
             <Tooltip title={reply.contact?.name} placement="top" arrow>
-              <div key={reply.id}>{reply.body}</div>
+              <div key={messageIdentity(reply)}>{reply.body}</div>
             </Tooltip>
           ) : (
-            <div key={reply.id}>{reply.body}</div>
+            <div key={messageIdentity(reply)}>{reply.body}</div>
           );
         });
 
@@ -1906,7 +1626,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
 
       if (message.mediaType === "transferNote") {
         return (
-          <React.Fragment key={message.id}>
+          <React.Fragment key={messageIdentity(message)}>
             {renderTicketDivider(message, index)}
             {renderDailyTimestamps(message, index)}
             {renderTransferNote(message, data)}
@@ -1919,7 +1639,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
       const isSticker = data?.message && "stickerMessage" in data.message;
       if (!message.fromMe) {
         const messageFragment = (
-          <React.Fragment key={message.id}>
+          <React.Fragment key={messageIdentity(message)}>
             {renderTicketDivider(message, index)}
             {renderDailyTimestamps(message, index)}
             {renderMessageDivider(message, index)}
@@ -2039,7 +1759,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
         return messageFragment;
       } else {
         return (
-          <React.Fragment key={message.id}>
+          <React.Fragment key={messageIdentity(message)}>
             {renderTicketDivider(message, index)}
             {renderDailyTimestamps(message, index)}
             {renderMessageDivider(message, index)}
@@ -2218,11 +1938,23 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
           <CircularProgress className={classes.circleLoading} />
         </div>
       )}
-      <MediaGalleryLightbox
-        open={lightboxOpen}
-        onClose={closeLightbox}
-        index={lightboxIndex}
-        slides={lightboxMedia.slides}
+      <AttachmentViewer
+        open={
+          attachmentsReady &&
+          !!attachmentSelection &&
+          attachmentItems.some(
+            item =>
+              attachmentIdentity(item) ===
+                attachmentIdentity(attachmentSelection) &&
+              item.version === attachmentSelection.version
+          )
+        }
+        ticketId={ticketId}
+        contextKey={attachmentScope}
+        selection={attachmentSelection}
+        items={attachmentItems}
+        onSelect={selectAttachment}
+        onClose={() => setAttachmentSelection(null)}
       />
     </div>
   );

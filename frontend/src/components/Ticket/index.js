@@ -23,6 +23,7 @@ import { TagsContainer } from "../TagsContainer";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import useSettings from "../../hooks/useSettings";
 import AcessoriasPanel from "../AcessoriasPanel";
+import AttachmentsPanel from "../AttachmentsPanel";
 
 const drawerWidth = 320;
 
@@ -57,6 +58,13 @@ const useStyles = makeStyles(theme => ({
       duration: theme.transitions.duration.enteringScreen
     }),
     marginRight: 0
+  },
+  attachmentToolbar: {
+    display: "flex",
+    justifyContent: "flex-end",
+    flexWrap: "wrap",
+    padding: theme.spacing(0.5, 2),
+    minWidth: 0
   },
   drawerShade: {
     display: "none",
@@ -215,6 +223,24 @@ const Ticket = () => {
     }
   };
 
+  const attachmentContextReady =
+    !loading &&
+    Number.isSafeInteger(Number(ticket.id)) &&
+    Number(ticket.id) > 0 &&
+    ticket.uuid === ticketId;
+  const attachmentContextKey = [
+    ticketId,
+    ticket.id,
+    ticket.contactId,
+    ticket.queueId,
+    ticket.userId,
+    ticket.status,
+    user.id,
+    user.companyId,
+    user.profile,
+    ...(user.queues || []).map(queue => queue.id).sort()
+  ].join(":");
+
   const renderMessagesList = () => {
     return (
       <>
@@ -223,6 +249,8 @@ const Ticket = () => {
           ticketId={ticket.id}
           isGroup={ticket.isGroup}
           markAsRead={true}
+          attachmentContextReady={attachmentContextReady}
+          attachmentContextKey={attachmentContextKey}
         ></MessagesList>
         {!loading &&
           Number.isSafeInteger(Number(ticket.id)) &&
@@ -254,6 +282,14 @@ const Ticket = () => {
           <TicketActionButtons ticket={ticket} showTabGroups={showTabGroups} />
         </TicketHeader>
         <Paper>
+          {attachmentContextReady && (
+            <div className={classes.attachmentToolbar}>
+              <AttachmentsPanel
+                ticketId={ticket.id}
+                contextKey={attachmentContextKey}
+              />
+            </div>
+          )}
           {!loading &&
             Number.isSafeInteger(Number(ticket.id)) &&
             Number(ticket.id) > 0 &&
