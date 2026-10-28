@@ -48,6 +48,8 @@ O [P0 de credenciais e isolamento](specs/p0-credenciais-isolamento.md) foi autor
 seu comportamento está definido em RF-020, sem habilitar os demais recursos propostos.
 O [P1 de resumos e sugestões](specs/p1-assistente-revisao.md) foi autorizado depois, com provedor simulado e dados
 fictícios (RF-021). Esse percurso não habilita um modelo real nem os conectores.
+O [P2 de consultas Acessórias](specs/p2-acessorias-consultas.md) também foi autorizado com mocks e dados fictícios
+(RF-022), sem conexão ao fornecedor real.
 
 **Fluxo principal:** o cliente escreve → o atendimento entra na fila (ou direto no responsável da carteira) → o painel
 de SLA mostra a espera e destaca o que passou do prazo → o atendente responde e move o atendimento pelas colunas do
@@ -635,6 +637,64 @@ resposta chegar, o resultado não entra no editor da outra conversa.
 Dadas duas empresas e clientes distintos, quando alguém solicita resumo de atendimento fora da autorização, a API
 recusa sem fornecer texto/referências. Um atendimento vazio mostra falta de informação; um contexto grande informa
 seu limite. Mensagens excluídas, anexos, notas e outro atendimento do mesmo cliente não entram no resumo.
+
+### RF-022 — Clientes e pendências Acessórias (simulação)
+
+**Pedido (27/10/2026):** painel de consultas com mocks e dados fictícios, conforme
+[especificação](specs/p2-acessorias-consultas.md). Não usa token, API real ou escrita no sistema contábil.
+
+- Começa desligado. Exige modo mock no servidor e habilitação administrativa na empresa; a interface identifica
+  **Simulação**. Modo desconhecido não conecta fornecedor real nem habilita a empresa.
+- Em atendimento válido e autorizado, o painel mostra somente clientes externos explicitamente vinculados ao
+  contato. Telefone, nome, documento em mensagem ou ID conhecido não concedem acesso. Administrador consulta catálogo
+  fictício e confirma associação/desvinculação **local**; atendente não recebe catálogo irrestrito nem gerencia vínculos.
+- Um contato pode ter múltiplos clientes vinculados; a pessoa escolhe qual consultar. Cadastro/pendências de outro
+  cliente ou empresa ficam fora do painel. Vínculo repetido não duplica; remover localmente não exclui nada no fornecedor.
+- Mostra cadastro fictício, pendências paginadas em cinco itens, competência e prazo não confirmado, origem,
+  horário da consulta/atualização e aviso de dados desatualizados. Vazio, falha, limite e timeout são estados distintos.
+  Erro não apresenta dados anteriores como uma consulta atual.
+- Trocar cliente/atendimento, cancelar ou alterar vínculo invalida resultados pendentes. Mudanças de vínculo notificam
+  somente o identificador do contato afetado na própria empresa, sem divulgar cadastro/pendências; o painel desse contato
+  descarta o snapshot ao receber a notificação.
+  Sem conexão de eventos, uma nova consulta sempre revalida o acesso/vínculo, sem prometer atualização instantânea.
+- Consulta não altera rascunho, leitura, SLA, responsável, notas, mensagens ou IA. Dados ficam na memória do painel;
+  auditoria guarda somente ação, identificadores e metadados. Nenhum documento é baixado/exportado.
+
+**Cenários de aceite:**
+
+Dado um contato com dois clientes fictícios vinculados, quando alguém autorizado abre o painel e escolhe um cliente,
+vê somente seu cadastro e a página selecionada de pendências, com origem/data e Simulação. Sem vínculo, recebe o estado
+correspondente e não uma tentativa de correspondência por telefone ou documento.
+
+Dadas duas empresas que usam o mesmo ID externo fictício, quando A consulta ou altera vínculo, B permanece intacta e
+seus dados não são devolvidos. Atendente fora do setor ou sem setor é recusado; apenas administrador gerencia vínculos.
+
+Dado um resultado em andamento, quando o vínculo é removido/recriado ou a conversa muda, o resultado antigo não entra
+no cliente errado. Falha ou dado desatualizado fica explícito, sem confirmação de prazo fiscal ou obrigação cumprida.
+
+### RF-023 — Arquivos e visualizadores na conversa
+
+**Pedido:** ampliar a integração de arquivos e visualizar PDF, imagens e vídeos dentro do chat, conforme
+[especificação](specs/anexos-visualizadores.md). A interação do WhatsApp serve como referência.
+
+- **Arquivos** abre o histórico de anexos permitido do contato no atendimento atual, com filtros, paginação própria
+  e busca por nome nos arquivos já carregados. A listagem não se limita ao lote de mensagens visível no chat.
+- A mensagem e a área de arquivos usam o mesmo visualizador: imagem com zoom/rotação, vídeo com controles e PDF com
+  páginas/zoom. Não abre serviço externo de visualização. PDF sem metadados específicos do WhatsApp continua documento;
+  tipo desconhecido não é tratado como vídeo. Mensagem excluída não recebe novo acesso ao visualizador.
+- Uma prévia de até 25 MiB fica ativa por vez. Cancelar, fechar ou trocar contexto libera o conteúdo local e impede
+  resposta antiga no arquivo errado. Carregamento, vazio, formato/codec não suportado, arquivo ausente, PDF inválido/com
+  senha e limite são comunicados. Abrir arquivo não envia mensagem nem altera rascunho, leitura ou SLA.
+- A nova API verifica empresa, contato, setor, histórico e a identidade composta da mensagem. Conteúdo local é
+  carregado com autenticação; erro de acesso não provoca abertura automática de URL pública. Download é explícito.
+- Arquivos externos/grandes podem manter a ação **Abrir original** pelo mecanismo existente. Os caminhos públicos
+  legados do Express/nginx e da entrega ao destinatário continuam públicos; esta entrega não promete privatizá-los
+  nem altera uploads, armazenamento, envio ou retenção dos arquivos.
+
+**Aceite:** dado um atendimento autorizado com PDF de duas páginas, imagens e vídeo, a pessoa abre pela mensagem ou
+pela área de arquivos, muda página/ampliação, reproduz/pausa e baixa por ação explícita, em desktop/celular e ambos os
+temas. Outra empresa/cliente/setor proibido não recebe metadados nem bytes pela nova API, mesmo com ID/cursor conhecido.
+Troca de contexto durante carga encerra o visualizador anterior; falha não abre silenciosamente o arquivo legado.
 
 ## 4. Restrições e cuidados
 

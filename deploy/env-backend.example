@@ -49,3 +49,6 @@ CREDENTIALS_PREVIOUS_MASTER_KEY=
 # P1 remains off by default. "mock" enables the local simulation only and also
 # requires the company's administrator to enable it in Settings.
 AI_ASSISTANT_MODE=disabled
+
+# P2: "mock" is local simulation only; also requires the company's admin flag.
+ACESSORIAS_MODE=disabled

@@ -1,4 +1,5 @@
 import {
+  isAcessoriasRequest,
   isCredentialRequest,
   isAssistantRequest,
   isSensitiveRequest
@@ -33,6 +34,53 @@ describe("credential request telemetry", () => {
   );
 });
 
+describe("attachment request telemetry", () => {
+  it.each([
+    "/tickets/301/attachments",
+    "/tickets/301/attachments?kind=pdf&cursor=fictitious",
+    "/tickets/301/attachments/302/fixture-message/content",
+    "/Tickets/301/Attachments/302/fixture-message",
+    "/tickets/301/%61ttachments?bad=%XX",
+    "/tickets/301%2Fextra/%61ttachments/302/fixture-message/content",
+    "/tickets/301%XX/%61ttachments",
+    "https://example.invalid/backend/tickets/301/attachments"
+  ])("keeps rejected attachment data out of telemetry: %s", url => {
+    expect(isSensitiveRequest(url)).toBe(true);
+  });
+
+  it.each([
+    undefined,
+    "/tickets/301",
+    "/tickets/301/attachments-other",
+    "/contacts"
+  ])("preserves unrelated diagnostics: %s", url =>
+    expect(isSensitiveRequest(url)).toBe(false)
+  );
+});
+
+describe("Acessorias request telemetry", () => {
+  it.each([
+    "/tickets/301/acessorias/status",
+    "/tickets/301/acessorias/catalog",
+    "/tickets/301/acessorias/links/mock-001",
+    "/tickets/301/acessorias/clients/mock-001?page=2",
+    "/Tickets/301/Acessorias/links?bad=%XX",
+    "/tickets/301/%61cessorias/links?bad=%XX",
+    "/tickets/1%2Fextra/acessorias/links",
+    "/tickets/1%2Fextra/%61cessorias/links?bad=%XX",
+    "/tickets/1%XX/%61cessorias/links",
+    "/settings/acessoriasEnabled",
+    "/Settings/%61cessoriasEnabled?bad=%XX"
+  ])("excludes bodies even when rejected: %s", url => {
+    expect(isAcessoriasRequest(url)).toBe(true);
+    expect(isSensitiveRequest(url)).toBe(true);
+  });
+  it.each([undefined, "/tickets/301", "/contacts", "/settings/slaMinutes"])(
+    "keeps unrelated diagnostics: %s",
+    url => expect(isAcessoriasRequest(url)).toBe(false)
+  );
+});
+
 describe("assistant request telemetry", () => {
   it.each([
     "/tickets/301/assistant",
@@ -40,6 +88,9 @@ describe("assistant request telemetry", () => {
     "https://example.invalid/backend/tickets/301/assistant",
     "/Tickets/301/Assistant?bad=%XX",
     "/tickets/301/%61ssistant?bad=%XX",
+    "/tickets/1%2Fextra/assistant",
+    "/tickets/1%2Fextra/%61ssistant?bad=%XX",
+    "/tickets/1%XX/%61ssistant",
     "/settings/aiAssistantEnabled",
     "/Settings/%61iAssistantEnabled?bad=%XX"
   ])("excludes rejected request bodies as well as valid ones: %s", url => {

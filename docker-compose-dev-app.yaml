@@ -67,6 +67,8 @@ services:
       - CREDENTIALS_PREVIOUS_MASTER_KEY=${CREDENTIALS_PREVIOUS_MASTER_KEY:-}
       # P1 pilot: only disabled or the local simulated provider, never a real API.
       - AI_ASSISTANT_MODE=${AI_ASSISTANT_MODE:-disabled}
+      # P2 only offers a local mock; no supplier API is connected.
+      - ACESSORIAS_MODE=${ACESSORIAS_MODE:-disabled}
     command: >
       sh -c "npm ci --no-audit --no-fund
       && npm run generate:i18nkeys

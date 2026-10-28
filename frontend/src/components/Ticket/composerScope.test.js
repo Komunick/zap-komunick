@@ -32,7 +32,15 @@ jest.mock("../CustomerPanel", () => () => null);
 jest.mock("../TicketHeader", () => ({ children }) => <div>{children}</div>);
 jest.mock("../TicketInfo", () => () => null);
 jest.mock("../TicketActionButtonsCustom", () => () => null);
-jest.mock("../MessagesList", () => () => null);
+jest.mock("../MessagesList", () => ({ attachmentContextReady }) => (
+  <div
+    data-testid="attachment-context"
+    data-ready={String(attachmentContextReady)}
+  />
+));
+jest.mock("../AttachmentsPanel", () => ({ ticketId }) => (
+  <div data-testid="attachments-action" data-ticket-id={ticketId} />
+));
 jest.mock("../TagsContainer", () => ({ TagsContainer: () => null }));
 jest.mock("../MessageInputCustom/", () => ({ ticket }) => (
   <div data-testid="composer" data-ticket-id={ticket.id}>
@@ -40,6 +48,9 @@ jest.mock("../MessageInputCustom/", () => ({ ticket }) => (
   </div>
 ));
 jest.mock("../../errors/toastError", () => jest.fn());
+jest.mock("../AcessoriasPanel", () => ({ ticketId }) => (
+  <div data-testid="acessorias-action" data-ticket-id={ticketId} />
+));
 
 const deferred = () => {
   let resolve;
@@ -61,6 +72,12 @@ test("hides composer while initial ticket is unresolved and mounts only the matc
   api.get.mockReturnValue(pending.promise);
   render(<Ticket />);
   expect(screen.queryByTestId("composer")).not.toBeInTheDocument();
+  expect(screen.queryByTestId("acessorias-action")).not.toBeInTheDocument();
+  expect(screen.queryByTestId("attachments-action")).not.toBeInTheDocument();
+  expect(screen.getByTestId("attachment-context")).toHaveAttribute(
+    "data-ready",
+    "false"
+  );
   await act(async () => jest.advanceTimersByTime(501));
   expect(api.get).toHaveBeenCalledWith(
     "/tickets/u/fixture-a",
@@ -68,6 +85,11 @@ test("hides composer while initial ticket is unresolved and mounts only the matc
   );
   expect(screen.queryByTestId("composer")).not.toBeInTheDocument();
   await act(async () => pending.resolve({ data: row(301, "fixture-a") }));
+  expect(screen.getByTestId("attachments-action")).toBeInTheDocument();
+  expect(screen.getByTestId("attachment-context")).toHaveAttribute(
+    "data-ready",
+    "true"
+  );
   expect(screen.getByTestId("composer")).toHaveAttribute(
     "data-ticket-id",
     "301"
@@ -78,6 +100,11 @@ test("hides the old ticket composer immediately while the next route is pending"
   api.get.mockResolvedValueOnce({ data: row(301, "fixture-a") });
   const view = render(<Ticket />);
   await act(async () => jest.advanceTimersByTime(501));
+  expect(screen.getByTestId("attachments-action")).toBeInTheDocument();
+  expect(screen.getByTestId("attachment-context")).toHaveAttribute(
+    "data-ready",
+    "true"
+  );
   expect(screen.getByTestId("composer")).toHaveAttribute(
     "data-ticket-id",
     "301"
@@ -90,6 +117,11 @@ test("hides the old ticket composer immediately while the next route is pending"
   await act(async () => jest.advanceTimersByTime(501));
   expect(screen.queryByTestId("composer")).not.toBeInTheDocument();
   await act(async () => pending.resolve({ data: row(302, "fixture-b") }));
+  expect(screen.getByTestId("attachments-action")).toBeInTheDocument();
+  expect(screen.getByTestId("attachment-context")).toHaveAttribute(
+    "data-ready",
+    "true"
+  );
   expect(screen.getByTestId("composer")).toHaveAttribute(
     "data-ticket-id",
     "302"
@@ -106,11 +138,21 @@ test("an old ticket response cannot replace the next loaded conversation", async
   view.rerender(<Ticket />);
   await act(async () => jest.advanceTimersByTime(501));
   await act(async () => b.resolve({ data: row(302, "fixture-b") }));
+  expect(screen.getByTestId("attachments-action")).toBeInTheDocument();
+  expect(screen.getByTestId("attachment-context")).toHaveAttribute(
+    "data-ready",
+    "true"
+  );
   expect(screen.getByTestId("composer")).toHaveAttribute(
     "data-ticket-id",
     "302"
   );
   await act(async () => a.resolve({ data: row(301, "fixture-a") }));
+  expect(screen.getByTestId("attachments-action")).toBeInTheDocument();
+  expect(screen.getByTestId("attachment-context")).toHaveAttribute(
+    "data-ready",
+    "true"
+  );
   expect(screen.getByTestId("composer")).toHaveAttribute(
     "data-ticket-id",
     "302"

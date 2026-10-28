@@ -81,3 +81,50 @@ it("preserves other settings' existing single-row update behavior", async () => 
   expect(setting.update).toHaveBeenCalledWith({ value: "enabled" });
   expect(Setting.update).not.toHaveBeenCalled();
 });
+
+it("converges duplicate Acessórias flags without touching another office or AI", async () => {
+  const rows = [
+    row(1, 10, "acessoriasEnabled", "enabled"),
+    row(2, 10, "acessoriasEnabled", "disabled"),
+    row(3, 20, "acessoriasEnabled", "disabled"),
+    row(4, 10, "aiAssistantEnabled", "disabled")
+  ];
+  (Setting.findOrCreate as jest.Mock).mockResolvedValue([rows[0], false]);
+  (Setting.update as jest.Mock).mockImplementation(async (change, options) => {
+    rows
+      .filter(
+        setting =>
+          setting.companyId === options.where.companyId &&
+          setting.key === options.where.key
+      )
+      .forEach(setting => {
+        setting.value = change.value;
+      });
+  });
+  await UpdateSettingService({
+    key: "acessoriasEnabled",
+    companyId: 10,
+    value: "enabled"
+  });
+  expect(rows.map(setting => setting.value)).toEqual([
+    "enabled",
+    "enabled",
+    "disabled",
+    "disabled"
+  ]);
+});
+
+it("refuses unknown Acessórias flag values before persistence", async () => {
+  (Setting.findOrCreate as jest.Mock).mockClear();
+  await expect(
+    UpdateSettingService({
+      key: "acessoriasEnabled",
+      companyId: 10,
+      value: "real"
+    })
+  ).rejects.toMatchObject({
+    message: "ERR_ACESSORIAS_INVALID_REQUEST",
+    statusCode: 400
+  });
+  expect(Setting.findOrCreate).not.toHaveBeenCalled();
+});
