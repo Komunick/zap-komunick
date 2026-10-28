@@ -7,3 +7,9 @@
 /.env-backend-komunick
 /.env-frontend-komunick
 /backups/
+
+# Private ARM07 operator files; examples stay versioned.
+/deploy/arm07/.env
+/deploy/arm07/.env-backend
+/deploy/arm07/.env-bootstrap
+/deploy/arm07/backups/

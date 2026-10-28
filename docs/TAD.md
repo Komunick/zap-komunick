@@ -491,6 +491,26 @@ Runners usam somente fixtures rastreadas e não enviam mensagens. Resultados exe
 **Recuperação:** voltar o código preserva todos os arquivos e registros; não há DDL nem migração/remoção de mídia.
 Configuração e limites estão em DEPLOY, seção 12. Nenhuma mudança de credencial, IA ou fornecedor faz parte do percurso.
 
+### Publicação preparada para ARM07
+
+O candidato `deploy/arm07/` usa imagens Linux ARM64 identificadas por revisão,
+construídas de uma exportação Git. Não usa o diretório de trabalho que contém mídias
+e configurações de desenvolvimento. Migração e bootstrap são operações explícitas;
+o runtime não executa seeds. O bootstrap exige base vazia e administrador forte.
+
+A instalação tem banco/Redis/volumes próprios. O backend fica numa rede interna sem
+saída externa; o frontend alcança essa rede e publica somente uma porta em loopback
+para o Caddy do host. A cadeia de proxies aceita apenas os endereços previstos e
+sobrescreve o encaminhamento recebido do cliente. O frontend publica configuração
+por lista explícita, mantendo os segredos no backend/banco. A sessão local não é
+migrada e IA/Acessórias permanecem desligados.
+
+O desenho e os comandos operacionais estão em `deploy/arm07/README.md` e DEPLOY.
+A estratégia de validação cobre ARM nativo, bootstrap/recusa/reinício, ausência de
+segredos públicos, isolamento de saída e API/Socket/anexos pelo ingresso HTTPS em
+ambiente fictício separado. Esta configuração preparada não indica ativação pública;
+a especificação é `docs/specs/deploy-arm07-superchat.md`.
+
 ## 5. Decisões e pendências
 
 **Escolhas que precisam de explicação:**

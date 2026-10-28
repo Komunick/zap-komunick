@@ -4,6 +4,11 @@ Como colocar o Zap Komunick no ar em **`superchat.komunick.com`** (endereço esc
 na raiz do repositório (`docker-compose-komunick.yaml`, `docker-compose-komunick-proxy.yaml`) e em `deploy/`; os
 modelos de ambiente e do nginx já vêm com esse endereço.
 
+> **ARM07:** para o candidato ARM64 com o Caddy já existente no servidor, usar
+> [deploy/arm07/README.md](../deploy/arm07/README.md) e seus arquivos próprios.
+> Esse recorte mantém WhatsApp desconectado, banco novo e imagens por hash; não
+> usar o bootstrap automático do compose genérico abaixo nessa instalação.
+
 > **Antes de publicar:** o `zap.komunick.com` roda hoje o Ticketz 1.0.132 (com backup do Ticketz PRO em
 > `Komunick/ticketz-pro`). Este guia sobe o Zap Komunick num **subdomínio novo**, ao lado do atual. Trocar o
 > `zap.komunick.com` por este fork faz perder o que é exclusivo do PRO e é decisão do responsável (docs/PRD.md, seção 5).
@@ -270,3 +275,20 @@ Para validar no dev, usar somente duas empresas, mensagens e arquivos novos/fict
 Conferir paginação e acesso por empresa/cliente/setor, HEAD/Range/download, PDF com duas páginas, imagens e vídeos,
 falhas e troca de contexto; remover apenas IDs e diretório rastreados das fixtures. Preservar a master P0 e os modos
 IA/Acessórias desligados. Recuar o código não exige apagar arquivos nem reverter dados.
+
+## 13. Candidato ARM07 com Caddy existente
+
+O recorte para ARM07 está em [deploy/arm07/README.md](../deploy/arm07/README.md), conforme
+[a especificação](specs/deploy-arm07-superchat.md). Ele usa imagens Linux ARM64 por hash, projeto/banco/volumes novos,
+API e WebSocket atrás do Caddy existente e porta de aplicação somente em loopback. Não instalar o proxy genérico
+das seções anteriores nessa VM nem usar o bootstrap automático do Dockerfile genérico.
+
+A preparação mantém WhatsApp sem conexão e IA/Acessórias desligados, sem importar banco, mídias, chaves ou sessão
+do notebook. O backend permanece sem saída externa. Migração e bootstrap inicial são operações separadas do runtime;
+reiniciar não recria administrador. Os três ambientes privados são gerados uma vez por `prepare-env.sh`, fora de Git,
+e o frontend publica somente a configuração permitida. A master precisa de cópia segura separada do backup do banco.
+
+Em 28/10/2026, o acesso confirmado à ARM07 é `170.9.14.1`, enquanto o A observado de `superchat.komunick.com` aponta
+para `144.24.36.23`. Resolver a diferença e conferir AAAA antes de habilitar o fragmento Caddy; inicialmente usar
+Somente DNS. Preparar o candidato não altera esses registros nem ativa o domínio. As etapas de ingresso, validação,
+backup e recuperação estão no README; a ativação pública exige uma solicitação posterior.

@@ -1,0 +1,28 @@
+# syntax=docker/dockerfile:1.7
+ARG NODE_BUILD_IMAGE=node:24@sha256:d862bb5d082c5ae0210ac07e8c0344cb8cf7bef6d78e9b8c50c179da923108ea
+ARG NGINX_IMAGE=ghcr.io/ticketz-oss/nginx-alpine@sha256:a75a56a02021509e76235fdbdefacd42bc1f961b370777d73c43dc8677c97f27
+
+FROM --platform=$BUILDPLATFORM ${NODE_BUILD_IMAGE} AS build
+WORKDIR /usr/src/app
+COPY frontend/package.json frontend/package-lock.json ./
+RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
+COPY frontend/ ./
+COPY deploy/arm07/frontend-config.mjs ./deploy/frontend-config.mjs
+ARG SOURCE_REVISION
+ENV NODE_OPTIONS=--openssl-legacy-provider
+RUN npm run build && node deploy/frontend-config.mjs > build/config.json && \
+    SOURCE_REVISION="${SOURCE_REVISION}" node -e 'const fs=require("fs");const revision=process.env.SOURCE_REVISION;if(!/^[a-f0-9]{40}$/.test(revision||""))process.exit(1);fs.writeFileSync("build/deployment.json",JSON.stringify({application:"Zap Komunick",revision,platform:"linux/arm64",source:"https://github.com/Komunick/zap-komunick/tree/"+revision})+"\n")'
+
+FROM ${NGINX_IMAGE}
+ARG SOURCE_REVISION
+LABEL org.opencontainers.image.title="Zap Komunick frontend ARM07" \
+      org.opencontainers.image.source="https://github.com/Komunick/zap-komunick" \
+      org.opencontainers.image.revision="${SOURCE_REVISION}"
+COPY --from=build /usr/src/app/build /var/www/public
+COPY deploy/arm07/nginx.conf /etc/nginx/nginx.conf
+# The configuration is a build-time allowlist. Runtime environment variables
+# are never exported into a public JSON document.
+EXPOSE 8080
+USER 101:101
+ENTRYPOINT ["nginx"]
+CMD ["-g", "daemon off;"]

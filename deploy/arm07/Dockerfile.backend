@@ -1,0 +1,33 @@
+# syntax=docker/dockerfile:1.7
+# Build only from the clean Git-exported package root (never the notebook data).
+ARG NODE_BUILD_IMAGE=node:24@sha256:d862bb5d082c5ae0210ac07e8c0344cb8cf7bef6d78e9b8c50c179da923108ea
+ARG NODE_RUNTIME_IMAGE=ghcr.io/ticketz-oss/ticketz-node-24@sha256:e6fe802412b8a4556ad762a6391624687072681ad6626aea084fcbe2e320309d
+
+FROM ${NODE_BUILD_IMAGE} AS build
+WORKDIR /usr/src/app
+COPY backend/package.json backend/package-lock.json ./
+RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund && \
+    node -e 'require("fs").chmodSync(require("@ffmpeg-installer/ffmpeg").path,0o755)'
+COPY backend/ ./
+ARG SOURCE_REVISION
+RUN node -e 'if (!/^[a-f0-9]{40}$/.test(process.env.SOURCE_REVISION || "")) process.exit(1)'
+RUN npm run generate:i18nkeys && npm run build
+
+FROM ${NODE_RUNTIME_IMAGE}
+ARG SOURCE_REVISION
+LABEL org.opencontainers.image.title="Zap Komunick backend ARM07" \
+      org.opencontainers.image.source="https://github.com/Komunick/zap-komunick" \
+      org.opencontainers.image.revision="${SOURCE_REVISION}"
+WORKDIR /usr/src/app
+COPY --from=build /usr/src/app/dist ./dist
+COPY --from=build /usr/src/app/node_modules ./node_modules
+COPY --from=build /usr/src/app/package.json ./package.json
+COPY deploy/arm07/backend-ops.cjs ./deploy/backend-ops.cjs
+# Only immutable application artifacts enter the runtime image, no public/private
+# tree, .env file, retrieved archive, source checkout or local dependency volume.
+RUN mkdir -p public private && \
+    SOURCE_REVISION="${SOURCE_REVISION}" node -e 'const fs=require("fs");const revision=process.env.SOURCE_REVISION;if(!/^[a-f0-9]{40}$/.test(revision||""))process.exit(1);fs.writeFileSync("deployment.json",JSON.stringify({application:"Zap Komunick",revision,platform:"linux/arm64",source:"https://github.com/Komunick/zap-komunick/tree/"+revision})+"\n")'
+ENV NODE_ENV=production PORT=3000 SOURCE_REVISION=${SOURCE_REVISION}
+EXPOSE 3000
+ENTRYPOINT ["node", "/usr/src/app/deploy/backend-ops.cjs"]
+CMD ["run"]
