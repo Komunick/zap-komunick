@@ -496,7 +496,9 @@ Configuração e limites estão em DEPLOY, seção 12. Nenhuma mudança de crede
 O candidato `deploy/arm07/` usa imagens Linux ARM64 identificadas por revisão,
 construídas de uma exportação Git. Não usa o diretório de trabalho que contém mídias
 e configurações de desenvolvimento. Migração e bootstrap são operações explícitas;
-o runtime não executa seeds. O bootstrap exige base vazia e administrador forte.
+o runtime não executa seeds. O bootstrap exige base sem dados de negócio e
+administrador forte. As traduções globais precisam corresponder exatamente ao
+conjunto instalado pelas migrações; valores extras, alterados ou ausentes são recusados.
 
 A instalação tem banco/Redis/volumes próprios. O backend fica numa rede interna sem
 saída externa; o frontend alcança essa rede e publica somente uma porta em loopback

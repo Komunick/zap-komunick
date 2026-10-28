@@ -1,7 +1,7 @@
 "use strict";
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { validateRuntimeEnv, validateBootstrapEnv } = require("./backend-ops.cjs");
+const { validateRuntimeEnv, validateBootstrapEnv, sameTranslations } = require("./backend-ops.cjs");
 
 const base = () => ({
   CREDENTIALS_MASTER_KEY: Buffer.alloc(32, 19).toString("base64"),
@@ -56,4 +56,22 @@ test("bootstrap refuses a missing or malformed administrator email", () => {
   for (const email of [undefined, "", "not-an-email", "admin@invalid", "admin@example.invalid\nsecret"]) {
     assert.throws(() => validateBootstrapEnv({ ...admin(), EMAIL_ADDRESS: email }), { message: "ARM07_BOOTSTRAP_EMAIL_INVALID" });
   }
+});
+
+test("bootstrap accepts the exact migration dictionary independently of SQL row order", () => {
+  const expected = [
+    { language: "pt", namespace: "backend", key: "Hello", value: "Olá" },
+    { language: "en", namespace: "backend", key: "Hello", value: "Hello" }
+  ];
+  assert.equal(sameTranslations([...expected].reverse(), expected), true);
+});
+
+test("bootstrap refuses missing, additional, duplicate or customized dictionary rows", () => {
+  const row = { language: "pt", namespace: "backend", key: "Hello", value: "Olá" };
+  const expected = [row];
+  for (const actual of [
+    [], [row, { ...row, key: "Custom" }], [row, row],
+    [{ ...row, value: "conteúdo particular" }], [{ ...row, language: "pt_PT" }],
+    [{ ...row, namespace: "custom" }], [{ ...row, key: "Changed" }]
+  ]) assert.equal(sameTranslations(actual, expected), false);
 });

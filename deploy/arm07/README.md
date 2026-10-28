@@ -96,7 +96,9 @@ do candidato nao os executa no servidor produtivo.
    ```
 
    Esse bootstrap e somente para a primeira instalacao em base nova. Ele recusa
-   dados existentes/parciais e senha fraca; nao usar seed:all como reparo. Em falha,
+   dados existentes/parciais e senha fraca; aceita somente as traducoes globais
+   identicas as instaladas pelas migracoes, sem excluir dados de negocio da guarda.
+   Nao usar seed:all como reparo. Em falha,
    preservar os arquivos/banco para diagnostico. Nao apagar volumes nem repetir
    bootstrap cegamente. Em atualizacao, omitir bootstrap e avaliar migracoes antes
    de aplica-las, com backup e janela apropriados.

@@ -12,6 +12,11 @@ const SEEDS = [
   "20200904070006-create-default-user.js",
   "20200904070007-create-default-settings.js"
 ];
+const TRANSLATION_MIGRATIONS = [
+  "20250813194700-reload-all-translations.js",
+  "20260507113000-add-translation-for-message-edit-error.js",
+  "20260526110000-add-translations-for-wbot-monitor-calls.js"
+];
 
 function fail(code) {
   const error = new Error(code);
@@ -102,6 +107,51 @@ async function assertMigrations(sequelize, transaction) {
   }
 }
 
+function sameTranslations(actual, expected) {
+  const canonical = rows => rows.map(row => JSON.stringify([
+    row.language, row.namespace, row.key, row.value
+  ])).sort();
+  return JSON.stringify(canonical(actual)) === JSON.stringify(canonical(expected));
+}
+
+async function expectedTranslations() {
+  // These three reviewed migrations create application-owned dictionary data in
+  // an otherwise empty schema. Replay only their translation operations in memory
+  // so the bootstrap accepts the exact image baseline, never arbitrary metadata.
+  const { Op } = require("sequelize");
+  const rows = new Map();
+  const transaction = { commit: async () => {}, rollback: async () => {} };
+  const memoryInterface = {
+    sequelize: { transaction: async () => transaction },
+    bulkDelete: async (table, where) => {
+      if (table !== "Translations" || where.namespace !== "backend" || !Array.isArray(where[Op.or])) {
+        fail("ARM07_BOOTSTRAP_TRANSLATION_BASELINE_INVALID");
+      }
+      for (const criterion of where[Op.or]) {
+        const keys = criterion.key?.[Op.in];
+        if (typeof criterion.language !== "string" || !Array.isArray(keys)) {
+          fail("ARM07_BOOTSTRAP_TRANSLATION_BASELINE_INVALID");
+        }
+        for (const key of keys) rows.delete(JSON.stringify([criterion.language, where.namespace, key]));
+      }
+    },
+    bulkInsert: async (table, records) => {
+      if (table !== "Translations" || !Array.isArray(records)) fail("ARM07_BOOTSTRAP_TRANSLATION_BASELINE_INVALID");
+      for (const row of records) {
+        if (row.namespace !== "backend" || [row.language, row.namespace, row.key, row.value].some(value => typeof value !== "string")) {
+          fail("ARM07_BOOTSTRAP_TRANSLATION_BASELINE_INVALID");
+        }
+        rows.set(JSON.stringify([row.language, row.namespace, row.key]), { ...row });
+      }
+    }
+  };
+  for (const name of TRANSLATION_MIGRATIONS) {
+    const migration = require(path.join(ROOT, "dist/database/migrations", name));
+    await (migration.default || migration).up(memoryInterface);
+  }
+  return [...rows.values()];
+}
+
 async function bootstrap(sequelize) {
   const queryInterface = sequelize.getQueryInterface();
   await sequelize.transaction(async transaction => {
@@ -114,6 +164,11 @@ async function bootstrap(sequelize) {
     if (tables.length === 0) fail("ARM07_BOOTSTRAP_MIGRATIONS_REQUIRED");
     for (const { tablename } of tables) {
       await sequelize.query("LOCK TABLE " + identifier(tablename) + " IN EXCLUSIVE MODE", { transaction });
+      if (tablename === "Translations") {
+        const [actual] = await sequelize.query('SELECT language, namespace, key, value FROM "Translations"', { transaction });
+        if (!sameTranslations(actual, await expectedTranslations())) fail("ARM07_BOOTSTRAP_TRANSLATIONS_NOT_PRISTINE");
+        continue;
+      }
       const [rows] = await sequelize.query("SELECT EXISTS(SELECT 1 FROM " + identifier(tablename) + " LIMIT 1) AS populated", { transaction });
       if (rows[0].populated) fail("ARM07_BOOTSTRAP_DATABASE_NOT_EMPTY");
     }
@@ -191,7 +246,7 @@ async function main(mode = process.argv[2] || "run") {
   }
 }
 
-module.exports = { validateRuntimeEnv, validateBootstrapEnv, bootstrap, SEEDS, main };
+module.exports = { validateRuntimeEnv, validateBootstrapEnv, sameTranslations, expectedTranslations, bootstrap, SEEDS, main };
 
 if (require.main === module) {
   main().catch(error => {
