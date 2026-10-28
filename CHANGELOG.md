@@ -10,12 +10,6 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   limitada, bootstrap separado e banco próprio. O candidato mantém WhatsApp e fornecedores desligados; ativação
   do domínio e migração de dados não fazem parte dessa preparação.
 
-### Corrigido
-
-- Restauração do banco com índice de busca de etiquetas: a função de normalização
-  resolve a extensão de acentos pelo esquema explícito, preservando os resultados.
-
-### Adicionado
 - Área de arquivos da conversa com filtros, paginação e busca nos itens carregados. Imagens, vídeos e PDFs abrem
   dentro do aplicativo, com zoom/rotação, reprodução e controles de página. Prévias locais de até 25 MiB usam a nova
   API autenticada; os links públicos legados de entrega permanecem disponíveis. Sem alteração do envio ou armazenamento.
@@ -123,6 +117,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   com fita no topo, canto dobrado, pequena inclinação fixa por atendimento e efeito ao passar o mouse.
 
 ### Corrigido
+
+- Restauração do banco com índice de busca de etiquetas: a função de normalização
+  resolve a extensão de acentos pelo esquema explícito, preservando os resultados.
 
 - Rascunhos deixam de ser apagados ao abrir ou trocar de atendimento. Uma resposta atrasada do assistente não altera
   o editor de outra conversa; a revisão fica bloqueada durante a confirmação de uso para preservar a versão aceita.
