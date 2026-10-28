@@ -21,6 +21,9 @@ preparacao. Origem da aplicacao: merge do PR #21, `476077c`.
   origem delimitados e suporte a WebSocket e bytes/Range dos anexos.
 - Procedimento de preparacao, backup, ativacao e recuperacao, sem modificar sites,
   containers ou dados existentes do servidor durante a preparacao.
+- Correcao de compatibilidade do backup: a funcao existente de busca sem acentos
+  precisa resolver explicitamente `public.unaccent`, tambem quando a restauracao
+  usa `search_path` vazio. Preservar assinatura, resultados e indice de Tags.
 
 ## Criterios
 
@@ -36,6 +39,9 @@ preparacao. Origem da aplicacao: merge do PR #21, `476077c`.
    Diferenca entre DNS atual e servidor de destino e explicitada, sem mudanca de DNS.
 6. Instrucoes e candidato permitem revisao antes da ativacao; configuracoes/sites
    existentes e a publicacao LAN do notebook continuam preservados.
+7. Backup ficticio restaura integralmente em base nova, incluindo indice de Tags,
+   hashes das tabelas, sequencias e arquivos. A busca com/sem acentos preserva seu
+   resultado, inclusive com `search_path` vazio; nao altera dados da base de origem.
 
 ## Referencias e limite
 

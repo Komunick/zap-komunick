@@ -9,6 +9,13 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 - Preparação de publicação ARM64 na ARM07 para superchat.komunick.com, com imagens por hash, configuração pública
   limitada, bootstrap separado e banco próprio. O candidato mantém WhatsApp e fornecedores desligados; ativação
   do domínio e migração de dados não fazem parte dessa preparação.
+
+### Corrigido
+
+- Restauração do banco com índice de busca de etiquetas: a função de normalização
+  resolve a extensão de acentos pelo esquema explícito, preservando os resultados.
+
+### Adicionado
 - Área de arquivos da conversa com filtros, paginação e busca nos itens carregados. Imagens, vídeos e PDFs abrem
   dentro do aplicativo, com zoom/rotação, reprodução e controles de página. Prévias locais de até 25 MiB usam a nova
   API autenticada; os links públicos legados de entrega permanecem disponíveis. Sem alteração do envio ou armazenamento.

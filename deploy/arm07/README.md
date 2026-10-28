@@ -76,8 +76,8 @@ de bootstrap sem ele continua recusada. Os ambientes de banco/master permanecem.
 
 ## Ativacao posterior, depois da autorizacao
 
-Os comandos abaixo sao o procedimento para uma ativacao autorizada; a preparacao
-do candidato nao os executa no servidor produtivo.
+Os comandos abaixo sao o procedimento para uma ativacao autorizada. A preparacao
+os exercita somente em projeto descartavel de QA, sem aplica-los a instalacao publica.
 
 1. Conferir revisao, hashes e homologacao das mesmas imagens. Executar
    `bash ./preflight.sh --activation`: exige ARM07/ARM64, imagens carregadas com a
@@ -144,3 +144,10 @@ a master correta do cofre antes de iniciar. Nao executar bootstrap em base
 restaurada. Validar acesso/arquivos/credenciais antes de trocar o ingresso. Sessao
 WhatsApp nao deve ser restaurada neste primeiro deploy nem reconectada por esse
 procedimento. Testar restauracao apenas com dados ficticios antes do uso real.
+
+Este candidato inclui a migracao `20261028170000`, que qualifica a dependencia
+`public.unaccent` da funcao de busca. Mantem os resultados e o indice existente,
+e permite recriar esse indice durante a restauracao com search_path vazio.
+O down preserva essa correcao compativel. Backups anteriores a essa correcao podem
+conter a funcao antiga e exigir tratamento antes de recriar o indice; nao importar
+os backups de dev ou dos candidatos rejeitados nesta primeira instalacao.

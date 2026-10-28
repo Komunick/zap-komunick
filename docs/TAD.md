@@ -500,6 +500,12 @@ o runtime não executa seeds. O bootstrap exige base sem dados de negócio e
 administrador forte. As traduções globais precisam corresponder exatamente ao
 conjunto instalado pelas migrações; valores extras, alterados ou ausentes são recusados.
 
+A migração `20261028170000` qualifica `public.unaccent` no wrapper existente de
+busca, mantendo assinatura, volatilidade e resultados. Corrige a recriação do
+índice de Tags em restaurações que usam search_path vazio; não remove índices nem
+reescreve registros. O down mantém a correção compatível. A validação cobre busca
+com/sem acentos e backup/restauração integral em banco fictício separado.
+
 A instalação tem banco/Redis/volumes próprios. O backend fica numa rede interna sem
 saída externa; o frontend alcança essa rede e publica somente uma porta em loopback
 para o Caddy do host. A cadeia de proxies aceita apenas os endereços previstos e
