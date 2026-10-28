@@ -87,7 +87,9 @@ do candidato nao os executa no servidor produtivo.
 
    ```bash
    compose=(docker compose --project-directory "$PWD" --env-file "$PWD/.env" -f "$PWD/compose.yaml")
-   "${compose[@]}" up -d --pull never postgres redis
+   # Infraestrutura tambem usa digests fixos; obter exatamente essas referencias.
+   "${compose[@]}" pull postgres redis
+   "${compose[@]}" up -d --wait --pull never postgres redis
    "${compose[@]}" --profile ops run --rm --no-deps migrate
    "${compose[@]}" --profile ops run --rm --no-deps bootstrap
    "${compose[@]}" up -d --pull never backend frontend
