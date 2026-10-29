@@ -1,7 +1,9 @@
 import { pathToFileURL } from "node:url";
+import environment from "./environment.cjs";
 
 export function buildPublicConfig(env = {}) {
-  if (env.ZK_PUBLIC_HOST && env.ZK_PUBLIC_HOST !== "superchat.komunick.com") {
+  const profile = environment.deploymentProfile(env.ZK_ENVIRONMENT);
+  if (env.ZK_PUBLIC_HOST && env.ZK_PUBLIC_HOST !== profile.host) {
     throw new Error("ARM07_PUBLIC_HOST_INVALID");
   }
   const port = String(env.ZK_PUBLIC_PORT || "443");
@@ -10,7 +12,7 @@ export function buildPublicConfig(env = {}) {
   }
   return {
     BACKEND_PROTOCOL: "https",
-    BACKEND_HOST: "superchat.komunick.com",
+    BACKEND_HOST: profile.host,
     BACKEND_PORT: port,
     BACKEND_PATH: "/backend",
     WAVOIP_ENABLED: false

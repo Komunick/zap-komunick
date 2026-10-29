@@ -1,6 +1,6 @@
 # ARM07 candidate only. Images are prepared elsewhere; this file never builds.
 # Keep the host Caddy unchanged until the separately reviewed activation.
-name: zap-komunick-arm07
+name: ${COMPOSE_PROJECT_NAME:?defina o projeto exclusivo do ambiente}
 
 x-backend: &backend
   image: ${ZK_BACKEND_IMAGE:?defina ZK_BACKEND_IMAGE com identificador imutavel}
@@ -12,11 +12,12 @@ x-backend: &backend
     NODE_ENV: production
     PORT: "3000"
     ZK_REVISION: ${ZK_REVISION:?defina ZK_REVISION}
-    BACKEND_URL: ${ZK_PUBLIC_ORIGIN:-https://superchat.komunick.com}/backend
-    FRONTEND_URL: ${ZK_PUBLIC_ORIGIN:-https://superchat.komunick.com}
+    ZK_ENVIRONMENT: ${ZK_ENVIRONMENT:?defina production ou development}
+    BACKEND_URL: ${ZK_PUBLIC_ORIGIN:?defina a origem do ambiente}/backend
+    FRONTEND_URL: ${ZK_PUBLIC_ORIGIN:?defina a origem do ambiente}
     FRONTEND_CUSTOM_URL: ""
     FRONTEND_URL_REGEX: ""
-    TRUST_PROXY: ${ZK_FRONTEND_INTERNAL_IP:-172.29.252.10}/32
+    TRUST_PROXY: ${ZK_FRONTEND_INTERNAL_IP:?defina o proxy exclusivo do ambiente}/32
     DB_DIALECT: postgres
     DB_HOST: postgres
     DB_PORT: "5432"
@@ -39,7 +40,7 @@ x-backend: &backend
     - backend_private:/usr/src/app/private
   networks:
     internal:
-      ipv4_address: ${ZK_BACKEND_INTERNAL_IP:-172.29.252.11}
+      ipv4_address: ${ZK_BACKEND_INTERNAL_IP:?defina ZK_BACKEND_INTERNAL_IP}
   read_only: true
   tmpfs:
     - /tmp:rw,nosuid,noexec,size=128m
@@ -58,7 +59,7 @@ services:
     volumes: [postgres_data:/var/lib/postgresql/data]
     networks:
       internal:
-        ipv4_address: ${ZK_POSTGRES_INTERNAL_IP:-172.29.252.12}
+        ipv4_address: ${ZK_POSTGRES_INTERNAL_IP:?defina ZK_POSTGRES_INTERNAL_IP}
     healthcheck:
       test: [CMD-SHELL, "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
       interval: 5s
@@ -73,7 +74,7 @@ services:
     volumes: [redis_data:/data]
     networks:
       internal:
-        ipv4_address: ${ZK_REDIS_INTERNAL_IP:-172.29.252.13}
+        ipv4_address: ${ZK_REDIS_INTERNAL_IP:?defina ZK_REDIS_INTERNAL_IP}
     healthcheck:
       test: [CMD, redis-cli, ping]
       interval: 5s
@@ -98,12 +99,12 @@ services:
   frontend:
     image: ${ZK_FRONTEND_IMAGE:?defina ZK_FRONTEND_IMAGE com identificador imutavel}
     platform: linux/arm64
-    ports: ["127.0.0.1:${ZK_HTTP_PORT:-5480}:8080"]
+    ports: ["127.0.0.1:${ZK_HTTP_PORT:?defina ZK_HTTP_PORT}:8080"]
     networks:
       edge:
-        ipv4_address: ${ZK_FRONTEND_EDGE_IP:-172.29.251.10}
+        ipv4_address: ${ZK_FRONTEND_EDGE_IP:?defina ZK_FRONTEND_EDGE_IP}
       internal:
-        ipv4_address: ${ZK_FRONTEND_INTERNAL_IP:-172.29.252.10}
+        ipv4_address: ${ZK_FRONTEND_INTERNAL_IP:?defina ZK_FRONTEND_INTERNAL_IP}
     read_only: true
     tmpfs:
       - /tmp:rw,nosuid,noexec,size=64m
@@ -142,13 +143,13 @@ networks:
   edge:
     ipam:
       config:
-        - subnet: ${ZK_EDGE_SUBNET:-172.29.251.0/28}
-          gateway: ${ZK_EDGE_GATEWAY:-172.29.251.1}
+        - subnet: ${ZK_EDGE_SUBNET:?defina ZK_EDGE_SUBNET}
+          gateway: ${ZK_EDGE_GATEWAY:?defina ZK_EDGE_GATEWAY}
   internal:
     internal: true
     ipam:
       config:
-        - subnet: ${ZK_INTERNAL_SUBNET:-172.29.252.0/28}
+        - subnet: ${ZK_INTERNAL_SUBNET:?defina ZK_INTERNAL_SUBNET}
 
 volumes:
   postgres_data:

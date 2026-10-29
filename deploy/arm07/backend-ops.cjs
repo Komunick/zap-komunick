@@ -3,7 +3,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
-const { isIP } = require("node:net");
+const { deploymentProfile } = require("./environment.cjs");
 
 const ROOT = path.resolve(__dirname, "..");
 const LOCK_ID = 270720261;
@@ -31,6 +31,7 @@ function isMaster(value) {
 }
 
 function validateRuntimeEnv(env, allowBootstrapSecret = false) {
+  const profile = deploymentProfile(env.ZK_ENVIRONMENT);
   if (!isMaster(env.CREDENTIALS_MASTER_KEY) ||
       (env.CREDENTIALS_PREVIOUS_MASTER_KEY && !isMaster(env.CREDENTIALS_PREVIOUS_MASTER_KEY))) {
     fail("ARM07_MASTER_KEY_INVALID");
@@ -47,7 +48,7 @@ function validateRuntimeEnv(env, allowBootstrapSecret = false) {
   let origin;
   try {
     const parsed = new URL(env.FRONTEND_URL);
-    if (parsed.protocol !== "https:" || parsed.hostname !== "superchat.komunick.com" ||
+    if (parsed.protocol !== "https:" || parsed.hostname !== profile.host ||
         parsed.username || parsed.password || parsed.pathname !== "/" || parsed.search || parsed.hash) {
       fail("ARM07_PUBLIC_ORIGIN_INVALID");
     }
@@ -59,8 +60,7 @@ function validateRuntimeEnv(env, allowBootstrapSecret = false) {
       env.FRONTEND_CUSTOM_URL || env.FRONTEND_URL_REGEX) {
     fail("ARM07_PUBLIC_ORIGIN_INVALID");
   }
-  if (!/^172\.(?:1[6-9]|2[0-9]|3[01])\.(?:\d{1,3})\.(?:\d{1,3})\/32$/.test(env.TRUST_PROXY || "") ||
-      isIP((env.TRUST_PROXY || "").split("/")[0]) !== 4) {
+  if (env.TRUST_PROXY !== profile.internal + ".10/32") {
     fail("ARM07_TRUSTED_PROXY_INVALID");
   }
 }

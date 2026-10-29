@@ -4,6 +4,7 @@ const assert = require("node:assert/strict");
 const { validateRuntimeEnv, validateBootstrapEnv, sameTranslations } = require("./backend-ops.cjs");
 
 const base = () => ({
+  ZK_ENVIRONMENT: "production",
   CREDENTIALS_MASTER_KEY: Buffer.alloc(32, 19).toString("base64"),
   DB_PASS: "ARM07-fictional-database-password-123456789",
   NODE_ENV: "production", AI_ASSISTANT_MODE: "disabled", ACESSORIAS_MODE: "disabled",
@@ -15,6 +16,21 @@ const admin = () => ({ ADMIN_PASSWORD: "Fictional-ARM07-admin-1234567890", EMAIL
 test("accepts prepared production and isolated TLS QA origins", () => {
   assert.doesNotThrow(() => validateRuntimeEnv(base()));
   assert.doesNotThrow(() => validateRuntimeEnv({ ...base(), FRONTEND_URL: "https://superchat.komunick.com:15443", BACKEND_URL: "https://superchat.komunick.com:15443/backend" }));
+});
+
+test("development uses its own host and exact trusted proxy", () => {
+  const development = { ...base(), ZK_ENVIRONMENT: "development", FRONTEND_URL: "https://superchatdev.komunick.com", BACKEND_URL: "https://superchatdev.komunick.com/backend", TRUST_PROXY: "172.29.250.10/32" };
+  assert.doesNotThrow(() => validateRuntimeEnv(development));
+  assert.doesNotThrow(() => validateRuntimeEnv({ ...development, FRONTEND_URL: "https://superchatdev.komunick.com:15444", BACKEND_URL: "https://superchatdev.komunick.com:15444/backend" }));
+  assert.throws(() => validateRuntimeEnv({ ...development, FRONTEND_URL: base().FRONTEND_URL, BACKEND_URL: base().BACKEND_URL }), { message: "ARM07_PUBLIC_ORIGIN_INVALID" });
+  assert.throws(() => validateRuntimeEnv({ ...development, TRUST_PROXY: base().TRUST_PROXY }), { message: "ARM07_TRUSTED_PROXY_INVALID" });
+  assert.throws(() => validateRuntimeEnv({ ...base(), TRUST_PROXY: development.TRUST_PROXY }), { message: "ARM07_TRUSTED_PROXY_INVALID" });
+});
+
+test("requires an explicit recognized environment", () => {
+  for (const profile of [undefined, "", "dev", "Production", "production\n", "__proto__"]) {
+    assert.throws(() => validateRuntimeEnv({ ...base(), ZK_ENVIRONMENT: profile }), { message: "ARM07_ENVIRONMENT_INVALID" });
+  }
 });
 test("refuses missing, malformed and noncanonical master keys", () => {
   for (const key of [undefined, "", "fictional-key", Buffer.alloc(31).toString("base64"), Buffer.alloc(33).toString("base64")]) {

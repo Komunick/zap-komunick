@@ -22,7 +22,7 @@ WORKDIR /usr/src/app
 COPY --from=build /usr/src/app/dist ./dist
 COPY --from=build /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/package.json ./package.json
-COPY deploy/arm07/backend-ops.cjs ./deploy/backend-ops.cjs
+COPY deploy/arm07/backend-ops.cjs deploy/arm07/environment.cjs ./deploy/
 # Only immutable application artifacts enter the runtime image, no public/private
 # tree, .env file, retrieved archive, source checkout or local dependency volume.
 RUN mkdir -p public private && \

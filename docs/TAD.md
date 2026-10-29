@@ -491,9 +491,11 @@ Runners usam somente fixtures rastreadas e não enviam mensagens. Resultados exe
 **Recuperação:** voltar o código preserva todos os arquivos e registros; não há DDL nem migração/remoção de mídia.
 Configuração e limites estão em DEPLOY, seção 12. Nenhuma mudança de credencial, IA ou fornecedor faz parte do percurso.
 
-### Publicação preparada para ARM07
+### Ambientes preparados para ARM07
 
-O candidato `deploy/arm07/` usa imagens Linux ARM64 identificadas por revisão,
+O pacote `deploy/arm07/` define dois perfis fechados: `development`, domínio
+`superchatdev.komunick.com` e projeto Compose `superchatdev`; `production`, domínio
+`superchat.komunick.com` e projeto `superchat`. Usa imagens Linux ARM64 identificadas por revisão,
 construídas de uma exportação Git. Não usa o diretório de trabalho que contém mídias
 e configurações de desenvolvimento. Migração e bootstrap são operações explícitas;
 o runtime não executa seeds. O bootstrap exige base sem dados de negócio e
@@ -506,17 +508,26 @@ busca, mantendo assinatura, volatilidade e resultados. Corrige a recriação do
 reescreve registros. O down mantém a correção compatível. A validação cobre busca
 com/sem acentos e backup/restauração integral em banco fictício separado.
 
-A instalação tem banco/Redis/volumes próprios. O backend fica numa rede interna sem
-saída externa; o frontend alcança essa rede e publica somente uma porta em loopback
-para o Caddy do host. A cadeia de proxies aceita apenas os endereços previstos e
+Cada instalação tem banco/Redis/volumes, administrador e segredos próprios. As redes
+Docker não se sobrepõem: desenvolvimento usa `172.29.249.0/28` (edge) e
+`172.29.250.0/28` (interna), produção usa `172.29.251.0/28` e `172.29.252.0/28`.
+O backend comum fica numa rede interna sem saída externa; o frontend de cada perfil
+alcança sua rede e publica somente uma porta em loopback (5481 em desenvolvimento,
+5480 em produção) para o Caddy do host. Cada domínio tem fragmento Caddy independente.
+A cadeia de proxies aceita apenas os endereços previstos para o perfil e
 sobrescreve o encaminhamento recebido do cliente. O frontend publica configuração
-por lista explícita, mantendo os segredos no backend/banco. A sessão local não é
-migrada e IA/Acessórias permanecem desligados.
+por lista explícita, mantendo os segredos no backend/banco. Domínio e gateway do
+nginx são fixados no build da variante frontend, com labels de perfil/domínio;
+o preflight recusa misturá-la com outro ambiente. O pacote da revisão contém ambas
+as variantes homologadas; promover a aplicação preserva seus hashes e não copia
+banco, mídias, master ou sessão de desenvolvimento para produção. A sessão local
+não é migrada e IA/Acessórias permanecem desligados.
 
 O desenho e os comandos operacionais estão em `deploy/arm07/README.md` e DEPLOY.
 A estratégia de validação cobre ARM nativo, bootstrap/recusa/reinício, ausência de
 segredos públicos, isolamento de saída e API/Socket/anexos pelo ingresso HTTPS em
-ambiente fictício separado. Esta configuração preparada não indica ativação pública;
+ambiente fictício separado, além da coexistência dos perfis e recusa de autenticação
+cruzada entre bases. Esta configuração preparada não indica ativação pública;
 a especificação é `docs/specs/deploy-arm07-superchat.md`.
 
 ## 5. Decisões e pendências
