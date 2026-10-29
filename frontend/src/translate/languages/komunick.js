@@ -2987,6 +2987,226 @@ es.attachments = {
   }
 };
 
+pt.sci = {
+  button: "SCI",
+  open: "Abrir SCI deste atendimento",
+  title: "SCI — Simulação",
+  simulation: "Simulação",
+  scope:
+    "Publicações inteiramente fictícias para testar o painel. Não representam documentos ou confirmações da SCI.",
+  refreshLinks: "Atualizar vínculos",
+  linkClient: "Vincular cliente",
+  loading: "Consultando simulação…",
+  noLinks: "Este contato ainda não tem clientes vinculados.",
+  selectedClient: "Cliente vinculado",
+  chooseClient: "Escolha um cliente vinculado",
+  localLinks: "Vínculos locais do contato",
+  catalog: "Catálogo simulado da empresa",
+  linkNamed: "Vincular {{name}}",
+  unlinkNamed: "Desvincular {{name}}",
+  link: "Vincular",
+  unlink: "Desvincular",
+  alreadyLinked: "Já vinculado",
+  registration: "Cadastro do cliente",
+  publications: "Publicações simuladas",
+  noPublications: "Nenhuma publicação nesta simulação.",
+  previous: "Página anterior",
+  next: "Próxima página",
+  page: "Página {{page}}",
+  retry: "Tentar novamente",
+  source: "Origem e atualização",
+  publishedAt: "Publicado em {{date}}",
+  updatedAt: "Atualizado em {{date}}",
+  fetchedAt: "Consultado em {{date}}",
+  stale:
+    "Dados desatualizados: esta simulação usa uma versão antiga. Confirme as informações antes de usar.",
+  close: "Fechar",
+  cancelQuery: "Cancelar consulta",
+  cancel: "Cancelar",
+  confirmLinkTitle: "Confirmar vínculo local",
+  confirmUnlinkTitle: "Confirmar desvinculação local",
+  confirmLink: "Confirmar vínculo",
+  confirmUnlink: "Confirmar desvinculação",
+  localOnly:
+    "Esta ação altera somente o vínculo local deste contato na simulação SCI. Não modifica o cadastro ou as publicações do fornecedor.",
+  disabled: "A consulta SCI está desabilitada para esta empresa ou ambiente.",
+  permission: "Você não tem permissão para esta consulta ou ação.",
+  notLinked:
+    "O cliente não está mais vinculado a este contato. Atualize os vínculos.",
+  notFound: "O cliente simulado não foi encontrado.",
+  contextChanged:
+    "O atendimento ou vínculo mudou durante a consulta. Atualize os vínculos.",
+  functionalError:
+    "A simulação informou uma falha na consulta. Nenhum resultado foi aproveitado.",
+  invalidOutput: "O resultado recebido não pôde ser validado.",
+  upstreamUnauthorized:
+    "A simulação de autorização do fornecedor recusou a consulta.",
+  rateLimited:
+    "A simulação atingiu o limite de consultas. Tente novamente mais tarde.",
+  timeout:
+    "A consulta demorou além do limite. Nenhum resultado foi aproveitado.",
+  unavailable:
+    "A consulta simulada está indisponível. Tente novamente mais tarde.",
+  requestError:
+    "Não foi possível concluir a consulta. Nenhum resultado anterior será apresentado como atualizado.",
+  settingsTitle: "Consultas SCI (simulação)",
+  settingsHint:
+    "Habilita publicações fictícias e vínculos locais para esta empresa no ambiente autorizado. Não conecta à SCI real nem habilita IA ou mensagens.",
+  settingError:
+    "Não foi possível alterar a configuração. O valor anterior foi preservado.",
+  settingConflict:
+    "Há configurações divergentes. A consulta permanece desativada; salve a opção desejada para regularizar."
+};
+
+en.sci = {
+  button: "SCI",
+  open: "Open SCI for this conversation",
+  title: "SCI — Simulation",
+  simulation: "Simulation",
+  scope:
+    "Entirely fictitious publications for testing this panel. They do not represent SCI documents or confirmations.",
+  refreshLinks: "Refresh links",
+  linkClient: "Link client",
+  loading: "Loading simulation…",
+  noLinks: "This contact has no linked clients yet.",
+  selectedClient: "Linked client",
+  chooseClient: "Choose a linked client",
+  localLinks: "Contact's local links",
+  catalog: "Company's simulated catalog",
+  linkNamed: "Link {{name}}",
+  unlinkNamed: "Unlink {{name}}",
+  link: "Link",
+  unlink: "Unlink",
+  alreadyLinked: "Already linked",
+  registration: "Client registration",
+  publications: "Simulated publications",
+  noPublications: "No publications in this simulation.",
+  previous: "Previous page",
+  next: "Next page",
+  page: "Page {{page}}",
+  retry: "Try again",
+  source: "Source and freshness",
+  publishedAt: "Published on {{date}}",
+  updatedAt: "Updated on {{date}}",
+  fetchedAt: "Retrieved on {{date}}",
+  stale:
+    "Outdated data: this simulation uses an old version. Verify the information before use.",
+  close: "Close",
+  cancelQuery: "Cancel query",
+  cancel: "Cancel",
+  confirmLinkTitle: "Confirm local link",
+  confirmUnlinkTitle: "Confirm local unlink",
+  confirmLink: "Confirm link",
+  confirmUnlink: "Confirm unlink",
+  localOnly:
+    "This action only changes this contact's local link in the SCI simulation. It does not change the provider's registration or publications.",
+  disabled: "SCI queries are disabled for this company or environment.",
+  permission: "You do not have permission for this query or action.",
+  notLinked:
+    "This client is no longer linked to this contact. Refresh the links.",
+  notFound: "The simulated client was not found.",
+  contextChanged:
+    "The conversation or link changed during the query. Refresh the links.",
+  functionalError:
+    "The simulation reported a query failure. No result was used.",
+  invalidOutput: "The received result could not be validated.",
+  upstreamUnauthorized:
+    "The simulated provider authorization denied the query.",
+  rateLimited: "The simulation reached its query limit. Try again later.",
+  timeout: "The query timed out. No result was used.",
+  unavailable: "The simulated query is unavailable. Try again later.",
+  requestError:
+    "The query could not be completed. Previous results will not be shown as up to date.",
+  settingsTitle: "SCI queries (simulation)",
+  settingsHint:
+    "Enables fictitious publications and local links for this company in the authorized environment. It does not connect to real SCI or enable AI or messaging.",
+  settingError:
+    "Unable to change the setting. The previous value was preserved.",
+  settingConflict:
+    "Conflicting settings exist. Queries remain disabled; save the desired option to resolve them."
+};
+
+es.sci = {
+  button: "SCI",
+  open: "Abrir SCI de esta conversación",
+  title: "SCI — Simulación",
+  simulation: "Simulación",
+  scope:
+    "Publicaciones enteramente ficticias para probar este panel. No representan documentos ni confirmaciones de SCI.",
+  refreshLinks: "Actualizar vínculos",
+  linkClient: "Vincular cliente",
+  loading: "Consultando simulación…",
+  noLinks: "Este contacto aún no tiene clientes vinculados.",
+  selectedClient: "Cliente vinculado",
+  chooseClient: "Elige un cliente vinculado",
+  localLinks: "Vínculos locales del contacto",
+  catalog: "Catálogo simulado de la empresa",
+  linkNamed: "Vincular {{name}}",
+  unlinkNamed: "Desvincular {{name}}",
+  link: "Vincular",
+  unlink: "Desvincular",
+  alreadyLinked: "Ya vinculado",
+  registration: "Registro del cliente",
+  publications: "Publicaciones simuladas",
+  noPublications: "No hay publicaciones en esta simulación.",
+  previous: "Página anterior",
+  next: "Página siguiente",
+  page: "Página {{page}}",
+  retry: "Intentar de nuevo",
+  source: "Origen y actualización",
+  publishedAt: "Publicado el {{date}}",
+  updatedAt: "Actualizado el {{date}}",
+  fetchedAt: "Consultado el {{date}}",
+  stale:
+    "Datos desactualizados: esta simulación usa una versión antigua. Confirma la información antes de usarla.",
+  close: "Cerrar",
+  cancelQuery: "Cancelar consulta",
+  cancel: "Cancelar",
+  confirmLinkTitle: "Confirmar vínculo local",
+  confirmUnlinkTitle: "Confirmar desvinculación local",
+  confirmLink: "Confirmar vínculo",
+  confirmUnlink: "Confirmar desvinculación",
+  localOnly:
+    "Esta acción solo cambia el vínculo local de este contacto en la simulación SCI. No modifica el registro ni las publicaciones del proveedor.",
+  disabled: "Las consultas SCI están desactivadas para esta empresa o entorno.",
+  permission: "No tienes permiso para esta consulta o acción.",
+  notLinked:
+    "El cliente ya no está vinculado a este contacto. Actualiza los vínculos.",
+  notFound: "No se encontró el cliente simulado.",
+  contextChanged:
+    "La conversación o el vínculo cambió durante la consulta. Actualiza los vínculos.",
+  functionalError:
+    "La simulación informó un fallo en la consulta. No se utilizó ningún resultado.",
+  invalidOutput: "No se pudo validar el resultado recibido.",
+  upstreamUnauthorized:
+    "La autorización simulada del proveedor rechazó la consulta.",
+  rateLimited:
+    "La simulación alcanzó el límite de consultas. Inténtalo más tarde.",
+  timeout: "Se agotó el tiempo de consulta. No se utilizó ningún resultado.",
+  unavailable: "La consulta simulada no está disponible. Inténtalo más tarde.",
+  requestError:
+    "No se pudo completar la consulta. No se mostrarán datos anteriores como actualizados.",
+  settingsTitle: "Consultas SCI (simulación)",
+  settingsHint:
+    "Habilita publicaciones ficticias y vínculos locales para esta empresa en el entorno autorizado. No conecta con SCI real ni habilita IA o mensajes.",
+  settingError:
+    "No se pudo cambiar la configuración. Se conservó el valor anterior.",
+  settingConflict:
+    "Hay configuraciones distintas. La consulta sigue desactivada; guarda la opción deseada para resolverlas."
+};
+
+pt.audit.entities.contact = "Contato";
+pt.audit.actions.sci_link_created = "Vínculo SCI criado";
+pt.audit.actions.sci_link_deleted = "Vínculo SCI removido";
+
+en.audit.entities.contact = "Contact";
+en.audit.actions.sci_link_created = "SCI link created";
+en.audit.actions.sci_link_deleted = "SCI link removed";
+
+es.audit.entities.contact = "Contacto";
+es.audit.actions.sci_link_created = "Vínculo SCI creado";
+es.audit.actions.sci_link_deleted = "Vínculo SCI eliminado";
+
 export const komunickMessages = {
   pt: { translations: pt },
   pt_PT: { translations: pt },

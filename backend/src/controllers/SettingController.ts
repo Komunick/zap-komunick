@@ -9,6 +9,7 @@ import { GetSettingService } from "../services/SettingServices/GetSettingService
 import { triggerGracefulShutdown } from "../utils/shutdown";
 import { auditRequest } from "../services/AuditServices/RecordAuditService";
 import { IP_ALLOWLIST_KEYS } from "../services/SecurityServices/IpAllowlistService";
+import { loadTicketViewer } from "../services/TicketServices/AuthorizeTicketContextService";
 
 type LogoRequest = {
   mode: string;
@@ -46,6 +47,12 @@ export const update = async (
   // checks that the administrator is not locking himself out (RF-016)
   if (IP_ALLOWLIST_KEYS.includes(key)) {
     throw new AppError("ERR_USE_SECURITY_ROUTE", 400);
+  }
+
+  // P3: a still-valid JWT from a transferred/demoted administrator grants no flag write.
+  if (key === "sciEnabled") {
+    const viewer = await loadTicketViewer({ userId: req.user.id, companyId });
+    if (!viewer.isAdmin) throw new AppError("ERR_NO_PERMISSION", 403);
   }
 
   const setting = await UpdateSettingService({

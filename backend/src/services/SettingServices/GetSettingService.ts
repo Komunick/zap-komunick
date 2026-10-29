@@ -1,10 +1,12 @@
 import AppError from "../../errors/AppError";
 import Setting from "../../models/Setting";
 import { isCredentialKey } from "../../helpers/CredentialRules";
+import { loadTicketViewer } from "../TicketServices/AuthorizeTicketContextService";
 
 interface Request {
   key: string;
   user: {
+    id?: string | number;
     profile: string;
     companyId: number;
   };
@@ -15,6 +17,7 @@ interface Request {
 export const safeSettingsKeys = {
   aiAssistantEnabled: "disabled",
   acessoriasEnabled: "disabled",
+  sciEnabled: "disabled",
   groupsTab: "disabled",
   CheckMsgIsGroup: "disabled",
   soundGroupNotifications: "disabled",
@@ -32,6 +35,20 @@ export const GetSettingService = async ({
   }
 
   if (isCredentialKey(key)) return "";
+
+  // P3 status is metadata of the current company, never a grant from an old JWT.
+  if (key === "sciEnabled") {
+    if (user.id === undefined) throw new AppError("ERR_NO_PERMISSION", 403);
+    await loadTicketViewer({ userId: user.id, companyId: user.companyId });
+    const rows = await Setting.findAll({
+      where: { companyId: user.companyId, key },
+      attributes: ["value"],
+      logging: false
+    });
+    return rows.length > 0 && rows.every(row => row.value === "enabled")
+      ? "enabled"
+      : "disabled";
+  }
 
   const setting = await Setting.findOne({
     where: {

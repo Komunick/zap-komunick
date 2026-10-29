@@ -298,3 +298,27 @@ Em 29/10/2026, o acesso confirmado à ARM07 é `170.9.14.1`, enquanto os registr
 AAAA de cada domínio antes de habilitar seu fragmento Caddy; inicialmente usar Somente DNS. Preparar os
 candidatos não altera esses registros nem ativa os domínios. As etapas de ingresso, validação, backup e recuperação
 estão no README; a ativação pública exige uma solicitação posterior.
+
+## 14. Painel SCI simulado — RF-024
+
+O P3 está definido em [specs/p3-sci-consultas.md](specs/p3-sci-consultas.md). Usa somente catálogo/publicações fictícios;
+não precisa de chave, licença, SCI WEB, SDK, documento ou acesso de rede. Campos são contrato interno de simulação,
+sem promessa de compatibilidade com Report/Atendimento. Não marcar leitura nem importar documentos reais nesse teste.
+
+Começa desligado: em ambiente descartável de desenvolvimento, definir `SCI_MODE=mock` no backend e habilitar
+`sciEnabled` nas configurações da empresa como administrador. Modo `disabled`, desconhecido ou flag ausente/divergente
+recusa consultas. P1/P2 seguem suas flags próprias e não são habilitados pela SCI. Os perfis ARM07 mantêm SCI disabled;
+esta entrega não publica a revisão nova nos ambientes existentes e não reconecta WhatsApp.
+
+A consulta parte do atendimento autorizado e exige cliente SCI vinculado explicitamente ao contato. Administração
+confirma vínculo local; IDs iguais em Acessórias/SCI não compartilham autorização. Publicações mostram somente
+metadados paginados, origem/horários e aviso stale. Dados ficam na memória do painel, sem links ou download.
+
+Para desativar, desligar flag ou `SCI_MODE`. A interface oculta consultas e descarta dados; DELETE
+`/tickets/:ticketId/sci/links/:externalClientId` ainda permite revogar vínculo SCI conhecido à administração autorizada,
+sem catálogo/rede. Não há migração: manter ContactExternalClientLinks ao recuar preserva ambos os namespaces.
+
+Validar com duas empresas/contatos/setores e IDs fictícios repetidos entre fornecedores: autorização, seleção,
+idempotência, paginação, vazio/stale, falhas e resposta tardia. Conferir UI nos dois temas e desktop/celular;
+preservar snapshots de negócio/rascunho/credenciais e limpar somente fixtures rastreadas. Não usar /srv/superchat*
+ou banco, master e sessão existentes para QA. Não executar o npm test com seus hooks de undo sobre base compartilhada.

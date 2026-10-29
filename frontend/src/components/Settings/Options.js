@@ -29,6 +29,7 @@ import { getBackendURL } from "../../services/config";
 import CompanyCredentialSettings from "../CompanyCredentialSettings";
 import AssistantSettings from "../AssistantSettings";
 import AcessoriasSettings from "../AcessoriasSettings";
+import SciSettings from "../SciSettings";
 
 const useStyles = makeStyles(theme => ({
   container: {
@@ -1366,6 +1367,7 @@ export default function Options(props) {
           <Grid xs={12} item>
             <AssistantSettings settings={settings} />
             <AcessoriasSettings settings={settings} />
+            <SciSettings settings={settings} />
           </Grid>
         )}
 

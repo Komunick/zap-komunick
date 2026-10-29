@@ -69,6 +69,8 @@ services:
       - AI_ASSISTANT_MODE=${AI_ASSISTANT_MODE:-disabled}
       # P2 only offers a local mock; no supplier API is connected.
       - ACESSORIAS_MODE=${ACESSORIAS_MODE:-disabled}
+      # P3 SCI: explicit local simulation only; no real supplier or document access.
+      - SCI_MODE=${SCI_MODE:-disabled}
     command: >
       sh -c "npm ci --no-audit --no-fund
       && npm run generate:i18nkeys

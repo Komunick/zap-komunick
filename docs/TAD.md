@@ -170,7 +170,8 @@ Stitch entra como tokens: `sidebar*` (menu preto, igual nos dois temas), `accent
 **Integrações:** nenhuma nova. O envio continua pelo WhatsApp do Ticketz (Baileys).
 
 **Proposta da rodada 3:** ver [`docs/specs/rodada-3-ia-integracoes.md`](specs/rodada-3-ia-integracoes.md) para o plano
-de IA assistida e Acessórias/SCI, ainda sem implementação ou conexão. O código herdado já contém transcrição por
+de IA assistida e Acessórias/SCI. Os recortes P0 e P1/P2/P3 simulados são definidos separadamente abaixo;
+conexões reais continuam propostas. O código herdado já contém transcrição por
 OpenAI/Groq. Antes de novas chaves, o plano prevê separar credenciais de `Settings` e impedir sua serialização em
 `Company.settings`, além de conferir autorização do contexto e a proteção de documentos externos.
 O recorte P0 autorizado separadamente está definido no PRD RF-020 e em
@@ -490,6 +491,30 @@ Runners usam somente fixtures rastreadas e não enviam mensagens. Resultados exe
 
 **Recuperação:** voltar o código preserva todos os arquivos e registros; não há DDL nem migração/remoção de mídia.
 Configuração e limites estão em DEPLOY, seção 12. Nenhuma mudança de credencial, IA ou fornecedor faz parte do percurso.
+
+### Publicações SCI simuladas — RF-024
+
+O P3 de `docs/specs/p3-sci-consultas.md` segue autorização P0 e usa exclusivamente provedor local com contrato
+interno de metadados. `SCI_MODE=mock` e flag administrativa `sciEnabled=enabled` são condições independentes, ambas
+inicialmente desligadas; modo desconhecido e duplicatas divergentes falham fechados. O compose ARM07 fixa SCI disabled,
+e seu wrapper recusa mock/modo ausente nesse perfil operacional. Não existe adaptador de rede, leitura de tokens,
+SDK/MCP, fila, download, sincronização, marcação de leitura ou consulta pela IA neste percurso.
+
+As rotas `/tickets/:ticketId/sci` usam sessão/compliance e o usuário atual do banco. Serviços conferem empresa,
+contato, setor, perfil e versão do vínculo antes/depois de awaits; a finalização das leituras e o CRUD local
+serializam o contato e compartilham a transação com a autorização. A espera do provedor fica fora do bloqueio. `ContactExternalClientLinks` existente guarda provider fixo `sci`, preservando unicidade
+empresa/contato/provedor/ID e todo vínculo Acessórias. Não há DDL ou migração nova. Remover vínculo SCI conhecido
+continua permitido à administração autorizada pela API off, sem consultar catálogo; o painel de consulta fica oculto.
+
+O frontend oferece seleção explícita, confirmação administrativa e paginação de metadados fictícios, com origem,
+consulta/atualização e estado stale. Valida contratos, cancela/ignora respostas tardias e descarta resultados após
+revogação/troca de contexto. Nenhum resultado vai a storage; auditoria/eventos e erros não contêm publicações/cadastro.
+Regras de telemetria cobrem SCI inclusive em paths codificados ou JSON inválido, antes do Sentry/handler genérico.
+
+A validação prevista cobre disabled/mock, duplicatas de flag, duas empresas/provedores com IDs repetidos,
+revogação entre awaits e CRUD idempotente; paginação/vazio/stale/falhas e UI em claro/escuro e desktop/celular.
+Fixtures são rastreadas em projeto descartável sem saída; snapshots de negócio, rascunho e credenciais devem coincidir.
+Resultados executados e limitações ficam no PR. Recuar o código preserva a tabela e seus vínculos, sem undo destrutivo.
 
 ### Ambientes preparados para ARM07
 

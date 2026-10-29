@@ -31,6 +31,7 @@ x-backend: &backend
     REDIS_OPT_LIMITER_DURATION: "3000"
     AI_ASSISTANT_MODE: disabled
     ACESSORIAS_MODE: disabled
+    SCI_MODE: disabled
     SOCKET_ADMIN: "false"
     SENTRY_DSN: ""
     TZ: America/Sao_Paulo
