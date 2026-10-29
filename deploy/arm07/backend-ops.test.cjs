@@ -7,7 +7,7 @@ const base = () => ({
   ZK_ENVIRONMENT: "production",
   CREDENTIALS_MASTER_KEY: Buffer.alloc(32, 19).toString("base64"),
   DB_PASS: "ARM07-fictional-database-password-123456789",
-  NODE_ENV: "production", AI_ASSISTANT_MODE: "disabled", ACESSORIAS_MODE: "disabled",
+  NODE_ENV: "production", AI_ASSISTANT_MODE: "disabled", ACESSORIAS_MODE: "disabled", SCI_MODE: "disabled",
   SOCKET_ADMIN: "false", FRONTEND_URL: "https://superchat.komunick.com",
   BACKEND_URL: "https://superchat.komunick.com/backend", TRUST_PROXY: "172.29.252.10/32"
 });
@@ -43,10 +43,16 @@ test("refuses a weak or multiline database secret without echoing it", () => {
   }
 });
 test("refuses enabled integrations or socket administration", () => {
-  for (const key of ["AI_ASSISTANT_MODE", "ACESSORIAS_MODE", "SOCKET_ADMIN"]) {
+  for (const key of ["AI_ASSISTANT_MODE", "ACESSORIAS_MODE", "SCI_MODE", "SOCKET_ADMIN"]) {
     assert.throws(() => validateRuntimeEnv({ ...base(), [key]: "true" }), { message: "ARM07_RUNTIME_MODE_INVALID" });
   }
 });
+test("SCI cannot silently run in ARM07 without an explicit disabled mode", () => {
+  for (const mode of [undefined, "mock", "external", "disabled\n"]) {
+    assert.throws(() => validateRuntimeEnv({ ...base(), SCI_MODE: mode }), { message: "ARM07_RUNTIME_MODE_INVALID" });
+  }
+});
+
 test("bootstrap password cannot enter the runtime or migration environment", () => {
   assert.throws(() => validateRuntimeEnv({ ...base(), ...admin() }), { message: "ARM07_RUNTIME_BOOTSTRAP_SECRET_FORBIDDEN" });
   assert.doesNotThrow(() => validateRuntimeEnv({ ...base(), ...admin() }, true));

@@ -41,7 +41,8 @@ function validateRuntimeEnv(env, allowBootstrapSecret = false) {
     fail("ARM07_DATABASE_SECRET_INVALID");
   }
   if (env.NODE_ENV !== "production" || env.AI_ASSISTANT_MODE !== "disabled" ||
-      env.ACESSORIAS_MODE !== "disabled" || env.SOCKET_ADMIN !== "false") {
+      env.ACESSORIAS_MODE !== "disabled" || env.SCI_MODE !== "disabled" ||
+      env.SOCKET_ADMIN !== "false") {
     fail("ARM07_RUNTIME_MODE_INVALID");
   }
   if (!allowBootstrapSecret && env.ADMIN_PASSWORD) fail("ARM07_RUNTIME_BOOTSTRAP_SECRET_FORBIDDEN");

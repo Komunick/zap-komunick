@@ -23,6 +23,7 @@ import { TagsContainer } from "../TagsContainer";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import useSettings from "../../hooks/useSettings";
 import AcessoriasPanel from "../AcessoriasPanel";
+import SciPanel from "../SciPanel";
 import AttachmentsPanel from "../AttachmentsPanel";
 
 const drawerWidth = 320;
@@ -294,12 +295,20 @@ const Ticket = () => {
             Number.isSafeInteger(Number(ticket.id)) &&
             Number(ticket.id) > 0 &&
             ticket.uuid === ticketId && (
+              <>
               <AcessoriasPanel
                 key={`${ticket.id}:${ticket.contactId}:${ticket.queueId}:${ticket.userId}:${ticket.status}`}
                 ticketId={ticket.id}
                 contactId={ticket.contactId}
                 companyId={ticket.companyId}
               />
+                <SciPanel
+                  contextKey={`${ticket.id}:${ticket.contactId}:${ticket.queueId}:${ticket.userId}:${ticket.status}`}
+                  ticketId={ticket.id}
+                  contactId={ticket.contactId}
+                  companyId={ticket.companyId}
+                />
+              </>
             )}
           <TagsContainer
             ticket={["ticket", "both"].includes(tagsMode) && ticket}

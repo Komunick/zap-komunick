@@ -2,6 +2,7 @@ import { Router } from "express";
 import credentialRoutes from "./credentialRoutes";
 import assistantRoutes from "./assistantRoutes";
 import acessoriasRoutes from "./acessoriasRoutes";
+import sciRoutes from "./sciRoutes";
 import attachmentRoutes from "./attachmentRoutes";
 
 import userRoutes from "./userRoutes";
@@ -89,6 +90,7 @@ routes.use(closeReasonRoutes);
 routes.use(credentialRoutes);
 routes.use(assistantRoutes);
 routes.use(acessoriasRoutes);
+routes.use(sciRoutes);
 routes.use(attachmentRoutes);
 
 export default routes;

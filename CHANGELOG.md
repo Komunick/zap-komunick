@@ -6,6 +6,10 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Adicionado
 
+- Painel SCI simulado com clientes explicitamente vinculados e metadados de publicações paginados, origem e
+  atualização. Começa desligado por empresa/servidor, mantém vínculos separados do Acessórias e exige confirmação
+  administrativa para alterações locais. Não usa API/token real, download de documento ou marcação de leitura.
+
 - Preparação de dois ambientes ARM64 na ARM07: superchatdev.komunick.com para desenvolvimento e
   superchat.komunick.com para produção. Cada um tem projeto, banco, Redis, arquivos e segredos próprios,
   frontend por hash para seu domínio e bootstrap separado. Ambos mantêm WhatsApp e fornecedores desligados;

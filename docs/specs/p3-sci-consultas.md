@@ -27,7 +27,8 @@ compatibilidade com Report 24h, Report Atendimento ou qualquer API real.
   Não presume vínculo por nome, telefone, documento ou conteúdo de mensagem.
 - Administrador consulta catálogo fictício e confirma inclusão/remoção do vínculo
   local. Atendente consulta só os vinculados; não gerencia catálogo ou vínculos.
-  Remoção administrativa local continua possível com recurso desligado.
+  A API permite remoção administrativa de vínculo local conhecido com consulta desligada;
+  nesse estado a interface não abre catálogo/publicações.
 - Reutiliza ContactExternalClientLinks com provider fixo `sci`; não compartilha
   vínculos com `acessorias`, mesmo com IDs externos iguais. Não requer migração de dados.
 - Mostra cadastro fictício e publicações com id, título, categoria, competência

@@ -491,6 +491,30 @@ Runners usam somente fixtures rastreadas e não enviam mensagens. Resultados exe
 **Recuperação:** voltar o código preserva todos os arquivos e registros; não há DDL nem migração/remoção de mídia.
 Configuração e limites estão em DEPLOY, seção 12. Nenhuma mudança de credencial, IA ou fornecedor faz parte do percurso.
 
+### Publicações SCI simuladas — RF-024
+
+O P3 de `docs/specs/p3-sci-consultas.md` segue autorização P0 e usa exclusivamente provedor local com contrato
+interno de metadados. `SCI_MODE=mock` e flag administrativa `sciEnabled=enabled` são condições independentes, ambas
+inicialmente desligadas; modo desconhecido e duplicatas divergentes falham fechados. O compose ARM07 fixa SCI disabled,
+e seu wrapper recusa mock/modo ausente nesse perfil operacional. Não existe adaptador de rede, leitura de tokens,
+SDK/MCP, fila, download, sincronização, marcação de leitura ou consulta pela IA neste percurso.
+
+As rotas `/tickets/:ticketId/sci` usam sessão/compliance e o usuário atual do banco. Serviços conferem empresa,
+contato, setor, perfil e versão do vínculo antes/depois de awaits; CRUD local serializa o contato e compartilha a
+transação com a autorização. `ContactExternalClientLinks` existente guarda provider fixo `sci`, preservando unicidade
+empresa/contato/provedor/ID e todo vínculo Acessórias. Não há DDL ou migração nova. Remover vínculo SCI conhecido
+continua permitido à administração autorizada pela API off, sem consultar catálogo; o painel de consulta fica oculto.
+
+O frontend oferece seleção explícita, confirmação administrativa e paginação de metadados fictícios, com origem,
+consulta/atualização e estado stale. Valida contratos, cancela/ignora respostas tardias e descarta resultados após
+revogação/troca de contexto. Nenhum resultado vai a storage; auditoria/eventos e erros não contêm publicações/cadastro.
+Regras de telemetria cobrem SCI inclusive em paths codificados ou JSON inválido, antes do Sentry/handler genérico.
+
+A validação prevista cobre disabled/mock, duplicatas de flag, duas empresas/provedores com IDs repetidos,
+revogação entre awaits e CRUD idempotente; paginação/vazio/stale/falhas e UI em claro/escuro e desktop/celular.
+Fixtures são rastreadas em projeto descartável sem saída; snapshots de negócio, rascunho e credenciais devem coincidir.
+Resultados executados e limitações ficam no PR. Recuar o código preserva a tabela e seus vínculos, sem undo destrutivo.
+
 ### Ambientes preparados para ARM07
 
 O pacote `deploy/arm07/` define dois perfis fechados: `development`, domínio

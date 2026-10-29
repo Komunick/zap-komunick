@@ -9,7 +9,9 @@ O pedido posterior de P1 com mocks e dados fictícios está delimitado em
 [P1 — resumos e sugestões com revisão humana](p1-assistente-revisao.md); isso não autoriza provedor real ou conectores.
 As demais etapas e conexões reais continuam propostas.
 O P2 solicitado depois foi delimitado como [consultas Acessórias com mocks e vínculo explícito](p2-acessorias-consultas.md),
-sem acesso ao fornecedor real; as demais integrações/sincronização continuam propostas.
+sem acesso ao fornecedor real. O P3 solicitado em 29/10/2026 foi delimitado como
+[painel SCI com publicações fictícias](p3-sci-consultas.md), sem escolher ou conectar um módulo real;
+as conexões reais e sincronização continuam propostas.
 
 O pedido desta etapa é preparar o plano e identificar credenciais/acessos. Ele não autoriza chamadas com dados reais,
 contratação, publicação, envio de mensagens ou operações de escrita nos fornecedores. Não há prazo, orçamento ou modelo

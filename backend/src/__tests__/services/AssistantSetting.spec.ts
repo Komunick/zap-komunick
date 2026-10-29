@@ -128,3 +128,36 @@ it("refuses unknown Acessórias flag values before persistence", async () => {
   });
   expect(Setting.findOrCreate).not.toHaveBeenCalled();
 });
+
+it.each(["enabled", "disabled"])(
+  "converges duplicate SCI flags to %s without changing another company or P1/P2",
+  async value => {
+    const rows = [
+      row(1, 10, "sciEnabled", "enabled"),
+      row(2, 10, "sciEnabled", "disabled"),
+      row(3, 20, "sciEnabled", "disabled"),
+      row(4, 10, "aiAssistantEnabled", "disabled"),
+      row(5, 10, "acessoriasEnabled", "disabled")
+    ];
+    (Setting.findOrCreate as jest.Mock).mockResolvedValue([rows[0], false]);
+    (Setting.update as jest.Mock).mockImplementation(async (change, options) => {
+      rows
+        .filter(setting => setting.companyId === options.where.companyId && setting.key === options.where.key)
+        .forEach(setting => { setting.value = change.value; });
+    });
+    await UpdateSettingService({ key: "sciEnabled", companyId: 10, value });
+    expect(rows.map(setting => setting.value)).toEqual([value, value, "disabled", "disabled", "disabled"]);
+    expect(Setting.update).toHaveBeenLastCalledWith(
+      { value },
+      { where: { companyId: 10, key: "sciEnabled" } }
+    );
+  }
+);
+
+it.each(["real", "", "true", "MOCK"])("refuses invalid SCI flag %s before persistence", async value => {
+  (Setting.findOrCreate as jest.Mock).mockClear();
+  await expect(UpdateSettingService({ key: "sciEnabled", companyId: 10, value })).rejects.toMatchObject({
+    message: "ERR_SCI_INVALID_REQUEST", statusCode: 400
+  });
+  expect(Setting.findOrCreate).not.toHaveBeenCalled();
+});

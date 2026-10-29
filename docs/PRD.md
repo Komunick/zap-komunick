@@ -1,7 +1,7 @@
 # PRD — Zap Komunick
 
 **Komunick Inteligência e Tecnologia**
-**Responsável:** Jailson (Komunick) · **Atualizado em:** 27/10/2026
+**Responsável:** Jailson (Komunick) · **Atualizado em:** 29/10/2026
 **Fonte oficial:** `docs/PRD.md` no repositório
 **Validado por:** Pendente
 
@@ -50,6 +50,8 @@ O [P1 de resumos e sugestões](specs/p1-assistente-revisao.md) foi autorizado de
 fictícios (RF-021). Esse percurso não habilita um modelo real nem os conectores.
 O [P2 de consultas Acessórias](specs/p2-acessorias-consultas.md) também foi autorizado com mocks e dados fictícios
 (RF-022), sem conexão ao fornecedor real.
+O P3 SCI foi autorizado em 29/10/2026 somente como [painel de publicações simuladas](specs/p3-sci-consultas.md)
+(RF-024); produto/módulo e contrato real continuam pendentes, sem download ou marcação de leitura no fornecedor.
 
 **Fluxo principal:** o cliente escreve → o atendimento entra na fila (ou direto no responsável da carteira) → o painel
 de SLA mostra a espera e destaca o que passou do prazo → o atendente responde e move o atendimento pelas colunas do
@@ -695,6 +697,29 @@ no cliente errado. Falha ou dado desatualizado fica explícito, sem confirmaçã
 pela área de arquivos, muda página/ampliação, reproduz/pausa e baixa por ação explícita, em desktop/celular e ambos os
 temas. Outra empresa/cliente/setor proibido não recebe metadados nem bytes pela nova API, mesmo com ID/cursor conhecido.
 Troca de contexto durante carga encerra o visualizador anterior; falha não abre silenciosamente o arquivo legado.
+
+### RF-024 — Clientes e publicações SCI (simulação)
+
+**Pedido (29/10/2026):** painel SCI com mocks e dados fictícios, conforme
+[especificação](specs/p3-sci-consultas.md). Contrato interno de metadados; não representa integração a um módulo real.
+
+- Começa desligado e exige `SCI_MODE=mock` e `sciEnabled=enabled` na empresa. Administrador gerencia a flag;
+  ausência, valor desconhecido e duplicatas divergentes recusam consulta. P1/P2 continuam independentes.
+- No atendimento autorizado, mostra somente clientes SCI explicitamente vinculados ao contato e exige seleção.
+  Administrador consulta catálogo fictício e confirma vínculo local; atendente não gerencia catálogo/vínculos.
+  O namespace SCI é separado do Acessórias mesmo quando IDs externos coincidem.
+- Lista publicações fictícias com título, categoria, competência e data, em páginas de cinco itens, com origem e
+  horários da fonte/consulta. Vazio, falha, timeout, limite e desatualização têm estados distintos. Não há URLs,
+  conteúdo/download de documento, prazo fiscal confirmado nem marcação de leitura.
+- Mudanças de contexto, acesso, flag e vínculo invalidam resultados. Consultas não alteram rascunho, leitura, SLA,
+  mensagens, notas ou credenciais. Conteúdo fica em memória; auditoria/eventos contêm só ação/IDs/metadados mínimos.
+- A API permite revogar um vínculo local SCI conhecido mesmo com a consulta desligada, sem chamar provedor;
+  nessa condição a interface oculta o painel de consulta. Não exclui nada em fornecedor nem no namespace Acessórias.
+
+**Aceite:** duas empresas e dois fornecedores com IDs externos iguais mantêm dados/vínculos separados. Selecionar
+um de vários clientes mostra somente suas publicações, com paginação correta. Resposta atrasada após remoção/recriação
+ou troca de atendimento é recusada/descartada. Interface funciona em ambos os temas e desktop/celular. Testes usam
+somente dados fictícios, sem acesso externo, arquivos ou envio e preservam os estados anteriores do atendimento.
 
 ## 4. Restrições e cuidados
 
