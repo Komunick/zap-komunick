@@ -1,0 +1,158 @@
+# ARM07 candidate only. Images are prepared elsewhere; this file never builds.
+# Keep the host Caddy unchanged until the separately reviewed activation.
+name: ${COMPOSE_PROJECT_NAME:?defina o projeto exclusivo do ambiente}
+
+x-backend: &backend
+  image: ${ZK_BACKEND_IMAGE:?defina ZK_BACKEND_IMAGE com identificador imutavel}
+  platform: linux/arm64
+  env_file:
+    - path: ./.env-backend
+      required: true
+  environment:
+    NODE_ENV: production
+    PORT: "3000"
+    ZK_REVISION: ${ZK_REVISION:?defina ZK_REVISION}
+    ZK_ENVIRONMENT: ${ZK_ENVIRONMENT:?defina production ou development}
+    BACKEND_URL: ${ZK_PUBLIC_ORIGIN:?defina a origem do ambiente}/backend
+    FRONTEND_URL: ${ZK_PUBLIC_ORIGIN:?defina a origem do ambiente}
+    FRONTEND_CUSTOM_URL: ""
+    FRONTEND_URL_REGEX: ""
+    TRUST_PROXY: ${ZK_FRONTEND_INTERNAL_IP:?defina o proxy exclusivo do ambiente}/32
+    DB_DIALECT: postgres
+    DB_HOST: postgres
+    DB_PORT: "5432"
+    DB_USER: ${POSTGRES_USER:-ticketz}
+    DB_NAME: ${POSTGRES_DB:-ticketz}
+    DB_PASS: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}
+    DB_MAX_CONNECTIONS: "10"
+    DB_MIN_CONNECTIONS: "0"
+    REDIS_URI: redis://redis:6379
+    REDIS_OPT_LIMITER_MAX: "1"
+    REDIS_OPT_LIMITER_DURATION: "3000"
+    AI_ASSISTANT_MODE: disabled
+    ACESSORIAS_MODE: disabled
+    SOCKET_ADMIN: "false"
+    SENTRY_DSN: ""
+    TZ: America/Sao_Paulo
+    LOG_LEVEL: info
+  volumes:
+    - backend_public:/usr/src/app/public
+    - backend_private:/usr/src/app/private
+  networks:
+    internal:
+      ipv4_address: ${ZK_BACKEND_INTERNAL_IP:?defina ZK_BACKEND_INTERNAL_IP}
+  read_only: true
+  tmpfs:
+    - /tmp:rw,nosuid,noexec,size=128m
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+
+services:
+  postgres:
+    image: postgres:16-alpine@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
+    platform: linux/arm64
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ticketz}
+      POSTGRES_DB: ${POSTGRES_DB:-ticketz}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}
+      TZ: America/Sao_Paulo
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    networks:
+      internal:
+        ipv4_address: ${ZK_POSTGRES_INTERNAL_IP:?defina ZK_POSTGRES_INTERNAL_IP}
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 3s
+      retries: 24
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine@sha256:6ba19c50b56777f5c11c58eff8ddb69d0d5f27ba131cffb63f180ccfd43c66af
+    platform: linux/arm64
+    command: [redis-server, --appendonly, "yes"]
+    volumes: [redis_data:/data]
+    networks:
+      internal:
+        ipv4_address: ${ZK_REDIS_INTERNAL_IP:?defina ZK_REDIS_INTERNAL_IP}
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 24
+    restart: unless-stopped
+
+  backend:
+    <<: *backend
+    command: [run]
+    restart: unless-stopped
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/',{signal:AbortSignal.timeout(3000)}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 30s
+
+  frontend:
+    image: ${ZK_FRONTEND_IMAGE:?defina ZK_FRONTEND_IMAGE com identificador imutavel}
+    platform: linux/arm64
+    ports: ["127.0.0.1:${ZK_HTTP_PORT:?defina ZK_HTTP_PORT}:8080"]
+    networks:
+      edge:
+        ipv4_address: ${ZK_FRONTEND_EDGE_IP:?defina ZK_FRONTEND_EDGE_IP}
+      internal:
+        ipv4_address: ${ZK_FRONTEND_INTERNAL_IP:?defina ZK_FRONTEND_INTERNAL_IP}
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,noexec,size=64m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    depends_on:
+      backend: {condition: service_healthy}
+    restart: unless-stopped
+
+  migrate:
+    <<: *backend
+    profiles: [ops]
+    command: [migrate]
+    networks:
+      internal: {}
+    depends_on:
+      postgres: {condition: service_healthy}
+    restart: "no"
+
+  bootstrap:
+    <<: *backend
+    profiles: [ops]
+    command: [bootstrap]
+    networks:
+      internal: {}
+    env_file:
+      - path: ./.env-backend
+        required: true
+      - path: ./.env-bootstrap
+        required: false
+    depends_on:
+      postgres: {condition: service_healthy}
+    restart: "no"
+
+networks:
+  edge:
+    ipam:
+      config:
+        - subnet: ${ZK_EDGE_SUBNET:?defina ZK_EDGE_SUBNET}
+          gateway: ${ZK_EDGE_GATEWAY:?defina ZK_EDGE_GATEWAY}
+  internal:
+    internal: true
+    ipam:
+      config:
+        - subnet: ${ZK_INTERNAL_SUBNET:?defina ZK_INTERNAL_SUBNET}
+
+volumes:
+  postgres_data:
+  redis_data:
+  backend_public:
+  backend_private:
