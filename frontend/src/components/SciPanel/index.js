@@ -49,43 +49,112 @@ const useStyles = makeStyles(theme => ({
 
 // P3 uses an internal metadata-only simulation contract. Never accept document
 // bodies, arbitrary links or provider fields in the panel's memory.
-const object = value => !!value && typeof value === "object" && !Array.isArray(value);
-const exactKeys = (value, keys) => object(value) && Object.keys(value).sort().join(",") === [...keys].sort().join(",");
-const text = (value, max) => typeof value === "string" && !!value.trim() && value.length <= max;
-const validId = value => typeof value === "string" && /^[a-z0-9][a-z0-9_-]{0,63}$/.test(value);
-const validIso = value => typeof value === "string" && Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value;
+const object = value =>
+  !!value && typeof value === "object" && !Array.isArray(value);
+const exactKeys = (value, keys) =>
+  object(value) &&
+  Object.keys(value).sort().join(",") === [...keys].sort().join(",");
+const text = (value, max) =>
+  typeof value === "string" && !!value.trim() && value.length <= max;
+const validId = value =>
+  typeof value === "string" && /^[a-z0-9][a-z0-9_-]{0,63}$/.test(value);
+const validIso = value =>
+  typeof value === "string" &&
+  Number.isFinite(Date.parse(value)) &&
+  new Date(value).toISOString() === value;
 const validClient = client =>
   exactKeys(client, ["externalClientId", "name", "documentLabel"]) &&
-  validId(client.externalClientId) && text(client.name, 160) && text(client.documentLabel, 120);
+  validId(client.externalClientId) &&
+  text(client.name, 160) &&
+  text(client.documentLabel, 120);
 const validSource = source =>
   exactKeys(source, ["provider", "label", "fetchedAt", "updatedAt", "stale"]) &&
-  source.provider === "sci" && source.label === "Simulação local SCI" &&
-  validIso(source.fetchedAt) && validIso(source.updatedAt) &&
-  Date.parse(source.updatedAt) <= Date.parse(source.fetchedAt) && typeof source.stale === "boolean";
+  source.provider === "sci" &&
+  source.label === "Simulação local SCI" &&
+  validIso(source.fetchedAt) &&
+  validIso(source.updatedAt) &&
+  Date.parse(source.updatedAt) <= Date.parse(source.fetchedAt) &&
+  typeof source.stale === "boolean";
 const mockEnvelope = data => data?.mode === "mock" && data.simulated === true;
 const validList = data =>
-  exactKeys(data, ["mode", "simulated", "clients", "source"]) && mockEnvelope(data) &&
-  Array.isArray(data.clients) && data.clients.length <= 20 && data.clients.every(validClient) &&
-  new Set(data.clients.map(client => client.externalClientId)).size === data.clients.length && validSource(data.source);
+  exactKeys(data, ["mode", "simulated", "clients", "source"]) &&
+  mockEnvelope(data) &&
+  Array.isArray(data.clients) &&
+  data.clients.length <= 20 &&
+  data.clients.every(validClient) &&
+  new Set(data.clients.map(client => client.externalClientId)).size ===
+    data.clients.length &&
+  validSource(data.source);
 const validStatus = data =>
-  exactKeys(data, ["enabled", "mode", "simulated", "reason", "limits", "canManageLinks"]) &&
-  typeof data.enabled === "boolean" && ["disabled", "mock"].includes(data.mode) && data.simulated === true &&
-  (data.enabled ? data.mode === "mock" && data.reason === null :
-    (data.mode === "disabled" && data.reason === "SERVER_DISABLED") || (data.mode === "mock" && data.reason === "COMPANY_DISABLED")) &&
-  typeof data.canManageLinks === "boolean" && exactKeys(data.limits, ["pageSize", "maxPage"]) &&
-  data.limits.pageSize === 5 && data.limits.maxPage === 100;
+  exactKeys(data, [
+    "enabled",
+    "mode",
+    "simulated",
+    "reason",
+    "limits",
+    "canManageLinks"
+  ]) &&
+  typeof data.enabled === "boolean" &&
+  ["disabled", "mock"].includes(data.mode) &&
+  data.simulated === true &&
+  (data.enabled
+    ? data.mode === "mock" && data.reason === null
+    : (data.mode === "disabled" && data.reason === "SERVER_DISABLED") ||
+      (data.mode === "mock" && data.reason === "COMPANY_DISABLED")) &&
+  typeof data.canManageLinks === "boolean" &&
+  exactKeys(data.limits, ["pageSize", "maxPage"]) &&
+  data.limits.pageSize === 5 &&
+  data.limits.maxPage === 100;
 const validDetail = (data, id, page) => {
-  if (!exactKeys(data, ["mode", "simulated", "client", "publications", "pagination", "source"]) ||
-    !mockEnvelope(data) || !validClient(data.client) || data.client.externalClientId !== id || !validSource(data.source) ||
-    !exactKeys(data.pagination, ["page", "pageSize", "total", "hasMore"]) || data.pagination.page !== page ||
-    data.pagination.pageSize !== 5 || !Number.isSafeInteger(data.pagination.total) || data.pagination.total < 0 ||
-    data.pagination.total > 500 || typeof data.pagination.hasMore !== "boolean" || !Array.isArray(data.publications)) return false;
-  const expectedCount = Math.min(5, Math.max(0, data.pagination.total - (page - 1) * 5));
-  return data.publications.length === expectedCount && data.pagination.hasMore === (page * 5 < data.pagination.total) &&
-    data.publications.every(item => exactKeys(item, ["id", "title", "categoryLabel", "periodLabel", "publishedAt"]) &&
-      text(item.id, 100) && text(item.title, 200) && text(item.categoryLabel, 100) && text(item.periodLabel, 100) &&
-      validIso(item.publishedAt) && Date.parse(item.publishedAt) <= Date.parse(data.source.fetchedAt)) &&
-    new Set(data.publications.map(item => item.id)).size === data.publications.length;
+  if (
+    !exactKeys(data, [
+      "mode",
+      "simulated",
+      "client",
+      "publications",
+      "pagination",
+      "source"
+    ]) ||
+    !mockEnvelope(data) ||
+    !validClient(data.client) ||
+    data.client.externalClientId !== id ||
+    !validSource(data.source) ||
+    !exactKeys(data.pagination, ["page", "pageSize", "total", "hasMore"]) ||
+    data.pagination.page !== page ||
+    data.pagination.pageSize !== 5 ||
+    !Number.isSafeInteger(data.pagination.total) ||
+    data.pagination.total < 0 ||
+    data.pagination.total > 500 ||
+    typeof data.pagination.hasMore !== "boolean" ||
+    !Array.isArray(data.publications)
+  )
+    return false;
+  const expectedCount = Math.min(
+    5,
+    Math.max(0, data.pagination.total - (page - 1) * 5)
+  );
+  return (
+    data.publications.length === expectedCount &&
+    data.pagination.hasMore === page * 5 < data.pagination.total &&
+    data.publications.every(
+      item =>
+        exactKeys(item, [
+          "id",
+          "title",
+          "categoryLabel",
+          "periodLabel",
+          "publishedAt"
+        ]) &&
+        text(item.id, 100) &&
+        text(item.title, 200) &&
+        text(item.categoryLabel, 100) &&
+        text(item.periodLabel, 100) &&
+        validIso(item.publishedAt) &&
+        Date.parse(item.publishedAt) <= Date.parse(data.source.fetchedAt)
+    ) &&
+    new Set(data.publications.map(item => item.id)).size ===
+      data.publications.length
+  );
 };
 const fail = code => {
   const error = new Error(code);
@@ -174,15 +243,34 @@ function Panel({ ticketId, contactId, companyId }) {
       if (active()) {
         setDetail(null);
         const code = failure?.response?.data?.error || failure?.code;
-        if (["ERR_NO_PERMISSION", "ERR_NO_TICKET_FOUND", "ERR_SCI_CLIENT_NOT_LINKED", "ERR_SCI_CONTEXT_CHANGED", "ERR_SCI_DISABLED"].includes(code)) {
+        if (
+          [
+            "ERR_NO_PERMISSION",
+            "ERR_NO_TICKET_FOUND",
+            "ERR_SCI_CLIENT_NOT_LINKED",
+            "ERR_SCI_CONTEXT_CHANGED",
+            "ERR_SCI_DISABLED"
+          ].includes(code)
+        ) {
           clearResults();
           setLinked([]);
           setLinkedSource(null);
         }
-        if (["ERR_NO_PERMISSION", "ERR_NO_TICKET_FOUND"].includes(code)) setStatus(null);
+        if (["ERR_NO_PERMISSION", "ERR_NO_TICKET_FOUND"].includes(code))
+          setStatus(null);
         setError(errorText(failure));
         if (code === "ERR_SCI_DISABLED")
-          setStatus(previous => previous && { ...previous, enabled: false, reason: previous.mode === "disabled" ? "SERVER_DISABLED" : "COMPANY_DISABLED" });
+          setStatus(
+            previous =>
+              previous && {
+                ...previous,
+                enabled: false,
+                reason:
+                  previous.mode === "disabled"
+                    ? "SERVER_DISABLED"
+                    : "COMPANY_DISABLED"
+              }
+          );
       }
     } finally {
       if (active()) {
@@ -356,7 +444,11 @@ function Panel({ ticketId, contactId, companyId }) {
           data?.externalClientId !== client.externalClientId ||
           data.linked !== (kind === "link") ||
           typeof data[kind === "link" ? "created" : "deleted"] !== "boolean" ||
-          !exactKeys(data, ["externalClientId", "linked", kind === "link" ? "created" : "deleted"])
+          !exactKeys(data, [
+            "externalClientId",
+            "linked",
+            kind === "link" ? "created" : "deleted"
+          ])
         )
           invalidOutput();
         return getLinked(signal);
@@ -401,9 +493,7 @@ function Panel({ ticketId, contactId, companyId }) {
         fullScreen={fullScreen}
         aria-labelledby="sci-dialog-title"
       >
-        <DialogTitle id="sci-dialog-title">
-          {i18n.t("sci.title")}
-        </DialogTitle>
+        <DialogTitle id="sci-dialog-title">{i18n.t("sci.title")}</DialogTitle>
         <DialogContent dividers>
           <Chip size="small" label={i18n.t("sci.simulation")} />
           <Alert severity="info" className={classes.notice}>
@@ -425,10 +515,7 @@ function Panel({ ticketId, contactId, companyId }) {
           </div>
           {!!loading && (
             <Typography component="div" role="status" aria-live="polite">
-              <CircularProgress
-                size={18}
-                aria-label={i18n.t("sci.loading")}
-              />{" "}
+              <CircularProgress size={18} aria-label={i18n.t("sci.loading")} />{" "}
               {i18n.t("sci.loading")}
             </Typography>
           )}
@@ -558,7 +645,14 @@ function Panel({ ticketId, contactId, companyId }) {
                   <ListItem key={item.id}>
                     <ListItemText
                       primary={item.title}
-                      secondary={[item.categoryLabel, item.periodLabel, i18n.t("sci.publishedAt", { date: date(item.publishedAt), interpolation: { escapeValue: false } })].join(" · ")}
+                      secondary={[
+                        item.categoryLabel,
+                        item.periodLabel,
+                        i18n.t("sci.publishedAt", {
+                          date: date(item.publishedAt),
+                          interpolation: { escapeValue: false }
+                        })
+                      ].join(" · ")}
                     />
                   </ListItem>
                 ))}
@@ -671,11 +765,18 @@ function Panel({ ticketId, contactId, companyId }) {
 export default function SciPanel(props) {
   const auth = useContext(AuthContext);
   const viewer = auth?.user;
-  const viewerKey = JSON.stringify([viewer?.id, viewer?.companyId, viewer?.profile,
-    (viewer?.queues || []).map(queue => queue.id).sort((a, b) => a - b)]);
+  const viewerKey = JSON.stringify([
+    viewer?.id,
+    viewer?.companyId,
+    viewer?.profile,
+    (viewer?.queues || []).map(queue => queue.id).sort((a, b) => a - b)
+  ]);
   const id = Number(props.ticketId);
   if (!Number.isSafeInteger(id) || id <= 0) return null;
   return (
-    <Panel key={`${id}:${props.contactId}:${props.companyId}:${props.contextKey || ""}:${viewerKey}`} {...props} />
+    <Panel
+      key={`${id}:${props.contactId}:${props.companyId}:${props.contextKey || ""}:${viewerKey}`}
+      {...props}
+    />
   );
 }

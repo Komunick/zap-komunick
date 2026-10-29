@@ -20,9 +20,7 @@ describe("SCI internal mock contract", () => {
       { externalClientId: "mock-001", provider: "other" }
     ].map(input => [input])
   )("rejects authority fields in local link requests", input => {
-    expect(() => parseSciLink(input)).toThrow(
-      "ERR_SCI_INVALID_REQUEST"
-    );
+    expect(() => parseSciLink(input)).toThrow("ERR_SCI_INVALID_REQUEST");
   });
   it.each([
     null,
@@ -41,9 +39,7 @@ describe("SCI internal mock contract", () => {
     }
   );
   it("accepts explicit IDs and only a bounded page query", () => {
-    expect(parseSciLink({ externalClientId: "mock-001" })).toBe(
-      "mock-001"
-    );
+    expect(parseSciLink({ externalClientId: "mock-001" })).toBe("mock-001");
     expect(parseSciPage({})).toBe(1);
     expect(parseSciPage({ page: "100" })).toBe(100);
     requireEmptySciQuery({});
@@ -59,9 +55,7 @@ describe("SCI internal mock contract", () => {
     { companyId: "20" },
     { page: "1", contactId: "2" }
   ])("rejects invalid or authority-bearing queries", query => {
-    expect(() => parseSciPage(query)).toThrow(
-      "ERR_SCI_INVALID_REQUEST"
-    );
+    expect(() => parseSciPage(query)).toThrow("ERR_SCI_INVALID_REQUEST");
     expect(() => requireEmptySciQuery(query)).toThrow(
       "ERR_SCI_INVALID_REQUEST"
     );
@@ -196,18 +190,8 @@ describe("SCI internal mock contract", () => {
       "ERR_SCI_UPSTREAM_UNAUTHORIZED",
       502
     ],
-    [
-      429,
-      { detail: "FICTITIOUS_VENDOR_DETAIL" },
-      "ERR_SCI_RATE_LIMITED",
-      429
-    ],
-    [
-      500,
-      { detail: "FICTITIOUS_VENDOR_DETAIL" },
-      "ERR_SCI_UNAVAILABLE",
-      503
-    ]
+    [429, { detail: "FICTITIOUS_VENDOR_DETAIL" }, "ERR_SCI_RATE_LIMITED", 429],
+    [500, { detail: "FICTITIOUS_VENDOR_DETAIL" }, "ERR_SCI_UNAVAILABLE", 503]
   ])(
     "maps simulated transport status %s to a safe code",
     (status, payload, code, expectedStatus) => {
@@ -284,28 +268,36 @@ describe("SCI internal mock contract", () => {
   );
 
   it("rejects wrong provider source, document fields on clients and invalid publication dates", async () => {
-    const result = validateSciDetail(unwrapSciMock(
-      await requestMockSci({
-        operation: "detail",
-        companyId: 10,
-        externalClientId: "mock-001",
-        page: 1
-      })
-    ), 10, "mock-001", 1);
+    const result = validateSciDetail(
+      unwrapSciMock(
+        await requestMockSci({
+          operation: "detail",
+          companyId: 10,
+          externalClientId: "mock-001",
+          page: 1
+        })
+      ),
+      10,
+      "mock-001",
+      1
+    );
     const cases: unknown[] = [
       { ...result, source: { ...result.source, provider: "acessorias" } },
-      { ...result, client: { ...result.client, documentUrl: "FICTITIOUS_DOCUMENT" } }
+      {
+        ...result,
+        client: { ...result.client, documentUrl: "FICTITIOUS_DOCUMENT" }
+      }
     ];
-    for (const date of ["2026-01-01", "invalid", "2099-01-01T00:00:00.000Z"]) {
+    ["2026-01-01", "invalid", "2099-01-01T00:00:00.000Z"].forEach(date => {
       const changed = JSON.parse(JSON.stringify(result));
       changed.publications[0].publishedAt = date;
       cases.push(changed);
-    }
-    for (const item of cases) {
+    });
+    cases.forEach(item => {
       expect(() => validateSciDetail(item, 10, "mock-001", 1)).toThrow(
         "ERR_SCI_INVALID_OUTPUT"
       );
-    }
+    });
   });
 
   it("exercises the explicit invalid-output fixture without an external request", async () => {
@@ -317,8 +309,8 @@ describe("SCI internal mock contract", () => {
         page: 1
       })
     );
-    expect(() => validateSciDetail(result, 10, "mock-invalid-output", 1)).toThrow(
-      "ERR_SCI_INVALID_OUTPUT"
-    );
+    expect(() =>
+      validateSciDetail(result, 10, "mock-invalid-output", 1)
+    ).toThrow("ERR_SCI_INVALID_OUTPUT");
   });
 });

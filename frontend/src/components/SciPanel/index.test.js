@@ -64,13 +64,19 @@ const detail = (id, page = 1, overrides = {}) => ({
   mode: "mock",
   simulated: true,
   client: id === "mock-001" ? client1 : client2,
-  publications: Array.from({ length: Math.min(5, 12 - (page - 1) * 5) }, (_, offset) => ({
-    id: `fixture-${id}-${page}-${offset}`,
-    title: offset === 0 ? `Fixture publication ${id} page ${page}` : `Other publication ${page}-${offset}`,
-    categoryLabel: "Categoria fictícia",
-    periodLabel: "Competência simulada",
-    publishedAt: "2026-10-25T12:00:00.000Z"
-  })),
+  publications: Array.from(
+    { length: Math.min(5, 12 - (page - 1) * 5) },
+    (_, offset) => ({
+      id: `fixture-${id}-${page}-${offset}`,
+      title:
+        offset === 0
+          ? `Fixture publication ${id} page ${page}`
+          : `Other publication ${page}-${offset}`,
+      categoryLabel: "Categoria fictícia",
+      periodLabel: "Competência simulada",
+      publishedAt: "2026-10-25T12:00:00.000Z"
+    })
+  ),
   pagination: { page, pageSize: 5, total: 12, hasMore: page < 3 },
   source,
   ...overrides
@@ -330,9 +336,7 @@ test("failure clears old client data and never presents an old source as fresh",
   expect(
     screen.queryByText("Fixture publication mock-001 page 1")
   ).not.toBeInTheDocument();
-  expect(
-    screen.queryByText("Simulação local SCI")
-  ).not.toBeInTheDocument();
+  expect(screen.queryByText("Simulação local SCI")).not.toBeInTheDocument();
   expect(
     screen.queryByText("private-fictitious-payload")
   ).not.toBeInTheDocument();
@@ -342,9 +346,24 @@ test.each([
   { simulated: false },
   { client: { ...client2 } },
   { publications: [null] },
-  { publications: detail("mock-001").publications.map(item => ({ ...item, url: "https://private.invalid/document" })) },
-  { publications: detail("mock-001").publications.map(item => ({ ...item, publishedAt: "2099-01-01T00:00:00.000Z" })) },
-  { publications: detail("mock-001").publications.map(item => ({ ...item, id: "same-id" })) },
+  {
+    publications: detail("mock-001").publications.map(item => ({
+      ...item,
+      url: "https://private.invalid/document"
+    }))
+  },
+  {
+    publications: detail("mock-001").publications.map(item => ({
+      ...item,
+      publishedAt: "2099-01-01T00:00:00.000Z"
+    }))
+  },
+  {
+    publications: detail("mock-001").publications.map(item => ({
+      ...item,
+      id: "same-id"
+    }))
+  },
   { publications: detail("mock-001").publications.slice(0, 1) },
   { documentContent: "private-fictitious-document" },
   { source: { ...source, provider: "acessorias" } },
@@ -520,16 +539,13 @@ test("timeout invalidates a query even if its transport eventually resolves", as
   fireEvent.change(screen.getByLabelText("sci.selectedClient"), {
     target: { value: "mock-001" }
   });
-  act(() =>
-    timer.mock.calls.find(call => call[1] === SCI_TIMEOUT_MS)[0]()
-  );
+  act(() => timer.mock.calls.find(call => call[1] === SCI_TIMEOUT_MS)[0]());
   await screen.findByText("sci.timeout");
   await act(async () => pending.resolve({ data: detail("mock-001") }));
   expect(
     screen.queryByText("Fixture publication mock-001 page 1")
   ).not.toBeInTheDocument();
 });
-
 
 test("publication metadata is visible without document links or read actions", async () => {
   render(panel());
@@ -566,13 +582,19 @@ test("switching company or ticket context aborts data even with the same ticket 
   );
   const view = render(panel({ contextKey: "queue-1" }));
   await openPanel();
-  fireEvent.change(screen.getByLabelText("sci.selectedClient"), { target: { value: "mock-001" } });
-  const signal = api.get.mock.calls.find(([url]) => url.endsWith("/clients/mock-001"))[1].signal;
+  fireEvent.change(screen.getByLabelText("sci.selectedClient"), {
+    target: { value: "mock-001" }
+  });
+  const signal = api.get.mock.calls.find(([url]) =>
+    url.endsWith("/clients/mock-001")
+  )[1].signal;
   view.rerender(panel({ companyId: 20, contextKey: "queue-2" }));
   await waitFor(() => expect(button("open")).toBeEnabled());
   expect(signal.aborted).toBe(true);
   await act(async () => pending.resolve({ data: detail("mock-001") }));
-  expect(screen.queryByText("Fixture publication mock-001 page 1")).not.toBeInTheDocument();
+  expect(
+    screen.queryByText("Fixture publication mock-001 page 1")
+  ).not.toBeInTheDocument();
   await openPanel();
   expect(screen.getByLabelText("sci.selectedClient")).toHaveValue("");
 });
@@ -582,40 +604,93 @@ test("current viewer profile or sector changes invalidate the panel and late dat
   api.get.mockImplementation((url, config) =>
     url.endsWith("/clients/mock-001") ? pending.promise : respond(url, config)
   );
-  const view = render(<AuthContext.Provider value={{ user: { id: 10, companyId: 10, profile: "admin", queues: [{ id: 401 }] } }}>{panel()}</AuthContext.Provider>);
+  const view = render(
+    <AuthContext.Provider
+      value={{
+        user: { id: 10, companyId: 10, profile: "admin", queues: [{ id: 401 }] }
+      }}
+    >
+      {panel()}
+    </AuthContext.Provider>
+  );
   await openPanel();
-  fireEvent.change(screen.getByLabelText("sci.selectedClient"), { target: { value: "mock-001" } });
-  const signal = api.get.mock.calls.find(([url]) => url.endsWith("/clients/mock-001"))[1].signal;
-  api.get.mockRejectedValue({ response: { data: { error: "ERR_NO_PERMISSION" } } });
-  view.rerender(<AuthContext.Provider value={{ user: { id: 10, companyId: 10, profile: "user", queues: [{ id: 402 }] } }}>{panel()}</AuthContext.Provider>);
+  fireEvent.change(screen.getByLabelText("sci.selectedClient"), {
+    target: { value: "mock-001" }
+  });
+  const signal = api.get.mock.calls.find(([url]) =>
+    url.endsWith("/clients/mock-001")
+  )[1].signal;
+  api.get.mockRejectedValue({
+    response: { data: { error: "ERR_NO_PERMISSION" } }
+  });
+  view.rerender(
+    <AuthContext.Provider
+      value={{
+        user: { id: 10, companyId: 10, profile: "user", queues: [{ id: 402 }] }
+      }}
+    >
+      {panel()}
+    </AuthContext.Provider>
+  );
   await waitFor(() => expect(signal.aborted).toBe(true));
   await act(async () => pending.resolve({ data: detail("mock-001") }));
-  expect(screen.queryByText("Fixture publication mock-001 page 1")).not.toBeInTheDocument();
+  expect(
+    screen.queryByText("Fixture publication mock-001 page 1")
+  ).not.toBeInTheDocument();
   expect(screen.queryByRole("button")).not.toBeInTheDocument();
 });
 
 test("SCI flag events clear results while Acessórias flag events do not affect SCI", async () => {
   const handlers = {};
-  const socket = { on: jest.fn((name, callback) => { handlers[name] = callback; }), off: jest.fn(), disconnect: jest.fn() };
-  render(<SocketContext.Provider value={{ GetSocket: () => socket }}>{panel()}</SocketContext.Provider>);
+  const socket = {
+    on: jest.fn((name, callback) => {
+      handlers[name] = callback;
+    }),
+    off: jest.fn(),
+    disconnect: jest.fn()
+  };
+  render(
+    <SocketContext.Provider value={{ GetSocket: () => socket }}>
+      {panel()}
+    </SocketContext.Provider>
+  );
   await openPanel();
   await choose();
   act(() => handlers.settings({ key: "acessoriasEnabled", value: "disabled" }));
-  expect(screen.getByText("Fixture publication mock-001 page 1")).toBeInTheDocument();
-  api.get.mockResolvedValue({ data: { ...status, enabled: false, reason: "COMPANY_DISABLED" } });
+  expect(
+    screen.getByText("Fixture publication mock-001 page 1")
+  ).toBeInTheDocument();
+  api.get.mockResolvedValue({
+    data: { ...status, enabled: false, reason: "COMPANY_DISABLED" }
+  });
   act(() => handlers.settings({ key: "sciEnabled", value: "disabled" }));
-  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
-  expect(screen.queryByText("Fixture publication mock-001 page 1")).not.toBeInTheDocument();
+  await waitFor(() =>
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+  );
+  expect(
+    screen.queryByText("Fixture publication mock-001 page 1")
+  ).not.toBeInTheDocument();
   expect(screen.queryByRole("button")).not.toBeInTheDocument();
 });
 
 test("catalog metadata with an extra private field is rejected before rendering", async () => {
-  api.get.mockImplementation((url, config) => url.endsWith("/catalog") ? { data: { ...list([{ ...client2, name: "Hidden private catalog client" }]), accessToken: "private-catalog-canary" } } : respond(url, config));
+  api.get.mockImplementation((url, config) =>
+    url.endsWith("/catalog")
+      ? {
+          data: {
+            ...list([{ ...client2, name: "Hidden private catalog client" }]),
+            accessToken: "private-catalog-canary"
+          }
+        }
+      : respond(url, config)
+  );
   render(panel());
   await openPanel();
   fireEvent.click(button("linkClient"));
   await screen.findByText("sci.invalidOutput");
-  expect(screen.queryByText("Hidden private catalog client")).not.toBeInTheDocument();
+  expect(
+    screen.queryByText("Hidden private catalog client")
+  ).not.toBeInTheDocument();
   expect(screen.queryByText("private-catalog-canary")).not.toBeInTheDocument();
 });
 
@@ -624,7 +699,11 @@ test("canceling local link confirmation never starts a mutation", async () => {
   render(panel());
   await openPanel();
   fireEvent.click(button("linkClient"));
-  fireEvent.click(await screen.findByRole("button", { name: "sci.linkNamed Fixture Company Two" }));
+  fireEvent.click(
+    await screen.findByRole("button", {
+      name: "sci.linkNamed Fixture Company Two"
+    })
+  );
   fireEvent.click(button("cancel"));
   expect(screen.queryByText("sci.confirmLinkTitle")).not.toBeInTheDocument();
   expect(api.post).not.toHaveBeenCalled();
@@ -642,10 +721,14 @@ test.each([
   render(panel());
   await openPanel();
   await choose();
-  api.get.mockRejectedValueOnce({ response: { data: { error: code, secret: "private-error-canary" } } });
+  api.get.mockRejectedValueOnce({
+    response: { data: { error: code, secret: "private-error-canary" } }
+  });
   fireEvent.click(button("next"));
   await screen.findByText(`sci.${key}`);
-  expect(screen.queryByText("Fixture publication mock-001 page 1")).not.toBeInTheDocument();
+  expect(
+    screen.queryByText("Fixture publication mock-001 page 1")
+  ).not.toBeInTheDocument();
   expect(screen.queryByText("private-error-canary")).not.toBeInTheDocument();
 });
 

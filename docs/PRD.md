@@ -711,7 +711,8 @@ Troca de contexto durante carga encerra o visualizador anterior; falha não abre
 - Lista publicações fictícias com título, categoria, competência e data, em páginas de cinco itens, com origem e
   horários da fonte/consulta. Vazio, falha, timeout, limite e desatualização têm estados distintos. Não há URLs,
   conteúdo/download de documento, prazo fiscal confirmado nem marcação de leitura.
-- Mudanças de contexto, acesso, flag e vínculo invalidam resultados. Consultas não alteram rascunho, leitura, SLA,
+- Mudanças de contexto, acesso, flag e vínculo invalidam resultados; sem entrega de evento, nova consulta sempre
+  revalida acesso, sem promessa de revogação visual instantânea do snapshot já recebido. Consultas não alteram rascunho, leitura, SLA,
   mensagens, notas ou credenciais. Conteúdo fica em memória; auditoria/eventos contêm só ação/IDs/metadados mínimos.
 - A API permite revogar um vínculo local SCI conhecido mesmo com a consulta desligada, sem chamar provedor;
   nessa condição a interface oculta o painel de consulta. Não exclui nada em fornecedor nem no namespace Acessórias.

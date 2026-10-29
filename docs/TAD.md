@@ -170,7 +170,8 @@ Stitch entra como tokens: `sidebar*` (menu preto, igual nos dois temas), `accent
 **Integrações:** nenhuma nova. O envio continua pelo WhatsApp do Ticketz (Baileys).
 
 **Proposta da rodada 3:** ver [`docs/specs/rodada-3-ia-integracoes.md`](specs/rodada-3-ia-integracoes.md) para o plano
-de IA assistida e Acessórias/SCI, ainda sem implementação ou conexão. O código herdado já contém transcrição por
+de IA assistida e Acessórias/SCI. Os recortes P0 e P1/P2/P3 simulados são definidos separadamente abaixo;
+conexões reais continuam propostas. O código herdado já contém transcrição por
 OpenAI/Groq. Antes de novas chaves, o plano prevê separar credenciais de `Settings` e impedir sua serialização em
 `Company.settings`, além de conferir autorização do contexto e a proteção de documentos externos.
 O recorte P0 autorizado separadamente está definido no PRD RF-020 e em
@@ -500,8 +501,8 @@ e seu wrapper recusa mock/modo ausente nesse perfil operacional. Não existe ada
 SDK/MCP, fila, download, sincronização, marcação de leitura ou consulta pela IA neste percurso.
 
 As rotas `/tickets/:ticketId/sci` usam sessão/compliance e o usuário atual do banco. Serviços conferem empresa,
-contato, setor, perfil e versão do vínculo antes/depois de awaits; CRUD local serializa o contato e compartilha a
-transação com a autorização. `ContactExternalClientLinks` existente guarda provider fixo `sci`, preservando unicidade
+contato, setor, perfil e versão do vínculo antes/depois de awaits; a finalização das leituras e o CRUD local
+serializam o contato e compartilham a transação com a autorização. A espera do provedor fica fora do bloqueio. `ContactExternalClientLinks` existente guarda provider fixo `sci`, preservando unicidade
 empresa/contato/provedor/ID e todo vínculo Acessórias. Não há DDL ou migração nova. Remover vínculo SCI conhecido
 continua permitido à administração autorizada pela API off, sem consultar catálogo; o painel de consulta fica oculto.
 

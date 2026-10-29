@@ -38,9 +38,12 @@ compatibilidade com Report 24h, Report Atendimento ou qualquer API real.
 - Vazio, indisponibilidade, timeout, limite/acesso simulados e saída inválida são
   distintos. Troca/cancelamento, evento de revogação ou resposta atrasada limpam
   resultados e impedem uso no atendimento/cliente errado. Conteúdo fica em memória.
+  Eventos são de melhor esforço: sem entrega, o snapshot já recebido não tem revogação
+  visual instantânea; toda nova consulta revalida acesso, flag e vínculo.
 - Revalida acesso atual da empresa/usuário/setor, flag, contato e versão do vínculo
-  depois de awaits. CRUD usa a mesma transação/conexão da autorização e serializa
-  o contato. Recriar vínculo não reaproveita autorização da versão removida.
+  depois de awaits. A checagem final de versão e autorização das leituras e o CRUD
+  compartilham a transação/conexão e o bloqueio do contato. O provedor é consultado
+  fora desse bloqueio; recriar vínculo não reaproveita autorização da versão removida.
 - Auditoria/eventos contêm somente ação/IDs/metadados mínimos. Erros, JSON inválido,
   logs e telemetria não incluem conteúdo de cadastro/publicações nem segredos.
 

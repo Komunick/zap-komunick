@@ -81,9 +81,7 @@ export const parseSciPage = (query: Record<string, unknown>): number => {
   return Number(query.page);
 };
 
-export const requireEmptySciQuery = (
-  query: Record<string, unknown>
-): void => {
+export const requireEmptySciQuery = (query: Record<string, unknown>): void => {
   if (Object.keys(query).length)
     throw new AppError("ERR_SCI_INVALID_REQUEST", 400);
 };
@@ -185,7 +183,13 @@ export const validateSciDetail = (
     !input.publications.every(
       (item, index) =>
         object(item) &&
-        keys(item, ["id", "title", "categoryLabel", "periodLabel", "publishedAt"]) &&
+        keys(item, [
+          "id",
+          "title",
+          "categoryLabel",
+          "periodLabel",
+          "publishedAt"
+        ]) &&
         text(item.id, 100) &&
         item.id ===
           `${externalClientId}-item-${String((page - 1) * SCI_LIMITS.pageSize + index + 1).padStart(2, "0")}` &&
@@ -207,16 +211,12 @@ export interface MockSciResponse {
   status: number;
   payload: unknown;
 }
-export const unwrapSciMock = (
-  response: MockSciResponse
-): unknown => {
+export const unwrapSciMock = (response: MockSciResponse): unknown => {
   if (!response || !Number.isInteger(response.status)) return invalidOutput();
   if (response.status === 401)
     throw new AppError("ERR_SCI_UPSTREAM_UNAUTHORIZED", 502);
-  if (response.status === 429)
-    throw new AppError("ERR_SCI_RATE_LIMITED", 429);
-  if (response.status !== 200)
-    throw new AppError("ERR_SCI_UNAVAILABLE", 503);
+  if (response.status === 429) throw new AppError("ERR_SCI_RATE_LIMITED", 429);
+  if (response.status !== 200) throw new AppError("ERR_SCI_UNAVAILABLE", 503);
   if (
     object(response.payload) &&
     Object.prototype.hasOwnProperty.call(response.payload, "Erro")

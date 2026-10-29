@@ -82,11 +82,15 @@ export const requestMockSci = async (
   );
   if (client.externalClientId === "mock-invalid-output" && visible[0]) {
     // Intentional fixture: the validator must reject document URLs, never expose them.
-    Object.assign(visible[0], { downloadUrl: "https://example.invalid/fictitious" });
+    Object.assign(visible[0], {
+      downloadUrl: "https://example.invalid/fictitious"
+    });
   }
   const metadata = source(client.externalClientId === "mock-stale");
   if (client.externalClientId === "mock-invalid-output")
-    Object.assign(metadata, { documentUrl: "https://example.invalid/fictitious" });
+    Object.assign(metadata, {
+      documentUrl: "https://example.invalid/fictitious"
+    });
   return {
     status: 200,
     payload: {

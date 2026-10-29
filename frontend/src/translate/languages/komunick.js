@@ -3029,8 +3029,7 @@ pt.sci = {
   confirmUnlink: "Confirmar desvinculação",
   localOnly:
     "Esta ação altera somente o vínculo local deste contato na simulação SCI. Não modifica o cadastro ou as publicações do fornecedor.",
-  disabled:
-    "A consulta SCI está desabilitada para esta empresa ou ambiente.",
+  disabled: "A consulta SCI está desabilitada para esta empresa ou ambiente.",
   permission: "Você não tem permissão para esta consulta ou ação.",
   notLinked:
     "O cliente não está mais vinculado a este contato. Atualize os vínculos.",
@@ -3169,8 +3168,7 @@ es.sci = {
   confirmUnlink: "Confirmar desvinculación",
   localOnly:
     "Esta acción solo cambia el vínculo local de este contacto en la simulación SCI. No modifica el registro ni las publicaciones del proveedor.",
-  disabled:
-    "Las consultas SCI están desactivadas para esta empresa o entorno.",
+  disabled: "Las consultas SCI están desactivadas para esta empresa o entorno.",
   permission: "No tienes permiso para esta consulta o acción.",
   notLinked:
     "El cliente ya no está vinculado a este contacto. Actualiza los vínculos.",

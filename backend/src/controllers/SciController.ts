@@ -28,17 +28,11 @@ const changed = (req: Request, contactId: number): void => {
   }
 };
 export const status = async (req: Request, res: Response): Promise<Response> =>
-  res.json(
-    await ticketSciStatus(req.params.ticketId, actor(req), req.query)
-  );
+  res.json(await ticketSciStatus(req.params.ticketId, actor(req), req.query));
 export const catalog = async (req: Request, res: Response): Promise<Response> =>
-  res.json(
-    await ticketSciCatalog(req.params.ticketId, actor(req), req.query)
-  );
+  res.json(await ticketSciCatalog(req.params.ticketId, actor(req), req.query));
 export const clients = async (req: Request, res: Response): Promise<Response> =>
-  res.json(
-    await ticketSciClients(req.params.ticketId, actor(req), req.query)
-  );
+  res.json(await ticketSciClients(req.params.ticketId, actor(req), req.query));
 export const detail = async (req: Request, res: Response): Promise<Response> =>
   res.json(
     await ticketSciDetail(

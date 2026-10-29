@@ -40,9 +40,7 @@ jest.mock("../../services/SciServices/MockSciProvider");
 
 const actualProvider = jest.requireActual<
   typeof import("../../services/SciServices/MockSciProvider")
->(
-  "../../services/SciServices/MockSciProvider"
-).requestMockSci;
+>("../../services/SciServices/MockSciProvider").requestMockSci;
 const actor = { userId: "101", companyId: 10 };
 const transaction = { LOCK: { UPDATE: "UPDATE" } };
 const initialTicket = {
@@ -145,9 +143,7 @@ describe("SCI local mapping and authorized mock reads", () => {
     async mode => {
       if (mode === undefined) delete process.env.SCI_MODE;
       else process.env.SCI_MODE = mode;
-      await expect(
-        ticketSciStatus("301", actor, {})
-      ).resolves.toMatchObject({
+      await expect(ticketSciStatus("301", actor, {})).resolves.toMatchObject({
         enabled: false,
         mode: "disabled",
         simulated: true,
@@ -192,9 +188,9 @@ describe("SCI local mapping and authorized mock reads", () => {
     async queues => {
       viewer("user", queues);
       await expect(detail()).rejects.toMatchObject({ statusCode: 403 });
-      await expect(
-        ticketSciClients("301", actor, {})
-      ).rejects.toMatchObject({ statusCode: 403 });
+      await expect(ticketSciClients("301", actor, {})).rejects.toMatchObject({
+        statusCode: 403
+      });
       expect(requestMockSci).not.toHaveBeenCalled();
     }
   );
@@ -221,9 +217,9 @@ describe("SCI local mapping and authorized mock reads", () => {
       client: { externalClientId: "mock-001" },
       pagination: { page: 1, pageSize: 5, total: 12, hasMore: true }
     });
-    await expect(
-      ticketSciCatalog("301", actor, {})
-    ).rejects.toMatchObject({ message: "ERR_SCI_MANAGE_DENIED" });
+    await expect(ticketSciCatalog("301", actor, {})).rejects.toMatchObject({
+      message: "ERR_SCI_MANAGE_DENIED"
+    });
     await expect(
       createSciLink("301", actor, { externalClientId: "mock-002" }, {})
     ).rejects.toMatchObject({ message: "ERR_SCI_MANAGE_DENIED" });
@@ -299,7 +295,9 @@ describe("SCI local mapping and authorized mock reads", () => {
     expect(duplicate.created).toBe(false);
     expect(second.created).toBe(true);
     expect(links).toHaveLength(5);
-    expect(links.some(link => link.provider === "acessorias" && link.id === 900)).toBe(true);
+    expect(
+      links.some(link => link.provider === "acessorias" && link.id === 900)
+    ).toBe(true);
     expect(ContactExternalClientLink.findOrCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
@@ -339,14 +337,18 @@ describe("SCI local mapping and authorized mock reads", () => {
     ];
     process.env.SCI_MODE = "disabled";
     flags = [{ value: "disabled" }];
-    expect(
-      await deleteSciLink("301", actor, "mock-001", {})
-    ).toMatchObject({ linked: false, deleted: true });
-    expect(
-      await deleteSciLink("301", actor, "mock-001", {})
-    ).toMatchObject({ linked: false, deleted: false });
+    expect(await deleteSciLink("301", actor, "mock-001", {})).toMatchObject({
+      linked: false,
+      deleted: true
+    });
+    expect(await deleteSciLink("301", actor, "mock-001", {})).toMatchObject({
+      linked: false,
+      deleted: false
+    });
     expect(links).toHaveLength(4);
-    expect(links.some(link => link.provider === "acessorias" && link.id === 900)).toBe(true);
+    expect(
+      links.some(link => link.provider === "acessorias" && link.id === 900)
+    ).toBe(true);
     expect(links.some(link => link.companyId === 20)).toBe(true);
     expect(links.some(link => link.contactId === 202)).toBe(true);
     expect(links.some(link => link.externalClientId === "mock-002")).toBe(true);
@@ -356,12 +358,7 @@ describe("SCI local mapping and authorized mock reads", () => {
   it("rejects unknown catalog IDs and client-supplied authority before changing mappings", async () => {
     admin();
     await expect(
-      createSciLink(
-        "301",
-        actor,
-        { externalClientId: "mock-unknown" },
-        {}
-      )
+      createSciLink("301", actor, { externalClientId: "mock-unknown" }, {})
     ).rejects.toMatchObject({ message: "ERR_SCI_CLIENT_NOT_FOUND" });
     await expect(
       createSciLink(
@@ -401,36 +398,52 @@ describe("SCI local mapping and authorized mock reads", () => {
       links = [];
       return result;
     });
-    await expect(
-      ticketSciClients("301", actor, {})
-    ).rejects.toMatchObject({ message: "ERR_SCI_CONTEXT_CHANGED" });
+    await expect(ticketSciClients("301", actor, {})).rejects.toMatchObject({
+      message: "ERR_SCI_CONTEXT_CHANGED"
+    });
   });
 
-  it.each(["sector", "transfer", "contact", "flag", "mode", "company", "removedUser", "profile"])(
-    "rechecks %s after the asynchronous mock",
-    async change => {
-      (requestMockSci as jest.Mock).mockImplementation(async request => {
-        const result = await actualProvider(request);
-        if (change === "sector") viewer("user", []);
-        if (change === "transfer") {
-          admin();
-          ticket.queueId = 402;
-        }
-        if (change === "contact") ticket.contactId = 202;
-        if (change === "flag") flags = [{ value: "disabled" }];
-        if (change === "mode") process.env.SCI_MODE = "disabled";
-        if (change === "company")
-          (User.findOne as jest.Mock).mockResolvedValue({ id: 101, companyId: 20, profile: "admin", queues: [] });
-        if (change === "removedUser") (User.findOne as jest.Mock).mockResolvedValue(null);
-        if (change === "profile") admin();
-        return result;
-      });
-      await expect(detail()).rejects.toMatchObject({
-        statusCode:
-          change === "contact" ? 404 : ["transfer", "profile"].includes(change) ? 409 : 403
-      });
-    }
-  );
+  it.each([
+    "sector",
+    "transfer",
+    "contact",
+    "flag",
+    "mode",
+    "company",
+    "removedUser",
+    "profile"
+  ])("rechecks %s after the asynchronous mock", async change => {
+    (requestMockSci as jest.Mock).mockImplementation(async request => {
+      const result = await actualProvider(request);
+      if (change === "sector") viewer("user", []);
+      if (change === "transfer") {
+        admin();
+        ticket.queueId = 402;
+      }
+      if (change === "contact") ticket.contactId = 202;
+      if (change === "flag") flags = [{ value: "disabled" }];
+      if (change === "mode") process.env.SCI_MODE = "disabled";
+      if (change === "company")
+        (User.findOne as jest.Mock).mockResolvedValue({
+          id: 101,
+          companyId: 20,
+          profile: "admin",
+          queues: []
+        });
+      if (change === "removedUser")
+        (User.findOne as jest.Mock).mockResolvedValue(null);
+      if (change === "profile") admin();
+      return result;
+    });
+    await expect(detail()).rejects.toMatchObject({
+      statusCode:
+        change === "contact"
+          ? 404
+          : ["transfer", "profile"].includes(change)
+            ? 409
+            : 403
+    });
+  });
 
   it("rolls back a local create when the administrator loses access before commit", async () => {
     admin();
@@ -579,7 +592,7 @@ describe("SCI local mapping and authorized mock reads", () => {
     });
   });
 
-  it.each(["create", "delete"])(
+  it.each(["create", "delete", "detail", "clients"])(
     "uses the same transaction for every authorization query during %s",
     async operation => {
       admin();
@@ -619,22 +632,108 @@ describe("SCI local mapping and authorized mock reads", () => {
       });
       if (operation === "create") {
         await expect(
-          createSciLink(
-            "301",
-            actor,
-            { externalClientId: "mock-002" },
-            {}
-          )
+          createSciLink("301", actor, { externalClientId: "mock-002" }, {})
         ).resolves.toMatchObject({ created: true });
         expect(checked).toContain("Setting");
-      } else {
+      } else if (operation === "delete") {
         await expect(
           deleteSciLink("301", actor, "mock-001", {})
         ).resolves.toMatchObject({ deleted: true });
+      } else if (operation === "detail") {
+        await expect(detail()).resolves.toMatchObject({ simulated: true });
+        expect(checked).toContain("Setting");
+      } else {
+        await expect(ticketSciClients("301", actor, {})).resolves.toMatchObject(
+          {
+            simulated: true
+          }
+        );
+        expect(checked).toContain("Setting");
       }
       expect(checked).toEqual(
         expect.arrayContaining(["User/queues", "Ticket", "Contact"])
       );
+    }
+  );
+
+  it.each(["detail", "clients"])(
+    "serializes final %s authorization with concurrent local unlink using the shared contact lock",
+    async operation => {
+      admin();
+      const deferred = () => {
+        let resolve: () => void;
+        const promise = new Promise<void>(done => {
+          resolve = done;
+        });
+        return { promise, resolve: () => resolve() };
+      };
+      const finalAuthorization = deferred();
+      const continueAuthorization = deferred();
+      const writerBlocked = deferred();
+      type Tx = { id: number; LOCK: { UPDATE: string } };
+      let owner: Tx | null = null;
+      let nextId = 0;
+      let userReads = 0;
+      let writerStarted = false;
+      const waiting: { transaction: Tx; release: () => void }[] = [];
+      const events: string[] = [];
+      (sequelize.transaction as jest.Mock).mockImplementation(async execute => {
+        const tx: Tx = { id: ++nextId, LOCK: { UPDATE: "UPDATE" } };
+        try {
+          return await execute(tx);
+        } finally {
+          events.push(`commit:${tx.id}`);
+          if (owner === tx) {
+            const next = waiting.shift();
+            owner = next ? next.transaction : null;
+            if (next) next.release();
+          }
+        }
+      });
+      (Contact.findOne as jest.Mock).mockImplementation(async options => {
+        if (options.lock === "UPDATE") {
+          const tx = options.transaction as Tx;
+          if (owner && owner !== tx) {
+            if (writerStarted) writerBlocked.resolve();
+            await new Promise<void>(resolve =>
+              waiting.push({ transaction: tx, release: resolve })
+            );
+          } else owner = tx;
+          events.push(`locked:${tx.id}`);
+        }
+        return { id: 201, companyId: 10 };
+      });
+      (User.findOne as jest.Mock).mockImplementation(async () => {
+        userReads += 1;
+        if (userReads === 2) {
+          finalAuthorization.resolve();
+          await continueAuthorization.promise;
+        }
+        return { id: 101, companyId: 10, profile: "admin", queues: [] };
+      });
+      const read =
+        operation === "detail" ? detail() : ticketSciClients("301", actor, {});
+      await finalAuthorization.promise;
+      writerStarted = true;
+      const unlink = deleteSciLink("301", actor, "mock-001", {});
+      let ordering: string;
+      let results: unknown[];
+      try {
+        ordering = await Promise.race([
+          unlink.then(() => "unlink-committed-during-reader-authorization"),
+          writerBlocked.promise.then(
+            () => "unlink-waited-for-reader-contact-lock"
+          )
+        ]);
+      } finally {
+        continueAuthorization.resolve();
+        results = await Promise.all([read, unlink]);
+      }
+      expect(ordering).toBe("unlink-waited-for-reader-contact-lock");
+      expect(results[0]).toMatchObject({ mode: "mock", simulated: true });
+      expect(results[1]).toMatchObject({ deleted: true, linked: false });
+      expect(links).toEqual([]);
+      expect(events).toEqual(["locked:1", "commit:1", "locked:2", "commit:2"]);
     }
   );
 });

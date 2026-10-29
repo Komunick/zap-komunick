@@ -296,12 +296,12 @@ const Ticket = () => {
             Number(ticket.id) > 0 &&
             ticket.uuid === ticketId && (
               <>
-              <AcessoriasPanel
-                key={`${ticket.id}:${ticket.contactId}:${ticket.queueId}:${ticket.userId}:${ticket.status}`}
-                ticketId={ticket.id}
-                contactId={ticket.contactId}
-                companyId={ticket.companyId}
-              />
+                <AcessoriasPanel
+                  key={`${ticket.id}:${ticket.contactId}:${ticket.queueId}:${ticket.userId}:${ticket.status}`}
+                  ticketId={ticket.id}
+                  contactId={ticket.contactId}
+                  companyId={ticket.companyId}
+                />
                 <SciPanel
                   contextKey={`${ticket.id}:${ticket.contactId}:${ticket.queueId}:${ticket.userId}:${ticket.status}`}
                   ticketId={ticket.id}

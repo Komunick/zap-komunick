@@ -60,12 +60,8 @@ export default function SciSettings({ settings }) {
         }
         label={i18n.t("sci.settingsTitle")}
       />
-      <Typography variant="body2">
-        {i18n.t("sci.settingsHint")}
-      </Typography>
-      {error && (
-        <Alert severity="error">{i18n.t("sci.settingError")}</Alert>
-      )}
+      <Typography variant="body2">{i18n.t("sci.settingsHint")}</Typography>
+      {error && <Alert severity="error">{i18n.t("sci.settingError")}</Alert>}
       {conflict && (
         <Alert severity="warning">{i18n.t("sci.settingConflict")}</Alert>
       )}

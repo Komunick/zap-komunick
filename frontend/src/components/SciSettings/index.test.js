@@ -22,11 +22,7 @@ test("defaults off, then explicitly changes only the SCI company flag", async ()
 });
 test("failure keeps the previous flag without echoing request details", async () => {
   api.put.mockRejectedValue(new Error("private-fictitious-payload"));
-  render(
-    <SciSettings
-      settings={[{ key: "sciEnabled", value: "enabled" }]}
-    />
-  );
+  render(<SciSettings settings={[{ key: "sciEnabled", value: "enabled" }]} />);
   const field = screen.getByRole("checkbox", {
     name: "sci.settingsTitle"
   });
@@ -52,18 +48,37 @@ test("duplicate conflicting flags are disabled and visibly explained", () => {
   expect(screen.getByText("sci.settingConflict")).toBeInTheDocument();
 });
 
-
 test("P1 and Acessórias flags cannot turn on SCI", () => {
-  render(<SciSettings settings={[{ key: "aiAssistantEnabled", value: "enabled" }, { key: "acessoriasEnabled", value: "enabled" }]} />);
-  expect(screen.getByRole("checkbox", { name: "sci.settingsTitle" })).not.toBeChecked();
+  render(
+    <SciSettings
+      settings={[
+        { key: "aiAssistantEnabled", value: "enabled" },
+        { key: "acessoriasEnabled", value: "enabled" }
+      ]}
+    />
+  );
+  expect(
+    screen.getByRole("checkbox", { name: "sci.settingsTitle" })
+  ).not.toBeChecked();
   expect(api.put).not.toHaveBeenCalled();
 });
 
 test("a successful toggle converges a conflicting local display only after acceptance", async () => {
   api.put.mockResolvedValue({ data: {} });
-  render(<SciSettings settings={[{ key: "sciEnabled", value: "enabled" }, { key: "sciEnabled", value: "disabled" }]} />);
+  render(
+    <SciSettings
+      settings={[
+        { key: "sciEnabled", value: "enabled" },
+        { key: "sciEnabled", value: "disabled" }
+      ]}
+    />
+  );
   fireEvent.click(screen.getByRole("checkbox", { name: "sci.settingsTitle" }));
-  await waitFor(() => expect(screen.queryByText("sci.settingConflict")).not.toBeInTheDocument());
-  expect(screen.getByRole("checkbox", { name: "sci.settingsTitle" })).toBeChecked();
+  await waitFor(() =>
+    expect(screen.queryByText("sci.settingConflict")).not.toBeInTheDocument()
+  );
+  expect(
+    screen.getByRole("checkbox", { name: "sci.settingsTitle" })
+  ).toBeChecked();
   expect(api.put).toHaveBeenCalledTimes(1);
 });

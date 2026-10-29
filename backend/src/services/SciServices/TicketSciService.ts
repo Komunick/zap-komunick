@@ -19,10 +19,7 @@ import {
 import AuthorizeTicketContextService, {
   ContextActor
 } from "../TicketServices/AuthorizeTicketContextService";
-import {
-  MockSciRequest,
-  requestMockSci
-} from "./MockSciProvider";
+import { MockSciRequest, requestMockSci } from "./MockSciProvider";
 
 interface Scope {
   ticketId: number;
@@ -48,9 +45,7 @@ const allowedErrors = new Set([
   "ERR_SCI_TIMEOUT",
   "ERR_SCI_UNAVAILABLE"
 ]);
-const protectSci = async <T>(
-  operation: () => Promise<T>
-): Promise<T> => {
+const protectSci = async <T>(operation: () => Promise<T>): Promise<T> => {
   try {
     return await operation();
   } catch (error) {
@@ -145,9 +140,7 @@ const reauthorize = async (
     throw new AppError("ERR_SCI_DISABLED", 403);
 };
 
-const mockRequest = async (
-  request: MockSciRequest
-): Promise<unknown> => {
+const mockRequest = async (request: MockSciRequest): Promise<unknown> => {
   let timer: ReturnType<typeof setTimeout>;
   try {
     const response = await Promise.race([
@@ -175,9 +168,14 @@ const linkWhere = (scope: Scope, externalClientId?: string) => ({
   provider: SCI_PROVIDER,
   ...(externalClientId === undefined ? {} : { externalClientId })
 });
-const scopedLink = async (scope: Scope, externalClientId: string) => {
+const scopedLink = async (
+  scope: Scope,
+  externalClientId: string,
+  transaction?: Transaction
+) => {
   const link = await ContactExternalClientLink.findOne({
     where: linkWhere(scope, externalClientId),
+    ...(transaction ? { transaction } : {}),
     logging: false
   });
   if (
@@ -197,9 +195,10 @@ const linkVersion = (link: ContactExternalClientLink): string =>
     link.externalClientId,
     new Date(link.updatedAt).toISOString()
   ]);
-const scopedLinks = async (scope: Scope) => {
+const scopedLinks = async (scope: Scope, transaction?: Transaction) => {
   const links = await ContactExternalClientLink.findAll({
     where: linkWhere(scope),
+    ...(transaction ? { transaction } : {}),
     logging: false
   });
   return links.filter(
@@ -258,9 +257,13 @@ export const ticketSciClients = async (
     const links = await scopedLinks(scope);
     const version = linksVersion(links);
     const result = await catalog(scope.companyId);
-    if (linksVersion(await scopedLinks(scope)) !== version)
-      throw new AppError("ERR_SCI_CONTEXT_CHANGED", 409);
-    await reauthorize(ticketId, actor, scope);
+    // Share the mutation lock: unlink/recreate cannot commit during final authorization.
+    await sequelize.transaction(async transaction => {
+      await lockContact(scope, transaction);
+      if (linksVersion(await scopedLinks(scope, transaction)) !== version)
+        throw new AppError("ERR_SCI_CONTEXT_CHANGED", 409);
+      await reauthorize(ticketId, actor, scope, false, true, transaction);
+    });
     const clients = links.map(link =>
       result.clients.find(
         client => client.externalClientId === link.externalClientId
@@ -293,21 +296,24 @@ export const ticketSciDetail = async (
       externalClientId,
       page
     );
-    let current: ContactExternalClientLink;
-    try {
-      current = await scopedLink(scope, externalClientId);
-    } catch (error) {
-      if (
-        error instanceof AppError &&
-        error.message === "ERR_SCI_CLIENT_NOT_LINKED"
-      ) {
-        throw new AppError("ERR_SCI_CONTEXT_CHANGED", 409);
+    await sequelize.transaction(async transaction => {
+      await lockContact(scope, transaction);
+      let current: ContactExternalClientLink;
+      try {
+        current = await scopedLink(scope, externalClientId, transaction);
+      } catch (error) {
+        if (
+          error instanceof AppError &&
+          error.message === "ERR_SCI_CLIENT_NOT_LINKED"
+        ) {
+          throw new AppError("ERR_SCI_CONTEXT_CHANGED", 409);
+        }
+        throw error;
       }
-      throw error;
-    }
-    if (linkVersion(current) !== version)
-      throw new AppError("ERR_SCI_CONTEXT_CHANGED", 409);
-    await reauthorize(ticketId, actor, scope);
+      if (linkVersion(current) !== version)
+        throw new AppError("ERR_SCI_CONTEXT_CHANGED", 409);
+      await reauthorize(ticketId, actor, scope, false, true, transaction);
+    });
     return {
       mode: "mock",
       simulated: true,
