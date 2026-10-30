@@ -193,6 +193,11 @@ acesso no formulário do usuário; "Repetir", contatos, etiqueta, anexo e "Envia
 "SLA e carteira de clientes" e "Exigir motivo ao finalizar" em Configurações; aba "Pausados" e botões Transferir,
 Pausar, Retomar e Finalizar no atendimento.
 
+**Menu lateral (RF-009):** `layout/index.js` usa `Drawer.PaperProps.onPointerEnter` para abrir o trilho somente com
+ponteiro mouse, breakpoint desktop e variante permanente. A entrada define aberto, sem toggle/timer ou fechamento
+ao sair; mantém a transição visual, os controles e a persistência existentes. Foco desktop não monta Drawer e a
+gaveta temporária móvel continua controlada por toque/botão.
+
 **Etiquetas por setor (RF-019):** `TagModal` usa `QueueSelect` com seleção múltipla e texto explicando que a seleção
 vazia vale para todos os setores; `pages/Tags` mostra a coluna "Setores". `components/TagPicker` reúne
 `useSectorTags`, `TagChecklist` e `TagPickerPopover`: a linha do atendimento abre o popover e salva por
