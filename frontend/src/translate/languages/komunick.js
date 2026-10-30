@@ -274,6 +274,7 @@ const pt = {
     deleteWarning:
       "O grupo e todas as mensagens dele serão apagados para todos os participantes. Esta ação não pode ser revertida, confirmar?",
     groupName: "Nome do grupo",
+    participants: "Participantes",
     close: "Fechar",
     save: "Salvar",
     needTitle: "Preencha o nome do grupo.",
@@ -910,6 +911,7 @@ const en = {
     deleteWarning:
       "The group and all its messages will be deleted for every member. This cannot be undone, confirm?",
     groupName: "Group name",
+    participants: "Participants",
     close: "Close",
     save: "Save",
     needTitle: "Fill in the group name.",
@@ -1547,6 +1549,7 @@ const es = {
     deleteWarning:
       "El grupo y todos sus mensajes se borrarán para todos los participantes. Esta acción no se puede revertir, ¿confirmar?",
     groupName: "Nombre del grupo",
+    participants: "Participantes",
     close: "Cerrar",
     save: "Guardar",
     needTitle: "Complete el nombre del grupo.",

@@ -188,6 +188,7 @@ export function ChatModal({
         <Grid spacing={2} container>
           <Grid xs={12} style={{ padding: 18 }} item>
             <TextField
+              id="internal-chat-group-name"
               label={i18n.t("chatPage.groupName")}
               placeholder={i18n.t("chatPage.groupName")}
               value={title}
@@ -200,6 +201,7 @@ export function ChatModal({
           <Grid xs={12} item>
             <UsersFilter
               multiple
+              label={i18n.t("chatPage.participants")}
               onFiltered={users => setUsers(users)}
               initialUsers={users}
               excludeId={user.id}
