@@ -6,6 +6,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Adicionado
 
+- Menu lateral abre ao passar o mouse sobre o trilho recolhido no desktop, sem precisar clicar. Botão, teclado,
+  preferência salva e funcionamento por toque no celular continuam disponíveis.
+
 - Consulta integrada simulada no atendimento, com seleção independente de clientes Acessórias/SCI, texto elegível da
   conversa, fontes/horários e avisos de limite, desatualização e falha parcial. Resumo e sugestão exigem ação humana;
   sugestão editável só é anexada ao rascunho após nova validação de contexto/vínculos, sem envio. Começa desligada e
