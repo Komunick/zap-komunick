@@ -40,7 +40,8 @@ import { getInitials } from "../../helpers/getInitials";
 import {
   chatDisplayName,
   chatPeerId,
-  mergeChat
+  mergeChat,
+  mergeChatMessages
 } from "../../helpers/chatDisplay";
 
 // Zap Komunick: the internal chat is one list of conversations (groups and
@@ -69,7 +70,7 @@ const useStyles = makeStyles(theme => ({
     display: "flex",
     flexDirection: "column",
     flex: "none",
-    width: 340,
+    width: 320,
     minHeight: 0,
     borderRight: `1px solid ${theme.palette.divider}`,
     [theme.breakpoints.down("sm")]: { width: "100%", borderRight: 0 }
@@ -82,6 +83,7 @@ const useStyles = makeStyles(theme => ({
     padding: "14px 12px 10px 16px"
   },
   asideTitle: { fontSize: 18, fontWeight: 700 },
+  asideSubtitle: { color: theme.komunick.textSecondary, fontSize: 12 },
   conversation: {
     display: "flex",
     flexDirection: "column",
@@ -94,7 +96,8 @@ const useStyles = makeStyles(theme => ({
     alignItems: "center",
     gap: 12,
     padding: "10px 16px",
-    borderBottom: `1px solid ${theme.palette.divider}`
+    borderBottom: `1px solid ${theme.komunick.border}`,
+    backgroundColor: theme.komunick.paper
   },
   headAvatar: { width: 40, height: 40, fontWeight: 700, color: "#FFFFFF" },
   headText: { flex: 1, minWidth: 0 },
@@ -230,11 +233,26 @@ function Chat(props) {
   const [search, setSearch] = useState("");
   const [messages, setMessages] = useState([]);
   const [messagesPageInfo, setMessagesPageInfo] = useState({ hasMore: false });
-  const [messagesPage, setMessagesPage] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [listLoading, setListLoading] = useState(true);
+  const [listError, setListError] = useState(false);
+  const [listVersion, setListVersion] = useState(0);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [messagesError, setMessagesError] = useState(false);
+  const [openingContact, setOpeningContact] = useState(null);
   const scrollToBottomRef = useRef();
   const currentIdRef = useRef(null);
+  const messagesRequestRef = useRef(0);
+  const pendingRequestRef = useRef(null);
+  const messagesPageRef = useRef(1);
+  const paginationReadyRef = useRef(false);
+  const retryMessagesRef = useRef({ page: 1, refresh: false });
+  const navigationRef = useRef(0);
+  const openingContactRef = useRef(false);
+  const mountedRef = useRef(true);
+  const pendingListChangesRef = useRef(null);
   const { id } = useParams();
+  const routeIdRef = useRef(id);
+  routeIdRef.current = id;
 
   const socketManager = useContext(SocketContext);
   const wide = isWidthUp("md", props.width);
@@ -253,7 +271,11 @@ function Chat(props) {
     return map;
   }, [contacts]);
 
-  const upsertChat = record =>
+  const upsertChat = record => {
+    if (!record) return;
+    const changes = pendingListChangesRef.current;
+    if (changes)
+      changes.set(record.id, mergeChat(changes.get(record.id), record));
     setChats(prev =>
       prev.some(chat => chat.id === record.id)
         ? prev.map(chat =>
@@ -261,18 +283,20 @@ function Chat(props) {
           )
         : [record, ...prev]
     );
-
-  // the people come first: the list is useful as soon as the screen opens
-  useEffect(() => {
-    api
-      .get("/users/list")
-      .then(({ data }) => setContacts(data))
-      .catch(toastError);
-  }, []);
+  };
 
   useEffect(() => {
     let active = true;
-    const loadAll = async () => {
+    const changes = new Map();
+    pendingListChangesRef.current = changes;
+    setListLoading(true);
+    setListError(false);
+    let pending = 2;
+    const finished = () => {
+      pending -= 1;
+      if (active && pending === 0) setListLoading(false);
+    };
+    const loadChats = async () => {
       let all = [];
       let page = 1;
       let more = true;
@@ -285,27 +309,69 @@ function Chat(props) {
         more = data.hasMore;
         page += 1;
       }
-      if (!active) return;
-      setChats(all);
-      if (id) {
-        const chat = all.find(c => c.uuid === id);
-        if (chat) selectChat(chat, false);
-      }
+      return all;
     };
-    loadAll().catch(toastError);
+    loadChats()
+      .then(all => {
+        if (!active) return;
+        // Zap Komunick: a delayed list snapshot must not undo a newer direct
+        // creation, socket update or deletion that happened while it loaded.
+        const reconciled = new Map(all.map(chat => [chat.id, chat]));
+        changes.forEach((record, chatId) => {
+          if (record === null) reconciled.delete(chatId);
+          else
+            reconciled.set(chatId, mergeChat(reconciled.get(chatId), record));
+        });
+        const records = Array.from(reconciled.values());
+        setChats(records);
+        if (routeIdRef.current && !currentIdRef.current) {
+          const chat = records.find(c => c.uuid === routeIdRef.current);
+          if (chat) selectChat(chat, false);
+        }
+      })
+      .catch(() => {
+        if (active) setListError(true);
+      })
+      .finally(() => {
+        if (pendingListChangesRef.current === changes)
+          pendingListChangesRef.current = null;
+        finished();
+      });
+    api
+      .get("/users/list")
+      .then(({ data }) => {
+        if (active) setContacts(data);
+      })
+      .catch(() => {
+        if (active) setListError(true);
+      })
+      .finally(finished);
     return () => {
       active = false;
+      if (pendingListChangesRef.current === changes)
+        pendingListChangesRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [listVersion]);
+
+  useEffect(
+    () => () => {
+      mountedRef.current = false;
+      messagesRequestRef.current += 1;
+    },
+    []
+  );
 
   useEffect(() => {
-    currentIdRef.current = currentId;
     if (currentId) {
       findMessages(currentId, 1).then(() => {
-        if (typeof scrollToBottomRef.current === "function") {
+        if (
+          currentIdRef.current === currentId &&
+          typeof scrollToBottomRef.current === "function"
+        ) {
           setTimeout(() => {
-            scrollToBottomRef.current();
+            if (currentIdRef.current === currentId)
+              scrollToBottomRef.current?.();
           }, 300);
         }
       });
@@ -325,9 +391,14 @@ function Chat(props) {
 
     const onChat = data => {
       if (data.action === "delete") {
+        pendingListChangesRef.current?.set(+data.id, null);
         setChats(prev => prev.filter(c => c.id !== +data.id));
         if (currentIdRef.current === +data.id) {
           setCurrentId(null);
+          currentIdRef.current = null;
+          navigationRef.current += 1;
+          messagesRequestRef.current += 1;
+          pendingRequestRef.current = null;
           setMessages([]);
           history.push("/chats");
         }
@@ -341,14 +412,20 @@ function Chat(props) {
           !mine &&
           data.chat.id === currentIdRef.current
         ) {
-          api.post(`/chats/${data.chat.id}/read`, { userId: user.id });
+          api
+            .post(`/chats/${data.chat.id}/read`, { userId: user.id })
+            .catch(toastError);
         }
       }
     };
 
     const onMessage = data => {
-      if (data.action === "new-message") {
-        setMessages(prev => [...prev, data.newMessage]);
+      if (
+        data.action === "new-message" &&
+        currentId === currentIdRef.current &&
+        data.newMessage?.chatId === currentIdRef.current
+      ) {
+        setMessages(prev => mergeChatMessages(prev, [data.newMessage]));
         if (typeof scrollToBottomRef.current === "function") {
           scrollToBottomRef.current();
         }
@@ -372,43 +449,73 @@ function Chat(props) {
   }, [currentId, socketManager, user.id]);
 
   const selectChat = (chat, navigate = true) => {
+    if (currentIdRef.current === chat.id) return;
+    currentIdRef.current = chat.id;
+    navigationRef.current += 1;
+    messagesRequestRef.current += 1;
+    pendingRequestRef.current = null;
+    retryMessagesRef.current = { page: 1, refresh: false };
     setMessages([]);
-    setMessagesPage(1);
+    messagesPageRef.current = 1;
+    paginationReadyRef.current = false;
+    setMessagesPageInfo({ hasMore: false });
+    setMessagesError(false);
+    setMessagesLoading(true);
     setCurrentId(chat.id);
     if (navigate && chat.uuid !== id) history.push(`/chats/${chat.uuid}`);
     const unreads =
       (chat.users || []).find(u => u.userId === user.id)?.unreads || 0;
     if (unreads > 0) {
-      api.post(`/chats/${chat.id}/read`, { userId: user.id }).catch(() => {});
+      api.post(`/chats/${chat.id}/read`, { userId: user.id }).catch(toastError);
     }
   };
 
   const selectContact = async person => {
+    if (openingContactRef.current) return;
+    openingContactRef.current = true;
+    const navigation = navigationRef.current;
+    setOpeningContact(person.id);
     try {
       const { data } = await api.post("/chats/direct", { userId: person.id });
+      if (!mountedRef.current) return;
       upsertChat(data);
-      selectChat(data);
-      setSearch("");
+      if (navigationRef.current === navigation) {
+        selectChat(data);
+        setSearch("");
+      }
     } catch (err) {
       toastError(err);
+    } finally {
+      openingContactRef.current = false;
+      if (mountedRef.current) setOpeningContact(null);
     }
   };
 
   const backToList = () => {
+    currentIdRef.current = null;
+    navigationRef.current += 1;
+    messagesRequestRef.current += 1;
+    pendingRequestRef.current = null;
     setCurrentId(null);
+    setMessages([]);
     history.push("/chats");
   };
 
   const sendMessage = async contentMessage => {
-    setLoading(true);
+    const chatId = currentId;
+    if (!chatId || currentIdRef.current !== chatId) return false;
     try {
-      await api.post(`/chats/${currentId}/messages`, {
+      const { data } = await api.post(`/chats/${chatId}/messages`, {
         message: contentMessage
       });
-    } catch (err) {
-      toastError(err);
+      if (mountedRef.current && currentIdRef.current === chatId) {
+        setMessages(prev => mergeChatMessages(prev, [data]));
+        scrollToBottomRef.current?.();
+      }
+      return true;
+    } catch {
+      return false;
     }
-    setLoading(false);
   };
 
   const deleteChat = async () => {
@@ -419,23 +526,61 @@ function Chat(props) {
     }
   };
 
-  const findMessages = async (chatId, page = messagesPage) => {
-    setLoading(true);
+  const findMessages = async (
+    chatId,
+    page = messagesPageRef.current,
+    refresh = false
+  ) => {
+    if (
+      !chatId ||
+      currentIdRef.current !== chatId ||
+      (pendingRequestRef.current && !refresh)
+    )
+      return false;
+    const request = ++messagesRequestRef.current;
+    pendingRequestRef.current = request;
+    retryMessagesRef.current = { page, refresh };
+    setMessagesLoading(true);
+    setMessagesError(false);
     try {
       const { data } = await api.get(
         `/chats/${chatId}/messages?pageNumber=${page}`
       );
-      setMessagesPage(page + 1);
-      setMessagesPageInfo(data);
-      setMessages(prev => [...data.records, ...prev]);
-    } catch (err) {
-      toastError(err);
+      if (
+        !mountedRef.current ||
+        currentIdRef.current !== chatId ||
+        messagesRequestRef.current !== request
+      )
+        return false;
+      if (!refresh || !paginationReadyRef.current) {
+        messagesPageRef.current = page + 1;
+        paginationReadyRef.current = true;
+        setMessagesPageInfo({ hasMore: data.hasMore });
+      }
+      setMessages(prev => mergeChatMessages(prev, data.records));
+      return true;
+    } catch {
+      if (
+        mountedRef.current &&
+        currentIdRef.current === chatId &&
+        messagesRequestRef.current === request
+      )
+        setMessagesError(true);
+      return false;
+    } finally {
+      if (
+        mountedRef.current &&
+        currentIdRef.current === chatId &&
+        messagesRequestRef.current === request
+      ) {
+        pendingRequestRef.current = null;
+        setMessagesLoading(false);
+      }
     }
-    setLoading(false);
   };
 
   const loadMoreMessages = async () => {
-    if (!loading) {
+    if (!messagesLoading) {
       findMessages(currentId);
     }
   };
@@ -532,11 +677,19 @@ function Chat(props) {
         <Title>{i18n.t("internalChat.title")}</Title>
         <Paper elevation={0} className={classes.shell}>
           {(wide || !hasChat) && (
-            <aside className={classes.aside}>
+            <aside
+              className={classes.aside}
+              aria-label={i18n.t("chatPage.teamConversations")}
+            >
               <div className={classes.asideHead}>
-                <Typography className={classes.asideTitle}>
-                  {i18n.t("chatPage.people")}
-                </Typography>
+                <div>
+                  <Typography className={classes.asideTitle}>
+                    {i18n.t("chatPage.people")}
+                  </Typography>
+                  <Typography className={classes.asideSubtitle}>
+                    {i18n.t("chatPage.teamHint")}
+                  </Typography>
+                </div>
                 <Button
                   size="small"
                   color="primary"
@@ -559,6 +712,10 @@ function Chat(props) {
                 activeUuid={currentChat.uuid}
                 onSelectChat={chat => selectChat(chat)}
                 onSelectContact={selectContact}
+                loading={listLoading}
+                error={listError}
+                onRetry={() => setListVersion(version => version + 1)}
+                openingContact={openingContact}
               />
             </aside>
           )}
@@ -574,7 +731,16 @@ function Chat(props) {
                       scrollToBottomRef={scrollToBottomRef}
                       pageInfo={messagesPageInfo}
                       messages={messages}
-                      loading={loading}
+                      historyLoading={messagesLoading}
+                      historyError={messagesError}
+                      handleRetryMessages={() =>
+                        findMessages(
+                          currentId,
+                          retryMessagesRef.current.page,
+                          retryMessagesRef.current.refresh
+                        )
+                      }
+                      handleMediaSent={() => findMessages(currentId, 1, true)}
                       handleSendMessage={sendMessage}
                       handleLoadMore={loadMoreMessages}
                     />

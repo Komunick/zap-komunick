@@ -69,6 +69,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Alterado
 
+- Chat interno com busca limpável, estados de carregamento/vazio/erro e repetição, seleção e não lidas acessíveis.
+  Mensagens, anexos e campo de envio respeitam a largura disponível e os temas claro e escuro.
+
 - A chave de IA não é mais preenchida na tela nem salva ao desfocar. Configurações mostra somente seu estado e exige
   ação explícita para salvar, proteger uma configuração antiga ou confirmar remoção.
 - O filtro "Carteira" em Contatos reúne "Todos", "Minha carteira" e, para administradores, "Sem responsável".
@@ -130,6 +133,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   com fita no topo, canto dobrado, pequena inclinação fixa por atendimento e efeito ao passar o mouse.
 
 ### Corrigido
+
+- No chat interno, Shift+Enter insere uma linha; texto e anexos permanecem disponíveis quando o envio falha.
+  Envios pendentes não são repetidos, e respostas atrasadas do histórico não entram em outra conversa.
 
 - Restauração do banco com índice de busca de etiquetas: a função de normalização
   resolve a extensão de acentos pelo esquema explícito, preservando os resultados.
