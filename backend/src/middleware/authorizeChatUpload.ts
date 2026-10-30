@@ -1,6 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 import AuthorizeChatService from "../services/ChatService/AuthorizeChatService";
-import { chatUpload, removeChatUploadFiles } from "../config/chatUpload";
+import {
+  chatUpload,
+  finalizeChatUploadFiles,
+  removeChatUploadFiles
+} from "../config/chatUpload";
 
 export default async function authorizeChatUpload(
   req: Request,
@@ -20,10 +24,18 @@ export function receiveChatUpload(
   next: NextFunction
 ): void {
   chatUpload.array("medias")(req, res, async error => {
-    if (!error) return next();
+    let failure = error;
+    if (!failure) {
+      try {
+        await finalizeChatUploadFiles(req.files as Express.Multer.File[]);
+      } catch (fileError) {
+        failure = fileError;
+      }
+    }
+    if (!failure) return next();
     try {
       await removeChatUploadFiles(req.files as Express.Multer.File[]);
-      return next(error);
+      return next(failure);
     } catch (cleanupError) {
       return next(cleanupError);
     }

@@ -12,6 +12,7 @@ import {
 } from "sequelize-typescript";
 import User from "./User";
 import Chat from "./Chat";
+import { chatMediaUrl } from "../helpers/ChatMediaRules";
 
 @Table({ tableName: "ChatMessages" })
 class ChatMessage extends Model<ChatMessage> {
@@ -34,7 +35,7 @@ class ChatMessage extends Model<ChatMessage> {
   @Column(DataType.STRING)
   get mediaPath(): string | null {
     if (this.getDataValue("mediaPath")) {
-      return `${process.env.BACKEND_URL}/public/${this.getDataValue("mediaPath")}`;
+      return chatMediaUrl(this.chatId, this.id, process.env.BACKEND_URL || "");
     }
     return null;
   }

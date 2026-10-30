@@ -4,8 +4,15 @@ import authorizeChatUpload, {
   receiveChatUpload
 } from "../middleware/authorizeChatUpload";
 import * as ChatController from "../controllers/ChatController";
+import authenticateChatMedia from "../middleware/authenticateChatMedia";
+import * as ChatMediaController from "../controllers/ChatMediaController";
 
 const routes = express.Router();
+
+routes
+  .route("/chats/:chatId/messages/:messageId/media")
+  .get(authenticateChatMedia, ChatMediaController.show)
+  .head(authenticateChatMedia, ChatMediaController.show);
 
 routes.get("/chats", isAuth, ChatController.index);
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Lightbox, {
   IconButton as YarlIconButton
 } from "yet-another-react-lightbox";
@@ -10,6 +10,33 @@ import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import "yet-another-react-lightbox/plugins/captions.css";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
 import "yet-another-react-lightbox/styles.css";
+import { releaseChatMedia } from "../../helpers/chatMedia";
+
+// Native players may outlive detached refs. Private chat galleries retain the
+// actual nodes so close, revocation and identity changes stop their requests.
+function PrivateMediaStage({ children, style, onMediaError }) {
+  const container = useRef(null);
+  useEffect(() => {
+    const element = container.current;
+    const nodes = new Set();
+    const capture = () =>
+      element
+        ?.querySelectorAll("img,video,audio")
+        .forEach(node => nodes.add(node));
+    capture();
+    const observer = new MutationObserver(capture);
+    if (element) observer.observe(element, { childList: true, subtree: true });
+    return () => {
+      observer.disconnect();
+      nodes.forEach(releaseChatMedia);
+    };
+  }, []);
+  return (
+    <div ref={container} style={style} onErrorCapture={onMediaError}>
+      {children}
+    </div>
+  );
+}
 
 const RotateLeftIcon = props => (
   <svg
@@ -88,6 +115,7 @@ export const buildMediaGalleryData = (
     getId = message => message?.id,
     getMediaType = message => message?.mediaType,
     getMediaUrl = message => message?.mediaUrl,
+    getFileName,
     getThumbnailUrl = message => message?.thumbnailUrl,
     getDescription = message => message?.body,
     getUpdatedAt = message => message?.updatedAt,
@@ -123,6 +151,9 @@ export const buildMediaGalleryData = (
       const cacheSeed =
         getUpdatedAt(message) || getCreatedAt(message) || messageId;
       const downloadUrl = buildCacheBustedUrl(mediaUrl, cacheSeed);
+      const fileName =
+        getFileName?.(message) ||
+        extractFileName(mediaUrl, `${mediaType}-${messageId}`);
 
       acc.byMessageId[messageId] = acc.slides.length;
 
@@ -139,7 +170,7 @@ export const buildMediaGalleryData = (
           poster: thumbnailUrl || mediaUrl,
           download: {
             url: downloadUrl,
-            filename: extractFileName(mediaUrl, `video-${messageId}`)
+            filename: fileName
           },
           sources: [{ src: mediaUrl }]
         });
@@ -151,7 +182,7 @@ export const buildMediaGalleryData = (
           description,
           download: {
             url: downloadUrl,
-            filename: extractFileName(mediaUrl, `image-${messageId}`)
+            filename: fileName
           }
         });
       }
@@ -167,7 +198,11 @@ const MediaGalleryLightbox = ({
   index,
   slides,
   onClose,
-  onViewIndexChange
+  onViewIndexChange,
+  crossOrigin,
+  onDownload,
+  privateMedia = false,
+  onMediaError
 }) => {
   const [currentIndex, setCurrentIndex] = useState(index || 0);
   const [rotationBySlide, setRotationBySlide] = useState({});
@@ -201,6 +236,15 @@ const MediaGalleryLightbox = ({
       close={onClose}
       index={index}
       slides={slides}
+      {...(crossOrigin
+        ? {
+            carousel: { imageProps: { crossOrigin } },
+            video: { crossOrigin }
+          }
+        : {})}
+      {...(onDownload
+        ? { download: { download: ({ slide }) => onDownload(slide) } }
+        : {})}
       on={{
         view: ({ index: viewedIndex }) => {
           setCurrentIndex(viewedIndex);
@@ -212,20 +256,21 @@ const MediaGalleryLightbox = ({
       render={{
         slideContainer: ({ slide, children }) => {
           const rotation = rotationBySlide[slide?.key] || 0;
-          return (
-            <div
-              style={{
-                width: "100%",
-                height: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transform: `rotate(${rotation}deg)`
-              }}
-            >
-              {children}
-            </div>
-          );
+          const style = {
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transform: `rotate(${rotation}deg)`
+          };
+          if (privateMedia)
+            return (
+              <PrivateMediaStage style={style} onMediaError={onMediaError}>
+                {children}
+              </PrivateMediaStage>
+            );
+          return <div style={style}>{children}</div>;
         }
       }}
       captions={{

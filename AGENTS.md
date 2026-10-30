@@ -21,6 +21,10 @@ Execute na raiz do repositório. Neste notebook não há Node instalado no PATH:
   - frontend: `docker compose -f docker-compose-dev-app.yaml exec frontend sh -c "npx prettier --check <arquivos>"`
 - Nova migração: reinicie o backend (`docker compose -f docker-compose-dev-app.yaml restart backend`), que compila e
   roda `sequelize db:migrate` na subida.
+- Anexos privados do chat: não é uma migration SQL. Após build, inventarie com
+  `node dist/scripts/migrateChatMedia.js`; execute com `--execute` somente em manutenção sem escritores e confirme
+  `--check` antes de subir a versão nova. Veja `docs/specs/chat-anexos-privados.md` e a operação em `deploy/arm07/README.md`.
+  Não iniciar código antigo após o cutover nem remover arquivos para contornar uma falha de prontidão.
 
 O backend recarrega sozinho (`ts-node-dev --poll`); o frontend também (`react-scripts start` com polling).
 

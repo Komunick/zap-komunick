@@ -229,11 +229,29 @@ troca de identidade/logout, inclusive limpando listeners; um encerramento atrasa
 storage específico do chat com nomes aleatórios para não sobrescrever arquivos e permitir limpeza somente dos
 arquivos da requisição revogada ou não confirmada. A emissão ocorre após commit. Upload múltiplo é confirmado como
 um lote, mas mantém o evento legado de apenas uma mensagem; o remetente pode atualizar o histórico após o upload.
-A entrega pública legada `/public` do RF-023 não é privatizada nem migrada por esta correção.
+O [recorte de anexos privados](specs/chat-anexos-privados.md) acrescenta `config/chatMedia`, fora da raiz pública,
+e a rota `GET/HEAD /chats/:chatId/messages/:messageId/media`. Ela revalida empresa e participação antes de servir
+conteúdo, metadados, Range ou condicionais. Somente essa rota aceita também a sessão HttpOnly `jrt`, verificando
+assinatura, versão e empresa atuais, horas/IP; credenciais simultâneas devem concordar. Não emite tokens nem aceita
+segredo na URL. Cache é privado/no-store, a disposição e o MIME são controlados pelo servidor. O frontend usa IDs,
+sessão nativa e limpeza de players/galeria por identidade, sem fallback público nem mudança no PDF download existente.
+Após autorizar, a classificação lê no máximo 512 bytes de assinatura; isso preserva formatos conhecidos sem extensão
+e mantém conteúdo ativo/desconhecido como download. O corpo continua em streaming, sem carregar o arquivo inteiro.
+
+`ChatMediaMigrationService` inventaria basenames RAW e órfãos do namespace do chat, detecta referências estruturais de
+mídia compartilhadas e copia sem sobrescrever, verificando integridade antes de remover origens públicas. Mantém as
+associações e o schema. O CLI `node dist/scripts/migrateChatMedia.js` é dry-run por padrão; `--execute` exige manutenção
+sem escritores, e `--check` confirma prontidão. Falha parcial exige exame e retomada, não restauração automática.
+O servidor verifica prontidão antes de escutar HTTP. `PublicFileService` bloqueia nomes do chat antes de abrir arquivos,
+confina o acesso à raiz pública e recusa symlinks; o nginx usa proxy para essa decisão e não monta mais o volume público.
+O descritor de arquivos do painel RF-023 também consulta essa proteção antes de abrir o caminho e seu destino real,
+para não reabrir um anexo privado por uma referência de atendimento ou por um alias interno ao filesystem.
 
 A verificação de autorização cobre empresa/participante/dono, ausência de efeitos negados em banco/arquivos/eventos,
 associação legada indevida, remoção/mudança de empresa, concorrência real e rechecagem durante stream, usando somente
-novas identidades e arquivos fictícios rastreados. Isso não equivale a isolamento global de bytes já públicos.
+novas identidades e arquivos fictícios rastreados. Privacidade acrescenta migração por hash/retomada/conflito e negativas
+de entrega por todos os ingressos, além de preview/reprodução/download legítimos. Não revoga cópias já baixadas ou
+arquivos dos atendimentos que continuam públicos pelo contrato do RF-023.
 
 **Etiquetas por setor (RF-019):** `TagModal` usa `QueueSelect` com seleção múltipla e texto explicando que a seleção
 vazia vale para todos os setores; `pages/Tags` mostra a coluna "Setores". `components/TagPicker` reúne
@@ -521,9 +539,10 @@ Contrato/licença, acesso ao fornecedor real, sincronização, documentos e uso 
   scripts, XFA, formulários ou links/annotations; `isEvalSupported: false` é aplicado na carga conforme a
   [orientação oficial de segurança](https://github.com/mozilla/pdf.js/security/advisories/GHSA-wgrm-67xf-hhpq).
   Imagem permite zoom/rotação; vídeo usa controles nativos sem autoplay. Compatibilidade de codec é do navegador.
-- **Compatibilidade/limite:** `/public/*` no Express e o alias nginx continuam públicos; arquivos grandes também são
-  entregues ao destinatário por links legados. Não confundir nova API autorizada com privatização global desses bytes.
-  Mudar somente Express não elimina o caminho nginx. Migração de armazenamento e entrega é decisão separada.
+- **Compatibilidade/limite:** arquivos dos atendimentos em `/public/*` continuam públicos, inclusive os links grandes
+  entregues ao destinatário. A API autorizada do painel não privatiza esses bytes. A entrega pública passa pelo backend;
+  o alias nginx foi removido para proteger os anexos do chat interno, que seguem armazenamento privado e migração do
+  RF-010. Não confundir os dois contratos nem apagar arquivos desconhecidos dos demais módulos.
 
 **Verificação prevista:** regras/classificação/cursor/Range e serviços com duas empresas, IDs compostos repetidos,
 histórico e troca de acesso; filesystem local com arquivo ausente, assinatura divergente, limite e escape/symlink;

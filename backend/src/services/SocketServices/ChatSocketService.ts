@@ -4,6 +4,7 @@ import Chat from "../../models/Chat";
 import ChatUser from "../../models/ChatUser";
 import User from "../../models/User";
 import { logger } from "../../utils/logger";
+import { chatMediaUrl } from "../../helpers/ChatMediaRules";
 
 export interface ChatSocketSnapshot {
   id: number;
@@ -161,7 +162,13 @@ export async function emitChatEvent(
         message: message.message,
         createdAt: message.createdAt,
         updatedAt: message.updatedAt,
-        mediaPath: message.mediaPath,
+        mediaPath: message.mediaPath
+          ? chatMediaUrl(
+              message.chatId,
+              message.id,
+              process.env.BACKEND_URL || ""
+            )
+          : null,
         mediaName: message.mediaName,
         mediaType: message.mediaType,
         sender: safeUser(users.get(message.senderId))
