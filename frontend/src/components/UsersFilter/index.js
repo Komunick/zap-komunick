@@ -9,6 +9,7 @@ export function UsersFilter({
   onFiltered,
   initialUsers,
   excludeId,
+  label,
   multiple = false
 }) {
   const [users, setUsers] = useState([]);
@@ -116,7 +117,8 @@ export function UsersFilter({
           <TextField
             {...params}
             variant="outlined"
-            placeholder={i18n.t("tickets.search.filterByUsers")}
+            label={label}
+            placeholder={label || i18n.t("tickets.search.filterByUsers")}
           />
         )}
       />

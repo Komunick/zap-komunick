@@ -339,6 +339,15 @@ então vê o logo da Komunick, o botão verde e o painel da marca, no tema claro
   Grupos continuam com nome, participantes editáveis e exclusão pelo dono, agora no cabeçalho da conversa.
 - A lista se atualiza em tempo real (mensagem nova sobe a conversa e soma não lidas; com a conversa aberta, ela é
   marcada como lida). No celular, a lista e a conversa aparecem uma de cada vez, com botão de voltar.
+- A [melhoria de usabilidade](specs/chat-interno-usabilidade.md) distingue carregamento, vazio, busca sem resultados e
+  falha recuperável na lista e no histórico. A busca pode ser limpa, e seleção e não lidas continuam identificáveis.
+- Mensagens longas, quebras de linha e anexos respeitam a largura disponível nos dois temas. O campo de mensagem tem
+  identificação acessível; Enter envia, Shift+Enter insere uma linha e a composição de texto não dispara envio.
+- Envio pendente impede duplicação; uma falha conserva texto ou anexo para nova tentativa. Resultados atrasados do
+  histórico não entram em outra conversa, e a mesma mensagem recebida por HTTP/socket não aparece duas vezes.
+
+**Limite da melhoria de interface:** o backend legado do chat tem verificações de autorização incompletas. O recorte
+de usabilidade não altera essas permissões nem comprova isolamento; a correção exige definição separada antes de uso real.
 
 **Cenário de sucesso:**
 

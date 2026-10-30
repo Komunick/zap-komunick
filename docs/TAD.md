@@ -198,6 +198,22 @@ ponteiro mouse, breakpoint desktop e variante permanente. A entrada define abert
 ao sair; mantém a transição visual, os controles e a persistência existentes. Foco desktop não monta Drawer e a
 gaveta temporária móvel continua controlada por toque/botão.
 
+**Chat interno (RF-010):** `pages/Chat` mantém a API e os eventos existentes, separando carga da lista, histórico e
+envio. A identidade da conversa e a geração da busca delimitam as respostas do histórico; mensagens de HTTP/socket
+são mescladas por ID. Ao repetir a carga da lista, alterações locais/socket posteriores ao início da busca prevalecem
+sobre o snapshot recebido, inclusive exclusões. Falhas de leitura têm repetição por GET, sem repetir envios confirmados.
+O composer aguarda confirmação antes de limpar texto/anexos, bloqueia submissão simultânea e distingue Enter,
+Shift+Enter e composição de texto. Cada conversa mantém seu próprio gravador e encerra a captura ao desmontar;
+áudio convertido cujo envio falhou permanece como anexo para repetição manual. Layout e bolhas usam os tokens
+existentes e limites relativos à largura disponível. Textos do fork ficam em `translate/languages/komunick.js`;
+não há dependência ou migration nova.
+
+A verificação cobre falha e repetição, respostas fora de ordem, deduplicação, teclado, seleção/busca e envio/leitura
+entre atores fictícios no ambiente local, além de ambos os temas e celular. O backend legado ainda tem autorização
+incompleta em operações de chat e broadcasts de criação/edição sem restrição por sala; a UI não é uma barreira de
+segurança. Upload múltiplo persiste todos os arquivos, mas emite apenas uma mensagem: o remetente pode atualizar
+o histórico após o upload; entrega de todos os eventos aos demais participantes requer correção separada no backend.
+
 **Etiquetas por setor (RF-019):** `TagModal` usa `QueueSelect` com seleção múltipla e texto explicando que a seleção
 vazia vale para todos os setores; `pages/Tags` mostra a coluna "Setores". `components/TagPicker` reúne
 `useSectorTags`, `TagChecklist` e `TagPickerPopover`: a linha do atendimento abre o popover e salva por

@@ -1,7 +1,16 @@
-import React, { useMemo } from "react";
-import { Avatar, InputBase, makeStyles, Typography } from "@material-ui/core";
+import React, { useMemo, useRef } from "react";
+import {
+  Avatar,
+  Button,
+  CircularProgress,
+  IconButton,
+  InputBase,
+  makeStyles,
+  Typography
+} from "@material-ui/core";
 import SearchIcon from "@material-ui/icons/Search";
 import GroupIcon from "@material-ui/icons/Group";
+import ClearIcon from "@material-ui/icons/Clear";
 import clsx from "clsx";
 import { parseISO } from "date-fns";
 
@@ -64,6 +73,7 @@ const useStyles = makeStyles(theme => ({
     color: theme.palette.text.primary,
     cursor: "pointer",
     "&:hover": { backgroundColor: theme.komunick.subtle },
+    "&:disabled": { cursor: "wait", opacity: 0.65 },
     "&:focus-visible": { outline: `2px solid ${theme.komunick.accent}` }
   },
   rowActive: {
@@ -92,22 +102,23 @@ const useStyles = makeStyles(theme => ({
     fontWeight: 700,
     lineHeight: "20px",
     textAlign: "center",
-    color: "#FFFFFF",
+    color: theme.palette.primary.contrastText,
     backgroundColor: theme.palette.primary.main
   },
   empty: {
     padding: "24px 16px",
     fontSize: 14,
     textAlign: "center",
-    color: theme.palette.text.secondary
+    color: theme.palette.text.secondary,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 10
   }
 }));
 
 const normalize = text =>
-  (text || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "");
+  (text || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
 export default function ChatList({
   chats,
@@ -117,9 +128,18 @@ export default function ChatList({
   onSearch,
   activeUuid,
   onSelectChat,
-  onSelectContact
+  onSelectContact,
+  loading = false,
+  error = false,
+  onRetry,
+  openingContact
 }) {
   const classes = useStyles();
+  const searchRef = useRef();
+  const activePeer = chatPeerId(
+    chats.find(chat => chat.uuid === activeUuid),
+    user.id
+  );
 
   const usersById = useMemo(() => {
     const map = {};
@@ -169,13 +189,42 @@ export default function ChatList({
         <SearchIcon fontSize="small" />
         <InputBase
           className={classes.searchInput}
+          inputRef={searchRef}
           value={search}
           onChange={e => onSearch(e.target.value)}
           placeholder={i18n.t("chatPage.search")}
           inputProps={{ "aria-label": i18n.t("chatPage.search") }}
         />
+        {search && (
+          <IconButton
+            size="small"
+            aria-label={i18n.t("chatPage.clearSearch")}
+            onClick={() => {
+              onSearch("");
+              searchRef.current?.focus();
+            }}
+          >
+            <ClearIcon fontSize="small" />
+          </IconButton>
+        )}
       </div>
-      <div className={classes.scroll}>
+      <div className={classes.scroll} aria-busy={loading}>
+        {loading && (
+          <div className={classes.empty} role="status">
+            <CircularProgress size={22} />
+            {i18n.t("chatPage.loadingConversations")}
+          </div>
+        )}
+        {error && (
+          <div className={classes.empty} role="alert">
+            <Typography variant="body2">
+              {i18n.t("chatPage.conversationsError")}
+            </Typography>
+            <Button size="small" onClick={onRetry}>
+              {i18n.t("chatPage.retry")}
+            </Button>
+          </div>
+        )}
         {conversations.length > 0 && (
           <div className={classes.section}>
             {i18n.t("chatPage.conversations")}
@@ -192,6 +241,7 @@ export default function ChatList({
                 chat.uuid === activeUuid && classes.rowActive
               )}
               onClick={() => onSelectChat(chat)}
+              aria-pressed={chat.uuid === activeUuid}
             >
               <Avatar
                 className={classes.avatar}
@@ -215,10 +265,17 @@ export default function ChatList({
                     noWrap
                     className={clsx(classes.sub, classes.name)}
                   >
-                    {chat.lastMessage}
+                    {chat.lastMessage || i18n.t("chatPage.emptyPreview")}
                   </Typography>
                   {unreads > 0 && (
-                    <span className={classes.unread}>{unreads}</span>
+                    <span
+                      className={classes.unread}
+                      aria-label={i18n.t("chatPage.unreadMessages", {
+                        count: unreads
+                      })}
+                    >
+                      {unreads}
+                    </span>
                   )}
                 </div>
               </div>
@@ -233,8 +290,14 @@ export default function ChatList({
           <button
             type="button"
             key={`user-${person.id}`}
-            className={classes.row}
+            className={clsx(
+              classes.row,
+              activePeer === person.id && classes.rowActive
+            )}
+            aria-pressed={activePeer === person.id}
             onClick={() => onSelectContact(person)}
+            disabled={!!openingContact}
+            aria-busy={openingContact === person.id}
           >
             <Avatar
               className={classes.avatar}
@@ -253,8 +316,15 @@ export default function ChatList({
           </button>
         ))}
 
-        {nothing && (
-          <div className={classes.empty}>{i18n.t("chatPage.nobody")}</div>
+        {nothing && !loading && !error && (
+          <div className={classes.empty} role="status">
+            {i18n.t(search.trim() ? "chatPage.noResults" : "chatPage.nobody")}
+            <Typography variant="body2">
+              {i18n.t(
+                search.trim() ? "chatPage.searchHint" : "chatPage.emptyTeamHint"
+              )}
+            </Typography>
+          </div>
         )}
       </div>
     </div>
