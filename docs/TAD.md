@@ -531,6 +531,8 @@ vínculo, contexto ou flag invalida todo o agregado. Não há ferramenta escolhi
 Antes/depois dos awaits, o serviço confere ator atual, empresa, contato, ticket, perfil/setores, contexto de mensagens,
 flags e versões dos vínculos selecionados. A verificação final usa uma transação e Contact FOR UPDATE compartilhado
 com o CRUD; chamadas de mocks ficam fora do lock. A consulta P1 compartilhada aceita a conexão da verificação final.
+O snapshot também inclui responsável e status do ticket, conferidos contra o núcleo do ticket autorizado; trocar
+responsável na mesma fila ou fechar/pausar invalida a versão anterior, preservando a autorização P0 de consultas novas.
 `contextVersion` é SHA256 do estado local estável e seleção, sem texto legível. Não é autorização: POST/review
 recarrega permissões/snapshot locais independentemente e compara a versão antes do aceite humano, sem chamar fonte.
 Não inclui horários voláteis do mock nem promete atualizar um fornecedor real. Não cria sessão/cache de resultados.

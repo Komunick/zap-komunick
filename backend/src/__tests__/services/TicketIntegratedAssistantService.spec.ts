@@ -100,6 +100,8 @@ let ticket: {
   contactId: number;
   queueId: number;
   isGroup: boolean;
+  userId: number | null;
+  status: string;
 };
 let flags: { companyId: number; key: string; value: string }[];
 let links: {
@@ -132,7 +134,15 @@ const fixtures = (companyId = 10) => {
     profile: "user",
     queues: [{ id: 401, companyId }]
   };
-  ticket = { id: 301, companyId, contactId: 201, queueId: 401, isGroup: false };
+  ticket = {
+    id: 301,
+    companyId,
+    contactId: 201,
+    queueId: 401,
+    isGroup: false,
+    userId: currentUser.id,
+    status: "open"
+  };
   flags = flagKeys.map(key => ({ companyId, key, value: "enabled" }));
   links = ["acessorias", "sci"].map((provider, index) => ({
     id: 501 + index,
@@ -342,6 +352,71 @@ describe("integrated assistant current authorization, bounded sources and review
       noProviderCall();
     }
   );
+
+  it.each(
+    ["generate-final-await", "review-before"].flatMap(operation =>
+      ["assignee", "closed", "paused"].map(mutation => [operation, mutation])
+    )
+  )(
+    "invalidates %s for %s ticket assignment or state changes",
+    async (operation, mutation) => {
+      const mutate = () => {
+        if (mutation === "assignee") ticket.userId = 102;
+        else ticket.status = mutation;
+      };
+      if (operation === "review-before") {
+        const original = await generate();
+        mutate();
+        await expect(review(original)).rejects.toMatchObject({
+          message: "ERR_INTEGRATED_ASSISTANT_CONTEXT_CHANGED",
+          statusCode: 409
+        });
+      } else {
+        (Message.findAll as jest.Mock).mockImplementation(async options => {
+          const rows = messages.map(message => ({ ...message }));
+          if (options.transaction === transaction) mutate();
+          return rows;
+        });
+        await expect(generate()).rejects.toMatchObject({
+          message: "ERR_INTEGRATED_ASSISTANT_CONTEXT_CHANGED",
+          statusCode: 409
+        });
+      }
+    }
+  );
+
+  it.each(["closed", "paused"])(
+    "preserves authorized fresh read-only generation and review for %s tickets",
+    async state => {
+      ticket.status = state;
+      const result = await generate();
+      expect(result.mode).toBe("mock");
+      await expect(review(result)).resolves.toEqual({
+        valid: true,
+        mode: "mock",
+        simulated: true
+      });
+      expect(Ticket.update).not.toHaveBeenCalled();
+      expect(Message.create).not.toHaveBeenCalled();
+    }
+  );
+
+  it("refuses a hybrid state snapshot when the contact changes after the P0 authorization read", async () => {
+    const authorizedRead = (
+      Ticket.findOne as jest.Mock
+    ).getMockImplementation();
+    (Ticket.findOne as jest.Mock).mockImplementation(async options => {
+      const row = await authorizedRead(options);
+      return options.attributes.includes("status")
+        ? { ...row, contactId: 202 }
+        : row;
+    });
+    await expect(generate()).rejects.toMatchObject({
+      message: "ERR_INTEGRATED_ASSISTANT_CONTEXT_CHANGED",
+      statusCode: 409
+    });
+    noProviderCall();
+  });
 
   it("also requires the independent P1 server mode", async () => {
     process.env.AI_ASSISTANT_MODE = "disabled";

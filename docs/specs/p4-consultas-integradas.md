@@ -39,6 +39,8 @@ Sem dependência nova, merge, alteração dos ambientes ARM07 ou reconexão do W
   notas, estado, etiquetas, mensagens ou credenciais. Após aceite, o texto segue o rascunho normal herdado de P1.
 - `contextVersion` é um SHA256 do contexto local estável e da seleção, sem conteúdo legível; serve para comparar
   versões, não como credencial ou concessão de acesso. Revalidação sempre autentica e verifica permissões atuais.
+  Inclui responsável e estado do atendimento: trocar responsável na mesma fila ou fechar/pausar invalida o resultado
+  anterior. Isso não cria uma nova proibição de leitura para consultas iniciadas no estado atual.
   Não armazena resultados/sessões adicionais e não promete atualizar o fornecedor sem uma nova consulta.
 - Fechar, cancelar, trocar atendimento/cliente/página/ator ou receber evento de flag/vínculo limpa e invalida respostas
   antigas. Sem entrega do evento não há promessa de apagar instantaneamente um snapshot recebido; consulta e aceite

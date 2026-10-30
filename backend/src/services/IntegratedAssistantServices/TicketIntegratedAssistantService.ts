@@ -4,6 +4,7 @@ import AppError from "../../errors/AppError";
 import Contact from "../../models/Contact";
 import ContactExternalClientLink from "../../models/ContactExternalClientLink";
 import Setting from "../../models/Setting";
+import Ticket from "../../models/Ticket";
 import {
   ASSISTANT_LIMITS,
   AssistantContext,
@@ -55,6 +56,8 @@ const FLAG_KEYS = [
 type Flag = (typeof FLAG_KEYS)[number];
 interface Scope extends AssistantScope {
   queueId: number | null;
+  assignedUserId: number | null;
+  status: string;
   isAdmin: boolean;
   queueIds: number[];
   flags: Record<Flag, string[]>;
@@ -114,6 +117,32 @@ const loadScope = async (
     undefined,
     transaction
   );
+  // P4 versions assignment/state without changing P0's read permissions. A second
+  // query is necessary because the shared authorizer deliberately selects only
+  // access fields; reject a moved ticket rather than combining two scopes.
+  const snapshot = await Ticket.findOne({
+    where: { id: ticket.id, companyId: actor.companyId },
+    attributes: [
+      "id",
+      "companyId",
+      "contactId",
+      "queueId",
+      "isGroup",
+      "userId",
+      "status"
+    ],
+    ...(transaction ? { transaction } : {}),
+    logging: false
+  });
+  if (
+    !snapshot ||
+    snapshot.id !== ticket.id ||
+    snapshot.companyId !== ticket.companyId ||
+    snapshot.contactId !== ticket.contactId ||
+    snapshot.queueId !== ticket.queueId ||
+    (snapshot.isGroup === true) !== (ticket.isGroup === true)
+  )
+    changed();
   const rows = await Setting.findAll({
     where: { companyId: actor.companyId, key: { [Op.in]: [...FLAG_KEYS] } },
     attributes: ["key", "value"],
@@ -132,6 +161,8 @@ const loadScope = async (
     companyId: ticket.companyId,
     contactId: ticket.contactId,
     queueId: ticket.queueId,
+    assignedUserId: snapshot.userId ?? null,
+    status: snapshot.status,
     isGroup: ticket.isGroup === true,
     isAdmin: viewer.isAdmin,
     queueIds: [...viewer.queueIds].sort((a, b) => a - b),

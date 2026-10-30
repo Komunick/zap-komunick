@@ -737,6 +737,7 @@ somente dados fictícios, sem acesso externo, arquivos ou envio e preservam os e
   O texto não confirma fatos fiscais, pagamentos ou conteúdo de documentos.
 - Sugestão editável só é anexada ao rascunho em outra ação humana, após revalidar contexto local e vínculos atuais.
   Mudanças de acesso, mensagens usadas, flag ou vínculo impedem consulta/aceite com estado antigo, mesmo sem evento entregue.
+  Transferência de responsável na mesma fila e mudança de estado também invalidam a versão anterior da sugestão.
   Preserva texto existente e não envia ou altera leitura/SLA/estado/mensagens/notas/credenciais.
 - Resultados não aceitos ficam somente em memória. Contratos/erros são estritos e privados; catálogo/CRUD continuam
   nos painéis P2/P3. Não há nova credencial, cache de resultados, fila, documento ou escrita externa.
