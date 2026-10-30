@@ -84,6 +84,7 @@ const useStyles = makeStyles(theme => ({
   },
   asideTitle: { fontSize: 18, fontWeight: 700 },
   asideSubtitle: { color: theme.komunick.textSecondary, fontSize: 12 },
+  newGroupButton: { flexShrink: 0, whiteSpace: "nowrap" },
   conversation: {
     display: "flex",
     flexDirection: "column",
@@ -697,6 +698,7 @@ function Chat(props) {
                   color="primary"
                   variant="outlined"
                   startIcon={<GroupAddIcon />}
+                  className={classes.newGroupButton}
                   onClick={() => {
                     setDialogType("new");
                     setShowDialog(true);
