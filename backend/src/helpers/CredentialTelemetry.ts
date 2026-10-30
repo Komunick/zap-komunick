@@ -35,6 +35,12 @@ export const isAssistantRequest = (url?: string): boolean =>
   /\/tickets\/[\s\S]+\/assistant(?:[/?#]|$)/i.test(decodedPath(url)) ||
   /\/settings\/aiAssistantEnabled(?:[/?#]|$)/i.test(decodedPath(url));
 
+export const isIntegratedAssistantRequest = (url?: string): boolean =>
+  /\/tickets\/[\s\S]+\/integrated-assistant(?:[/?#]|$)/i.test(
+    decodedPath(url)
+  ) ||
+  /\/settings\/integratedAssistantEnabled(?:[/?#]|$)/i.test(decodedPath(url));
+
 export const isAcessoriasRequest = (url?: string): boolean =>
   /\/tickets\/[\s\S]+\/acessorias(?:[/?#]|$)/i.test(decodedPath(url)) ||
   /\/settings\/acessoriasEnabled(?:[/?#]|$)/i.test(decodedPath(url));
@@ -49,6 +55,7 @@ export const isAttachmentRequest = (url?: string): boolean =>
 export const isSensitiveRequest = (url?: string): boolean =>
   isCredentialRequest(url) ||
   isAssistantRequest(url) ||
+  isIntegratedAssistantRequest(url) ||
   isAcessoriasRequest(url) ||
   isSciRequest(url) ||
   isAttachmentRequest(url);

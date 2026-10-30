@@ -1,6 +1,6 @@
 # TAD — Zap Komunick
 
-**Komunick Inteligência e Tecnologia** · **Atualizado em:** 27/10/2026
+**Komunick Inteligência e Tecnologia** · **Atualizado em:** 30/10/2026
 **Fonte oficial:** `docs/TAD.md` no repositório · **Comportamento:** `docs/PRD.md`
 
 Levantamento parcial: este documento cobre o que o fork acrescenta ao Ticketz. O restante do sistema segue o desenho do
@@ -515,6 +515,39 @@ A validação prevista cobre disabled/mock, duplicatas de flag, duas empresas/pr
 revogação entre awaits e CRUD idempotente; paginação/vazio/stale/falhas e UI em claro/escuro e desktop/celular.
 Fixtures são rastreadas em projeto descartável sem saída; snapshots de negócio, rascunho e credenciais devem coincidir.
 Resultados executados e limitações ficam no PR. Recuar o código preserva a tabela e seus vínculos, sem undo destrutivo.
+
+### Consultas integradas com revisão humana — P4 simulado (RF-025)
+
+O contrato está em [specs/p4-consultas-integradas.md](specs/p4-consultas-integradas.md). O serviço integrado tem
+rotas/flag próprios e reutiliza a consulta textual elegível de P1 e os serviços de detalhe autorizados de P2/P3.
+Não altera os contratos públicos desses percursos. `INTEGRATED_ASSISTANT_MODE=mock`,
+`integratedAssistantEnabled=enabled` e P1 habilitado são condições cumulativas; cada fonte mantém sua habilitação.
+
+O backend aceita apenas tipo e seleções explícitas de vínculos/páginas. Limita contexto a 30 mensagens e 12.000 caracteres
+e fontes a uma página de 5 itens cada. Regras puras validam entradas/saídas e compõem texto determinístico a partir de
+mensagens/metadados autorizados. Falhas operacionais são envelopes parciais por fonte; perda de acesso, versão de
+vínculo, contexto ou flag invalida todo o agregado. Não há ferramenta escolhida por mensagem ou modelo.
+
+Antes/depois dos awaits, o serviço confere ator atual, empresa, contato, ticket, perfil/setores, contexto de mensagens,
+flags e versões dos vínculos selecionados. A verificação final usa uma transação e Contact FOR UPDATE compartilhado
+com o CRUD; chamadas de mocks ficam fora do lock. A consulta P1 compartilhada aceita a conexão da verificação final.
+O snapshot também inclui responsável e status do ticket, conferidos contra o núcleo do ticket autorizado; trocar
+responsável na mesma fila ou fechar/pausar invalida a versão anterior, preservando a autorização P0 de consultas novas.
+`contextVersion` é SHA256 do estado local estável e seleção, sem texto legível. Não é autorização: POST/review
+recarrega permissões/snapshot locais independentemente e compara a versão antes do aceite humano, sem chamar fonte.
+Não inclui horários voláteis do mock nem promete atualizar um fornecedor real. Não cria sessão/cache de resultados.
+
+O componente integrado no composer mantém seleções e sugestão editada apenas em memória, aborta/descarta resultados
+antigos e reage a eventos de contexto/flags/vínculos. Antes do callback síncrono de anexar, revalida a versão local;
+o callback existente ainda confere ticket e bloqueios de mídia/gravação/edição. Texto aceito entra no rascunho normal,
+sem envio. Traduções seguem os quatro idiomas e cores seguem tokens do tema. Settings da flag nova verifica admin atual.
+
+Rotas, erros e configuração são classificados como sensíveis antes de telemetria, inclusive caminhos codificados e
+JSON inválido. Auditoria guarda apenas ação, identificadores e metadados mínimos. Sem resultado, texto, documento,
+credencial ou hash de contexto em logs/jobs. Sem DDL/dependência nova; recuar o código preserva mensagens/vínculos.
+A validação usa projeto local novo sem saída, duas empresas/clientes, provedores com IDs iguais, mudanças durante
+awaits e antes do review, paginação/falhas/stale, rascunho e snapshots, além dos dois temas e desktop/celular.
+Resultados executados ficam no PR. ARM07 mantém o modo integrado disabled; a demonstração P3 não é reutilizada como DB.
 
 ### Ambientes preparados para ARM07
 

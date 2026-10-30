@@ -1,15 +1,10 @@
-import { Op, col, fn, literal } from "sequelize";
 import AppError from "../../errors/AppError";
-import Message from "../../models/Message";
-import Contact from "../../models/Contact";
 import Setting from "../../models/Setting";
 import {
   ASSISTANT_LIMITS,
   AssistantKind,
   AssistantScope,
-  AssistantSource,
   assistantMode,
-  buildAssistantContext,
   parseAssistantRequest,
   validateAssistantOutput
 } from "../../helpers/AssistantRules";
@@ -17,6 +12,7 @@ import AuthorizeTicketContextService, {
   ContextActor
 } from "../TicketServices/AuthorizeTicketContextService";
 import { generateMockAssistant } from "./MockAssistantProvider";
+import LoadAssistantContextService from "./LoadAssistantContextService";
 
 const safeErrors = new Set([
   "ERR_NO_PERMISSION",
@@ -75,90 +71,6 @@ export const ticketAssistantStatus = async (
     return availability(actor.companyId);
   });
 
-const loadContext = async (scope: AssistantScope) => {
-  const rows = await Message.findAll({
-    where: {
-      [Op.and]: [
-        {
-          companyId: scope.companyId,
-          ticketId: scope.ticketId,
-          isDeleted: false
-        },
-        // Empty/whitespace messages must not consume the bounded text window.
-        literal('"Message"."body" ~ \'[^[:space:]]\''),
-        {
-          [Op.or]: [
-            { mediaType: null },
-            { mediaType: { [Op.in]: ["conversation", "extendedTextMessage"] } }
-          ]
-        },
-        { [Op.or]: [{ mediaUrl: null }, { mediaUrl: "" }] },
-        { [Op.or]: [{ thumbnailUrl: null }, { thumbnailUrl: "" }] },
-        {
-          [Op.or]: [
-            { fromMe: true, contactId: null },
-            scope.isGroup
-              ? { "$contact.companyId$": scope.companyId }
-              : { contactId: scope.contactId }
-          ]
-        }
-      ]
-    },
-    attributes: [
-      "id",
-      "companyId",
-      "ticketId",
-      "contactId",
-      "fromMe",
-      "isDeleted",
-      "mediaType",
-      "mediaUrl",
-      "thumbnailUrl",
-      "createdAt",
-      "updatedAt",
-      [
-        fn("left", col("Message.body"), ASSISTANT_LIMITS.maxCharacters + 1),
-        "body"
-      ],
-      [
-        literal(
-          `char_length("Message"."body") > ${ASSISTANT_LIMITS.maxCharacters + 1}`
-        ),
-        "bodyTruncated"
-      ]
-    ],
-    ...(scope.isGroup
-      ? {
-          include: [
-            {
-              model: Contact,
-              as: "contact",
-              attributes: ["id", "companyId"],
-              where: { companyId: scope.companyId },
-              required: false
-            }
-          ]
-        }
-      : {}),
-    order: [
-      ["createdAt", "DESC"],
-      ["id", "DESC"]
-    ],
-    limit: ASSISTANT_LIMITS.maxMessages + 1,
-    raw: true,
-    logging: false
-  });
-  return buildAssistantContext(
-    rows.map(row => ({
-      ...(row as unknown as AssistantSource),
-      senderCompanyId: (row as unknown as Record<string, number>)[
-        "contact.companyId"
-      ]
-    })),
-    scope
-  );
-};
-
 const timedMock = async (
   kind: AssistantKind,
   messages: Parameters<typeof generateMockAssistant>[1]
@@ -196,7 +108,7 @@ export const generateTicketAssistant = async (
       isGroup: ticket.isGroup === true
     };
     const queueId = ticket.queueId;
-    const context = await loadContext(scope);
+    const context = await LoadAssistantContextService(scope);
     const messages = context.messages.map(message =>
       Object.freeze({ ...message })
     );
@@ -216,7 +128,7 @@ export const generateTicketAssistant = async (
     }
     if (!(await availability(actor.companyId)).enabled)
       throw new AppError("ERR_ASSISTANT_DISABLED", 403);
-    const freshContext = await loadContext(scope);
+    const freshContext = await LoadAssistantContextService(scope);
     if (JSON.stringify(freshContext) !== JSON.stringify(context)) {
       throw new AppError("ERR_ASSISTANT_CONTEXT_CHANGED", 409);
     }

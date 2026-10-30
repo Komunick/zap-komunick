@@ -71,6 +71,8 @@ services:
       - ACESSORIAS_MODE=${ACESSORIAS_MODE:-disabled}
       # P3 SCI: explicit local simulation only; no real supplier or document access.
       - SCI_MODE=${SCI_MODE:-disabled}
+      # P4 queries only local simulations and also requires its own company flag.
+      - INTEGRATED_ASSISTANT_MODE=${INTEGRATED_ASSISTANT_MODE:-disabled}
     command: >
       sh -c "npm ci --no-audit --no-fund
       && npm run generate:i18nkeys

@@ -6,6 +6,11 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Adicionado
 
+- Consulta integrada simulada no atendimento, com seleção independente de clientes Acessórias/SCI, texto elegível da
+  conversa, fontes/horários e avisos de limite, desatualização e falha parcial. Resumo e sugestão exigem ação humana;
+  sugestão editável só é anexada ao rascunho após nova validação de contexto/vínculos, sem envio. Começa desligada e
+  mantém as flags das fontes independentes, sem IA/API real, sincronização ou documentos.
+
 - Painel SCI simulado com clientes explicitamente vinculados e metadados de publicações paginados, origem e
   atualização. Começa desligado por empresa/servidor, mantém vínculos separados do Acessórias e exige confirmação
   administrativa para alterações locais. Não usa API/token real, download de documento ou marcação de leitura.

@@ -1,7 +1,7 @@
 # PRD — Zap Komunick
 
 **Komunick Inteligência e Tecnologia**
-**Responsável:** Jailson (Komunick) · **Atualizado em:** 29/10/2026
+**Responsável:** Jailson (Komunick) · **Atualizado em:** 30/10/2026
 **Fonte oficial:** `docs/PRD.md` no repositório
 **Validado por:** Pendente
 
@@ -52,6 +52,8 @@ O [P2 de consultas Acessórias](specs/p2-acessorias-consultas.md) também foi au
 (RF-022), sem conexão ao fornecedor real.
 O P3 SCI foi autorizado em 29/10/2026 somente como [painel de publicações simuladas](specs/p3-sci-consultas.md)
 (RF-024); produto/módulo e contrato real continuam pendentes, sem download ou marcação de leitura no fornecedor.
+O P4 foi autorizado em 30/10/2026 como [consultas integradas com mocks](specs/p4-consultas-integradas.md)
+(RF-025), com revisão humana. Sincronização e conexões reais continuam fora do recorte.
 
 **Fluxo principal:** o cliente escreve → o atendimento entra na fila (ou direto no responsável da carteira) → o painel
 de SLA mostra a espera e destaca o que passou do prazo → o atendente responde e move o atendimento pelas colunas do
@@ -721,6 +723,28 @@ Troca de contexto durante carga encerra o visualizador anterior; falha não abre
 um de vários clientes mostra somente suas publicações, com paginação correta. Resposta atrasada após remoção/recriação
 ou troca de atendimento é recusada/descartada. Interface funciona em ambos os temas e desktop/celular. Testes usam
 somente dados fictícios, sem acesso externo, arquivos ou envio e preservam os estados anteriores do atendimento.
+
+### RF-025 — Consultas integradas com revisão humana (simulação)
+
+**Pedido (30/10/2026):** reunir IA, Acessórias e SCI com mocks/dados fictícios, conforme
+[especificação](specs/p4-consultas-integradas.md). Não habilita fornecedores, IA reais ou sincronização.
+
+- Começa desligado: exige modo/flag próprios e assistente P1 habilitado. Fontes mantêm suas habilitações independentes.
+  No atendimento autorizado, a pessoa escolhe explicitamente clientes vinculados por provedor e ao menos uma fonte;
+  não há correspondência automática por ID, nome ou texto de mensagem.
+- Uma solicitação humana gera resumo ou sugestão simulados a partir do texto elegível P1 e de uma página de até 5 itens
+  por fonte escolhida. Origem, horários, limites, desatualização, vazio e falhas parciais aparecem separados.
+  O texto não confirma fatos fiscais, pagamentos ou conteúdo de documentos.
+- Sugestão editável só é anexada ao rascunho em outra ação humana, após revalidar contexto local e vínculos atuais.
+  Mudanças de acesso, mensagens usadas, flag ou vínculo impedem consulta/aceite com estado antigo, mesmo sem evento entregue.
+  Transferência de responsável na mesma fila e mudança de estado também invalidam a versão anterior da sugestão.
+  Preserva texto existente e não envia ou altera leitura/SLA/estado/mensagens/notas/credenciais.
+- Resultados não aceitos ficam somente em memória. Contratos/erros são estritos e privados; catálogo/CRUD continuam
+  nos painéis P2/P3. Não há nova credencial, cache de resultados, fila, documento ou escrita externa.
+
+**Aceite:** duas empresas/clientes e IDs repetidos entre provedores permanecem isolados. Seleção e páginas explícitas,
+falhas parciais e stale não apresentam confirmação indevida. Troca, cancelamento, revogação ou edição durante awaits
+e antes do aceite recusam respostas antigas. Percurso completo em ambos os temas e desktop/celular, com dados fictícios.
 
 ## 4. Restrições e cuidados
 

@@ -16,6 +16,7 @@ interface Request {
 // with respective default values
 export const safeSettingsKeys = {
   aiAssistantEnabled: "disabled",
+  integratedAssistantEnabled: "disabled",
   acessoriasEnabled: "disabled",
   sciEnabled: "disabled",
   groupsTab: "disabled",
@@ -37,7 +38,7 @@ export const GetSettingService = async ({
   if (isCredentialKey(key)) return "";
 
   // P3 status is metadata of the current company, never a grant from an old JWT.
-  if (key === "sciEnabled") {
+  if (["sciEnabled", "integratedAssistantEnabled"].includes(key)) {
     if (user.id === undefined) throw new AppError("ERR_NO_PERMISSION", 403);
     await loadTicketViewer({ userId: user.id, companyId: user.companyId });
     const rows = await Setting.findAll({
