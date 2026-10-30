@@ -312,6 +312,9 @@ referências do Dribbble (painéis de atendimento e CRMs de 2025 e 2026).
 - "Tarefas" fica oculto no menu lateral, nas abas de navegação e na paleta Ctrl K. A página continua acessível pelo
   endereço `/todolist`.
 - Login em duas colunas (formulário e painel da marca); no celular, só o formulário.
+- Após autenticar, usuário comum entra em `/tickets`; administrador com interface administrativa disponível entra
+  em `/`. A restauração da sessão e o redirecionamento não montam o dashboard para perfis sem acesso à sua interface.
+  As APIs administrativas mantêm seus bloqueios. Ver [correção do login por perfil](specs/login-dashboard-perfil.md).
 - Português é o idioma padrão (o idioma do navegador não é mais adivinhado; a escolha do usuário no menu continua
   valendo). O tema segue o claro ou escuro do sistema operacional, inclusive quando ele muda com a tela aberta; o
   interruptor "Modo escuro" fixa uma escolha e "Tema do sistema (Windows)", no menu do usuário, volta a seguir o sistema.

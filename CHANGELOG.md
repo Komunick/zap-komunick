@@ -134,6 +134,10 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- Login de usuários comuns deixa de abrir transitoriamente o dashboard e consultar suas APIs administrativas.
+  O destino respeita o perfil e a resolução da sessão; administradores mantêm o dashboard e as APIs continuam
+  recusando usuários comuns com 403.
+
 - Anexos do chat interno passam a exigir sessão e participação atual para visualização, reprodução e download.
   Arquivos existentes têm migração explícita para armazenamento privado, com verificação de integridade e retomada;
   links públicos antigos são bloqueados também no ingresso nginx. Arquivos dos demais módulos permanecem preservados.

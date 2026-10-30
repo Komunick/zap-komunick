@@ -3,33 +3,60 @@ import { Route as RouterRoute, Redirect } from "react-router-dom";
 
 import { AuthContext } from "../context/Auth/AuthContext";
 import BackdropLoading from "../components/BackdropLoading";
+import { getSessionHome } from "../helpers/sessionHome";
 
-const Route = ({ component: Component, isPrivate = false, ...rest }) => {
-  const { isAuth, loading } = useContext(AuthContext);
+const Route = ({
+  component: Component,
+  isPrivate = false,
+  adminOnly = false,
+  render,
+  children,
+  ...rest
+}) => {
+  const { isAuth, loading, user } = useContext(AuthContext);
 
-  if (!isAuth && isPrivate) {
-    return (
-      <>
-        {loading && <BackdropLoading />}
-        <Redirect to={{ pathname: "/login", state: { from: rest.location } }} />
-      </>
-    );
-  }
-
-  if (isAuth && !isPrivate) {
-    return (
-      <>
-        {loading && <BackdropLoading />}
-        <Redirect to={{ pathname: "/", state: { from: rest.location } }} />;
-      </>
-    );
-  }
-
+  // Zap Komunick: private routes also live outside Switch. Guard only a match,
+  // and never mount its page before the session/profile has been resolved.
   return (
-    <>
-      {loading && <BackdropLoading />}
-      <RouterRoute {...rest} component={Component} />
-    </>
+    <RouterRoute
+      {...rest}
+      render={routeProps => {
+        if (loading || (isAuth && !user?.profile)) {
+          return <BackdropLoading />;
+        }
+
+        if (!isAuth && isPrivate) {
+          return (
+            <Redirect
+              to={{ pathname: "/login", state: { from: routeProps.location } }}
+            />
+          );
+        }
+
+        if (isAuth && !isPrivate) {
+          return (
+            <Redirect
+              to={{
+                pathname: getSessionHome(user),
+                state: { from: routeProps.location }
+              }}
+            />
+          );
+        }
+
+        if (isAuth && adminOnly && user.profile !== "admin") {
+          return <Redirect to="/tickets" />;
+        }
+
+        if (children) {
+          return typeof children === "function"
+            ? children(routeProps)
+            : children;
+        }
+        if (Component) return <Component {...routeProps} />;
+        return render ? render(routeProps) : null;
+      }}
+    />
   );
 };
 
