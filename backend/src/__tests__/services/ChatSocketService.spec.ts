@@ -98,6 +98,31 @@ const server = (...sockets: ReturnType<typeof recipient>[]) => ({
 });
 
 describe("chat events authorize current recipients, not room names", () => {
+  it("serializes attachment events by message identity, never a public storage URL", async () => {
+    const before = process.env.BACKEND_URL;
+    process.env.BACKEND_URL = "https://backend.example.invalid/backend";
+    try {
+      const owner = recipient(101);
+      await emitChatEvent(server(owner) as never, {
+        kind: "message",
+        chat: snapshot,
+        newMessage: {
+          ...message,
+          mediaPath: "https://backend.example.invalid/public/1890171090516.png"
+        }
+      });
+      expect(owner.emit.mock.calls[0][1].newMessage.mediaPath).toBe(
+        "https://backend.example.invalid/backend/chats/301/messages/401/media"
+      );
+      expect(JSON.stringify(owner.emit.mock.calls)).not.toContain(
+        "1890171090516.png"
+      );
+    } finally {
+      if (before === undefined) delete process.env.BACKEND_URL;
+      else process.env.BACKEND_URL = before;
+    }
+  });
+
   it("locks the owner before the chat to avoid a concurrent owner-delete cascade cycle", async () => {
     await emitChatEvent(server(recipient(101)) as never, {
       kind: "read",

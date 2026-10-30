@@ -7,6 +7,7 @@ import {
   detectedAttachmentMime,
   localAttachmentPath
 } from "../../helpers/AttachmentRules";
+import { isProtectedChatPublicPath } from "../ChatService/ChatMediaMigrationService";
 
 const contained = (root: string, target: string): boolean => {
   const relative = path.relative(root, target);
@@ -26,15 +27,18 @@ export const openAttachmentFile = async (
   let handle: FileHandle;
   try {
     localAttachmentPath(raw, companyId);
+    // Zap Komunick: another authorized module cannot reopen a known private
+    // chat file if its former public pathname is reintroduced.
+    if (await isProtectedChatPublicPath(raw)) throw new Error("private chat");
     const root = await files.realpath(getPublicPath());
     const target = path.resolve(root, raw);
     if (!contained(root, target)) throw new Error("outside");
     const real = await files.realpath(target);
     if (!contained(root, real)) throw new Error("outside");
-    localAttachmentPath(
-      path.relative(root, real).split(path.sep).join("/"),
-      companyId
-    );
+    const canonical = path.relative(root, real).split(path.sep).join("/");
+    localAttachmentPath(canonical, companyId);
+    if (await isProtectedChatPublicPath(canonical))
+      throw new Error("private chat");
     const before = await files.stat(real);
     if (!before.isFile()) throw new Error("not regular");
     handle = await files.open(

@@ -134,6 +134,10 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- Anexos do chat interno passam a exigir sessão e participação atual para visualização, reprodução e download.
+  Arquivos existentes têm migração explícita para armazenamento privado, com verificação de integridade e retomada;
+  links públicos antigos são bloqueados também no ingresso nginx. Arquivos dos demais módulos permanecem preservados.
+
 - Chat interno passa a conferir empresa e participação nas operações e nos eventos; somente o dono participante
   administra grupos, e marcar leitura usa o usuário autenticado. Remoção de participante limpa também o popover.
   Upload é autorizado antes de gravar e revalidado antes de confirmar, com limpeza segura dos arquivos da requisição.

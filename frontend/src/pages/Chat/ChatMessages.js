@@ -16,6 +16,13 @@ import SendIcon from "@material-ui/icons/Send";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { useDate } from "../../hooks/useDate";
 import api from "../../services/api";
+import { getBackendURL } from "../../services/config";
+import {
+  chatMediaPath,
+  chatMediaPreview,
+  chatMediaUrl,
+  releaseChatMedia
+} from "../../helpers/chatMedia";
 import { i18n } from "../../translate/i18n";
 
 import AttachFileIcon from "@material-ui/icons/AttachFile";
@@ -34,6 +41,17 @@ import RecordingTimer from "../../components/MessageInputCustom/RecordingTimer";
 import MediaGalleryLightbox, {
   buildMediaGalleryData
 } from "../../components/MediaGalleryLightbox";
+
+const previewCandidate = message =>
+  message?.mediaPath && ["image", "audio", "video"].includes(message.mediaType);
+const previewKey = (scope, message) =>
+  [
+    scope,
+    message.id,
+    message.mediaPath,
+    message.mediaType,
+    message.updatedAt
+  ].join("|");
 
 const useStyles = makeStyles(theme => ({
   mainContainer: {
@@ -244,6 +262,9 @@ export default function ChatMessages({
   const { datetimeToClient } = useDate();
   const baseRef = useRef();
   const previewVideoRefs = useRef({});
+  const mediaNodesRef = useRef(new Map());
+  const downloadRequestRef = useRef(null);
+  const previewRequestsRef = useRef(new Map());
   const sendingRef = useRef(false);
   const mountedRef = useRef(true);
   const inputRef = useRef();
@@ -258,12 +279,82 @@ export default function ChatMessages({
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [previewVideoPlayingById, setPreviewVideoPlayingById] = useState({});
+  const [downloadBusy, setDownloadBusy] = useState(false);
+  const [mediaError, setMediaError] = useState("");
+  const [previews, setPreviews] = useState({});
+  const previewScope = `${user.companyId}:${user.id}:${chat.id}`;
+
+  useEffect(() => {
+    const requests = previewRequestsRef.current;
+    const activeKeys = new Set();
+    messages.filter(previewCandidate).forEach(message => {
+      const key = previewKey(previewScope, message);
+      activeKeys.add(key);
+      if (requests.has(key)) return;
+      const path = chatMediaPath(chat.id, message.id);
+      if (!path) return;
+      const request = { controller: new AbortController() };
+      requests.set(key, request);
+      api
+        .head(path, { signal: request.controller.signal, timeout: 30000 })
+        .then(({ headers }) => {
+          if (
+            !mountedRef.current ||
+            request.controller.signal.aborted ||
+            requests.get(key) !== request
+          )
+            return;
+          setPreviews(previous => ({
+            ...previous,
+            [key]: { decision: chatMediaPreview(headers) }
+          }));
+        })
+        .catch(error => {
+          if (
+            !mountedRef.current ||
+            request.controller.signal.aborted ||
+            requests.get(key) !== request
+          )
+            return;
+          setPreviews(previous => ({ ...previous, [key]: { decision: null } }));
+          setMediaError(
+            [401, 403, 404].includes(error?.response?.status)
+              ? "attachments.access"
+              : "attachments.failed"
+          );
+          setLightboxOpen(false);
+        });
+    });
+    requests.forEach((request, key) => {
+      if (!activeKeys.has(key)) {
+        request.controller.abort();
+        requests.delete(key);
+      }
+    });
+    setPreviews(previous => {
+      const entries = Object.entries(previous).filter(([key]) =>
+        activeKeys.has(key)
+      );
+      return entries.length === Object.keys(previous).length
+        ? previous
+        : Object.fromEntries(entries);
+    });
+    // A pending HEAD belongs to its attachment key, not to the messages array.
+    // Removed keys are cancelled above; unmount cancels all remaining requests.
+  }, [messages, chat.id, previewScope]);
 
   const lightboxMedia = useMemo(() => {
     return buildMediaGalleryData(messages, {
-      getMediaUrl: message => message?.mediaPath
+      getMediaUrl: message =>
+        message?.mediaPath &&
+        previews[previewKey(previewScope, message)]?.decision
+          ? chatMediaUrl(getBackendURL(), chat.id, message.id)
+          : null,
+      getMediaType: message =>
+        previews[previewKey(previewScope, message)]?.decision?.kind,
+      getFileName: message => message.mediaName || message.message
     });
-  }, [messages]);
+  }, [messages, chat.id, previews, previewScope]);
 
   const openLightboxForMessage = messageId => {
     const index = lightboxMedia.byMessageId[messageId];
@@ -272,6 +363,7 @@ export default function ChatMessages({
     }
 
     setLightboxIndex(index);
+    setMediaError("");
     setLightboxOpen(true);
   };
 
@@ -287,6 +379,8 @@ export default function ChatMessages({
 
   useEffect(() => {
     scrollToBottomRef.current = scrollToBottom;
+    const mediaNodes = mediaNodesRef.current;
+    const previewRequests = previewRequestsRef.current;
     return () => {
       mountedRef.current = false;
       scrollToBottomRef.current = null;
@@ -294,6 +388,16 @@ export default function ChatMessages({
         recorder.stop();
         recordingRef.current = false;
       }
+      const pendingDownload = downloadRequestRef.current;
+      downloadRequestRef.current = null;
+      if (pendingDownload) {
+        pendingDownload.controller.abort();
+        pendingDownload.close();
+      }
+      mediaNodes.forEach(entry => releaseChatMedia(entry.node));
+      mediaNodes.clear();
+      previewRequests.forEach(request => request.controller.abort());
+      previewRequests.clear();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -366,41 +470,149 @@ export default function ChatMessages({
     previewVideo.pause();
   };
 
-  const checkMessageMedia = message => {
-    const mediaUrl = message.mediaPath;
+  const captureMedia = (messageId, kind) => {
+    const key = `${kind}:${messageId}`;
+    if (!mediaNodesRef.current.has(key)) {
+      const entry = { node: null };
+      // Keep this callback stable across renders: replacing a ref must not
+      // pause playback whenever its play/pause indicator updates.
+      entry.ref = node => {
+        if (entry.node === node) return;
+        releaseChatMedia(entry.node);
+        entry.node = node;
+        if (kind === "video") {
+          if (node) previewVideoRefs.current[messageId] = node;
+          else delete previewVideoRefs.current[messageId];
+        }
+      };
+      mediaNodesRef.current.set(key, entry);
+    }
+    return mediaNodesRef.current.get(key).ref;
+  };
 
-    if (message.mediaType === "image") {
+  const reportMediaError = () => {
+    setMediaError("attachments.access");
+    setLightboxOpen(false);
+  };
+
+  const downloadMedia = async messageId => {
+    if (downloadRequestRef.current) return;
+    const path = chatMediaPath(chat.id, messageId, true);
+    const url = chatMediaUrl(getBackendURL(), chat.id, messageId, true);
+    if (!path || !url) return reportMediaError();
+    setMediaError("");
+    let destination;
+    try {
+      // Reserve the user-initiated destination before the asynchronous HEAD.
+      // A later denied GET stays outside the current chat and is never retried
+      // against the old public link. The server authorizes that GET again.
+      destination = window.open("about:blank", "_blank");
+      if (destination) destination.opener = null;
+    } catch {
+      destination = null;
+    }
+    if (!destination) {
+      setMediaError("chatPage.downloadBlocked");
+      setLightboxOpen(false);
+      return;
+    }
+    const request = {
+      controller: new AbortController(),
+      closed: false,
+      close() {
+        if (!this.closed) {
+          this.closed = true;
+          destination.close();
+        }
+      }
+    };
+    downloadRequestRef.current = request;
+    setDownloadBusy(true);
+    try {
+      await api.head(path, {
+        signal: request.controller.signal,
+        timeout: 30000
+      });
+      if (
+        !mountedRef.current ||
+        request.controller.signal.aborted ||
+        downloadRequestRef.current !== request ||
+        destination.closed
+      ) {
+        request.close();
+        return;
+      }
+      destination.location.replace(url);
+    } catch (error) {
+      request.close();
+      if (mountedRef.current && !request.controller.signal.aborted) {
+        setMediaError(
+          [401, 403, 404].includes(error?.response?.status)
+            ? "attachments.access"
+            : "attachments.failed"
+        );
+        setLightboxOpen(false);
+      }
+    } finally {
+      if (downloadRequestRef.current === request) {
+        downloadRequestRef.current = null;
+        if (mountedRef.current) setDownloadBusy(false);
+      }
+    }
+  };
+
+  const checkMessageMedia = message => {
+    const mediaUrl = chatMediaUrl(getBackendURL(), chat.id, message.id);
+    if (!mediaUrl)
+      return (
+        <Typography role="alert">{i18n.t("attachments.access")}</Typography>
+      );
+
+    const preview = previews[previewKey(previewScope, message)];
+    if (previewCandidate(message) && !preview)
+      return (
+        <Typography variant="caption" role="status">
+          {i18n.t("attachments.loading")}
+        </Typography>
+      );
+    const kind = preview?.decision?.kind;
+    if (kind === "image") {
       return (
         <img
+          ref={captureMedia(message.id, "image")}
           className={classes.messageMedia}
+          crossOrigin="use-credentials"
           src={mediaUrl}
           alt={i18n.t("chatPage.messageImage")}
           style={{ cursor: "pointer" }}
           onClick={() => openLightboxForMessage(message.id)}
+          onError={reportMediaError}
         />
       );
     }
-    if (message.mediaType === "audio") {
+    if (kind === "audio") {
       return (
-        <audio controls style={{ maxWidth: "100%" }}>
-          <source src={mediaUrl} type="audio/ogg"></source>
+        <audio
+          ref={captureMedia(message.id, "audio")}
+          crossOrigin="use-credentials"
+          controls
+          style={{ maxWidth: "100%" }}
+          onError={reportMediaError}
+        >
+          <source src={mediaUrl} type={preview.decision.mimeType}></source>
         </audio>
       );
     }
 
-    if (message.mediaType === "video") {
+    if (kind === "video") {
       return (
         <div className={classes.videoPreviewWrapper}>
           <video
-            ref={element => {
-              if (element) {
-                previewVideoRefs.current[message.id] = element;
-              } else {
-                delete previewVideoRefs.current[message.id];
-              }
-            }}
+            ref={captureMedia(message.id, "video")}
             className={classes.videoPreviewMedia}
+            crossOrigin="use-credentials"
             src={mediaUrl}
+            onError={reportMediaError}
             preload="metadata"
             playsInline
             onPlay={() => {
@@ -460,8 +672,8 @@ export default function ChatMessages({
               startIcon={<GetApp />}
               color="primary"
               variant="outlined"
-              target="_blank"
-              href={mediaUrl}
+              disabled={downloadBusy}
+              onClick={() => downloadMedia(message.id)}
             >
               {i18n.t("chatPage.download")}
             </Button>
@@ -651,6 +863,11 @@ export default function ChatMessages({
         ))}
         <div ref={baseRef}></div>
       </div>
+      {mediaError && (
+        <div className={classes.status} role="alert">
+          <Typography variant="body2">{i18n.t(mediaError)}</Typography>
+        </div>
+      )}
       <div className={classes.inputArea}>
         <FormControl variant="outlined" fullWidth>
           {recording ? (
@@ -809,6 +1026,10 @@ export default function ChatMessages({
         onClose={closeLightbox}
         index={lightboxIndex}
         slides={lightboxMedia.slides}
+        privateMedia
+        crossOrigin="use-credentials"
+        onDownload={slide => downloadMedia(slide.key)}
+        onMediaError={reportMediaError}
       />
     </Paper>
   );
