@@ -9,7 +9,8 @@ o dashboard administrativo. Escopo aprovado explicitamente pelo usuário em 30/1
 ## Escopo e comportamentos preservados
 
 - Usuário comum entra em `/tickets`; administrador com interface administrativa disponível continua entrando em `/`.
-  Preservar o destino já previsto para `hideAdminUI` e a conclusão do login com 2FA.
+  Preservar o destino `/tickets` já previsto para `hideAdminUI` e a conclusão do login com 2FA. Essa preferência de
+  interface não revoga as permissões administrativas nem o acesso direto a `/` de quem mantém perfil `admin`.
 - Aguardar a resolução da sessão antes de montar conteúdo que dependa do perfil. Reabrir `/login`, restaurar sessão
   e abrir `/` diretamente não devem provocar consultas administrativas de um usuário comum.
 - O dashboard continua funcional para administradores. A interface não substitui a autorização do servidor:

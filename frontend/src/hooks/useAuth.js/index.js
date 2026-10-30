@@ -12,6 +12,7 @@ import { clearAllCachedSettings } from "../../helpers/settingsCache";
 import moment from "moment";
 import { decodeToken } from "react-jwt";
 import { readStoredToken } from "../../helpers/storedToken";
+import { getSessionHome } from "../../helpers/sessionHome";
 import {
   isSignInRequest,
   registerAuthResponseInterceptor
@@ -46,7 +47,6 @@ const useAuth = () => {
         const token = readStoredToken();
         if (token) {
           config.headers["Authorization"] = `Bearer ${token}`;
-          setIsAuth(true);
         }
         return config;
       },
@@ -75,15 +75,17 @@ const useAuth = () => {
           localStorage.setItem("token", JSON.stringify(data.token));
           api.defaults.headers.Authorization = `Bearer ${data.token}`;
           socketManager.syncCurrentSocketToken?.(data.token);
-          setIsAuth(true);
           setUser(data.user);
+          setIsAuth(true);
         } catch (err) {
+          setUser({});
+          setIsAuth(false);
           toastError(err);
         }
       }
       setLoading(false);
     })();
-  }, []);
+  }, [socketManager]);
 
   useEffect(() => {
     const companyId = localStorage.getItem("companyId");
@@ -112,7 +114,7 @@ const useAuth = () => {
       token
     } = data;
 
-    const { companyId, userId } = decodeToken(token);
+    const { companyId } = decodeToken(token);
 
     if (has(company, "settings") && isArray(company.settings)) {
       const setting = company.settings.find(s => s.key === "campaignsEnabled");
@@ -123,7 +125,6 @@ const useAuth = () => {
 
     moment.locale("pt-br");
     const dueDate = data.user.company.dueDate;
-    const hoje = moment(moment()).format("DD/MM/yyyy");
     const vencimento = moment(dueDate).format("DD/MM/yyyy");
 
     var diff = moment(dueDate).diff(moment(moment()).format());
@@ -151,11 +152,7 @@ const useAuth = () => {
     } else {
       toast.success(i18n.t("auth.toasts.success"));
     }
-    if (data.user.profile === "admin" && !data.user.hideAdminUI) {
-      history.push("/");
-    } else {
-      history.push("/tickets");
-    }
+    history.push(getSessionHome(data.user));
   };
 
   // Zap Komunick: keep the password/challenge exchange separate from a

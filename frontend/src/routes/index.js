@@ -61,7 +61,13 @@ const Routes = () => {
             {/* <Route exact path="/create-company" component={Companies} /> */}
             <WhatsAppsProvider>
               <LoggedInLayout>
-                <Route exact path="/" component={Dashboard} isPrivate />
+                <Route
+                  exact
+                  path="/"
+                  component={Dashboard}
+                  isPrivate
+                  adminOnly
+                />
                 <Route
                   exact
                   path="/tickets/:ticketId?"
