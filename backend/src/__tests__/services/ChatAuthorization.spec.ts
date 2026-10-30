@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Op } from "sequelize";
+import { DataTypes, Op, Sequelize } from "sequelize";
 import Chat from "../../models/Chat";
 import ChatUser from "../../models/ChatUser";
 import ChatMessage from "../../models/ChatMessage";
@@ -268,6 +268,52 @@ beforeEach(() => {
 });
 
 describe("scoped chat operations", () => {
+  it("hydrates real Sequelize associations for authorized operations without a database connection", async () => {
+    const database = new Sequelize("postgres://fake:fake@127.0.0.1/fake", {
+      logging: false
+    });
+    const recordModel = database.define("FakeChat", {
+      id: { type: DataTypes.INTEGER, primaryKey: true },
+      ownerId: DataTypes.INTEGER,
+      companyId: DataTypes.INTEGER,
+      uuid: DataTypes.STRING
+    });
+    const memberModel = database.define("FakeChatMember", {
+      id: { type: DataTypes.INTEGER, primaryKey: true },
+      chatId: DataTypes.INTEGER,
+      userId: DataTypes.INTEGER
+    });
+    const userModel = database.define("FakeUser", {
+      id: { type: DataTypes.INTEGER, primaryKey: true }
+    });
+    recordModel.hasMany(memberModel, { as: "users" });
+    recordModel.belongsTo(userModel, { as: "owner", foreignKey: "ownerId" });
+    memberModel.belongsTo(userModel, { as: "user", foreignKey: "userId" });
+    const record = recordModel.build({
+      id: 101,
+      ownerId: 1,
+      companyId: 10,
+      uuid: chats[0].uuid
+    });
+    const participants = [1, 2].map(userId =>
+      memberModel.build({ id: userId, chatId: 101, userId })
+    );
+    (Chat.findOne as jest.Mock).mockResolvedValue(record);
+    (ChatUser.findAll as jest.Mock).mockResolvedValue(participants);
+    try {
+      const result = await invoke<FixtureRecord>(
+        ShowFromUuidService,
+        chats[0].uuid,
+        member
+      );
+      expect(result.users.map(person => person.userId)).toEqual([1, 2]);
+      expect(result.users[1].user).toEqual({ id: 2, name: people[1].name });
+      expect(result.owner).toEqual({ id: 1, name: people[0].name });
+      expect(JSON.stringify(result)).not.toContain("FIXTURE-PRIVATE");
+    } finally {
+      await database.close();
+    }
+  });
   it.each([outsider, foreign])(
     "denies unauthorized UUID lookup without returning a chat: %o",
     async actor => {

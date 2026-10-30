@@ -78,11 +78,16 @@ export async function loadChatSnapshot(
     users.map(user => [user.id, { id: user.id, name: user.name } as User])
   );
   const scoped = memberships.filter(member => people.has(member.userId));
-  scoped.forEach(member =>
-    member.setDataValue("user", people.get(member.userId))
-  );
+  // These queries have no include. setDataValue alone does not hydrate the
+  // association properties that services read on real Sequelize instances.
+  scoped.forEach(member => {
+    member.user = people.get(member.userId);
+    member.setDataValue("user", member.user);
+  });
+  record.users = scoped;
+  record.owner = people.get(record.ownerId) || null;
   record.setDataValue("users", scoped);
-  record.setDataValue("owner", people.get(record.ownerId) || null);
+  record.setDataValue("owner", record.owner);
   return record;
 }
 
