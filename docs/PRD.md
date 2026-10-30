@@ -352,7 +352,11 @@ Participantes estrangeiros são recusados antes de qualquer alteração. Leitura
 somente aos destinatários autorizados; quem sai do grupo recebe apenas a remoção da conversa, inclusive no popover.
 Uploads são autorizados antes de receber arquivos e revalidados antes de persistir, com limpeza exclusiva da requisição
 revogada. A melhoria anterior de interface não mudou essas permissões; este é o recorte separado de segurança.
-A entrega pública legada de arquivos do RF-023 permanece; esta correção não torna seus links privados.
+**Anexos privados:** o [recorte de privacidade dos anexos internos](specs/chat-anexos-privados.md) move anexos novos e
+legados identificados para armazenamento privado e entrega autenticada por mensagem. Empresa e participação atuais
+são verificadas em cada acesso, inclusive reprodução parcial e download. Links públicos antigos do chat deixam de
+entregar conteúdo; arquivos dos demais módulos mantêm seus contratos. A migração verifica integridade e conflitos
+antes de remover cópias públicas, com retomada segura e sem perda das associações.
 
 **Cenário de sucesso:**
 
@@ -711,6 +715,9 @@ no cliente errado. Falha ou dado desatualizado fica explícito, sem confirmaçã
 - Arquivos externos/grandes podem manter a ação **Abrir original** pelo mecanismo existente. Os caminhos públicos
   legados do Express/nginx e da entrega ao destinatário continuam públicos; esta entrega não promete privatizá-los
   nem altera uploads, armazenamento, envio ou retenção dos arquivos.
+
+Essa compatibilidade pública refere-se aos arquivos dos atendimentos. Os anexos do chat interno seguem a regra
+privada do RF-010 e sua especificação, sem alterar a entrega de arquivos dos demais módulos neste recorte.
 
 **Aceite:** dado um atendimento autorizado com PDF de duas páginas, imagens e vídeo, a pessoa abre pela mensagem ou
 pela área de arquivos, muda página/ampliação, reproduz/pausa e baixa por ação explícita, em desktop/celular e ambos os
