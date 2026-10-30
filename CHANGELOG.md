@@ -134,6 +134,10 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- Chat interno passa a conferir empresa e participação nas operações e nos eventos; somente o dono participante
+  administra grupos, e marcar leitura usa o usuário autenticado. Remoção de participante limpa também o popover.
+  Upload é autorizado antes de gravar e revalidado antes de confirmar, com limpeza segura dos arquivos da requisição.
+
 - No chat interno, Shift+Enter insere uma linha; texto e anexos permanecem disponíveis quando o envio falha.
   Envios pendentes não são repetidos, e respostas atrasadas do histórico não entram em outra conversa.
 

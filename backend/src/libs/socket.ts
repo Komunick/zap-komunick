@@ -123,7 +123,8 @@ export const initIO = (httpServer: Server): SocketIO => {
 
     if (userId && userId !== "undefined" && userId !== "null") {
       user = await User.findByPk(userId, { include: [Queue] });
-      if (user) {
+      // Zap Komunick: an access token cannot follow an account into another company.
+      if (user && user.companyId === tokenData.companyId) {
         await user.save();
       } else {
         logger.info(`onConnect: User ${userId} not found`);

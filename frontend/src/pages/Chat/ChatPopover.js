@@ -112,8 +112,17 @@ export default function ChatPopover() {
   const { datetimeToClient } = useDate();
   const [play] = useSound(notifySound);
   const soundAlertRef = useRef();
+  const pendingChatFetchesRef = useRef(new Set());
+  const mountedRef = useRef(true);
 
   const socketManager = useContext(SocketContext);
+
+  useEffect(
+    () => () => {
+      mountedRef.current = false;
+    },
+    []
+  );
 
   useEffect(() => {
     soundAlertRef.current = play;
@@ -144,6 +153,15 @@ export default function ChatPopover() {
     const socket = socketManager.GetSocket(companyId);
 
     const onCompanyChatPopover = data => {
+      // Zap Komunick: a response started before removal cannot restore the
+      // private preview. Eligible personal updates can restore a re-added chat.
+      pendingChatFetchesRef.current.forEach(changes => {
+        if (data.action === "delete") changes.set(+data.id, null);
+        else if (data.chat) changes.set(data.chat.id, data.chat);
+      });
+      if (data.action === "delete") {
+        dispatch({ type: "DELETE_CHAT", payload: +data.id });
+      }
       if (data.action === "new-message") {
         dispatch({ type: "CHANGE_CHAT", payload: data });
         if (data.newMessage.senderId !== user.id) {
@@ -155,13 +173,26 @@ export default function ChatPopover() {
       }
     };
 
+    const onPersonalChat = data => {
+      if (
+        (data.action === "create" || data.action === "update") &&
+        data.record
+      ) {
+        pendingChatFetchesRef.current.forEach(changes =>
+          changes.set(data.record.id, data.record)
+        );
+        dispatch({ type: "UPDATE_CHATS", payload: data.record });
+      }
+    };
+
     socket.on(`company-${companyId}-chat`, onCompanyChatPopover);
+    socket.on(`company-${companyId}-chat-user-${user.id}`, onPersonalChat);
 
     return () => {
       socket.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [socketManager]);
+  }, [socketManager, user.id]);
 
   useEffect(() => {
     let unreadsCount = 0;
@@ -182,15 +213,25 @@ export default function ChatPopover() {
   }, [chats, user.id]);
 
   const fetchChats = async () => {
+    const changes = new Map();
+    pendingChatFetchesRef.current.add(changes);
     try {
       const { data } = await api.get("/chats/", {
         params: { searchParam, pageNumber }
       });
-      dispatch({ type: "LOAD_CHATS", payload: data.records });
+      if (!mountedRef.current) return;
+      const records = new Map(data.records.map(chat => [chat.id, chat]));
+      changes.forEach((record, chatId) => {
+        if (record === null) records.delete(chatId);
+        else records.set(chatId, record);
+      });
+      dispatch({ type: "LOAD_CHATS", payload: Array.from(records.values()) });
       setHasMore(data.hasMore);
-      setLoading(false);
     } catch (err) {
-      toastError(err);
+      if (mountedRef.current) toastError(err);
+    } finally {
+      pendingChatFetchesRef.current.delete(changes);
+      if (mountedRef.current) setLoading(false);
     }
   };
 
@@ -225,6 +266,7 @@ export default function ChatPopover() {
   return (
     <div>
       <IconButton
+        aria-label={i18n.t("internalChat.title")}
         aria-describedby={id}
         variant="contained"
         color={invisible ? "default" : "inherit"}

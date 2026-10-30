@@ -6,7 +6,9 @@ import Contact from "../../models/Contact";
 
 jest.mock("socket.io", () => ({ Server: jest.fn() }));
 jest.mock("@socket.io/admin-ui", () => ({ instrument: jest.fn() }));
-jest.mock("jsonwebtoken", () => ({ verify: () => ({ id: 101 }) }));
+jest.mock("jsonwebtoken", () => ({
+  verify: () => ({ id: 101, companyId: 10 })
+}));
 jest.mock("../../config/auth", () => ({ secret: "fixture-only" }));
 jest.mock("../../utils/logger", () => ({
   logger: {

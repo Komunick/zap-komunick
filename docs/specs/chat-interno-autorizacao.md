@@ -8,8 +8,9 @@ Base examinada: `00bdf2be672d2f6d3fcc9f9299be022950aa49b4`, PR26 de usabilidade,
 
 ## Comportamento
 
-- Lista, consulta por UUID, histórico, envio e leitura usam o ator autenticado e sua empresa atual. Empresa divergente,
-  conversa inexistente ou ausência de participação respondem como conversa não encontrada, sem revelar seu conteúdo.
+- Lista, consulta por UUID, histórico, envio e leitura usam o ator autenticado e sua empresa atual. Conversa de outra
+  empresa, inexistente ou ausência de participação respondem como conversa não encontrada, sem revelar seu conteúdo.
+  Ator removido ou contexto de empresa já divergente do cadastro atual é recusado por falta de permissão.
   Perfil administrador/super não substitui participação. Associação legada entre empresas também não concede acesso.
 - Somente o dono que participa do grupo pode editar título/participantes ou excluir o grupo. Membro sem essa permissão
   recebe 403. Conversas diretas continuam sem edição de participantes/título e sem exclusão.
@@ -19,6 +20,8 @@ Base examinada: `00bdf2be672d2f6d3fcc9f9299be022950aa49b4`, PR26 de usabilidade,
 - Criação, edição, mensagem, leitura e exclusão são emitidas somente a destinatários autorizados no momento da emissão.
   Salas de usuário são candidatas, não permissão. Revalidar empresa/participação também para sockets já conectados;
   token cuja empresa difere da empresa atual do usuário é desconectado antes de criar sessão ou entrar em salas.
+  O cliente vincula a conexão ao ID e à empresa do token e encerra a conexão anterior ao trocar de identidade,
+  encerrar sessão ou perder uma identidade válida; não manter eventos do usuário anterior.
 - Ao remover alguém do grupo, enviar apenas a indicação de remoção `{action: "delete", id}` ao antigo participante
   ainda da mesma empresa, sem o chat atualizado. Quem foi readicionado não recebe remoção obsoleta. Página e popover
   removem os dados em cache dessa conversa. Excluir envia somente essa indicação aos antigos participantes válidos.
