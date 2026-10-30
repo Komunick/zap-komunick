@@ -346,8 +346,13 @@ então vê o logo da Komunick, o botão verde e o painel da marca, no tema claro
 - Envio pendente impede duplicação; uma falha conserva texto ou anexo para nova tentativa. Resultados atrasados do
   histórico não entram em outra conversa, e a mesma mensagem recebida por HTTP/socket não aparece duas vezes.
 
-**Limite da melhoria de interface:** o backend legado do chat tem verificações de autorização incompletas. O recorte
-de usabilidade não altera essas permissões nem comprova isolamento; a correção exige definição separada antes de uso real.
+**Autorização:** o recorte aprovado de [autorização do chat](specs/chat-interno-autorizacao.md) restringe consulta,
+histórico, envio e leitura à empresa e aos participantes atuais; somente o dono participante administra o grupo.
+Participantes estrangeiros são recusados antes de qualquer alteração. Leitura usa o ator autenticado, e eventos vão
+somente aos destinatários autorizados; quem sai do grupo recebe apenas a remoção da conversa, inclusive no popover.
+Uploads são autorizados antes de receber arquivos e revalidados antes de persistir, com limpeza exclusiva da requisição
+revogada. A melhoria anterior de interface não mudou essas permissões; este é o recorte separado de segurança.
+A entrega pública legada de arquivos do RF-023 permanece; esta correção não torna seus links privados.
 
 **Cenário de sucesso:**
 

@@ -47,6 +47,22 @@ import { toast } from "react-toastify";
 import api from "../../services/api";
 import { readStoredToken } from "../../helpers/storedToken";
 
+const tokenIdentity = token => {
+  try {
+    const identity = token && decodeToken(token);
+    if (
+      Number.isSafeInteger(identity?.id) &&
+      identity.id > 0 &&
+      Number.isSafeInteger(identity?.companyId) &&
+      identity.companyId > 0
+    )
+      return { userId: identity.id, companyId: identity.companyId };
+  } catch {
+    // Missing/malformed client identity cannot retain an old connection.
+  }
+  return null;
+};
+
 class ManagedSocket {
   constructor(socketManager) {
     this.socketManager = socketManager;
@@ -77,6 +93,7 @@ class ManagedSocket {
   }
 
   on(event, callback) {
+    if (this.rawSocket !== this.socketManager.currentSocket) return;
     if (event === "ready" || event === "connect") {
       return this.socketManager.onReady(callback);
     }
@@ -116,6 +133,7 @@ class ManagedSocket {
   }
 
   emit(event, ...params) {
+    if (this.rawSocket !== this.socketManager.currentSocket) return;
     if (event.startsWith("join")) {
       this.joins.push({ event: event.substring(4), params });
       console.debug("Joining", { event: event.substring(4), params });
@@ -140,11 +158,7 @@ class ManagedSocket {
 
   logout() {
     this.disconnect();
-    this.socketManager.resetWsConnectionIssue();
-    this.socketManager.currentSocket = null;
-    this.socketManager.currentCompanyId = -1;
-    this.socketManager.currentUserId = -1;
-    this.socketManager.socketReady = false;
+    this.socketManager.closeCurrentSocket(this.rawSocket);
   }
 }
 
@@ -162,6 +176,7 @@ const socketManager = {
   currentSocket: null,
   socketReady: false,
   tokenRefreshPromise: null,
+  reconnectAttemptHandler: null,
   wsConnectionIssueActive: false,
   wsConnectionIssueListeners: [],
   wsReconnectAttemptCount: 0,
@@ -171,6 +186,26 @@ const socketManager = {
   wsRefreshRequiredReconnectThreshold: 2,
   wsConnectionStableTimer: null,
   wsConnectionStabilityDelayMs: 5000,
+
+  // Zap Komunick: an old ManagedSocket cannot close a newer actor's transport.
+  closeCurrentSocket: function (expectedSocket = this.currentSocket) {
+    if (expectedSocket !== this.currentSocket) return;
+    const socket = this.currentSocket;
+    this.currentSocket = null;
+    this.currentCompanyId = -1;
+    this.currentUserId = -1;
+    this.socketReady = false;
+    this.tokenRefreshPromise = null;
+    if (socket) {
+      socket.removeAllListeners();
+      socket.offAny?.();
+      if (this.reconnectAttemptHandler)
+        socket.io.off("reconnect_attempt", this.reconnectAttemptHandler);
+      socket.disconnect();
+    }
+    this.reconnectAttemptHandler = null;
+    this.resetWsConnectionIssue();
+  },
 
   notifyWsConnectionIssue: function () {
     this.wsConnectionIssueListeners.forEach(listener => {
@@ -316,11 +351,21 @@ const socketManager = {
       return this.tokenRefreshPromise;
     }
 
-    this.tokenRefreshPromise = api
+    const socket = this.currentSocket;
+    const userId = this.currentUserId;
+    const companyId = this.currentCompanyId;
+    if (!socket) return null;
+    const request = api
       .post("/auth/refresh_token")
       .then(({ data }) => {
         const refreshedToken = data?.token;
-        if (!refreshedToken) {
+        const identity = tokenIdentity(refreshedToken);
+        if (
+          this.currentSocket !== socket ||
+          this.tokenRefreshPromise !== request ||
+          identity?.userId !== userId ||
+          identity?.companyId !== companyId
+        ) {
           return null;
         }
 
@@ -330,25 +375,37 @@ const socketManager = {
         return refreshedToken;
       })
       .catch(error => {
-        console.debug("Unable to refresh token for socket", error);
+        if (
+          this.currentSocket === socket &&
+          this.tokenRefreshPromise === request
+        )
+          console.debug("Unable to refresh token for socket", error);
         return null;
       })
       .finally(() => {
-        this.tokenRefreshPromise = null;
+        if (this.tokenRefreshPromise === request)
+          this.tokenRefreshPromise = null;
       });
 
-    return this.tokenRefreshPromise;
+    this.tokenRefreshPromise = request;
+    return request;
   },
 
   applySocketToken: function (token, markReconnect = false) {
-    if (!this.currentSocket || !token) {
-      return;
+    const identity = tokenIdentity(token);
+    if (
+      !this.currentSocket ||
+      identity?.userId !== this.currentUserId ||
+      identity?.companyId !== this.currentCompanyId
+    ) {
+      return false;
     }
 
     this.currentSocket.io.opts.query.token = token;
     if (markReconnect) {
       this.currentSocket.io.opts.query.r = 1;
     }
+    return true;
   },
 
   syncCurrentSocketToken: function (token) {
@@ -356,31 +413,33 @@ const socketManager = {
   },
 
   reconnectWithFreshToken: async function () {
+    const socket = this.currentSocket;
     const refreshedToken = await this.refreshAuthToken();
-    if (!refreshedToken || !this.currentSocket) {
+    if (!refreshedToken || !socket || this.currentSocket !== socket) {
       return;
     }
 
-    this.applySocketToken(refreshedToken, true);
-    this.currentSocket.connect();
+    if (this.applySocketToken(refreshedToken, true)) socket.connect();
   },
 
   GetSocket: function (_discardCompanyId = null) {
     const token = readStoredToken();
-    if (!token) {
+    const identity = tokenIdentity(token);
+    if (!identity) {
+      this.closeCurrentSocket();
       return new DummySocket();
     }
 
-    const { userId, companyId } = decodeToken(token);
+    const { userId, companyId } = identity;
 
-    if (companyId !== this.currentCompanyId || userId !== this.currentUserId) {
+    if (
+      !this.currentSocket ||
+      companyId !== this.currentCompanyId ||
+      userId !== this.currentUserId
+    ) {
       if (this.currentSocket) {
         console.debug("closing old socket - company or user changed");
-        this.currentSocket.removeAllListeners();
-        this.currentSocket.disconnect();
-        this.currentSocket = null;
-        this.currentCompanyId = null;
-        this.currentUserId = null;
+        this.closeCurrentSocket();
       }
 
       this.currentCompanyId = companyId;
@@ -392,33 +451,37 @@ const socketManager = {
         pingInterval: 18000,
         query: { token }
       });
+      const socket = this.currentSocket;
 
       this.resetWsReconnectAttemptCount();
 
-      this.currentSocket.io.on("reconnect_attempt", async () => {
+      this.reconnectAttemptHandler = async () => {
+        if (this.currentSocket !== socket) return;
         this.incrementWsReconnectAttemptCount();
-        this.currentSocket.io.opts.query.r = 1;
+        socket.io.opts.query.r = 1;
         const newToken = readStoredToken();
         if (isExpired(newToken)) {
           console.debug("Refreshing before reconnect attempt");
           const refreshedToken = await this.refreshAuthToken();
-          if (refreshedToken) {
-            this.currentSocket.io.opts.query.token = refreshedToken;
+          if (refreshedToken && this.currentSocket === socket) {
+            this.applySocketToken(refreshedToken);
           }
         } else {
           console.debug("Using new token");
-          this.currentSocket.io.opts.query.token = newToken;
+          this.applySocketToken(newToken);
         }
-      });
+      };
+      socket.io.on("reconnect_attempt", this.reconnectAttemptHandler);
 
-      this.currentSocket.on("disconnect", reason => {
+      socket.on("disconnect", reason => {
+        if (this.currentSocket !== socket) return;
         console.debug(`socket disconnected because: ${reason}`);
         if (reason !== "io client disconnect") {
           this.markWsConnectionFailure();
         }
 
         if (reason.startsWith("io server disconnect")) {
-          console.debug("tryng to reconnect", this.currentSocket);
+          console.debug("tryng to reconnect", socket);
           const newToken = readStoredToken();
 
           if (isExpired(newToken)) {
@@ -427,13 +490,12 @@ const socketManager = {
             return;
           }
           console.debug("Reconnecting using refreshed token");
-          this.currentSocket.io.opts.query.token = newToken;
-          this.currentSocket.io.opts.query.r = 1;
-          this.currentSocket.connect();
+          if (this.applySocketToken(newToken, true)) socket.connect();
         }
       });
 
-      this.currentSocket.on("connect_error", async error => {
+      socket.on("connect_error", async error => {
+        if (this.currentSocket !== socket) return;
         this.markWsConnectionFailure();
 
         const message = error?.message?.toLowerCase?.() || "";
@@ -451,27 +513,30 @@ const socketManager = {
         await this.reconnectWithFreshToken();
       });
 
-      this.currentSocket.on("connect", (...params) => {
+      socket.on("connect", (...params) => {
+        if (this.currentSocket !== socket) return;
         console.debug("socket connected", params);
         this.markWsConnectionStable();
       });
 
-      this.currentSocket.on("error", payload => {
+      socket.on("error", payload => {
+        if (this.currentSocket !== socket) return;
         const message = payload?.message;
         if (typeof message === "string" && message.trim()) {
           toast.error(message);
         }
       });
 
-      this.currentSocket.onAny((event, ...args) => {
+      socket.onAny((event, ...args) => {
+        if (this.currentSocket !== socket) return;
         if (event === "backendlog") {
           return;
         }
-        console.debug("Event: ", { socket: this.currentSocket, event, args });
+        console.debug("Event: ", { socket, event, args });
       });
 
       this.onReady(() => {
-        this.socketReady = true;
+        if (this.currentSocket === socket) this.socketReady = true;
       });
     }
 

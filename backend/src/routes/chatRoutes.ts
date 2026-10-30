@@ -1,10 +1,9 @@
 import express from "express";
-import multer from "multer";
 import isAuth from "../middleware/isAuth";
-import uploadConfig from "../config/upload";
+import authorizeChatUpload, {
+  receiveChatUpload
+} from "../middleware/authorizeChatUpload";
 import * as ChatController from "../controllers/ChatController";
-
-const upload = multer(uploadConfig);
 
 const routes = express.Router();
 
@@ -17,7 +16,8 @@ routes.get("/chats/:id/messages", isAuth, ChatController.messages);
 routes.post(
   "/chats/:id/messages",
   isAuth,
-  upload.array("medias"),
+  authorizeChatUpload,
+  receiveChatUpload,
   ChatController.saveMessage
 );
 

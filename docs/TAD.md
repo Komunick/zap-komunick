@@ -208,11 +208,32 @@ Shift+Enter e composição de texto. Cada conversa mantém seu próprio gravador
 existentes e limites relativos à largura disponível. Textos do fork ficam em `translate/languages/komunick.js`;
 não há dependência ou migration nova.
 
-A verificação cobre falha e repetição, respostas fora de ordem, deduplicação, teclado, seleção/busca e envio/leitura
-entre atores fictícios no ambiente local, além de ambos os temas e celular. O backend legado ainda tem autorização
-incompleta em operações de chat e broadcasts de criação/edição sem restrição por sala; a UI não é uma barreira de
-segurança. Upload múltiplo persiste todos os arquivos, mas emite apenas uma mensagem: o remetente pode atualizar
-o histórico após o upload; entrega de todos os eventos aos demais participantes requer correção separada no backend.
+A verificação da interface cobre falha e repetição, respostas fora de ordem, deduplicação, teclado, seleção/busca e
+envio/leitura entre atores fictícios, além de ambos os temas e celular. A [correção de autorização](specs/chat-interno-autorizacao.md)
+aplica `helpers/ChatAuthorization` e `ChatService/AuthorizeChatService` às operações expostas. O ator é recarregado
+na empresa autenticada; o snapshot usa participantes atuais da mesma empresa e somente `id/name` de usuários.
+Mutações são transacionais, com bloqueio do chat e validação de participantes antes das escritas. O proprietário
+é bloqueado por ID antes do chat, com releitura posterior; isso evita um ciclo com a exclusão de usuário que remove
+seus chats por cascata. Esse bloqueio não autoriza nem expõe dados de um proprietário que mudou de empresa.
+Leitura ignora o `userId` do corpo. O par de uma conversa direta é serializado antes dos bloqueios de usuário,
+evitando criação duplicada sem introduzir um ciclo de locks entre abertura e leitura.
+
+`SocketServices/ChatSocketService` usa salas de usuário apenas como candidatas e revalida o contexto atual antes de
+emitir; envio falha fechado se não conseguir autorizar os destinatários. Um usuário removido recebe somente o ID da
+conversa a remover; página/popover não reintroduzem esse preview por resposta antiga. O início do socket confere a
+empresa do token contra o cadastro antes de criar sessão ou entrar nas salas.
+No cliente, `SocketContext` lê a identidade pelo claim `id` emitido pelo servidor e encerra sockets anteriores em
+troca de identidade/logout, inclusive limpando listeners; um encerramento atrasado não fecha a conexão do novo ator.
+
+`authorizeChatUpload` precede o Multer; a persistência revalida a participação sob lock. `config/chatUpload` mantém
+storage específico do chat com nomes aleatórios para não sobrescrever arquivos e permitir limpeza somente dos
+arquivos da requisição revogada ou não confirmada. A emissão ocorre após commit. Upload múltiplo é confirmado como
+um lote, mas mantém o evento legado de apenas uma mensagem; o remetente pode atualizar o histórico após o upload.
+A entrega pública legada `/public` do RF-023 não é privatizada nem migrada por esta correção.
+
+A verificação de autorização cobre empresa/participante/dono, ausência de efeitos negados em banco/arquivos/eventos,
+associação legada indevida, remoção/mudança de empresa, concorrência real e rechecagem durante stream, usando somente
+novas identidades e arquivos fictícios rastreados. Isso não equivale a isolamento global de bytes já públicos.
 
 **Etiquetas por setor (RF-019):** `TagModal` usa `QueueSelect` com seleção múltipla e texto explicando que a seleção
 vazia vale para todos os setores; `pages/Tags` mostra a coluna "Setores". `components/TagPicker` reúne
