@@ -52,3 +52,7 @@ AI_ASSISTANT_MODE=disabled
 
 # P2: "mock" is local simulation only; also requires the company's admin flag.
 ACESSORIAS_MODE=disabled
+
+# P3 SCI and P4 integrated queries are simulations with independent company flags.
+SCI_MODE=disabled
+INTEGRATED_ASSISTANT_MODE=disabled

@@ -34,8 +34,8 @@ o DNS correto. A preparacao atual nao mudou nenhum registro.
   proprios. Nao restaurar o banco, midias, diretorios public/private, master P0 ou
   sessao do notebook. Nao copiar dados/segredos entre desenvolvimento e producao.
 - Backend somente na rede Docker interna, sem rota externa; WhatsApp permanece
-  desconectado mesmo se alguem tentar iniciar uma conexao. IA/Acessorias/SCI disabled.
-  O P3 simulado e validado somente em QA separado; este compose nao habilita mocks.
+  desconectado mesmo se alguem tentar iniciar uma conexao. IA/Acessorias/SCI/P4 disabled.
+  Os pilotos simulados sao validados somente em QA separado; este compose nao habilita mocks.
 - Runtime executa a aplicacao; migracao e bootstrap sao operacoes explicitas.
   Reiniciar nao roda seeds, nao recria administrador e nao troca senhas.
 - Config publico limitado as chaves do frontend. Ambiente privado nao e exportado

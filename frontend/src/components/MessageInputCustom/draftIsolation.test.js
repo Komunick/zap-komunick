@@ -14,6 +14,20 @@ import { ReplyMessageContext } from "../../context/ReplyingMessage/ReplyingMessa
 import api from "../../services/api";
 
 let mockAssistantProps;
+let mockIntegratedProps;
+jest.mock("../IntegratedAssistant", () => props => {
+  mockIntegratedProps = props;
+  return (
+    <button
+      disabled={props.disabled}
+      onClick={() =>
+        props.onUseDraft("Integrated reviewed fixture", props.ticketId)
+      }
+    >
+      Use integrated fixture
+    </button>
+  );
+});
 jest.mock("../TicketAssistant", () => props => {
   mockAssistantProps = props;
   return (
@@ -133,6 +147,23 @@ test("a reviewed callback cannot insert after entering reply mode or changing ti
   await waitFor(() => expect(field()).toHaveValue("Human B"));
   expect(accept("Late suggestion", 301)).toBe(false);
   expect(field()).toHaveValue("Human B");
+});
+
+test("integrated review reuses the actual draft guard and preserves existing text without sending", async () => {
+  sessionStorage.setItem("messageDraft-301", "Human A");
+  sessionStorage.setItem("messageDraft-302", "Human B");
+  const view = render(viewOf(301));
+  await waitFor(() => expect(field()).toHaveValue("Human A"));
+  fireEvent.click(screen.getByText("Use integrated fixture"));
+  expect(field()).toHaveValue("Human A\n\nIntegrated reviewed fixture");
+  const accept = mockIntegratedProps.onUseDraft;
+  view.rerender(viewOf(301, { body: "Fictitious reply", fromMe: false }));
+  expect(accept("Late integrated fixture", 301)).toBe(false);
+  view.rerender(viewOf(302));
+  await waitFor(() => expect(field()).toHaveValue("Human B"));
+  expect(accept("Late integrated fixture", 301)).toBe(false);
+  expect(field()).toHaveValue("Human B");
+  expect(api.post).not.toHaveBeenCalled();
 });
 
 test("sending with a pending mock request clears only the sent ticket draft", async () => {

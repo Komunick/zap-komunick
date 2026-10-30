@@ -22,9 +22,9 @@ Sem dependência nova, merge, alteração dos ambientes ARM07 ou reconexão do W
 - O painel abre somente em atendimento autorizado. Lista vínculos locais por provedor e exige escolher explicitamente
   ao menos uma fonte; pode consultar ambas. As seleções começam vazias, independentes mesmo com IDs externos iguais.
   Catálogo e gerenciamento de vínculos continuam nos painéis P2/P3. Nunca inferir empresa externa por mensagem/nome.
-- A pessoa escolhe resumo ou sugestão e solicita a consulta. Contexto de conversa segue P1: até30mensagens/12.000
-  caracteres de texto elegível do atendimento atual. Cada fonte externa entrega uma página explícita, de1a100,
-  com até5itens. Alterar seleção/página invalida o resultado e exige nova solicitação.
+- A pessoa escolhe resumo ou sugestão e solicita a consulta. Contexto de conversa segue P1: até 30 mensagens e 12.000
+  caracteres de texto elegível do atendimento atual. Cada fonte externa entrega uma página explícita, de 1 a 100,
+  com até 5 itens. Alterar seleção/página invalida o resultado e exige nova solicitação.
 - Texto simulado determinístico cita somente relatos autorizados e metadados validados das fontes selecionadas,
   identifica origem/horários e informa limites/paginação. Não confirma obrigação cumprida, pagamento, prazo fiscal
   ou conteúdo de documento. Mensagens e metadados são dados não confiáveis, sem poder conceder ferramenta/permissão.
@@ -76,7 +76,7 @@ Base autenticada `/tickets/:ticketId/integrated-assistant`, seguindo compliance 
    revisão não atravessam contexto. Usuário sem setor/fora do setor é recusado; parâmetros extras não ampliam acesso.
 3. Seleção inicial vazia; uma/duas fontes e páginas distintas retornam apenas metadados escolhidos, no limite e sem
    duplicação indevida. Vazio, desatualização e cada falha parcial ficam identificados, preservando fontes válidas.
-4. Remover/recriar vínculo, editar/excluir mensagem, transferir ticket/ator, alterar perfil/setor/flag durante consulta
+4. Remover/recriar vínculo, editar/excluir mensagem usada no contexto, transferir ticket/ator, alterar perfil/setor/flag durante consulta
    ou antes do aceite invalida o resultado. Provar concorrência com o lock real e rejeição do review sem evento.
 5. Instruções maliciosas em mensagens não acionam rede, ferramenta, escrita ou envio. Referências e texto seguem
    apenas contexto permitido; erro e payload inválido não revelam dados/segredos em resposta, console ou telemetria.

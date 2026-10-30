@@ -32,6 +32,7 @@ x-backend: &backend
     AI_ASSISTANT_MODE: disabled
     ACESSORIAS_MODE: disabled
     SCI_MODE: disabled
+    INTEGRATED_ASSISTANT_MODE: disabled
     SOCKET_ADMIN: "false"
     SENTRY_DSN: ""
     TZ: America/Sao_Paulo
