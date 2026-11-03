@@ -39,6 +39,11 @@ import { generateColor } from "../../helpers/colorGenerator";
 import { getInitials } from "../../helpers/getInitials";
 import pastRelativeDate from "../../helpers/pastRelativeDate";
 import TagsLine from "../TagsLine";
+import {
+  formatMinutes,
+  isSlaBreached,
+  slaWaitingMinutes
+} from "../../helpers/sla";
 
 const useStyles = makeStyles(theme => ({
   ticket: {
@@ -154,10 +159,24 @@ const useStyles = makeStyles(theme => ({
   presence: {
     color: theme.mode === "light" ? "green" : "lightgreen",
     fontWeight: "bold"
+  },
+  slaBadge: {
+    backgroundColor: red[700],
+    color: "white",
+    borderRadius: 7,
+    padding: "0 5px",
+    marginRight: 4,
+    fontSize: 10,
+    fontWeight: "bold"
   }
 }));
 
-const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
+const TicketListItemCustom = ({
+  ticket,
+  setTabOpen,
+  groupActionButtons,
+  slaMinutes
+}) => {
   const classes = useStyles();
 
   const history = useHistory();
@@ -596,6 +615,17 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
                 variant="body2"
                 color="textSecondary"
               >
+                {isSlaBreached(ticket, slaMinutes) && (
+                  <Tooltip
+                    title={i18n.t("sla.badgeTooltip", {
+                      time: formatMinutes(slaWaitingMinutes(ticket))
+                    })}
+                  >
+                    <span className={classes.slaBadge}>
+                      {i18n.t("sla.badge")}
+                    </span>
+                  </Tooltip>
+                )}
                 {pastRelativeDate(parseISO(ticket.updatedAt))}
               </Typography>
 

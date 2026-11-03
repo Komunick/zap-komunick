@@ -72,6 +72,13 @@ contactRoutes.delete(
   ContactController.remove
 );
 
+contactRoutes.put(
+  "/contacts/:contactId/wallet",
+  isAuth,
+  isAdmin,
+  ContactController.updateWallet
+);
+
 contactRoutes.post(
   "/contacts/:contactId/tags",
   apiTokenAuth,

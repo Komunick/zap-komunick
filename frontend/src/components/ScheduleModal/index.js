@@ -19,7 +19,12 @@ import { i18n } from "../../translate/i18n";
 
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
-import { FormControl, FormControlLabel, Switch } from "@material-ui/core";
+import {
+  FormControl,
+  FormControlLabel,
+  Switch,
+  MenuItem
+} from "@material-ui/core";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import moment from "moment";
 import { AuthContext } from "../../context/Auth/AuthContext";
@@ -85,7 +90,9 @@ const ScheduleModal = ({
     contactId: "",
     sendAt: moment().add(1, "hour").format("YYYY-MM-DDTHH:mm"),
     sentAt: "",
-    saveMessage: false
+    saveMessage: false,
+    recurrence: "none",
+    recurrenceEndAt: ""
   };
 
   const initialContact = {
@@ -134,7 +141,11 @@ const ScheduleModal = ({
             return {
               ...prevState,
               ...data,
-              sendAt: moment(data.sendAt).format("YYYY-MM-DDTHH:mm")
+              sendAt: moment(data.sendAt).format("YYYY-MM-DDTHH:mm"),
+              recurrence: data.recurrence || "none",
+              recurrenceEndAt: data.recurrenceEndAt
+                ? moment(data.recurrenceEndAt).format("YYYY-MM-DD")
+                : ""
             };
           });
           setCurrentContact(data.contact);
@@ -219,10 +230,19 @@ const ScheduleModal = ({
 
     const sendAtWithTimezone = `${year}-${month}-${day}T${hour}:${minute}:${second}${offsetSign}${offsetHours}:${offsetMins}`;
 
+    // Zap Komunick: recurrence (docs/PRD.md, RF-006); the end date counts
+    // until the end of that day
+    const recurrenceEndAt =
+      values.recurrence !== "none" && values.recurrenceEndAt
+        ? `${values.recurrenceEndAt}T23:59:59${offsetSign}${offsetHours}:${offsetMins}`
+        : null;
+
     const scheduleData = {
       ...values,
       userId: user.id,
-      sendAt: sendAtWithTimezone
+      sendAt: sendAtWithTimezone,
+      recurrence: values.recurrence || "none",
+      recurrenceEndAt
     };
     try {
       if (scheduleId) {
@@ -334,6 +354,38 @@ const ScheduleModal = ({
                     helperText={touched.sendAt && errors.sendAt}
                     fullWidth
                   />
+                </div>
+                <div className={classes.multFieldLine}>
+                  <Field
+                    as={TextField}
+                    select
+                    variant="outlined"
+                    margin="dense"
+                    label={i18n.t("recurrence.label")}
+                    name="recurrence"
+                    fullWidth
+                  >
+                    {["none", "daily", "weekly", "monthly", "yearly"].map(
+                      option => (
+                        <MenuItem key={option} value={option}>
+                          {i18n.t(`recurrence.options.${option}`)}
+                        </MenuItem>
+                      )
+                    )}
+                  </Field>
+                  {values.recurrence && values.recurrence !== "none" && (
+                    <Field
+                      as={TextField}
+                      variant="outlined"
+                      margin="dense"
+                      type="date"
+                      label={i18n.t("recurrence.endAt")}
+                      name="recurrenceEndAt"
+                      InputLabelProps={{ shrink: true }}
+                      helperText={i18n.t("recurrence.endAtHelper")}
+                      fullWidth
+                    />
+                  )}
                 </div>
                 <div className={classes.multFieldLine}>
                   <FormControl variant="outlined" margin="dense" fullWidth>

@@ -18,6 +18,7 @@ import { i18n } from "../../translate/i18n";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import toastError from "../../errors/toastError";
+import useSettings from "../../hooks/useSettings";
 
 const useStyles = makeStyles(theme => ({
   ticketsListWrapper: {
@@ -207,6 +208,34 @@ const TicketsListCustom = props => {
   const { profile, queues } = user;
 
   const socketManager = useContext(SocketContext);
+
+  // Zap Komunick: SLA highlight (docs/PRD.md, RF-002)
+  const { getSetting } = useSettings();
+  const [slaMinutes, setSlaMinutes] = useState("0");
+  const [, setSlaTick] = useState(0);
+
+  useEffect(() => {
+    getSetting("slaMinutes", "0")
+      .then(value => setSlaMinutes(value || "0"))
+      .catch(() => {});
+    // re-render once a minute so tickets cross the deadline without events
+    const timer = setInterval(() => setSlaTick(tick => tick + 1), 60000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const socket = socketManager.GetSocket(localStorage.getItem("companyId"));
+    const onSettings = data => {
+      if (data?.key === "slaMinutes") {
+        setSlaMinutes(data.value || "0");
+      }
+    };
+    socket.on("settings", onSettings);
+    return () => {
+      socket.disconnect();
+    };
+  }, [socketManager]);
 
   useEffect(() => {
     dispatch({ type: "RESET" });
@@ -492,6 +521,7 @@ const TicketsListCustom = props => {
                   setTabOpen={setTabOpen}
                   key={ticket.id}
                   groupActionButtons={!groups && !showTabGroups}
+                  slaMinutes={slaMinutes}
                 />
               ))}
             </>

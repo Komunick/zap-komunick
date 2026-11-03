@@ -15,7 +15,8 @@ export const safeSettingsKeys = {
   groupsTab: "disabled",
   CheckMsgIsGroup: "disabled",
   soundGroupNotifications: "disabled",
-  tagsMode: "ticket"
+  tagsMode: "ticket",
+  slaMinutes: "0"
 };
 
 export const GetSettingService = async ({

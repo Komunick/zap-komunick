@@ -34,6 +34,8 @@ import ticketzOSSRoutes from "./ticketzOSSRoutes";
 import i18nRoutes from "./i18nRoutes";
 import wavoipRoutes from "./wavoipRoutes";
 import dockerRoutes from "./dockerRoutes";
+import slaRoutes from "./slaRoutes";
+import kanbanRoutes from "./kanbanRoutes";
 
 const routes = Router();
 
@@ -72,5 +74,7 @@ routes.use(ticketzOSSRoutes);
 routes.use(i18nRoutes);
 routes.use(wavoipRoutes);
 routes.use(dockerRoutes);
+routes.use(slaRoutes);
+routes.use(kanbanRoutes);
 
 export default routes;

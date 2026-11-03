@@ -1,4 +1,67 @@
-# AGENTS.md — Ticketz
+# AGENTS.md — Zap Komunick
+
+Zap Komunick é o atendimento por WhatsApp da Komunick: um fork do Ticketz (AGPL-3.0) com recursos inspirados no
+ZapContábil (painel de SLA, carteira de clientes, Kanban, horário de acesso por usuário e agendamento recorrente).
+Este repositório guarda o sistema inteiro (backend e frontend). A primeira parte deste arquivo traz as regras da
+Komunick; a segunda, a partir de "Ticketz (upstream)", é a orientação técnica que veio do projeto original.
+
+## Comandos do projeto
+
+Execute na raiz do repositório. Neste notebook não há Node instalado no PATH: tudo roda em contêiner.
+
+- Preparar o ambiente: `docker compose -f docker-compose-dev-app.yaml up -d` (Postgres, Redis, backend e frontend
+  com o código montado; frontend em http://localhost:5420, backend em http://localhost:5421, login
+  `admin@ticketz.host` do seed). A primeira subida instala dependências e aplica migrações; leva alguns minutos.
+- Testar a alteração (regras sem banco):
+  `docker compose -f docker-compose-dev-app.yaml exec backend sh -c "NODE_ENV=test npx jest src/__tests__/helpers --coverage=false"`
+- Verificar antes da revisão final, nos arquivos alterados:
+  - backend: `docker compose -f docker-compose-dev-app.yaml exec backend sh -c "npx tsc --noEmit && npx eslint <arquivos>"`
+  - frontend: `docker compose -f docker-compose-dev-app.yaml exec frontend sh -c "npx prettier --check <arquivos>"`
+- Nova migração: reinicie o backend (`docker compose -f docker-compose-dev-app.yaml restart backend`), que compila e
+  roda `sequelize db:migrate` na subida.
+
+O backend recarrega sozinho (`ts-node-dev --poll`); o frontend também (`react-scripts start` com polling).
+
+## Contexto por necessidade
+
+Consulte somente os trechos pertinentes. Não presuma acesso a links ou arquivos que não leu. Distinga obrigações
+confirmadas de inspiração e observações do sistema atual; estas não viram requisitos automaticamente.
+
+- Especificação indicada em `docs/specs/<nome-da-mudanca>.md`, quando houver. Na primeira entrega o `docs/PRD.md`
+  delimita todo o escopo.
+- `docs/PRD.md`: comportamento, escopo e critérios do produto; propostas não são regras confirmadas.
+- `docs/TAD.md`: desenho técnico das partes acrescentadas pelo fork e estratégia de testes.
+- `docs/PRINCIPLES.md`: qualidade da implementação e dos testes.
+- `docs/DELIVERY-WORKFLOW.md`: seção 3 para planejamento, autorizações, revisão e evidências; seções 1, 4 e 5 para
+  branches, publicação e conclusão.
+- `CHANGELOG.md`: notas relevantes da entrega.
+- Tarefas no Linear: projeto "Zap Komunick – atendimento WhatsApp (fork do Ticketz)" (P-KOM-4), time KOM.
+
+## Limites essenciais
+
+- Execute o escopo definido pelo dev; não amplie o combinado. Apresente plano curto com resultado esperado e
+  verificação prevista; siga as aprovações do workflow.
+- Preserve alterações alheias. Não enfraqueça testes e controles.
+- Não faça merge, push direto em `dev`/`main`, alterações de proteções ou operações produtivas
+  (zap.komunick.com é produção).
+
+## Particularidades do fork
+
+- **AGPL:** quem usa o sistema precisa conseguir o código desta versão. O link fica na tela "Sobre"
+  (`frontend/src/components/AboutModal`), apontando para github.com/Komunick/zap-komunick. Não remova.
+- **Atualizações do Ticketz:** o remoto `upstream` é github.com/ticketz-oss/ticketz. Para facilitar a mesclagem, o
+  código novo fica em arquivos próprios (`helpers/*Rules.ts`, `services/SlaServices`, `services/KanbanServices`,
+  `pages/Sla`, `pages/Kanban`, `translate/languages/komunick.js`) e as mudanças em arquivos do upstream são pequenas;
+  os trechos maiores levam um comentário "Zap Komunick".
+- **Textos novos da interface** vão em `frontend/src/translate/languages/komunick.js` (pt, pt_PT, en, es), mesclado
+  sobre os dicionários do upstream; não edite `pt.js`/`en.js` para recursos do fork.
+- **Regras de negócio** do fork ficam em funções puras em `backend/src/helpers/` com teste em
+  `backend/src/__tests__/helpers/`; serviços e controladores só buscam dados e aplicam o resultado.
+- **Ticketz PRO** é fechado: não copie código dele (nem do bundle do zap.komunick.com) para este repositório.
+
+---
+
+# Ticketz (upstream)
 
 Compact guidance for OpenCode sessions working in this repo.
 

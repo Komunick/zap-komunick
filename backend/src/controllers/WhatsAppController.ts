@@ -146,7 +146,7 @@ export const remove = async (
   if (closeTickets === "true") {
     const closedTickets = (
       await Ticket.update(
-        { status: "closed" },
+        { status: "closed", unansweredSince: null },
         {
           where: {
             whatsappId,

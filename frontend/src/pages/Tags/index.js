@@ -15,6 +15,7 @@ import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
 import FlagIcon from "@material-ui/icons/Flag";
 import CheckCircleIcon from "@material-ui/icons/CheckCircle";
+import ViewColumnIcon from "@material-ui/icons/ViewColumn";
 import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 import IconButton from "@material-ui/core/IconButton";
@@ -276,6 +277,9 @@ const Tags = () => {
                 {i18n.t("tags.table.tickets")}
               </TableCell>
               <TableCell align="center">
+                {i18n.t("tags.table.kanban")}
+              </TableCell>
+              <TableCell align="center">
                 {i18n.t("tags.table.actions")}
               </TableCell>
             </TableRow>
@@ -299,6 +303,14 @@ const Tags = () => {
                   </TableCell>
                   <TableCell align="center">{tag.contactsCount}</TableCell>
                   <TableCell align="center">{tag.ticketsCount}</TableCell>
+                  <TableCell align="center">
+                    {tag.kanban ? (
+                      <ViewColumnIcon
+                        fontSize="small"
+                        titleAccess={i18n.t("tags.table.kanban")}
+                      />
+                    ) : null}
+                  </TableCell>
                   <TableCell align="center">
                     <>
                       {(user.profile === "admin" ||
@@ -327,7 +339,7 @@ const Tags = () => {
                   </TableCell>
                 </TableRow>
               ))}
-              {loading && <TableRowSkeleton columns={4} />}
+              {loading && <TableRowSkeleton columns={6} />}
             </>
           </TableBody>
         </Table>
