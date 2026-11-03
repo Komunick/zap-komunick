@@ -2,14 +2,25 @@ import { promises as fs } from "fs";
 import path from "path";
 import os from "os";
 import { openAttachmentFile } from "../../services/AttachmentServices/AttachmentFileService";
+import { isProtectedChatPublicPath } from "../../services/ChatService/ChatMediaMigrationService";
 
 let mockRoot: string;
 jest.mock("../../helpers/GetPublicPath", () => ({
   getPublicPath: () => mockRoot
 }));
+jest.mock(
+  "../../services/ChatService/ChatMediaMigrationService",
+  () => ({ isProtectedChatPublicPath: jest.fn() }),
+  { virtual: true }
+);
 const pdf = new TextEncoder().encode("%PDF-1.7\nFICTITIOUS ONLY\n");
 describe("attachment descriptor and filesystem fence using temporary fictitious files", () => {
   let temp: string;
+  beforeEach(() => {
+    (isProtectedChatPublicPath as jest.Mock).mockImplementation(
+      async value => value === "private-chat.pdf"
+    );
+  });
   beforeAll(async () => {
     temp = await fs.mkdtemp(path.join(os.tmpdir(), "zk-attachment-test-"));
     mockRoot = path.join(temp, "public");
@@ -20,6 +31,11 @@ describe("attachment descriptor and filesystem fence using temporary fictitious 
     await fs.writeFile(path.join(mockRoot, "media", "10", "x", "a.pdf"), pdf);
     await fs.writeFile(path.join(mockRoot, "media", "20", "b.pdf"), pdf);
     await fs.writeFile(path.join(temp, "outside.pdf"), pdf);
+    await fs.writeFile(path.join(mockRoot, "private-chat.pdf"), pdf);
+    await fs.symlink(
+      path.join(mockRoot, "private-chat.pdf"),
+      path.join(mockRoot, "media", "10", "private-alias.pdf")
+    );
     await fs.writeFile(
       path.join(mockRoot, "fake.pdf"),
       "<html>FICTITIOUS</html>"
@@ -67,6 +83,15 @@ describe("attachment descriptor and filesystem fence using temporary fictitious 
     expect(file.mimeType).toBeNull();
     await file.handle.close();
   });
+  it.each(["private-chat.pdf", "media/10/private-alias.pdf"])(
+    "refuses private chat bytes through the ticket API descriptor: %s",
+    async raw => {
+      await expect(openAttachmentFile(raw, 10)).rejects.toMatchObject({
+        message: "ERR_ATTACHMENT_NOT_FOUND",
+        statusCode: 404
+      });
+    }
+  );
   it("keeps the opened inode even if its pathname is replaced later", async () => {
     const original = path.join(mockRoot, "stable.pdf");
     await fs.writeFile(original, pdf);

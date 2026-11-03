@@ -1,7 +1,7 @@
 # PRD — Zap Komunick
 
 **Komunick Inteligência e Tecnologia**
-**Responsável:** Jailson (Komunick) · **Atualizado em:** 27/10/2026
+**Responsável:** Jailson (Komunick) · **Atualizado em:** 30/10/2026
 **Fonte oficial:** `docs/PRD.md` no repositório
 **Validado por:** Pendente
 
@@ -50,6 +50,10 @@ O [P1 de resumos e sugestões](specs/p1-assistente-revisao.md) foi autorizado de
 fictícios (RF-021). Esse percurso não habilita um modelo real nem os conectores.
 O [P2 de consultas Acessórias](specs/p2-acessorias-consultas.md) também foi autorizado com mocks e dados fictícios
 (RF-022), sem conexão ao fornecedor real.
+O P3 SCI foi autorizado em 29/10/2026 somente como [painel de publicações simuladas](specs/p3-sci-consultas.md)
+(RF-024); produto/módulo e contrato real continuam pendentes, sem download ou marcação de leitura no fornecedor.
+O P4 foi autorizado em 30/10/2026 como [consultas integradas com mocks](specs/p4-consultas-integradas.md)
+(RF-025), com revisão humana. Sincronização e conexões reais continuam fora do recorte.
 
 **Fluxo principal:** o cliente escreve → o atendimento entra na fila (ou direto no responsável da carteira) → o painel
 de SLA mostra a espera e destaca o que passou do prazo → o atendente responde e move o atendimento pelas colunas do
@@ -296,6 +300,9 @@ referências do Dribbble (painéis de atendimento e CRMs de 2025 e 2026).
   quente no tema claro, que recolhe para o trilho). Barra do topo plana com busca global (Ctrl K: páginas e
   atendimentos que o usuário pode ver), interruptor de tema e usuário; conteúdo sem cartões flutuantes. No celular os três
   usam a gaveta. Referências em `docs/design/stitch-layouts`.
+- No desktop, passar o mouse sobre o trilho recolhido abre o menu imediatamente, sem clique ou espera adicional.
+  O menu permanece aberto ao navegar pelos itens ou sair da área; botão, teclado e preferência salva continuam
+  controlando o recolhimento. Toque e gaveta do celular mantêm o comportamento existente.
 - Atendimentos: uma linha de visões com contadores (em atendimento ou meus, aguardando, pausados, resolvidos) mais a
   busca; filas como chips que o usuário liga e desliga (sempre fica ao menos uma); cada atendimento em uma linha enxuta;
   em telas de 1400 px ou mais, painel do cliente fixo à direita da conversa (carteira, fila, atendente, SLA, etiquetas,
@@ -305,6 +312,9 @@ referências do Dribbble (painéis de atendimento e CRMs de 2025 e 2026).
 - "Tarefas" fica oculto no menu lateral, nas abas de navegação e na paleta Ctrl K. A página continua acessível pelo
   endereço `/todolist`.
 - Login em duas colunas (formulário e painel da marca); no celular, só o formulário.
+- Após autenticar, usuário comum entra em `/tickets`; administrador com interface administrativa disponível entra
+  em `/`. A restauração da sessão e o redirecionamento não montam o dashboard para perfis sem acesso à sua interface.
+  As APIs administrativas mantêm seus bloqueios. Ver [correção do login por perfil](specs/login-dashboard-perfil.md).
 - Português é o idioma padrão (o idioma do navegador não é mais adivinhado; a escolha do usuário no menu continua
   valendo). O tema segue o claro ou escuro do sistema operacional, inclusive quando ele muda com a tela aberta; o
   interruptor "Modo escuro" fixa uma escolha e "Tema do sistema (Windows)", no menu do usuário, volta a seguir o sistema.
@@ -332,6 +342,24 @@ então vê o logo da Komunick, o botão verde e o painel da marca, no tema claro
   Grupos continuam com nome, participantes editáveis e exclusão pelo dono, agora no cabeçalho da conversa.
 - A lista se atualiza em tempo real (mensagem nova sobe a conversa e soma não lidas; com a conversa aberta, ela é
   marcada como lida). No celular, a lista e a conversa aparecem uma de cada vez, com botão de voltar.
+- A [melhoria de usabilidade](specs/chat-interno-usabilidade.md) distingue carregamento, vazio, busca sem resultados e
+  falha recuperável na lista e no histórico. A busca pode ser limpa, e seleção e não lidas continuam identificáveis.
+- Mensagens longas, quebras de linha e anexos respeitam a largura disponível nos dois temas. O campo de mensagem tem
+  identificação acessível; Enter envia, Shift+Enter insere uma linha e a composição de texto não dispara envio.
+- Envio pendente impede duplicação; uma falha conserva texto ou anexo para nova tentativa. Resultados atrasados do
+  histórico não entram em outra conversa, e a mesma mensagem recebida por HTTP/socket não aparece duas vezes.
+
+**Autorização:** o recorte aprovado de [autorização do chat](specs/chat-interno-autorizacao.md) restringe consulta,
+histórico, envio e leitura à empresa e aos participantes atuais; somente o dono participante administra o grupo.
+Participantes estrangeiros são recusados antes de qualquer alteração. Leitura usa o ator autenticado, e eventos vão
+somente aos destinatários autorizados; quem sai do grupo recebe apenas a remoção da conversa, inclusive no popover.
+Uploads são autorizados antes de receber arquivos e revalidados antes de persistir, com limpeza exclusiva da requisição
+revogada. A melhoria anterior de interface não mudou essas permissões; este é o recorte separado de segurança.
+**Anexos privados:** o [recorte de privacidade dos anexos internos](specs/chat-anexos-privados.md) move anexos novos e
+legados identificados para armazenamento privado e entrega autenticada por mensagem. Empresa e participação atuais
+são verificadas em cada acesso, inclusive reprodução parcial e download. Links públicos antigos do chat deixam de
+entregar conteúdo; arquivos dos demais módulos mantêm seus contratos. A migração verifica integridade e conflitos
+antes de remover cópias públicas, com retomada segura e sem perda das associações.
 
 **Cenário de sucesso:**
 
@@ -691,10 +719,59 @@ no cliente errado. Falha ou dado desatualizado fica explícito, sem confirmaçã
   legados do Express/nginx e da entrega ao destinatário continuam públicos; esta entrega não promete privatizá-los
   nem altera uploads, armazenamento, envio ou retenção dos arquivos.
 
+Essa compatibilidade pública refere-se aos arquivos dos atendimentos. Os anexos do chat interno seguem a regra
+privada do RF-010 e sua especificação, sem alterar a entrega de arquivos dos demais módulos neste recorte.
+
 **Aceite:** dado um atendimento autorizado com PDF de duas páginas, imagens e vídeo, a pessoa abre pela mensagem ou
 pela área de arquivos, muda página/ampliação, reproduz/pausa e baixa por ação explícita, em desktop/celular e ambos os
 temas. Outra empresa/cliente/setor proibido não recebe metadados nem bytes pela nova API, mesmo com ID/cursor conhecido.
 Troca de contexto durante carga encerra o visualizador anterior; falha não abre silenciosamente o arquivo legado.
+
+### RF-024 — Clientes e publicações SCI (simulação)
+
+**Pedido (29/10/2026):** painel SCI com mocks e dados fictícios, conforme
+[especificação](specs/p3-sci-consultas.md). Contrato interno de metadados; não representa integração a um módulo real.
+
+- Começa desligado e exige `SCI_MODE=mock` e `sciEnabled=enabled` na empresa. Administrador gerencia a flag;
+  ausência, valor desconhecido e duplicatas divergentes recusam consulta. P1/P2 continuam independentes.
+- No atendimento autorizado, mostra somente clientes SCI explicitamente vinculados ao contato e exige seleção.
+  Administrador consulta catálogo fictício e confirma vínculo local; atendente não gerencia catálogo/vínculos.
+  O namespace SCI é separado do Acessórias mesmo quando IDs externos coincidem.
+- Lista publicações fictícias com título, categoria, competência e data, em páginas de cinco itens, com origem e
+  horários da fonte/consulta. Vazio, falha, timeout, limite e desatualização têm estados distintos. Não há URLs,
+  conteúdo/download de documento, prazo fiscal confirmado nem marcação de leitura.
+- Mudanças de contexto, acesso, flag e vínculo invalidam resultados; sem entrega de evento, nova consulta sempre
+  revalida acesso, sem promessa de revogação visual instantânea do snapshot já recebido. Consultas não alteram rascunho, leitura, SLA,
+  mensagens, notas ou credenciais. Conteúdo fica em memória; auditoria/eventos contêm só ação/IDs/metadados mínimos.
+- A API permite revogar um vínculo local SCI conhecido mesmo com a consulta desligada, sem chamar provedor;
+  nessa condição a interface oculta o painel de consulta. Não exclui nada em fornecedor nem no namespace Acessórias.
+
+**Aceite:** duas empresas e dois fornecedores com IDs externos iguais mantêm dados/vínculos separados. Selecionar
+um de vários clientes mostra somente suas publicações, com paginação correta. Resposta atrasada após remoção/recriação
+ou troca de atendimento é recusada/descartada. Interface funciona em ambos os temas e desktop/celular. Testes usam
+somente dados fictícios, sem acesso externo, arquivos ou envio e preservam os estados anteriores do atendimento.
+
+### RF-025 — Consultas integradas com revisão humana (simulação)
+
+**Pedido (30/10/2026):** reunir IA, Acessórias e SCI com mocks/dados fictícios, conforme
+[especificação](specs/p4-consultas-integradas.md). Não habilita fornecedores, IA reais ou sincronização.
+
+- Começa desligado: exige modo/flag próprios e assistente P1 habilitado. Fontes mantêm suas habilitações independentes.
+  No atendimento autorizado, a pessoa escolhe explicitamente clientes vinculados por provedor e ao menos uma fonte;
+  não há correspondência automática por ID, nome ou texto de mensagem.
+- Uma solicitação humana gera resumo ou sugestão simulados a partir do texto elegível P1 e de uma página de até 5 itens
+  por fonte escolhida. Origem, horários, limites, desatualização, vazio e falhas parciais aparecem separados.
+  O texto não confirma fatos fiscais, pagamentos ou conteúdo de documentos.
+- Sugestão editável só é anexada ao rascunho em outra ação humana, após revalidar contexto local e vínculos atuais.
+  Mudanças de acesso, mensagens usadas, flag ou vínculo impedem consulta/aceite com estado antigo, mesmo sem evento entregue.
+  Transferência de responsável na mesma fila e mudança de estado também invalidam a versão anterior da sugestão.
+  Preserva texto existente e não envia ou altera leitura/SLA/estado/mensagens/notas/credenciais.
+- Resultados não aceitos ficam somente em memória. Contratos/erros são estritos e privados; catálogo/CRUD continuam
+  nos painéis P2/P3. Não há nova credencial, cache de resultados, fila, documento ou escrita externa.
+
+**Aceite:** duas empresas/clientes e IDs repetidos entre provedores permanecem isolados. Seleção e páginas explícitas,
+falhas parciais e stale não apresentam confirmação indevida. Troca, cancelamento, revogação ou edição durante awaits
+e antes do aceite recusam respostas antigas. Percurso completo em ambos os temas e desktop/celular, com dados fictícios.
 
 ## 4. Restrições e cuidados
 

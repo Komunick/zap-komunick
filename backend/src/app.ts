@@ -7,8 +7,6 @@ import cookieParser from "cookie-parser";
 import * as Sentry from "@sentry/node";
 
 import "./database";
-import path from "path";
-import uploadConfig from "./config/upload";
 import AppError from "./errors/AppError";
 import routes from "./routes";
 import { logger } from "./utils/logger";
@@ -16,10 +14,7 @@ import { messageQueue, sendScheduledMessages } from "./queues";
 import { corsOrigin } from "./helpers/corsOrigin";
 import { isSensitiveRequest } from "./helpers/CredentialTelemetry";
 import credentialErrorHandler from "./middleware/credentialErrorHandler";
-
-class SystemError extends Error {
-  code?: string;
-}
+import servePublicFile from "./services/PublicFileService";
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
@@ -54,47 +49,7 @@ app.use(
 app.use(cookieParser());
 app.use(express.json({ limit: "10mb" }));
 app.use(Sentry.Handlers.requestHandler());
-app.get("/public/*", (req, res) => {
-  const filePath = path.join(uploadConfig.directory, req.params[0]);
-
-  if (filePath.endsWith(".aac")) {
-    res.setHeader("Content-Type", "audio/aac");
-  }
-
-  // ?inline=1 → serve with Content-Disposition: inline so browsers display
-  // the file in-place (e.g. PDF viewer iframe) instead of downloading it.
-  if (req.query.inline === "1") {
-    res.setHeader("Content-Disposition", "inline");
-    return res.sendFile(filePath, err => {
-      if (err) {
-        const sysErr = err as SystemError;
-        if (sysErr.code === "ENOENT") {
-          res.status(404).end();
-        } else {
-          logger.debug(
-            { err },
-            `Error serving inline file ${req.params[0]}: ${sysErr.message}`
-          );
-          res.status(500).end();
-        }
-      }
-    });
-  }
-
-  res.download(filePath, (err: SystemError) => {
-    if (err) {
-      if (err.code === "ENOENT") {
-        res.status(404).end();
-      } else {
-        logger.debug(
-          { err },
-          `Error downloading file ${req.params[0]}: ${err.message}`
-        );
-        res.status(500).end();
-      }
-    }
-  });
-});
+app.get("/public/*", servePublicFile);
 
 app.use((req, _res, next) => {
   const { method, path: requestPath } = req;

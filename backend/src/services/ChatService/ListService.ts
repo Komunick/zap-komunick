@@ -1,58 +1,91 @@
 import { Op } from "sequelize";
+import AppError from "../../errors/AppError";
+import {
+  chatAccessError,
+  positiveChatId
+} from "../../helpers/ChatAuthorization";
 import Chat from "../../models/Chat";
 import ChatUser from "../../models/ChatUser";
-import User from "../../models/User";
-
+import {
+  loadChatActor,
+  lockChatOwners,
+  loadChatSnapshot,
+  withChatTransaction
+} from "./AuthorizeChatService";
 interface Request {
   ownerId: number;
+  companyId: number;
   pageNumber?: string;
 }
-
-interface Response {
-  records: Chat[];
-  count: number;
-  hasMore: boolean;
-}
-
-const ListService = async ({
-  ownerId,
-  pageNumber = "1"
-}: Request): Promise<Response> => {
-  const chatUsers = await ChatUser.findAll({
-    where: { userId: ownerId }
+const ListService = ({ ownerId, companyId, pageNumber = "1" }: Request) =>
+  withChatTransaction(async transaction => {
+    const actor = await loadChatActor(
+      { userId: ownerId, companyId },
+      transaction
+    );
+    const page = positiveChatId(pageNumber);
+    if (!page) throw new AppError("ERR_INVALID_CHAT_PAGE", 400);
+    const mine = await ChatUser.findAll({
+      where: { userId: actor.userId },
+      transaction
+    });
+    const limit = 20,
+      offset = limit * (page - 1);
+    const preliminary = await Chat.findAll({
+      where: {
+        id: { [Op.in]: mine.map(member => member.chatId) },
+        companyId: actor.companyId
+      },
+      limit,
+      offset,
+      order: [["updatedAt", "DESC"]],
+      transaction
+    });
+    const ownerByChat = new Map(
+      preliminary.map(chat => [chat.id, chat.ownerId])
+    );
+    const owners = await lockChatOwners([...ownerByChat.values()], transaction);
+    const candidates = await Chat.findAll({
+      where: {
+        id: {
+          [Op.in]: preliminary
+            .filter(chat => owners.has(chat.ownerId))
+            .map(chat => chat.id)
+        },
+        companyId: actor.companyId
+      },
+      order: [["updatedAt", "DESC"]],
+      transaction,
+      lock: transaction.LOCK.SHARE
+    });
+    const records: Chat[] = [];
+    for (let index = 0; index < candidates.length; index += 1) {
+      const record = candidates[index];
+      if (record.ownerId !== ownerByChat.get(record.id)) continue;
+      await loadChatSnapshot(record, transaction);
+      if (
+        !chatAccessError(
+          record,
+          actor,
+          record.users.map(member => member.userId)
+        )
+      )
+        records.push(record);
+    }
+    const count = await Chat.count({
+      where: { companyId: actor.companyId },
+      include: [
+        {
+          model: ChatUser,
+          as: "users",
+          where: { userId: actor.userId },
+          attributes: [],
+          required: true
+        }
+      ],
+      distinct: true,
+      transaction
+    });
+    return { records, count, hasMore: count > offset + records.length };
   });
-
-  const chatIds = chatUsers.map(chat => chat.chatId);
-
-  const limit = 20;
-  const offset = limit * (+pageNumber - 1);
-
-  const { count, rows: records } = await Chat.findAndCountAll({
-    where: {
-      id: {
-        [Op.in]: chatIds
-      }
-    },
-    include: [
-      { model: User, as: "owner", attributes: ["id", "name"] },
-      {
-        model: ChatUser,
-        as: "users",
-        include: [{ model: User, as: "user", attributes: ["id", "name"] }]
-      }
-    ],
-    limit,
-    offset,
-    order: [["updatedAt", "DESC"]]
-  });
-
-  const hasMore = count > offset + records.length;
-
-  return {
-    records,
-    count,
-    hasMore
-  };
-};
-
 export default ListService;

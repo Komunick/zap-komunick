@@ -298,3 +298,52 @@ Em 29/10/2026, o acesso confirmado à ARM07 é `170.9.14.1`, enquanto os registr
 AAAA de cada domínio antes de habilitar seu fragmento Caddy; inicialmente usar Somente DNS. Preparar os
 candidatos não altera esses registros nem ativa os domínios. As etapas de ingresso, validação, backup e recuperação
 estão no README; a ativação pública exige uma solicitação posterior.
+
+## 14. Painel SCI simulado — RF-024
+
+O P3 está definido em [specs/p3-sci-consultas.md](specs/p3-sci-consultas.md). Usa somente catálogo/publicações fictícios;
+não precisa de chave, licença, SCI WEB, SDK, documento ou acesso de rede. Campos são contrato interno de simulação,
+sem promessa de compatibilidade com Report/Atendimento. Não marcar leitura nem importar documentos reais nesse teste.
+
+Começa desligado: em ambiente descartável de desenvolvimento, definir `SCI_MODE=mock` no backend e habilitar
+`sciEnabled` nas configurações da empresa como administrador. Modo `disabled`, desconhecido ou flag ausente/divergente
+recusa consultas. P1/P2 seguem suas flags próprias e não são habilitados pela SCI. Os perfis ARM07 mantêm SCI disabled;
+esta entrega não publica a revisão nova nos ambientes existentes e não reconecta WhatsApp.
+
+A consulta parte do atendimento autorizado e exige cliente SCI vinculado explicitamente ao contato. Administração
+confirma vínculo local; IDs iguais em Acessórias/SCI não compartilham autorização. Publicações mostram somente
+metadados paginados, origem/horários e aviso stale. Dados ficam na memória do painel, sem links ou download.
+
+Para desativar, desligar flag ou `SCI_MODE`. A interface oculta consultas e descarta dados; DELETE
+`/tickets/:ticketId/sci/links/:externalClientId` ainda permite revogar vínculo SCI conhecido à administração autorizada,
+sem catálogo/rede. Não há migração: manter ContactExternalClientLinks ao recuar preserva ambos os namespaces.
+
+Validar com duas empresas/contatos/setores e IDs fictícios repetidos entre fornecedores: autorização, seleção,
+idempotência, paginação, vazio/stale, falhas e resposta tardia. Conferir UI nos dois temas e desktop/celular;
+preservar snapshots de negócio/rascunho/credenciais e limpar somente fixtures rastreadas. Não usar /srv/superchat*
+ou banco, master e sessão existentes para QA. Não executar o npm test com seus hooks de undo sobre base compartilhada.
+
+## 15. Consultas integradas simuladas — RF-025
+
+O recorte está em [specs/p4-consultas-integradas.md](specs/p4-consultas-integradas.md). Não precisa de chave, modelo,
+licença ou rede de fornecedor. Não implementa sincronização ou documentos; não habilitar em empresas com dados reais
+para seguir o roteiro fictício. Os perfis ARM07 mantêm `INTEGRATED_ASSISTANT_MODE=disabled` e não recebem mocks.
+
+Em projeto local isolado, definir `INTEGRATED_ASSISTANT_MODE=mock` e habilitar `integratedAssistantEnabled` como
+administrador. P1 também precisa de `AI_ASSISTANT_MODE=mock` e `aiAssistantEnabled=enabled`; cada fonte selecionada
+exige seu próprio modo/flag e vínculo P2/P3. A opção integrada não ativa outras flags. Ausência/valor desconhecido e
+duplicatas divergentes recusam. Não importar banco, arquivos, credenciais ou sessões de instalações existentes.
+
+No atendimento fictício, abrir a consulta integrada, escolher clientes/páginas separadamente e solicitar resumo ou
+sugestão. Conferir origem, horários, paginação, stale e falhas parciais. Editar sugestão e anexar é outra ação humana,
+com nova verificação local dos vínculos/mensagens/permissões; o botão de envio normal permanece separado e não deve
+ser exercitado. Nenhum texto não aceito fica em storage. Alteração de contexto invalida resultados em andamento.
+
+Desativar flag ou modo integrado descarta o percurso; dados e vínculos permanecem. P1/P2/P3 continuam independentes.
+Não há migração/undo, nova chave, fila ou cache. Atualizar fonte é nova consulta; review não chama fornecedor nem
+significa que uma obrigação foi cumprida. A versão local P4 deve ter projeto/banco/cache/volumes/chave próprios e
+origem distinta da demonstração P3 para não compartilhar cookie de sessão entre portas do mesmo host.
+
+Validar serviços/API/UI com duas empresas e fixtures rastreadas, IDs repetidos entre fornecedores, modo desligado/
+desconhecido, review após alteração de vínculo/mensagem/perfil/flag, paginação, falhas e respostas antigas. Conferir
+rascunho, leitura/SLA e snapshot de negócio/credenciais, remover somente fixtures. Evidências e limites ficam no PR.
