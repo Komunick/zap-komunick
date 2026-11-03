@@ -201,6 +201,14 @@ imagens do Ticketz), `SOCKET_ADMIN=false`, senha do primeiro administrador por `
 Observação: `docker compose logs` no servidor; não há monitoramento externo. O workflow do upstream
 (`.github/workflows/build-docker.yml`) publica em `ghcr.io/ticketz-oss` e não é usado.
 
+**Reconexão do WhatsApp:** cada queda do socket passa por `helpers/ReconnectPolicy` (código do `lastDisconnect`):
+401, 403, 411 e 500 apagam a sessão e pedem QR novo; 440 (sessão aberta por outro cliente com as mesmas credenciais,
+como outro servidor ou um backend duplicado) para a conexão sem apagar as credenciais e avisa os administradores, em
+vez de reconectar e brigar pela sessão; 515 reconecta em 0,5 s (normal depois de parear); o resto (408, 428, 503,
+desconhecido) reconecta com espera crescente de 2 s até 5 min, com até 20% de variação, zerada quando a conexão abre.
+Cada queda fica no log como `Socket <nome> closed: <motivo> -> <ação>`. Antes, toda queda que não fosse 401
+reconectava em 2 s fixos, inclusive 440, e o 403 apagava a sessão e ainda tentava reconectar.
+
 **Recuperação:** as migrações têm `down`; nenhuma apaga dados existentes (o `down` da `20261021130000` apaga os
 motivos cadastrados). Desligar `slaMinutes`, `walletAutoAssign` e `closeReasonRequired` devolve o comportamento original
 sem migração reversa. Antes de voltar a uma versão sem o status `paused`, retomar ou finalizar os atendimentos
