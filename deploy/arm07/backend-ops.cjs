@@ -42,6 +42,7 @@ function validateRuntimeEnv(env, allowBootstrapSecret = false) {
   }
   if (env.NODE_ENV !== "production" || env.AI_ASSISTANT_MODE !== "disabled" ||
       env.ACESSORIAS_MODE !== "disabled" || env.SCI_MODE !== "disabled" ||
+      env.INTEGRATED_ASSISTANT_MODE !== "disabled" ||
       env.SOCKET_ADMIN !== "false") {
     fail("ARM07_RUNTIME_MODE_INVALID");
   }

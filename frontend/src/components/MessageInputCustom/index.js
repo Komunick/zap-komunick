@@ -57,6 +57,7 @@ import { faSignature } from "@fortawesome/free-solid-svg-icons";
 import { isMobile } from "../../helpers/isMobile";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import TicketAssistant from "../TicketAssistant";
+import IntegratedAssistant from "../IntegratedAssistant";
 import useTicketDraft from "../../hooks/useTicketDraft";
 
 const Mp3Recorder = new MicRecorder({ bitRate: 128 });
@@ -1210,6 +1211,14 @@ const MessageInputCustom = props => {
         <TicketAssistant
           key={`${ticketId}:${ticket.contactId}:${ticket.queueId}:${ticket.userId}:${ticketStatus}`}
           ticketId={ticketId}
+          disabled={assistantComposer.current.blocked}
+          onUseDraft={useAssistantDraft}
+        />
+        <IntegratedAssistant
+          contextKey={`${ticketId}:${ticket.contactId}:${ticket.queueId}:${ticket.userId}:${ticketStatus}`}
+          ticketId={ticketId}
+          contactId={ticket.contactId}
+          companyId={ticket.companyId}
           disabled={assistantComposer.current.blocked}
           onUseDraft={useAssistantDraft}
         />

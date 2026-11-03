@@ -274,13 +274,54 @@ const pt = {
     deleteWarning:
       "O grupo e todas as mensagens dele serão apagados para todos os participantes. Esta ação não pode ser revertida, confirmar?",
     groupName: "Nome do grupo",
+    participants: "Participantes",
     close: "Fechar",
     save: "Salvar",
     needTitle: "Preencha o nome do grupo.",
     needUsers: "Selecione pelo menos uma pessoa.",
     back: "Voltar para a lista",
     pick: "Escolha uma conversa ou uma pessoa",
-    pickHint: "Clique em alguém da lista para começar a conversar."
+    pickHint: "Clique em alguém da lista para começar a conversar.",
+    teamHint: "Conversas e pessoas da empresa",
+    teamConversations: "Conversas da equipe",
+    clearSearch: "Limpar busca",
+    loadingConversations: "Carregando conversas e pessoas…",
+    conversationsError:
+      "Não foi possível carregar toda a lista. As conversas e pessoas disponíveis foram mantidas.",
+    retry: "Tentar novamente",
+    noResults: "Nenhuma conversa ou pessoa encontrada.",
+    searchHint: "Tente outro nome, e-mail ou texto da última mensagem.",
+    emptyTeamHint: "As pessoas da sua empresa aparecerão aqui.",
+    emptyPreview: "Conversa sem mensagens",
+    unreadMessages: "{{count}} mensagens não lidas",
+    messages: "Mensagens da conversa",
+    loadingMessages: "Carregando mensagens…",
+    messagesError:
+      "Não foi possível carregar as mensagens. As mensagens já exibidas foram mantidas.",
+    loadMore: "Carregar mensagens anteriores",
+    emptyMessages: "Comece esta conversa",
+    emptyMessagesHint:
+      "Envie uma mensagem para combinar o trabalho com a equipe.",
+    unknownSender: "Participante",
+    messageInput: "Mensagem interna",
+    send: "Enviar mensagem",
+    sending: "Enviando mensagem…",
+    sendError:
+      "Não foi possível enviar. Confira sua conexão e tente novamente.",
+    composerHint: "Enter envia · Shift+Enter quebra a linha",
+    attachFiles: "Anexar arquivos",
+    sendFiles: "Enviar arquivos",
+    cancelFiles: "Cancelar anexos",
+    recordAudio: "Gravar áudio",
+    cancelRecording: "Cancelar gravação",
+    sendRecording: "Enviar gravação",
+    messageImage: "Imagem da mensagem",
+    playVideo: "Reproduzir vídeo",
+    pauseVideo: "Pausar vídeo",
+    openMedia: "Ampliar mídia",
+    download: "Baixar arquivo",
+    downloadBlocked:
+      "Permita abrir a janela de download no navegador e tente novamente."
   },
   dashboardPage: {
     hello: "Olá, {{name}}!",
@@ -574,6 +615,17 @@ const pt = {
     businessDaysTooltip: "Só em dia útil"
   },
   backendErrors: {
+    ERR_CHAT_MEDIA_STORAGE_UNSAFE:
+      "Os anexos estão temporariamente indisponíveis. Tente novamente.",
+    ERR_CHAT_MEDIA_UNAVAILABLE:
+      "Anexo temporariamente indisponível. Tente novamente.",
+    ERR_NO_CHAT_FOUND: "Conversa não encontrada ou indisponível.",
+    ERR_CHAT_DIRECT_READONLY:
+      "Conversas diretas não podem ser editadas ou excluídas.",
+    ERR_INVALID_CHAT_USER: "Selecione participantes válidos da sua empresa.",
+    ERR_INVALID_CHAT_TITLE: "Informe um nome válido para o grupo.",
+    ERR_INVALID_CHAT_PAGE: "Página do chat inválida.",
+    ERR_INVALID_CHAT_MESSAGE: "Mensagem inválida.",
     ERR_BULK_NO_TAGS: "Escolha ao menos uma etiqueta (no máximo 20).",
     ERR_INVALID_TAG_FILTER: "Filtro de etiquetas inválido.",
     ERR_TICKET_PAUSE_NOT_OPEN: "Só dá para pausar um atendimento em andamento.",
@@ -872,13 +924,52 @@ const en = {
     deleteWarning:
       "The group and all its messages will be deleted for every member. This cannot be undone, confirm?",
     groupName: "Group name",
+    participants: "Participants",
     close: "Close",
     save: "Save",
     needTitle: "Fill in the group name.",
     needUsers: "Select at least one person.",
     back: "Back to the list",
     pick: "Pick a conversation or a person",
-    pickHint: "Click someone in the list to start chatting."
+    pickHint: "Click someone in the list to start chatting.",
+    teamHint: "Company conversations and people",
+    teamConversations: "Team conversations",
+    clearSearch: "Clear search",
+    loadingConversations: "Loading conversations and people…",
+    conversationsError:
+      "Could not load the full list. Available conversations and people were kept.",
+    retry: "Try again",
+    noResults: "No matching conversation or person.",
+    searchHint: "Try another name, email or text from the latest message.",
+    emptyTeamHint: "People in your company will appear here.",
+    emptyPreview: "No messages yet",
+    unreadMessages: "{{count}} unread messages",
+    messages: "Conversation messages",
+    loadingMessages: "Loading messages…",
+    messagesError:
+      "Could not load messages. Messages already displayed were kept.",
+    loadMore: "Load earlier messages",
+    emptyMessages: "Start this conversation",
+    emptyMessagesHint: "Send a message to coordinate work with your team.",
+    unknownSender: "Participant",
+    messageInput: "Internal message",
+    send: "Send message",
+    sending: "Sending message…",
+    sendError: "Could not send. Check your connection and try again.",
+    composerHint: "Enter sends · Shift+Enter adds a line break",
+    attachFiles: "Attach files",
+    sendFiles: "Send files",
+    cancelFiles: "Cancel attachments",
+    recordAudio: "Record audio",
+    cancelRecording: "Cancel recording",
+    sendRecording: "Send recording",
+    messageImage: "Message image",
+    playVideo: "Play video",
+    pauseVideo: "Pause video",
+    openMedia: "Expand media",
+    download: "Download file",
+    downloadBlocked:
+      "Allow the browser to open the download window and try again."
   },
   dashboardPage: {
     hello: "Hi, {{name}}!",
@@ -1173,6 +1264,17 @@ const en = {
     businessDaysTooltip: "Business days only"
   },
   backendErrors: {
+    ERR_CHAT_MEDIA_STORAGE_UNSAFE:
+      "Attachments are temporarily unavailable. Please try again.",
+    ERR_CHAT_MEDIA_UNAVAILABLE:
+      "Attachment temporarily unavailable. Please try again.",
+    ERR_NO_CHAT_FOUND: "Conversation not found or unavailable.",
+    ERR_CHAT_DIRECT_READONLY:
+      "Direct conversations cannot be edited or deleted.",
+    ERR_INVALID_CHAT_USER: "Select valid participants from your company.",
+    ERR_INVALID_CHAT_TITLE: "Enter a valid group name.",
+    ERR_INVALID_CHAT_PAGE: "Invalid chat page.",
+    ERR_INVALID_CHAT_MESSAGE: "Invalid message.",
     ERR_BULK_NO_TAGS: "Pick at least one tag (20 at most).",
     ERR_INVALID_TAG_FILTER: "Invalid tag filter.",
     ERR_TICKET_PAUSE_NOT_OPEN: "Only an ongoing ticket can be paused.",
@@ -1473,13 +1575,53 @@ const es = {
     deleteWarning:
       "El grupo y todos sus mensajes se borrarán para todos los participantes. Esta acción no se puede revertir, ¿confirmar?",
     groupName: "Nombre del grupo",
+    participants: "Participantes",
     close: "Cerrar",
     save: "Guardar",
     needTitle: "Complete el nombre del grupo.",
     needUsers: "Seleccione al menos una persona.",
     back: "Volver a la lista",
     pick: "Elija una conversación o una persona",
-    pickHint: "Haga clic en alguien de la lista para empezar a conversar."
+    pickHint: "Haga clic en alguien de la lista para empezar a conversar.",
+    teamHint: "Conversaciones y personas de la empresa",
+    teamConversations: "Conversaciones del equipo",
+    clearSearch: "Limpiar búsqueda",
+    loadingConversations: "Cargando conversaciones y personas…",
+    conversationsError:
+      "No se pudo cargar toda la lista. Se conservaron las conversaciones y personas disponibles.",
+    retry: "Intentar de nuevo",
+    noResults: "No se encontró una conversación o persona.",
+    searchHint: "Pruebe otro nombre, correo o texto del último mensaje.",
+    emptyTeamHint: "Las personas de su empresa aparecerán aquí.",
+    emptyPreview: "Conversación sin mensajes",
+    unreadMessages: "{{count}} mensajes sin leer",
+    messages: "Mensajes de la conversación",
+    loadingMessages: "Cargando mensajes…",
+    messagesError:
+      "No se pudieron cargar los mensajes. Se conservaron los mensajes ya mostrados.",
+    loadMore: "Cargar mensajes anteriores",
+    emptyMessages: "Empiece esta conversación",
+    emptyMessagesHint:
+      "Envíe un mensaje para coordinar el trabajo con el equipo.",
+    unknownSender: "Participante",
+    messageInput: "Mensaje interno",
+    send: "Enviar mensaje",
+    sending: "Enviando mensaje…",
+    sendError: "No se pudo enviar. Revise la conexión e intente de nuevo.",
+    composerHint: "Enter envía · Shift+Enter añade un salto de línea",
+    attachFiles: "Adjuntar archivos",
+    sendFiles: "Enviar archivos",
+    cancelFiles: "Cancelar adjuntos",
+    recordAudio: "Grabar audio",
+    cancelRecording: "Cancelar grabación",
+    sendRecording: "Enviar grabación",
+    messageImage: "Imagen del mensaje",
+    playVideo: "Reproducir vídeo",
+    pauseVideo: "Pausar vídeo",
+    openMedia: "Ampliar multimedia",
+    download: "Descargar archivo",
+    downloadBlocked:
+      "Permite abrir la ventana de descarga en el navegador e inténtalo de nuevo."
   },
   dashboardPage: {
     hello: "¡Hola, {{name}}!",
@@ -1773,6 +1915,17 @@ const es = {
     businessDaysTooltip: "Solo en día hábil"
   },
   backendErrors: {
+    ERR_CHAT_MEDIA_STORAGE_UNSAFE:
+      "Los adjuntos no están disponibles temporalmente. Inténtalo de nuevo.",
+    ERR_CHAT_MEDIA_UNAVAILABLE:
+      "Adjunto temporalmente no disponible. Inténtalo de nuevo.",
+    ERR_NO_CHAT_FOUND: "Conversación no encontrada o no disponible.",
+    ERR_CHAT_DIRECT_READONLY:
+      "Las conversaciones directas no se pueden editar ni eliminar.",
+    ERR_INVALID_CHAT_USER: "Seleccione participantes válidos de su empresa.",
+    ERR_INVALID_CHAT_TITLE: "Introduzca un nombre de grupo válido.",
+    ERR_INVALID_CHAT_PAGE: "Página del chat no válida.",
+    ERR_INVALID_CHAT_MESSAGE: "Mensaje no válido.",
     ERR_BULK_NO_TAGS: "Elija al menos una etiqueta (máximo 20).",
     ERR_INVALID_TAG_FILTER: "Filtro de etiquetas no válido.",
     ERR_TICKET_PAUSE_NOT_OPEN: "Solo se puede pausar una atención en curso.",
@@ -3206,6 +3359,280 @@ en.audit.actions.sci_link_deleted = "SCI link removed";
 es.audit.entities.contact = "Contacto";
 es.audit.actions.sci_link_created = "Vínculo SCI creado";
 es.audit.actions.sci_link_deleted = "Vínculo SCI eliminado";
+
+pt.audit.actions.integrated_assistant_generated = "Consulta integrada gerada";
+pt.audit.actions.integrated_assistant_reviewed =
+  "Consulta integrada revalidada para revisão";
+en.audit.actions.integrated_assistant_generated = "Integrated query generated";
+en.audit.actions.integrated_assistant_reviewed =
+  "Integrated query revalidated for review";
+es.audit.actions.integrated_assistant_generated = "Consulta integrada generada";
+es.audit.actions.integrated_assistant_reviewed =
+  "Consulta integrada revalidada para revisión";
+
+pt.integratedAssistant = {
+  sourceNotFound:
+    "O cliente vinculado não foi encontrado nesta fonte simulada. Os dados dessa fonte não foram incluídos.",
+  button: "Consulta integrada",
+  open: "Abrir consulta integrada deste atendimento",
+  title: "Consulta integrada — Simulação",
+  simulation: "Simulação",
+  scope:
+    "Conversa, pendências Acessórias e publicações SCI inteiramente fictícias. Não consulta fornecedores reais nem confirma obrigações ou documentos.",
+  reviewRequired:
+    "Revise o resultado. A sugestão só entra no rascunho após sua confirmação; nenhum envio é realizado.",
+  acessorias: "Acessórias",
+  sci: "SCI",
+  acessoriasClient: "Cliente Acessórias vinculado",
+  sciClient: "Cliente SCI vinculado",
+  acessoriasPage: "Página Acessórias",
+  sciPage: "Página SCI",
+  notSelected: "Não incluir esta fonte",
+  pageHint: "De 1 a 100",
+  invalidPage: "Informe uma página inteira de 1 a 100.",
+  noLinkedClients:
+    "Nenhum cliente vinculado. A administração pode cadastrar vínculos nos painéis Acessórias e SCI.",
+  selectionHint:
+    "Escolha ao menos uma fonte. Cada seleção e página são independentes; a consulta traz até cinco itens por fonte.",
+  refreshClients: "Atualizar clientes vinculados",
+  summary: "Consultar e resumir",
+  reply: "Consultar e sugerir resposta",
+  loading: "Consultando a simulação…",
+  cancel: "Cancelar",
+  result: "Resultado integrado para revisão",
+  draft: "Sugestão integrada para revisar",
+  appendHint:
+    "Edite e confirme para anexar ao rascunho existente. O envio continua sendo uma ação separada.",
+  useDraft: "Anexar ao rascunho",
+  references: "Referências da conversa",
+  noReferences: "Sem mensagens elegíveis como referência.",
+  acessoriasResult: "Resultado Acessórias",
+  sciResult: "Resultado SCI",
+  acessoriasItems: "Pendências fictícias Acessórias",
+  sciItems: "Publicações fictícias SCI",
+  emptySource: "Nenhum item nesta página da simulação.",
+  pageResult: "Página {{page}}: {{count}} de {{total}} itens da fonte.",
+  updatedAt: "Atualizado em {{date}}",
+  fetchedAt: "Consultado em {{date}}",
+  stale:
+    "Dados desatualizados: esta simulação usa uma versão antiga. Confirme as informações antes de usar.",
+  disabled:
+    "A consulta integrada está desativada para esta empresa ou ambiente, ou o assistente de conversa não está habilitado.",
+  permission: "Você não tem permissão para esta consulta.",
+  contextChanged:
+    "O atendimento, suas permissões ou os vínculos mudaram. Atualize os clientes e consulte novamente.",
+  invalidOutput: "O resultado recebido não pôde ser validado.",
+  requestError:
+    "Não foi possível concluir a consulta. Nenhum resultado anterior será usado como atual.",
+  timeout: "O tempo de consulta acabou. Nenhum resultado foi utilizado.",
+  composerBlocked:
+    "O editor mudou ou está ocupado. A sugestão não foi anexada.",
+  functionalError:
+    "A fonte simulada informou uma falha. Seus dados não foram incluídos.",
+  upstreamUnauthorized:
+    "A autorização simulada desta fonte recusou a consulta.",
+  rateLimited:
+    "A fonte simulada atingiu o limite de consultas. Tente novamente mais tarde.",
+  sourceDisabled: "Esta fonte está desativada para a empresa ou ambiente.",
+  sourceUnavailable:
+    "Esta fonte simulada está indisponível. Seus dados não foram incluídos.",
+  settingsTitle: "Consultas integradas com revisão humana (simulação)",
+  settingsHint:
+    "Habilita este percurso para a empresa no ambiente autorizado. Também exige o assistente de conversa; Acessórias e SCI mantêm suas próprias permissões e flags. Não ativa fornecedores reais ou envios.",
+  settingError:
+    "Não foi possível alterar a configuração. O valor anterior foi preservado.",
+  settingConflict:
+    "Há configurações divergentes. O recurso permanece desativado; salve a opção desejada para resolvê-las.",
+  warnings: {
+    PARTIAL_CONTEXT:
+      "O contexto da conversa é parcial e respeita o limite de mensagens e caracteres.",
+    NO_MESSAGES:
+      "Não há mensagens de texto elegíveis para o contexto da conversa.",
+    INSUFFICIENT_INFORMATION:
+      "A sugestão não confirma fatos externos. Revise e complemente as informações antes de usar.",
+    PARTIAL_SOURCES:
+      "Parte das fontes falhou. Consulte os avisos de cada fonte; ausência de dados não significa ausência de pendências.",
+    STALE_SOURCES:
+      "Uma fonte tem dados desatualizados. Eles não representam uma confirmação atual.",
+    PARTIAL_PAGES:
+      "Somente as páginas selecionadas foram consultadas. O resultado não representa todos os itens das fontes."
+  }
+};
+en.integratedAssistant = {
+  sourceNotFound:
+    "The linked client was not found in this simulated source. Its data was not included.",
+  button: "Integrated query",
+  open: "Open integrated query for this ticket",
+  title: "Integrated query — Simulation",
+  simulation: "Simulation",
+  scope:
+    "Conversation, Acessórias pending items and SCI publications are entirely fictitious. No real provider is queried and no obligation or document is confirmed.",
+  reviewRequired:
+    "Review the result. A suggestion only enters the draft after your confirmation; nothing is sent.",
+  acessorias: "Acessórias",
+  sci: "SCI",
+  acessoriasClient: "Linked Acessórias client",
+  sciClient: "Linked SCI client",
+  acessoriasPage: "Acessórias page",
+  sciPage: "SCI page",
+  notSelected: "Do not include this source",
+  pageHint: "From 1 to 100",
+  invalidPage: "Enter a whole page number from 1 to 100.",
+  noLinkedClients:
+    "No linked clients. An administrator can manage links in the Acessórias and SCI panels.",
+  selectionHint:
+    "Choose at least one source. Each selection and page is independent; the query returns up to five items per source.",
+  refreshClients: "Refresh linked clients",
+  summary: "Query and summarize",
+  reply: "Query and suggest reply",
+  loading: "Querying the simulation…",
+  cancel: "Cancel",
+  result: "Integrated result for review",
+  draft: "Integrated suggestion to review",
+  appendHint:
+    "Edit and confirm to append to the existing draft. Sending remains a separate action.",
+  useDraft: "Append to draft",
+  references: "Conversation references",
+  noReferences: "No eligible message references.",
+  acessoriasResult: "Acessórias result",
+  sciResult: "SCI result",
+  acessoriasItems: "Fictitious Acessórias pending items",
+  sciItems: "Fictitious SCI publications",
+  emptySource: "No items on this simulation page.",
+  pageResult: "Page {{page}}: {{count}} of {{total}} source items.",
+  updatedAt: "Updated at {{date}}",
+  fetchedAt: "Queried at {{date}}",
+  stale:
+    "Outdated data: this simulation uses an older version. Confirm the information before using it.",
+  disabled:
+    "Integrated queries are disabled for this company or environment, or the conversation assistant is not enabled.",
+  permission: "You do not have permission for this query.",
+  contextChanged:
+    "The ticket, your permissions or client links changed. Refresh the clients and query again.",
+  invalidOutput: "The received result could not be validated.",
+  requestError:
+    "The query could not be completed. Previous results will not be presented as current.",
+  timeout: "The query timed out. No result was used.",
+  composerBlocked:
+    "The editor changed or is busy. The suggestion was not appended.",
+  functionalError:
+    "The simulated source reported a failure. Its data was not included.",
+  upstreamUnauthorized:
+    "Simulated authorization for this source rejected the query.",
+  rateLimited: "The simulated source reached its query limit. Try again later.",
+  sourceDisabled: "This source is disabled for the company or environment.",
+  sourceUnavailable:
+    "This simulated source is unavailable. Its data was not included.",
+  settingsTitle: "Integrated queries with human review (simulation)",
+  settingsHint:
+    "Enables this workflow for the company in the authorized environment. It also requires the conversation assistant; Acessórias and SCI keep their own permissions and flags. It does not enable real providers or sending.",
+  settingError:
+    "The setting could not be changed. The previous value was preserved.",
+  settingConflict:
+    "Settings conflict. The feature remains disabled; save your chosen option to resolve them.",
+  warnings: {
+    PARTIAL_CONTEXT:
+      "Conversation context is partial and respects message and character limits.",
+    NO_MESSAGES:
+      "There are no eligible text messages for the conversation context.",
+    INSUFFICIENT_INFORMATION:
+      "The suggestion does not confirm external facts. Review and complete the information before using it.",
+    PARTIAL_SOURCES:
+      "Some sources failed. Check each source's notice; missing data does not mean there are no pending items.",
+    STALE_SOURCES:
+      "A source contains outdated data. It is not a current confirmation.",
+    PARTIAL_PAGES:
+      "Only selected pages were queried. The result does not cover every source item."
+  }
+};
+es.integratedAssistant = {
+  sourceNotFound:
+    "El cliente vinculado no se encontró en esta fuente simulada. Sus datos no se incluyeron.",
+  button: "Consulta integrada",
+  open: "Abrir consulta integrada de esta conversación",
+  title: "Consulta integrada — Simulación",
+  simulation: "Simulación",
+  scope:
+    "La conversación, los pendientes Acessórias y las publicaciones SCI son completamente ficticios. No se consulta a proveedores reales ni se confirma una obligación o documento.",
+  reviewRequired:
+    "Revisa el resultado. La sugerencia solo entra en el borrador después de tu confirmación; no se envía nada.",
+  acessorias: "Acessórias",
+  sci: "SCI",
+  acessoriasClient: "Cliente Acessórias vinculado",
+  sciClient: "Cliente SCI vinculado",
+  acessoriasPage: "Página Acessórias",
+  sciPage: "Página SCI",
+  notSelected: "No incluir esta fuente",
+  pageHint: "De 1 a 100",
+  invalidPage: "Introduce un número entero de página entre 1 y 100.",
+  noLinkedClients:
+    "No hay clientes vinculados. La administración puede gestionar vínculos en los paneles Acessórias y SCI.",
+  selectionHint:
+    "Elige al menos una fuente. Cada selección y página es independiente; la consulta devuelve hasta cinco elementos por fuente.",
+  refreshClients: "Actualizar clientes vinculados",
+  summary: "Consultar y resumir",
+  reply: "Consultar y sugerir respuesta",
+  loading: "Consultando la simulación…",
+  cancel: "Cancelar",
+  result: "Resultado integrado para revisión",
+  draft: "Sugerencia integrada para revisar",
+  appendHint:
+    "Edita y confirma para añadir al borrador existente. Enviar sigue siendo una acción separada.",
+  useDraft: "Añadir al borrador",
+  references: "Referencias de la conversación",
+  noReferences: "Sin mensajes elegibles como referencia.",
+  acessoriasResult: "Resultado Acessórias",
+  sciResult: "Resultado SCI",
+  acessoriasItems: "Pendientes ficticios Acessórias",
+  sciItems: "Publicaciones ficticias SCI",
+  emptySource: "No hay elementos en esta página de la simulación.",
+  pageResult: "Página {{page}}: {{count}} de {{total}} elementos de la fuente.",
+  updatedAt: "Actualizado el {{date}}",
+  fetchedAt: "Consultado el {{date}}",
+  stale:
+    "Datos desactualizados: esta simulación utiliza una versión antigua. Confirma la información antes de usarla.",
+  disabled:
+    "Las consultas integradas están desactivadas para esta empresa o entorno, o el asistente de conversación no está habilitado.",
+  permission: "No tienes permiso para esta consulta.",
+  contextChanged:
+    "La conversación, tus permisos o los vínculos cambiaron. Actualiza los clientes y vuelve a consultar.",
+  invalidOutput: "No se pudo validar el resultado recibido.",
+  requestError:
+    "No se pudo completar la consulta. No se presentarán resultados anteriores como actuales.",
+  timeout: "Se agotó el tiempo de consulta. No se utilizó ningún resultado.",
+  composerBlocked:
+    "El editor cambió o está ocupado. La sugerencia no se añadió.",
+  functionalError:
+    "La fuente simulada informó un fallo. Sus datos no se incluyeron.",
+  upstreamUnauthorized:
+    "La autorización simulada de esta fuente rechazó la consulta.",
+  rateLimited:
+    "La fuente simulada alcanzó el límite de consultas. Inténtalo más tarde.",
+  sourceDisabled: "Esta fuente está desactivada para la empresa o entorno.",
+  sourceUnavailable:
+    "Esta fuente simulada no está disponible. Sus datos no se incluyeron.",
+  settingsTitle: "Consultas integradas con revisión humana (simulación)",
+  settingsHint:
+    "Habilita este recorrido para la empresa en el entorno autorizado. También requiere el asistente de conversación; Acessórias y SCI mantienen sus propios permisos y opciones. No activa proveedores reales ni envíos.",
+  settingError:
+    "No se pudo cambiar la configuración. Se conservó el valor anterior.",
+  settingConflict:
+    "Hay configuraciones distintas. La función sigue desactivada; guarda la opción deseada para resolverlas.",
+  warnings: {
+    PARTIAL_CONTEXT:
+      "El contexto de la conversación es parcial y respeta los límites de mensajes y caracteres.",
+    NO_MESSAGES:
+      "No hay mensajes de texto elegibles para el contexto de la conversación.",
+    INSUFFICIENT_INFORMATION:
+      "La sugerencia no confirma hechos externos. Revisa y completa la información antes de usarla.",
+    PARTIAL_SOURCES:
+      "Algunas fuentes fallaron. Consulta los avisos de cada fuente; la falta de datos no significa ausencia de pendientes.",
+    STALE_SOURCES:
+      "Una fuente tiene datos desactualizados. No representan una confirmación actual.",
+    PARTIAL_PAGES:
+      "Solo se consultaron las páginas seleccionadas. El resultado no incluye todos los elementos de las fuentes."
+  }
+};
 
 export const komunickMessages = {
   pt: { translations: pt },

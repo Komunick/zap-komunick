@@ -39,120 +39,126 @@ const current = (profile = "admin", companyId = 10) => ({
   profile,
   queues: []
 });
-const req = () =>
+const req = (key: string) =>
   ({
-    params: { settingKey: "sciEnabled" },
+    params: { settingKey: key },
     body: { value: "enabled", companyId: 20 },
     user: actor
   }) as unknown as Request;
 
-describe("SCI settings use the current company and administrator rather than JWT role alone", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    (User.findOne as jest.Mock).mockResolvedValue(current());
-    (Setting.findAll as jest.Mock).mockResolvedValue([]);
-    (UpdateSettingService as jest.Mock).mockResolvedValue({
-      key: "sciEnabled",
-      value: "enabled",
-      companyId: 10
+describe.each(["sciEnabled", "integratedAssistantEnabled"])(
+  "%s uses the current company and administrator rather than JWT role alone",
+  key => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      (User.findOne as jest.Mock).mockResolvedValue(current());
+      (Setting.findAll as jest.Mock).mockResolvedValue([]);
+      (UpdateSettingService as jest.Mock).mockResolvedValue({
+        key,
+        value: "enabled",
+        companyId: 10
+      });
     });
-  });
 
-  it("defaults to disabled and reads only the current company flag", async () => {
-    await expect(
-      GetSettingService({ key: "sciEnabled", user: actor })
-    ).resolves.toBe("disabled");
-    expect(User.findOne).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: "101", companyId: 10 } })
+    it("defaults to disabled and reads only the current company flag", async () => {
+      await expect(GetSettingService({ key, user: actor })).resolves.toBe(
+        "disabled"
+      );
+      expect(User.findOne).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: "101", companyId: 10 } })
+      );
+      expect(Setting.findAll).toHaveBeenCalledWith({
+        where: { companyId: 10, key },
+        attributes: ["value"],
+        logging: false
+      });
+      expect(Setting.findOne).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      [[{ value: "enabled" }], "enabled"],
+      [[{ value: "enabled" }, { value: "enabled" }], "enabled"],
+      [[{ value: "enabled" }, { value: "disabled" }], "disabled"],
+      [[{ value: "unknown" }], "disabled"]
+    ])(
+      "requires an unambiguous flag for the public status",
+      async (rows, expected) => {
+        (Setting.findAll as jest.Mock).mockResolvedValue(rows);
+        await expect(GetSettingService({ key, user: actor })).resolves.toBe(
+          expected
+        );
+      }
     );
-    expect(Setting.findAll).toHaveBeenCalledWith({
-      where: { companyId: 10, key: "sciEnabled" },
-      attributes: ["value"],
-      logging: false
-    });
-    expect(Setting.findOne).not.toHaveBeenCalled();
-  });
 
-  it.each([
-    [[{ value: "enabled" }], "enabled"],
-    [[{ value: "enabled" }, { value: "enabled" }], "enabled"],
-    [[{ value: "enabled" }, { value: "disabled" }], "disabled"],
-    [[{ value: "unknown" }], "disabled"]
-  ])(
-    "requires an unambiguous flag for the public status",
-    async (rows, expected) => {
-      (Setting.findAll as jest.Mock).mockResolvedValue(rows);
+    it("lets current staff read the safe flag without gaining a settings write", async () => {
+      (User.findOne as jest.Mock).mockResolvedValue(current("user"));
+      (Setting.findAll as jest.Mock).mockResolvedValue([{ value: "enabled" }]);
       await expect(
-        GetSettingService({ key: "sciEnabled", user: actor })
-      ).resolves.toBe(expected);
-    }
-  );
-
-  it("lets current staff read the safe flag without gaining a settings write", async () => {
-    (User.findOne as jest.Mock).mockResolvedValue(current("user"));
-    (Setting.findAll as jest.Mock).mockResolvedValue([{ value: "enabled" }]);
-    await expect(
-      GetSettingService({
-        key: "sciEnabled",
-        user: { ...actor, profile: "user" }
-      })
-    ).resolves.toBe("enabled");
-    const response = { status: jest.fn().mockReturnThis(), json: jest.fn() };
-    await expect(
-      update(req(), response as unknown as Response)
-    ).rejects.toMatchObject({ message: "ERR_NO_PERMISSION", statusCode: 403 });
-    expect(UpdateSettingService).not.toHaveBeenCalled();
-  });
-
-  it.each([null, current("admin", 20)])(
-    "refuses deleted or transferred actors before reading or changing another company's flag",
-    async user => {
-      (User.findOne as jest.Mock).mockResolvedValue(user);
+        GetSettingService({
+          key,
+          user: { ...actor, profile: "user" }
+        })
+      ).resolves.toBe("enabled");
+      const response = { status: jest.fn().mockReturnThis(), json: jest.fn() };
       await expect(
-        GetSettingService({ key: "sciEnabled", user: actor })
+        update(req(key), response as unknown as Response)
       ).rejects.toMatchObject({
         message: "ERR_NO_PERMISSION",
         statusCode: 403
       });
-      await expect(update(req(), {} as Response)).rejects.toMatchObject({
-        message: "ERR_NO_PERMISSION",
-        statusCode: 403
-      });
-      expect(Setting.findAll).not.toHaveBeenCalled();
       expect(UpdateSettingService).not.toHaveBeenCalled();
-    }
-  );
-
-  it("does not accept a missing current identity for SCI status", async () => {
-    await expect(
-      GetSettingService({
-        key: "sciEnabled",
-        user: { profile: "admin", companyId: 10 }
-      })
-    ).rejects.toMatchObject({ statusCode: 403 });
-    expect(Setting.findAll).not.toHaveBeenCalled();
-  });
-
-  it("uses only the authenticated company for the current administrator's write", async () => {
-    const response = { status: jest.fn().mockReturnThis(), json: jest.fn() };
-    await update(req(), response as unknown as Response);
-    expect(UpdateSettingService).toHaveBeenCalledWith({
-      key: "sciEnabled",
-      companyId: 10,
-      value: "enabled"
     });
-    expect(response.status).toHaveBeenCalledWith(200);
-  });
 
-  it("preserves the existing non-SCI setting read path", async () => {
-    (Setting.findOne as jest.Mock).mockResolvedValue({ value: "enabled" });
-    await expect(
-      GetSettingService({ key: "acessoriasEnabled", user: actor })
-    ).resolves.toBe("enabled");
-    expect(User.findOne).not.toHaveBeenCalled();
-    expect(Setting.findAll).not.toHaveBeenCalled();
-    expect(Setting.findOne).toHaveBeenCalledWith({
-      where: { companyId: 10, key: "acessoriasEnabled" }
+    it.each([null, current("admin", 20)])(
+      "refuses deleted or transferred actors before reading or changing another company's flag",
+      async user => {
+        (User.findOne as jest.Mock).mockResolvedValue(user);
+        await expect(
+          GetSettingService({ key, user: actor })
+        ).rejects.toMatchObject({
+          message: "ERR_NO_PERMISSION",
+          statusCode: 403
+        });
+        await expect(update(req(key), {} as Response)).rejects.toMatchObject({
+          message: "ERR_NO_PERMISSION",
+          statusCode: 403
+        });
+        expect(Setting.findAll).not.toHaveBeenCalled();
+        expect(UpdateSettingService).not.toHaveBeenCalled();
+      }
+    );
+
+    it("does not accept a missing current identity for SCI status", async () => {
+      await expect(
+        GetSettingService({
+          key,
+          user: { profile: "admin", companyId: 10 }
+        })
+      ).rejects.toMatchObject({ statusCode: 403 });
+      expect(Setting.findAll).not.toHaveBeenCalled();
     });
-  });
-});
+
+    it("uses only the authenticated company for the current administrator's write", async () => {
+      const response = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+      await update(req(key), response as unknown as Response);
+      expect(UpdateSettingService).toHaveBeenCalledWith({
+        key,
+        companyId: 10,
+        value: "enabled"
+      });
+      expect(response.status).toHaveBeenCalledWith(200);
+    });
+
+    it("preserves the existing non-SCI setting read path", async () => {
+      (Setting.findOne as jest.Mock).mockResolvedValue({ value: "enabled" });
+      await expect(
+        GetSettingService({ key: "acessoriasEnabled", user: actor })
+      ).resolves.toBe("enabled");
+      expect(User.findOne).not.toHaveBeenCalled();
+      expect(Setting.findAll).not.toHaveBeenCalled();
+      expect(Setting.findOne).toHaveBeenCalledWith({
+        where: { companyId: 10, key: "acessoriasEnabled" }
+      });
+    });
+  }
+);

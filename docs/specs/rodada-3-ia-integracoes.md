@@ -12,6 +12,8 @@ O P2 solicitado depois foi delimitado como [consultas Acessórias com mocks e v�
 sem acesso ao fornecedor real. O P3 solicitado em 29/10/2026 foi delimitado como
 [painel SCI com publicações fictícias](p3-sci-consultas.md), sem escolher ou conectar um módulo real;
 as conexões reais e sincronização continuam propostas.
+Em 30/10/2026 foi autorizado o [P4 de consultas integradas com mocks](p4-consultas-integradas.md),
+com seleção explícita de fontes e revisão humana; isso não autoriza sincronização, fornecedor ou IA reais.
 
 O pedido desta etapa é preparar o plano e identificar credenciais/acessos. Ele não autoriza chamadas com dados reais,
 contratação, publicação, envio de mensagens ou operações de escrita nos fornecedores. Não há prazo, orçamento ou modelo
