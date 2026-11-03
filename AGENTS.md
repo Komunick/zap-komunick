@@ -163,8 +163,10 @@ Compact guidance for OpenCode sessions working in this repo.
 - Pull requests and matching pushes run Node tests/types/build only; they do not publish images or start the app.
 - Backend uses locked dependencies with lifecycle scripts disabled, translation-key generation, TypeScript and
   direct Jest. Never replace direct Jest with `npm test`: its pretest/posttest migrate, seed and undo a database.
-- Frontend also omits optional Node add-ons (PDF canvas uses the browser API); Jest stays in CI mode. Only the CRA
-  build keeps the existing non-fatal warning policy. Syntax/compilation failures still fail the job.
+- Frontend validation pins npm 10.9.4, matching the isolated native validation, and omits optional Node add-ons
+  (PDF canvas uses the browser API). Keep the locked peer dependencies available and verify a clean install in CI.
+  Jest stays in CI mode. Only the CRA build keeps the existing non-fatal warning policy. Syntax/compilation failures
+  still fail the job.
 - Publication is a separate job after both checks: only explicit `workflow_dispatch` with `publish_images=true`,
   default false, repository `Komunick/zap-komunick` and ref `dev`/`main`. Do not dispatch it during ordinary reviews.
 - Names derive from the repository in lowercase: `ghcr.io/komunick/zap-komunick-backend` and `...-frontend`.

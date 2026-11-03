@@ -63,6 +63,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           package-manager-cache: false
+      - name: Select the tested frontend npm version
+        # Keep lockfile materialization aligned with the clean native test gate.
+        run: |
+          npm install --global npm@10.9.4 --ignore-scripts --no-audit --no-fund
+          test "$(npm --version)" = "10.9.4"
       - name: Install locked dependencies without lifecycle scripts
         working-directory: frontend
         # The browser does not use the optional native canvas addon. Without

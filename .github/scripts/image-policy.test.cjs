@@ -185,6 +185,17 @@ test("workflow: automatic gates cannot run servers, migrations or registry actio
   // its optional packages; neither profile executes install lifecycle scripts.
   assert.match(install(frontend).run, /--omit=optional\b/);
   assert.doesNotMatch(install(backend).run, /--omit=optional\b/);
+  const npmPinIndex = frontend.steps.findIndex((step) =>
+    /npm install --global npm@/.test(step.run || ""),
+  );
+  assert.ok(npmPinIndex >= 0, "frontend must select its tested npm version");
+  const npmPin = frontend.steps[npmPinIndex];
+  assert.match(
+    npmPin.run,
+    /^npm install --global npm@10\.9\.4 --ignore-scripts --no-audit --no-fund$/m,
+  );
+  assert.match(npmPin.run, /^test "\$\(npm --version\)" = "10\.9\.4"$/m);
+  assert.ok(npmPinIndex < frontend.steps.indexOf(install(frontend)));
   assert.equal(
     frontend.steps.find((step) => /test --watchAll/.test(step.run || "")).env
       .CI,

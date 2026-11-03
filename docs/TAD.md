@@ -323,8 +323,11 @@ montadas no próprio servidor a partir do código (`docker-compose-komunick.yaml
 (`POSTGRES_PASSWORD`/`DB_PASS`), backend sem o socket do Docker (a autoatualização pela tela trocaria o fork pelas
 imagens do Ticketz), `SOCKET_ADMIN=false`, senha do primeiro administrador por `ADMIN_PASSWORD` e segredos do JWT por
 `crypto.randomBytes`, sem registro em log. Backup diário por `deploy/backup.sh` (banco e arquivos, 14 cópias).
-Observação: `docker compose logs` no servidor; não há monitoramento externo. O workflow do upstream
-(`.github/workflows/build-docker.yml`) publica em `ghcr.io/ticketz-oss` e não é usado.
+Observação: `docker compose logs` no servidor; não há monitoramento externo. O workflow do fork
+(`.github/workflows/build-docker.yml`) valida tipos, testes e build sem iniciar a aplicação. Publicação de imagens
+exige `workflow_dispatch` com `publish_images=true`, desligado por padrão, no próprio repositório e em `dev`/`main`,
+após os dois jobs de validação. Os destinos são `ghcr.io/komunick/zap-komunick-backend` e `...-frontend`, com tags
+do SHA de origem; uma futura implantação deve selecionar o digest resultante. O workflow não faz deploy.
 
 **Histórico do cliente e nota de transferência (RF-017):** `ListMessagesService` busca as mensagens de todos os
 `Tickets` do mesmo `contactId` na empresa (cursor `nextId` e respostas no mesmo conjunto); com `messageVisibility` =
