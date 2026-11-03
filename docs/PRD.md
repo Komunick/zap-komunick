@@ -151,6 +151,8 @@ de coluna troca a etiqueta dele.
   etiqueta de Kanban.
 - O quadro mostra os atendimentos em aberto que o usuário pode ver na lista: o administrador vê todos; o atendente vê
   os seus e os aguardando das filas dele, e só move esses. Mostra até 500, os movimentados mais recentemente.
+- A mesma autorização vale para movimentação por API, inclusive remoção da coluna. Negar antes de alterar etiquetas,
+  emitir eventos ou devolver dados de atendimento fora das permissões atuais; ver [correções de integração](specs/correcoes-integracao-pr29.md).
 - Além de arrastar, cada cartão tem o menu "Mover para" (teclado e leitores de tela).
 - Cada atendimento aparece como um post-it: papel na cor da etiqueta da coluna (amarelo em "Em aberto"), com fita, canto
   dobrado e inclinação pequena e fixa. A coluna tem largura fixa de 290 px; a prévia da mensagem é de uma linha, sem marcas
@@ -607,6 +609,8 @@ Acessórias/SCI.
 - Administradores gerenciam somente as credenciais da empresa autenticada. Em Configurações, a chave de IA aparece
   como configurada, ausente ou pendente de migração, com campo vazio para substituição e gravação explícita. Remover
   exige confirmação; a remoção local não revoga a chave no fornecedor. Atendentes não gerenciam credenciais.
+- A administração revalida o vínculo e o perfil atuais a cada operação. Transferência de empresa ou perda do perfil
+  administrativo invalida esse acesso mesmo com Bearer antigo ainda válido; sem redesenhar a revogação global de JWT.
 - Sem armazenamento protegido configurado no servidor, novas gravações/migrações são recusadas. Configuração herdada
   permanece privada e pode ser migrada de modo explícito, sem perder o valor por falha ou manter duplicata legível.
   A transcrição opcional herdada continua usando a credencial somente no backend; uma falha não impede registrar áudio.
