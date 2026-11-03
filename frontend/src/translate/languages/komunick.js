@@ -38,6 +38,7 @@ const pt = {
     listItems: {
       kanban: "Kanban",
       sla: "Painel de SLA",
+      onlineUsers: "Usuários online",
       closeReasons: "Motivos de finalização"
     }
   },
@@ -269,11 +270,108 @@ const pt = {
       p90: "90 dias"
     }
   },
+  onlineUsers: {
+    title: "Usuários online",
+    subtitle:
+      "Quem da equipe está conectado agora e quanto cada um tem em mãos.",
+    updatedAt: "Atualizado às {{time}}",
+    refresh: "Atualizar",
+    team: "Equipe",
+    showOffline: "Mostrar quem está offline",
+    nobody: "Ninguém online agora.",
+    noQueues: "Sem filas",
+    onlineNow: "Online agora",
+    onlineFor: "Online há {{time}}",
+    seenAgo: "Visto há {{time}}",
+    seenNow: "Saiu agora há pouco",
+    neverSeen: "Nunca entrou",
+    situation: {
+      online: "Online",
+      outsideHours: "Fora do horário de acesso",
+      offline: "Offline"
+    },
+    summary: {
+      online: "Online",
+      inService: "Em atendimento",
+      idle: "Online sem atendimento",
+      offline: "Offline",
+      outsideHours: "Fora do horário"
+    },
+    numbers: {
+      openCount: "em atendimento",
+      pausedCount: "pausados",
+      closedToday: "finalizados hoje"
+    }
+  },
+  walletBulk: {
+    transferButton: "Transferir carteira",
+    selectAll: "Marcar todos os contatos da lista",
+    selectOne: "Marcar {{name}}",
+    selected: "{{count}} contato(s) marcado(s)",
+    owner: "Responsável",
+    assign: "Definir responsável",
+    remove: "Tirar da carteira",
+    cancel: "Cancelar",
+    done: "Carteira atualizada em {{count}} contato(s).",
+    nothing: "Nenhum contato foi alterado.",
+    groups: "{{count}} grupo(s) ignorado(s): grupos não têm carteira.",
+    transferTitle: "Transferir carteira",
+    transferHint:
+      "Todos os contatos de um responsável passam para outro, por exemplo quando alguém sai da equipe.",
+    from: "De",
+    to: "Para",
+    fromCount: "{{count}} contato(s) nessa carteira",
+    noOwner: "Contatos sem responsável",
+    nobody: "Ninguém (tirar da carteira)",
+    same: "Escolha um responsável diferente",
+    transfer: "Transferir"
+  },
   about: {
     licensesourcecode: "Código-fonte desta versão",
     basedOnTicketz: "Baseado no Ticketz (código original)"
   },
   tickets: {
+    filters: {
+      button: "Filtros",
+      title: "Filtrar atendimentos",
+      connections: "Conexão",
+      attendants: "Atendente",
+      tags: "Etiquetas (todas)",
+      period: "Aberto entre",
+      from: "De",
+      to: "Até",
+      wallet: "Carteira",
+      wallet_all: "Todas",
+      wallet_mine: "Minha carteira",
+      wallet_none: "Sem responsável",
+      unread: "Só com mensagens não lidas",
+      sla: "Só SLA estourado (prazo de {{minutes}} min)",
+      slaOff: "Só SLA estourado (prazo desligado)",
+      clear: "Limpar",
+      apply: "Aplicar"
+    },
+    bulk: {
+      select: "Selecionar",
+      selected: "{{count}} selecionado(s)",
+      all: "Marcar todos ({{count}})",
+      none: "Desmarcar",
+      accept: "Aceitar",
+      acceptSome: "Aceitar {{count}}",
+      transfer: "Transferir",
+      close: "Finalizar",
+      cancel: "Cancelar",
+      transferTitle: "Transferir atendimentos",
+      queue: "Fila",
+      user: "Atendente",
+      userHint: "Sem atendente, eles voltam para a fila, aguardando.",
+      noUser: "Sem atendente (aguardando)",
+      closeTitle: "Finalizar {{count}} atendimento(s)",
+      closeHint:
+        "O motivo e a observação valem para todos. Os clientes não recebem a pesquisa de avaliação.",
+      done: "{{count}} atendimento(s) atualizado(s).",
+      failed:
+        "{{count}} não puderam ser alterados (situação mudou ou sem permissão)."
+    },
     views: {
       label: "Visões dos atendimentos",
       mine: "Meus",
@@ -420,6 +518,7 @@ const en = {
     listItems: {
       kanban: "Kanban",
       sla: "SLA panel",
+      onlineUsers: "Users online",
       closeReasons: "Close reasons"
     }
   },
@@ -649,11 +748,108 @@ const en = {
       p90: "90 days"
     }
   },
+  onlineUsers: {
+    title: "Users online",
+    subtitle:
+      "Who of the team is connected now and how much each one is handling.",
+    updatedAt: "Updated at {{time}}",
+    refresh: "Refresh",
+    team: "Team",
+    showOffline: "Show who is offline",
+    nobody: "Nobody online right now.",
+    noQueues: "No queues",
+    onlineNow: "Online now",
+    onlineFor: "Online for {{time}}",
+    seenAgo: "Seen {{time}} ago",
+    seenNow: "Just left",
+    neverSeen: "Never signed in",
+    situation: {
+      online: "Online",
+      outsideHours: "Outside access hours",
+      offline: "Offline"
+    },
+    summary: {
+      online: "Online",
+      inService: "In service",
+      idle: "Online without tickets",
+      offline: "Offline",
+      outsideHours: "Outside hours"
+    },
+    numbers: {
+      openCount: "in service",
+      pausedCount: "paused",
+      closedToday: "closed today"
+    }
+  },
+  walletBulk: {
+    transferButton: "Move wallet",
+    selectAll: "Select every contact of the list",
+    selectOne: "Select {{name}}",
+    selected: "{{count}} contact(s) selected",
+    owner: "Owner",
+    assign: "Set owner",
+    remove: "Remove from wallet",
+    cancel: "Cancel",
+    done: "Wallet updated on {{count}} contact(s).",
+    nothing: "No contact was changed.",
+    groups: "{{count}} group(s) skipped: groups have no wallet.",
+    transferTitle: "Move wallet",
+    transferHint:
+      "Every contact of one owner goes to another, for example when someone leaves the team.",
+    from: "From",
+    to: "To",
+    fromCount: "{{count}} contact(s) in this wallet",
+    noOwner: "Contacts without owner",
+    nobody: "Nobody (remove from wallet)",
+    same: "Pick a different owner",
+    transfer: "Move"
+  },
   about: {
     licensesourcecode: "Source code of this version",
     basedOnTicketz: "Based on Ticketz (original code)"
   },
   tickets: {
+    filters: {
+      button: "Filters",
+      title: "Filter tickets",
+      connections: "Connection",
+      attendants: "Attendant",
+      tags: "Tags (all of them)",
+      period: "Opened between",
+      from: "From",
+      to: "To",
+      wallet: "Wallet",
+      wallet_all: "All",
+      wallet_mine: "My wallet",
+      wallet_none: "No owner",
+      unread: "Only with unread messages",
+      sla: "Only breached SLA ({{minutes}} min deadline)",
+      slaOff: "Only breached SLA (deadline off)",
+      clear: "Clear",
+      apply: "Apply"
+    },
+    bulk: {
+      select: "Select",
+      selected: "{{count}} selected",
+      all: "Select all ({{count}})",
+      none: "Clear",
+      accept: "Accept",
+      acceptSome: "Accept {{count}}",
+      transfer: "Transfer",
+      close: "Close",
+      cancel: "Cancel",
+      transferTitle: "Transfer tickets",
+      queue: "Queue",
+      user: "Attendant",
+      userHint: "Without an attendant they go back to the queue, waiting.",
+      noUser: "No attendant (waiting)",
+      closeTitle: "Close {{count}} ticket(s)",
+      closeHint:
+        "The reason and note apply to all of them. Clients do not get the rating survey.",
+      done: "{{count}} ticket(s) updated.",
+      failed:
+        "{{count}} could not be changed (status changed or no permission)."
+    },
     views: {
       label: "Ticket views",
       mine: "Mine",
@@ -800,6 +996,7 @@ const es = {
     listItems: {
       kanban: "Kanban",
       sla: "Panel de SLA",
+      onlineUsers: "Usuarios en línea",
       closeReasons: "Motivos de cierre"
     }
   },
@@ -1031,11 +1228,107 @@ const es = {
       p90: "90 días"
     }
   },
+  onlineUsers: {
+    title: "Usuarios en línea",
+    subtitle: "Quién del equipo está conectado ahora y cuánto tiene cada uno.",
+    updatedAt: "Actualizado a las {{time}}",
+    refresh: "Actualizar",
+    team: "Equipo",
+    showOffline: "Mostrar quién está desconectado",
+    nobody: "Nadie en línea ahora.",
+    noQueues: "Sin colas",
+    onlineNow: "En línea ahora",
+    onlineFor: "En línea hace {{time}}",
+    seenAgo: "Visto hace {{time}}",
+    seenNow: "Acaba de salir",
+    neverSeen: "Nunca entró",
+    situation: {
+      online: "En línea",
+      outsideHours: "Fuera del horario de acceso",
+      offline: "Desconectado"
+    },
+    summary: {
+      online: "En línea",
+      inService: "En atención",
+      idle: "En línea sin atenciones",
+      offline: "Desconectado",
+      outsideHours: "Fuera del horario"
+    },
+    numbers: {
+      openCount: "en atención",
+      pausedCount: "pausadas",
+      closedToday: "finalizadas hoy"
+    }
+  },
+  walletBulk: {
+    transferButton: "Transferir cartera",
+    selectAll: "Marcar todos los contactos de la lista",
+    selectOne: "Marcar {{name}}",
+    selected: "{{count}} contacto(s) marcado(s)",
+    owner: "Responsable",
+    assign: "Definir responsable",
+    remove: "Quitar de la cartera",
+    cancel: "Cancelar",
+    done: "Cartera actualizada en {{count}} contacto(s).",
+    nothing: "Ningún contacto fue cambiado.",
+    groups: "{{count}} grupo(s) ignorado(s): los grupos no tienen cartera.",
+    transferTitle: "Transferir cartera",
+    transferHint:
+      "Todos los contactos de un responsable pasan a otro, por ejemplo cuando alguien deja el equipo.",
+    from: "De",
+    to: "Para",
+    fromCount: "{{count}} contacto(s) en esta cartera",
+    noOwner: "Contactos sin responsable",
+    nobody: "Nadie (quitar de la cartera)",
+    same: "Elija un responsable diferente",
+    transfer: "Transferir"
+  },
   about: {
     licensesourcecode: "Código fuente de esta versión",
     basedOnTicketz: "Basado en Ticketz (código original)"
   },
   tickets: {
+    filters: {
+      button: "Filtros",
+      title: "Filtrar atenciones",
+      connections: "Conexión",
+      attendants: "Atendente",
+      tags: "Etiquetas (todas)",
+      period: "Abierta entre",
+      from: "Desde",
+      to: "Hasta",
+      wallet: "Cartera",
+      wallet_all: "Todas",
+      wallet_mine: "Mi cartera",
+      wallet_none: "Sin responsable",
+      unread: "Solo con mensajes no leídos",
+      sla: "Solo SLA vencido (plazo de {{minutes}} min)",
+      slaOff: "Solo SLA vencido (plazo desactivado)",
+      clear: "Limpiar",
+      apply: "Aplicar"
+    },
+    bulk: {
+      select: "Seleccionar",
+      selected: "{{count}} seleccionado(s)",
+      all: "Marcar todos ({{count}})",
+      none: "Desmarcar",
+      accept: "Aceptar",
+      acceptSome: "Aceptar {{count}}",
+      transfer: "Transferir",
+      close: "Finalizar",
+      cancel: "Cancelar",
+      transferTitle: "Transferir atenciones",
+      queue: "Cola",
+      user: "Atendente",
+      userHint: "Sin atendente, vuelven a la cola, esperando.",
+      noUser: "Sin atendente (esperando)",
+      closeTitle: "Finalizar {{count}} atención(es)",
+      closeHint:
+        "El motivo y la observación valen para todas. Los clientes no reciben la encuesta de evaluación.",
+      done: "{{count}} atención(es) actualizada(s).",
+      failed:
+        "{{count}} no se pudieron cambiar (la situación cambió o sin permiso)."
+    },
     views: {
       label: "Vistas de atenciones",
       mine: "Míos",

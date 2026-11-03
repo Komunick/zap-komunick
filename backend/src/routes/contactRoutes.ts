@@ -73,6 +73,13 @@ contactRoutes.delete(
 );
 
 contactRoutes.put(
+  "/contacts/wallet/bulk",
+  isAuth,
+  isAdmin,
+  ContactController.updateWalletBulk
+);
+
+contactRoutes.put(
   "/contacts/:contactId/wallet",
   isAuth,
   isAdmin,
