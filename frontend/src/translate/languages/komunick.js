@@ -38,6 +38,7 @@ const pt = {
     listItems: {
       kanban: "Kanban",
       sla: "Painel de SLA",
+      onlineUsers: "Usuários online",
       closeReasons: "Motivos de finalização"
     }
   },
@@ -269,6 +270,62 @@ const pt = {
       p90: "90 dias"
     }
   },
+  onlineUsers: {
+    title: "Usuários online",
+    subtitle:
+      "Quem da equipe está conectado agora e quanto cada um tem em mãos.",
+    updatedAt: "Atualizado às {{time}}",
+    refresh: "Atualizar",
+    team: "Equipe",
+    showOffline: "Mostrar quem está offline",
+    nobody: "Ninguém online agora.",
+    noQueues: "Sem filas",
+    onlineNow: "Online agora",
+    onlineFor: "Online há {{time}}",
+    seenAgo: "Visto há {{time}}",
+    seenNow: "Saiu agora há pouco",
+    neverSeen: "Nunca entrou",
+    situation: {
+      online: "Online",
+      outsideHours: "Fora do horário de acesso",
+      offline: "Offline"
+    },
+    summary: {
+      online: "Online",
+      inService: "Em atendimento",
+      idle: "Online sem atendimento",
+      offline: "Offline",
+      outsideHours: "Fora do horário"
+    },
+    numbers: {
+      openCount: "em atendimento",
+      pausedCount: "pausados",
+      closedToday: "finalizados hoje"
+    }
+  },
+  walletBulk: {
+    transferButton: "Transferir carteira",
+    selectAll: "Marcar todos os contatos da lista",
+    selectOne: "Marcar {{name}}",
+    selected: "{{count}} contato(s) marcado(s)",
+    owner: "Responsável",
+    assign: "Definir responsável",
+    remove: "Tirar da carteira",
+    cancel: "Cancelar",
+    done: "Carteira atualizada em {{count}} contato(s).",
+    nothing: "Nenhum contato foi alterado.",
+    groups: "{{count}} grupo(s) ignorado(s): grupos não têm carteira.",
+    transferTitle: "Transferir carteira",
+    transferHint:
+      "Todos os contatos de um responsável passam para outro, por exemplo quando alguém sai da equipe.",
+    from: "De",
+    to: "Para",
+    fromCount: "{{count}} contato(s) nessa carteira",
+    noOwner: "Contatos sem responsável",
+    nobody: "Ninguém (tirar da carteira)",
+    same: "Escolha um responsável diferente",
+    transfer: "Transferir"
+  },
   about: {
     licensesourcecode: "Código-fonte desta versão",
     basedOnTicketz: "Baseado no Ticketz (código original)"
@@ -461,6 +518,7 @@ const en = {
     listItems: {
       kanban: "Kanban",
       sla: "SLA panel",
+      onlineUsers: "Users online",
       closeReasons: "Close reasons"
     }
   },
@@ -690,6 +748,62 @@ const en = {
       p90: "90 days"
     }
   },
+  onlineUsers: {
+    title: "Users online",
+    subtitle:
+      "Who of the team is connected now and how much each one is handling.",
+    updatedAt: "Updated at {{time}}",
+    refresh: "Refresh",
+    team: "Team",
+    showOffline: "Show who is offline",
+    nobody: "Nobody online right now.",
+    noQueues: "No queues",
+    onlineNow: "Online now",
+    onlineFor: "Online for {{time}}",
+    seenAgo: "Seen {{time}} ago",
+    seenNow: "Just left",
+    neverSeen: "Never signed in",
+    situation: {
+      online: "Online",
+      outsideHours: "Outside access hours",
+      offline: "Offline"
+    },
+    summary: {
+      online: "Online",
+      inService: "In service",
+      idle: "Online without tickets",
+      offline: "Offline",
+      outsideHours: "Outside hours"
+    },
+    numbers: {
+      openCount: "in service",
+      pausedCount: "paused",
+      closedToday: "closed today"
+    }
+  },
+  walletBulk: {
+    transferButton: "Move wallet",
+    selectAll: "Select every contact of the list",
+    selectOne: "Select {{name}}",
+    selected: "{{count}} contact(s) selected",
+    owner: "Owner",
+    assign: "Set owner",
+    remove: "Remove from wallet",
+    cancel: "Cancel",
+    done: "Wallet updated on {{count}} contact(s).",
+    nothing: "No contact was changed.",
+    groups: "{{count}} group(s) skipped: groups have no wallet.",
+    transferTitle: "Move wallet",
+    transferHint:
+      "Every contact of one owner goes to another, for example when someone leaves the team.",
+    from: "From",
+    to: "To",
+    fromCount: "{{count}} contact(s) in this wallet",
+    noOwner: "Contacts without owner",
+    nobody: "Nobody (remove from wallet)",
+    same: "Pick a different owner",
+    transfer: "Move"
+  },
   about: {
     licensesourcecode: "Source code of this version",
     basedOnTicketz: "Based on Ticketz (original code)"
@@ -882,6 +996,7 @@ const es = {
     listItems: {
       kanban: "Kanban",
       sla: "Panel de SLA",
+      onlineUsers: "Usuarios en línea",
       closeReasons: "Motivos de cierre"
     }
   },
@@ -1112,6 +1227,61 @@ const es = {
       p30: "30 días",
       p90: "90 días"
     }
+  },
+  onlineUsers: {
+    title: "Usuarios en línea",
+    subtitle: "Quién del equipo está conectado ahora y cuánto tiene cada uno.",
+    updatedAt: "Actualizado a las {{time}}",
+    refresh: "Actualizar",
+    team: "Equipo",
+    showOffline: "Mostrar quién está desconectado",
+    nobody: "Nadie en línea ahora.",
+    noQueues: "Sin colas",
+    onlineNow: "En línea ahora",
+    onlineFor: "En línea hace {{time}}",
+    seenAgo: "Visto hace {{time}}",
+    seenNow: "Acaba de salir",
+    neverSeen: "Nunca entró",
+    situation: {
+      online: "En línea",
+      outsideHours: "Fuera del horario de acceso",
+      offline: "Desconectado"
+    },
+    summary: {
+      online: "En línea",
+      inService: "En atención",
+      idle: "En línea sin atenciones",
+      offline: "Desconectado",
+      outsideHours: "Fuera del horario"
+    },
+    numbers: {
+      openCount: "en atención",
+      pausedCount: "pausadas",
+      closedToday: "finalizadas hoy"
+    }
+  },
+  walletBulk: {
+    transferButton: "Transferir cartera",
+    selectAll: "Marcar todos los contactos de la lista",
+    selectOne: "Marcar {{name}}",
+    selected: "{{count}} contacto(s) marcado(s)",
+    owner: "Responsable",
+    assign: "Definir responsable",
+    remove: "Quitar de la cartera",
+    cancel: "Cancelar",
+    done: "Cartera actualizada en {{count}} contacto(s).",
+    nothing: "Ningún contacto fue cambiado.",
+    groups: "{{count}} grupo(s) ignorado(s): los grupos no tienen cartera.",
+    transferTitle: "Transferir cartera",
+    transferHint:
+      "Todos los contactos de un responsable pasan a otro, por ejemplo cuando alguien deja el equipo.",
+    from: "De",
+    to: "Para",
+    fromCount: "{{count}} contacto(s) en esta cartera",
+    noOwner: "Contactos sin responsable",
+    nobody: "Nadie (quitar de la cartera)",
+    same: "Elija un responsable diferente",
+    transfer: "Transferir"
   },
   about: {
     licensesourcecode: "Código fuente de esta versión",
