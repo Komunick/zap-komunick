@@ -21,9 +21,10 @@ import alertSound from "../../assets/sound.mp3";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import Favicon from "react-favicon";
+import { PRODUCT_ICON } from "../../helpers/productBrand";
 import useSettings from "../../hooks/useSettings";
 
-const defaultLogoFavicon = "/vector/favicon.svg";
+const defaultLogoFavicon = PRODUCT_ICON;
 
 const useStyles = makeStyles(theme => ({
   tabContainer: {

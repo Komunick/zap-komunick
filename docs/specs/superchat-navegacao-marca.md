@@ -21,7 +21,8 @@ merge ou deploy e mantém o WhatsApp desconectado.
   e usar composições vertical e horizontal conforme o espaço disponível.
 - Título padrão SuperChat desde a inicialização e após carregar configurações. Preservar os nomes Whitelabel distintos.
   Usar um endereço próprio para o símbolo SuperChat no favicon, diferenciando-o dos endereços antigos sujeitos a cache.
-  Conferir HTML, React e PWA, preservando ícones personalizados e aliases antigos compatíveis.
+  Conferir HTML, React, notificações e PWA, preservando ícones personalizados e aliases antigos compatíveis.
+  As notificações mantêm o contador de conversas não lidas sobre o ícone selecionado, sem restaurar o endereço antigo.
 
 ## Critérios de aceite
 
