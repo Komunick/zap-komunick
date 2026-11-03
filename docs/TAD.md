@@ -198,6 +198,17 @@ ponteiro mouse, breakpoint desktop e variante permanente. A entrada define abert
 ao sair; mantém a transição visual, os controles e a persistência existentes. Foco desktop não monta Drawer e a
 gaveta temporária móvel continua controlada por toque/botão.
 
+**Login e dashboard por perfil (RF-009):** `helpers/sessionHome` compartilha o destino entre `useAuth` e `routes/Route`:
+`/` para administrador com interface administrativa disponível, `/tickets` para os demais. `Route` aplica os guards
+dentro do `render` de `RouterRoute`, após o match; somente `/` recebe `adminOnly` em `routes/index`. O carregamento
+da sessão/perfil não monta antecipadamente a página protegida; a navegação direta também não monta o
+dashboard para quem não deve vê-lo. Isso evita consultas administrativas durante o login comum sem alterar a
+autorização backend: `/dashboard/tickets`, `/dashboard/users` e `/dashboard/status` mantêm `isAuth`/`isAdmin`/
+`isCompliant`. `hideAdminUI` mantém o destino inicial `/tickets`, sem revogar o acesso direto de um perfil `admin`.
+A [definição do recorte](specs/login-dashboard-perfil.md) preserva os demais destinos privados e 2FA.
+Regressões cobrem a montagem e o redirecionamento, complementadas por login real com usuários fictícios,
+restauração da sessão, acesso direto e respostas autorizadas/negadas das três APIs, em ambos os temas e celular.
+
 **Chat interno (RF-010):** `pages/Chat` mantém a API e os eventos existentes, separando carga da lista, histórico e
 envio. A identidade da conversa e a geração da busca delimitam as respostas do histórico; mensagens de HTTP/socket
 são mescladas por ID. Ao repetir a carga da lista, alterações locais/socket posteriores ao início da busca prevalecem
