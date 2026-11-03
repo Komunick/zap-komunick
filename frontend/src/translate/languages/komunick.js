@@ -274,13 +274,54 @@ const pt = {
     deleteWarning:
       "O grupo e todas as mensagens dele serão apagados para todos os participantes. Esta ação não pode ser revertida, confirmar?",
     groupName: "Nome do grupo",
+    participants: "Participantes",
     close: "Fechar",
     save: "Salvar",
     needTitle: "Preencha o nome do grupo.",
     needUsers: "Selecione pelo menos uma pessoa.",
     back: "Voltar para a lista",
     pick: "Escolha uma conversa ou uma pessoa",
-    pickHint: "Clique em alguém da lista para começar a conversar."
+    pickHint: "Clique em alguém da lista para começar a conversar.",
+    teamHint: "Conversas e pessoas da empresa",
+    teamConversations: "Conversas da equipe",
+    clearSearch: "Limpar busca",
+    loadingConversations: "Carregando conversas e pessoas…",
+    conversationsError:
+      "Não foi possível carregar toda a lista. As conversas e pessoas disponíveis foram mantidas.",
+    retry: "Tentar novamente",
+    noResults: "Nenhuma conversa ou pessoa encontrada.",
+    searchHint: "Tente outro nome, e-mail ou texto da última mensagem.",
+    emptyTeamHint: "As pessoas da sua empresa aparecerão aqui.",
+    emptyPreview: "Conversa sem mensagens",
+    unreadMessages: "{{count}} mensagens não lidas",
+    messages: "Mensagens da conversa",
+    loadingMessages: "Carregando mensagens…",
+    messagesError:
+      "Não foi possível carregar as mensagens. As mensagens já exibidas foram mantidas.",
+    loadMore: "Carregar mensagens anteriores",
+    emptyMessages: "Comece esta conversa",
+    emptyMessagesHint:
+      "Envie uma mensagem para combinar o trabalho com a equipe.",
+    unknownSender: "Participante",
+    messageInput: "Mensagem interna",
+    send: "Enviar mensagem",
+    sending: "Enviando mensagem…",
+    sendError:
+      "Não foi possível enviar. Confira sua conexão e tente novamente.",
+    composerHint: "Enter envia · Shift+Enter quebra a linha",
+    attachFiles: "Anexar arquivos",
+    sendFiles: "Enviar arquivos",
+    cancelFiles: "Cancelar anexos",
+    recordAudio: "Gravar áudio",
+    cancelRecording: "Cancelar gravação",
+    sendRecording: "Enviar gravação",
+    messageImage: "Imagem da mensagem",
+    playVideo: "Reproduzir vídeo",
+    pauseVideo: "Pausar vídeo",
+    openMedia: "Ampliar mídia",
+    download: "Baixar arquivo",
+    downloadBlocked:
+      "Permita abrir a janela de download no navegador e tente novamente."
   },
   dashboardPage: {
     hello: "Olá, {{name}}!",
@@ -574,6 +615,17 @@ const pt = {
     businessDaysTooltip: "Só em dia útil"
   },
   backendErrors: {
+    ERR_CHAT_MEDIA_STORAGE_UNSAFE:
+      "Os anexos estão temporariamente indisponíveis. Tente novamente.",
+    ERR_CHAT_MEDIA_UNAVAILABLE:
+      "Anexo temporariamente indisponível. Tente novamente.",
+    ERR_NO_CHAT_FOUND: "Conversa não encontrada ou indisponível.",
+    ERR_CHAT_DIRECT_READONLY:
+      "Conversas diretas não podem ser editadas ou excluídas.",
+    ERR_INVALID_CHAT_USER: "Selecione participantes válidos da sua empresa.",
+    ERR_INVALID_CHAT_TITLE: "Informe um nome válido para o grupo.",
+    ERR_INVALID_CHAT_PAGE: "Página do chat inválida.",
+    ERR_INVALID_CHAT_MESSAGE: "Mensagem inválida.",
     ERR_BULK_NO_TAGS: "Escolha ao menos uma etiqueta (no máximo 20).",
     ERR_INVALID_TAG_FILTER: "Filtro de etiquetas inválido.",
     ERR_TICKET_PAUSE_NOT_OPEN: "Só dá para pausar um atendimento em andamento.",
@@ -872,13 +924,52 @@ const en = {
     deleteWarning:
       "The group and all its messages will be deleted for every member. This cannot be undone, confirm?",
     groupName: "Group name",
+    participants: "Participants",
     close: "Close",
     save: "Save",
     needTitle: "Fill in the group name.",
     needUsers: "Select at least one person.",
     back: "Back to the list",
     pick: "Pick a conversation or a person",
-    pickHint: "Click someone in the list to start chatting."
+    pickHint: "Click someone in the list to start chatting.",
+    teamHint: "Company conversations and people",
+    teamConversations: "Team conversations",
+    clearSearch: "Clear search",
+    loadingConversations: "Loading conversations and people…",
+    conversationsError:
+      "Could not load the full list. Available conversations and people were kept.",
+    retry: "Try again",
+    noResults: "No matching conversation or person.",
+    searchHint: "Try another name, email or text from the latest message.",
+    emptyTeamHint: "People in your company will appear here.",
+    emptyPreview: "No messages yet",
+    unreadMessages: "{{count}} unread messages",
+    messages: "Conversation messages",
+    loadingMessages: "Loading messages…",
+    messagesError:
+      "Could not load messages. Messages already displayed were kept.",
+    loadMore: "Load earlier messages",
+    emptyMessages: "Start this conversation",
+    emptyMessagesHint: "Send a message to coordinate work with your team.",
+    unknownSender: "Participant",
+    messageInput: "Internal message",
+    send: "Send message",
+    sending: "Sending message…",
+    sendError: "Could not send. Check your connection and try again.",
+    composerHint: "Enter sends · Shift+Enter adds a line break",
+    attachFiles: "Attach files",
+    sendFiles: "Send files",
+    cancelFiles: "Cancel attachments",
+    recordAudio: "Record audio",
+    cancelRecording: "Cancel recording",
+    sendRecording: "Send recording",
+    messageImage: "Message image",
+    playVideo: "Play video",
+    pauseVideo: "Pause video",
+    openMedia: "Expand media",
+    download: "Download file",
+    downloadBlocked:
+      "Allow the browser to open the download window and try again."
   },
   dashboardPage: {
     hello: "Hi, {{name}}!",
@@ -1173,6 +1264,17 @@ const en = {
     businessDaysTooltip: "Business days only"
   },
   backendErrors: {
+    ERR_CHAT_MEDIA_STORAGE_UNSAFE:
+      "Attachments are temporarily unavailable. Please try again.",
+    ERR_CHAT_MEDIA_UNAVAILABLE:
+      "Attachment temporarily unavailable. Please try again.",
+    ERR_NO_CHAT_FOUND: "Conversation not found or unavailable.",
+    ERR_CHAT_DIRECT_READONLY:
+      "Direct conversations cannot be edited or deleted.",
+    ERR_INVALID_CHAT_USER: "Select valid participants from your company.",
+    ERR_INVALID_CHAT_TITLE: "Enter a valid group name.",
+    ERR_INVALID_CHAT_PAGE: "Invalid chat page.",
+    ERR_INVALID_CHAT_MESSAGE: "Invalid message.",
     ERR_BULK_NO_TAGS: "Pick at least one tag (20 at most).",
     ERR_INVALID_TAG_FILTER: "Invalid tag filter.",
     ERR_TICKET_PAUSE_NOT_OPEN: "Only an ongoing ticket can be paused.",
@@ -1473,13 +1575,53 @@ const es = {
     deleteWarning:
       "El grupo y todos sus mensajes se borrarán para todos los participantes. Esta acción no se puede revertir, ¿confirmar?",
     groupName: "Nombre del grupo",
+    participants: "Participantes",
     close: "Cerrar",
     save: "Guardar",
     needTitle: "Complete el nombre del grupo.",
     needUsers: "Seleccione al menos una persona.",
     back: "Volver a la lista",
     pick: "Elija una conversación o una persona",
-    pickHint: "Haga clic en alguien de la lista para empezar a conversar."
+    pickHint: "Haga clic en alguien de la lista para empezar a conversar.",
+    teamHint: "Conversaciones y personas de la empresa",
+    teamConversations: "Conversaciones del equipo",
+    clearSearch: "Limpiar búsqueda",
+    loadingConversations: "Cargando conversaciones y personas…",
+    conversationsError:
+      "No se pudo cargar toda la lista. Se conservaron las conversaciones y personas disponibles.",
+    retry: "Intentar de nuevo",
+    noResults: "No se encontró una conversación o persona.",
+    searchHint: "Pruebe otro nombre, correo o texto del último mensaje.",
+    emptyTeamHint: "Las personas de su empresa aparecerán aquí.",
+    emptyPreview: "Conversación sin mensajes",
+    unreadMessages: "{{count}} mensajes sin leer",
+    messages: "Mensajes de la conversación",
+    loadingMessages: "Cargando mensajes…",
+    messagesError:
+      "No se pudieron cargar los mensajes. Se conservaron los mensajes ya mostrados.",
+    loadMore: "Cargar mensajes anteriores",
+    emptyMessages: "Empiece esta conversación",
+    emptyMessagesHint:
+      "Envíe un mensaje para coordinar el trabajo con el equipo.",
+    unknownSender: "Participante",
+    messageInput: "Mensaje interno",
+    send: "Enviar mensaje",
+    sending: "Enviando mensaje…",
+    sendError: "No se pudo enviar. Revise la conexión e intente de nuevo.",
+    composerHint: "Enter envía · Shift+Enter añade un salto de línea",
+    attachFiles: "Adjuntar archivos",
+    sendFiles: "Enviar archivos",
+    cancelFiles: "Cancelar adjuntos",
+    recordAudio: "Grabar audio",
+    cancelRecording: "Cancelar grabación",
+    sendRecording: "Enviar grabación",
+    messageImage: "Imagen del mensaje",
+    playVideo: "Reproducir vídeo",
+    pauseVideo: "Pausar vídeo",
+    openMedia: "Ampliar multimedia",
+    download: "Descargar archivo",
+    downloadBlocked:
+      "Permite abrir la ventana de descarga en el navegador e inténtalo de nuevo."
   },
   dashboardPage: {
     hello: "¡Hola, {{name}}!",
@@ -1773,6 +1915,17 @@ const es = {
     businessDaysTooltip: "Solo en día hábil"
   },
   backendErrors: {
+    ERR_CHAT_MEDIA_STORAGE_UNSAFE:
+      "Los adjuntos no están disponibles temporalmente. Inténtalo de nuevo.",
+    ERR_CHAT_MEDIA_UNAVAILABLE:
+      "Adjunto temporalmente no disponible. Inténtalo de nuevo.",
+    ERR_NO_CHAT_FOUND: "Conversación no encontrada o no disponible.",
+    ERR_CHAT_DIRECT_READONLY:
+      "Las conversaciones directas no se pueden editar ni eliminar.",
+    ERR_INVALID_CHAT_USER: "Seleccione participantes válidos de su empresa.",
+    ERR_INVALID_CHAT_TITLE: "Introduzca un nombre de grupo válido.",
+    ERR_INVALID_CHAT_PAGE: "Página del chat no válida.",
+    ERR_INVALID_CHAT_MESSAGE: "Mensaje no válido.",
     ERR_BULK_NO_TAGS: "Elija al menos una etiqueta (máximo 20).",
     ERR_INVALID_TAG_FILTER: "Filtro de etiquetas no válido.",
     ERR_TICKET_PAUSE_NOT_OPEN: "Solo se puede pausar una atención en curso.",
