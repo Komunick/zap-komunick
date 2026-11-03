@@ -1,6 +1,6 @@
-# TAD — Zap Komunick
+# TAD — SuperChat
 
-**Komunick Inteligência e Tecnologia** · **Atualizado em:** 30/10/2026
+**Komunick Inteligência e Tecnologia** · **Atualizado em:** 03/11/2026
 **Fonte oficial:** `docs/TAD.md` no repositório · **Comportamento:** `docs/PRD.md`
 
 Levantamento parcial: este documento cobre o que o fork acrescenta ao Ticketz. O restante do sistema segue o desenho do
@@ -88,7 +88,15 @@ balões) e as mudanças nos componentes do Material-UI (raios, botões, abas, ca
 tema com `createKomunickTheme`, que mescla esses valores sobre o tema do upstream sem mudar as chaves que os
 componentes do Ticketz usam. Cores que o upstream escreve direto nos componentes foram trocadas pelos tokens só onde
 apareciam (chat em `MessagesList`, barra do topo em `layout/index.js`, itens da lista e abas). Logo e ícones padrão
-estão em `public/vector/` e nos PNGs de `public/`; o Whitelabel da empresa continua por cima deles. A Direção B do
+estão em `public/vector/` e nos PNGs de `public/`; o Whitelabel da empresa continua por cima deles.
+A marca padrão é SuperChat: `BrandLogo` escolhe o lockup `superChat` com endosso oficial Komunick ou o símbolo compacto.
+A sidebar preta usa a variante clara do logo nos dois temas; imagens personalizadas continuam respeitadas.
+Os SVGs contêm contornos, sem fonte ou rede externa para renderizar a marca. A geometria original da Komunick é
+preservada separadamente em `vector/komunick.svg` e no endosso. `productBrand` normaliza somente nomes de produto
+legados na apresentação; a leitura pública não reescreve configurações, mensagens ou históricos. Títulos iniciais,
+PWA e nomes de downloads usam SuperChat, incluindo falhas de leitura da configuração. O issuer padrão de novos
+cadastros 2FA muda só o rótulo; inscrições existentes e segredos permanecem válidos. Veja
+[identidade SuperChat](specs/superchat-identidade.md). A Direção B do
 Stitch entra como tokens: `sidebar*` (menu preto, igual nos dois temas), `accent`, `selectedRow`, `tagBackground` e
 `bubbleMineBorder`, usados em `layout/index.js`, `layout/MainListItems.js` e `TicketListItemCustom`.
 
@@ -397,7 +405,7 @@ recuar a aplicação.
 - `TRUST_PROXY` vem desligado por padrão. Antes de ativar IPs permitidos atrás de um proxy, configurar explicitamente
   os proxies conhecidos (por exemplo `loopback` quando o proxy está no mesmo host, ou os CIDRs da rede do proxy),
   garantindo que acesso direto e cabeçalhos `X-Forwarded-For` não possam forjar o IP. A tela mostra o IP usado pelo
-  servidor para essa conferência. `TWO_FACTOR_ISSUER` personaliza o nome do autenticador (padrão `Zap Komunick`).
+  servidor para essa conferência. `TWO_FACTOR_ISSUER` personaliza o nome do autenticador (padrão `SuperChat`).
 - `RecordAuditService` registra as famílias `auth.`, `security.`, `user.` e `setting.` com empresa, usuário, entidade,
   data, IP e user-agent limitado a 512 caracteres. Falha de gravação é registrada no log sem interromper a ação.
   `GET /audit-logs` é administrativo e filtra a empresa autenticada, período (`from`, `to`), usuário e ação/família;

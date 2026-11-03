@@ -1,6 +1,6 @@
-# AGENTS.md — Zap Komunick
+# AGENTS.md — SuperChat
 
-Zap Komunick é o atendimento por WhatsApp da Komunick: um fork do Ticketz (AGPL-3.0) com recursos inspirados no
+SuperChat é o atendimento por WhatsApp da Komunick: um fork do Ticketz (AGPL-3.0) com recursos inspirados no
 ZapContábil (painel de SLA, carteira de clientes, Kanban, horário de acesso por usuário, agendamento recorrente,
 pausar atendimento, motivo de finalização e agendamento para vários contatos com anexo e dia útil) e com o visual da
 Komunick.
@@ -61,6 +61,10 @@ confirmadas de inspiração e observações do sistema atual; estas não viram r
   código novo fica em arquivos próprios (`helpers/*Rules.ts`, `services/SlaServices`, `services/KanbanServices`,
   `pages/Sla`, `pages/Kanban`, `pages/CloseReasons`, `components/ScheduleExtras`, `translate/languages/komunick.js`)
   e as mudanças em arquivos do upstream são pequenas; os trechos maiores levam um comentário "Zap Komunick".
+- **Marca do produto:** SuperChat; logo tipográfica `superChat`, com endosso `Powered by Komunick` e geometria
+  oficial preservada. Reutilize `components/BrandLogo`; a sidebar preta precisa da variante clara nos dois temas.
+  Preserve uploads Whitelabel, URLs AGPL, identificadores técnicos e históricos. Não renomeie banco/Compose/repositório
+  como parte de uma troca visual. Ver `docs/specs/superchat-identidade.md` e `public/vector/README.md`.
 - **Cores e visual** vêm dos tokens de `frontend/src/theme/komunick.js` (`theme.komunick.*`); não escreva cor fixa por
   tema (`theme.mode === "light" ? ... : ...`) em código novo.
 - **Textos novos da interface** vão em `frontend/src/translate/languages/komunick.js` (pt, pt_PT, en, es), mesclado

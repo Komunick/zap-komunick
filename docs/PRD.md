@@ -1,4 +1,4 @@
-# PRD — Zap Komunick
+# PRD — SuperChat
 
 **Komunick Inteligência e Tecnologia**
 **Responsável:** Jailson (Komunick) · **Atualizado em:** 30/10/2026
@@ -283,13 +283,18 @@ Dado um novo agendamento sem contato e sem etiqueta,
 quando o atendente tenta salvar,
 então o formulário pede pelo menos um contato ou uma etiqueta.
 
-### RF-009 — Identidade visual da Komunick
+### RF-009 — Identidade SuperChat e Komunick
 
-**O que faz:** o sistema abre com a marca da Komunick e um visual mais atual que o do Ticketz e o do ZapContábil, com
+**O que faz:** o sistema abre como SuperChat, com logo `superChat` e endosso `Powered by Komunick` usando a marca oficial
+da Komunick Inteligência, e um visual mais atual que o do Ticketz e o do ZapContábil, com
 referências do Dribbble (painéis de atendimento e CRMs de 2025 e 2026).
 
 **Regras importantes:**
-- Logo, ícone e cores da Komunick por padrão: verde #35B62E, preto #020605 e a fonte Manrope. Botões e textos em verde
+- Nome de produto padrão SuperChat, inclusive na inicialização, PWA, títulos, Sobre e configurações legadas de marca.
+  Preservar nomes personalizados, uploads Whitelabel, identificadores técnicos e créditos AGPL/Ticketz.
+  Ver [identidade SuperChat](specs/superchat-identidade.md); a troca não reescreve dados reais nem segredos 2FA.
+- Logo `superChat`, símbolo compacto e endosso com geometria oficial Komunick preservada. Usar as cores da Komunick:
+  verde #35B62E, preto #020605 e a fonte Manrope. Botões e textos em verde
   usam o tom mais escuro #1F7F1B no tema claro, para manter o contraste. O logo e a cor que a empresa configurar em
   Whitelabel continuam valendo.
 - Tema claro e escuro com as mesmas cores em todas as telas: menu, barra do topo, lista de atendimentos, chat, Kanban,
