@@ -47,13 +47,23 @@ const lockCompany = async (companyId: number, transaction: Transaction) => {
   if (!company) throw new AppError("ERR_NO_COMPANY_FOUND", 404);
 };
 
+// HTTP administration supplies its authorization transaction. Trusted internal
+// callers retain the existing standalone transaction and credential resolution.
+const credentialTransaction = <T>(
+  transaction: Transaction | undefined,
+  operation: (transaction: Transaction) => Promise<T>
+): Promise<T> =>
+  transaction ? operation(transaction) : sequelize.transaction(operation);
+
 export const listCredentialStatus = async (
-  companyId: number
+  companyId: number,
+  transaction?: Transaction
 ): Promise<CredentialStatus[]> =>
   protectStorage(async () => {
     const credentials = await CompanyCredential.findAll({
       where: { companyId, key: { [Op.in]: CREDENTIAL_KEYS } },
       attributes: ["key", "keyId"],
+      ...(transaction ? { transaction } : {}),
       logging: false
     });
     // Status queries never load legacy plaintext into the response process.
@@ -64,6 +74,7 @@ export const listCredentialStatus = async (
         [literal("length(COALESCE(\"value\", '')) > 0"), "configured"]
       ],
       raw: true,
+      ...(transaction ? { transaction } : {}),
       logging: false
     });
     const masterId = currentMasterKeyId();
@@ -87,11 +98,12 @@ export const listCredentialStatus = async (
 
 export const credentialStatus = async (
   companyId: number,
-  key: string
+  key: string,
+  transaction?: Transaction
 ): Promise<CredentialStatus> =>
   protectStorage(async () => {
     const validKey = requireCredentialKey(key);
-    return (await listCredentialStatus(companyId)).find(
+    return (await listCredentialStatus(companyId, transaction)).find(
       row => row.key === validKey
     );
   });
@@ -99,7 +111,8 @@ export const credentialStatus = async (
 export const saveCredential = async (
   companyId: number,
   key: string,
-  value: unknown
+  value: unknown,
+  transaction?: Transaction
 ): Promise<CredentialStatus> =>
   protectStorage(async () => {
     const validKey = requireCredentialKey(key);
@@ -108,7 +121,7 @@ export const saveCredential = async (
       validKey,
       requireCredentialValue(value)
     );
-    await sequelize.transaction(async transaction => {
+    await credentialTransaction(transaction, async transaction => {
       await lockCompany(companyId, transaction);
       const [credential] = await CompanyCredential.unscoped().findOrCreate({
         where: { companyId, key: validKey },
@@ -123,16 +136,17 @@ export const saveCredential = async (
         logging: false
       });
     });
-    return credentialStatus(companyId, validKey);
+    return credentialStatus(companyId, validKey, transaction);
   });
 
 export const deleteCredential = async (
   companyId: number,
-  key: string
+  key: string,
+  transaction?: Transaction
 ): Promise<CredentialStatus> =>
   protectStorage(async () => {
     const validKey = requireCredentialKey(key);
-    await sequelize.transaction(async transaction => {
+    await credentialTransaction(transaction, async transaction => {
       await lockCompany(companyId, transaction);
       await CompanyCredential.destroy({
         where: { companyId, key: validKey },
@@ -145,15 +159,16 @@ export const deleteCredential = async (
         logging: false
       });
     });
-    return credentialStatus(companyId, validKey);
+    return credentialStatus(companyId, validKey, transaction);
   });
 
 export const migrateCredentials = async (
-  companyId: number
+  companyId: number,
+  transaction?: Transaction
 ): Promise<CredentialStatus[]> =>
   protectStorage(async () => {
     requireMasterKey();
-    await sequelize.transaction(async transaction => {
+    await credentialTransaction(transaction, async transaction => {
       await lockCompany(companyId, transaction);
       const where = { companyId, key: { [Op.in]: CREDENTIAL_KEYS } };
       const credentials = await CompanyCredential.unscoped().findAll({
@@ -200,7 +215,7 @@ export const migrateCredentials = async (
       }
       await Setting.destroy({ where, transaction, logging: false });
     });
-    return listCredentialStatus(companyId);
+    return listCredentialStatus(companyId, transaction);
   });
 
 // Backend-only. Legacy fallback preserves optional transcription until explicit migration.

@@ -9,7 +9,9 @@ Komunick; a segunda, a partir de "Ticketz (upstream)", é a orientação técnic
 
 ## Comandos do projeto
 
-Execute na raiz do repositório. Neste notebook não há Node instalado no PATH: tudo roda em contêiner.
+Execute na raiz do repositório. O ambiente padrão usa contêineres. Também há validação Node isolada e CI, que não
+exigem iniciar a aplicação. Não ligar um Docker desligado para testar sem garantir que instâncias antigas com
+sessão WhatsApp salva permanecerão paradas; use uma cópia sanitizada com dados fictícios ou os jobs de CI.
 
 - Preparar o ambiente: `docker compose -f docker-compose-dev-app.yaml up -d` (Postgres, Redis, backend e frontend
   com o código montado; frontend em http://localhost:5420, backend em http://localhost:5421, login
@@ -158,9 +160,17 @@ Compact guidance for OpenCode sessions working in this repo.
 ## CI / Docker images
 
 - Workflow: `.github/workflows/build-docker.yml`.
-- Builds multi-arch (`linux/amd64`, `linux/arm64`) images on push to `main`, `fix/**`, `dev`, `test-**`, and tags `v*.*.*`.
-- Publishes to `ghcr.io/ticketz-oss/ticketz-backend` and `ghcr.io/ticketz-oss/ticketz-frontend`.
-- CI generates `backend/src/gitinfo.ts` and `frontend/public/gitinfo.json` from git metadata at build time.
+- Pull requests and matching pushes run Node tests/types/build only; they do not publish images or start the app.
+- Backend uses locked dependencies with lifecycle scripts disabled, translation-key generation, TypeScript and
+  direct Jest. Never replace direct Jest with `npm test`: its pretest/posttest migrate, seed and undo a database.
+- Frontend also omits optional Node add-ons (PDF canvas uses the browser API); Jest stays in CI mode. Only the CRA
+  build keeps the existing non-fatal warning policy. Syntax/compilation failures still fail the job.
+- Publication is a separate job after both checks: only explicit `workflow_dispatch` with `publish_images=true`,
+  default false, repository `Komunick/zap-komunick` and ref `dev`/`main`. Do not dispatch it during ordinary reviews.
+- Names derive from the repository in lowercase: `ghcr.io/komunick/zap-komunick-backend` and `...-frontend`.
+  Multi-arch images use source-SHA tags; deployment must select the resulting digest. Base images from upstream are
+  unchanged. The publication job generates Git metadata but never deploys, runs containers or starts WhatsApp.
+- `.github/scripts/image-policy.test.cjs` verifies event/ref/namespace and permissions using Node's test runner.
 
 ## Cross-stack conventions
 

@@ -11,6 +11,8 @@ A autorização anterior para os merges permanece, condicionada às correções,
 - Kanban: a movimentação direta deve aplicar os mesmos critérios de empresa, ator, fila e estado da listagem.
   Atendente não move nem recebe dados de atendimento pendente em fila alheia; voltar para “Em aberto” também exige
   autorização. Negativas não alteram etiquetas nem emitem eventos. Preservar as operações legitimamente permitidas.
+  A fronteira do Kanban respeita as restrições já existentes de etiquetas por setor (RF019), inclusive no destino
+  escolhido, sem impedir a remoção explícita de etiqueta histórica de outro setor após transferência.
 - Credenciais: cada operação administrativa verifica o vínculo e o perfil atuais do ator na empresa da sessão.
   Um Bearer válido antigo de A não permite administrar A após o ator ser transferido para B, removido ou perder
   o perfil administrativo. Aplicar a consulta de estado, substituição, remoção e migração, sem redesenhar JWT global

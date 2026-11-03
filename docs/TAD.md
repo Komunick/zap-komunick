@@ -47,6 +47,11 @@ do upstream para facilitar a mesclagem de novas versões.
 - Kanban: as colunas são etiquetas com `kanban = 1`. `PUT /kanban/tickets/:id` calcula com `planKanbanMove` as
   etiquetas de Kanban a remover e a acrescentar, grava em `TicketTags` e emite a atualização do ticket pelo socket. O
   quadro escuta `company-<id>-ticket` e `-appMessage` e recarrega com atraso de 1 s.
+  `KanbanVisibility` compartilha a elegibilidade por empresa/estado/fila/propriedade entre listagem e movimento;
+  o ator atual precisa manter o vínculo à empresa do Bearer. Movimento trava ator, filas, associações e atendimento
+  em transação, sem locking joins; remove/adiciona etiquetas e hidrata o retorno na mesma transação. O evento ocorre
+  após commit. Colunas/destino usam `TagScope` (RF-019); a remoção explícita do legado permanece possível. Associações
+  do DTO também são limitadas à empresa. Ver [correções de integração](specs/correcoes-integracao-pr29.md).
 - Horário de acesso: `AuthUserService` (login) e `RefreshTokenService` (renovação) recusam com
   `ERR_OUT_OF_ACCESS_HOURS` quando `canAccessNow` é falso; sessões de impersonação não são checadas.
 - Recorrência: `queues.ts` (`handleSendScheduledMessage`) chama `CreateNextOccurrenceService` no `finally`, após o envio
@@ -421,6 +426,10 @@ anterior sem 2FA/allowlist deixa de aplicar essas proteções e requer decisão 
   não habilita integração. As rotas `/credentials` são administrativas e usam a empresa da sessão. GET devolve somente
   estado; PUT substitui o valor; DELETE remove; POST `/credentials/migrate` move o legado e recifra na rotação. A chave
   mestra não tem rota de consulta nem é recebida no body dessas operações.
+- `withCredentialAdmin` revalida o ator e o perfil atuais na empresa da sessão antes de qualquer operação do cofre.
+  Bloqueia Company antes de User e mantém os locks até o commit; escrita e status usam a mesma transação, sem
+  transações aninhadas. Ator removido, transferido ou rebaixado é recusado mesmo com Bearer antigo válido. Chamadas
+  internas de resolução/transcrição mantêm o contrato backend-only; não há redesenho de JWT global.
 - A migração de esquema cria a tabela sem ler/mover valores herdados. A migração de dados é explícita e transacional,
   restrita à empresa autenticada. Sem chave mestra válida, recusar gravação/migração; não descartar dados por falha de
   decifragem ou conflito. Após migração bem-sucedida, a cópia legível em `Settings` é removida. A transcrição pode usar
