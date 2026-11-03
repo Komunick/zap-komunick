@@ -1,7 +1,9 @@
 # AGENTS.md — Zap Komunick
 
 Zap Komunick é o atendimento por WhatsApp da Komunick: um fork do Ticketz (AGPL-3.0) com recursos inspirados no
-ZapContábil (painel de SLA, carteira de clientes, Kanban, horário de acesso por usuário e agendamento recorrente).
+ZapContábil (painel de SLA, carteira de clientes, Kanban, horário de acesso por usuário, agendamento recorrente,
+pausar atendimento, motivo de finalização e agendamento para vários contatos com anexo e dia útil) e com o visual da
+Komunick.
 Este repositório guarda o sistema inteiro (backend e frontend). A primeira parte deste arquivo traz as regras da
 Komunick; a segunda, a partir de "Ticketz (upstream)", é a orientação técnica que veio do projeto original.
 
@@ -51,8 +53,10 @@ confirmadas de inspiração e observações do sistema atual; estas não viram r
   (`frontend/src/components/AboutModal`), apontando para github.com/Komunick/zap-komunick. Não remova.
 - **Atualizações do Ticketz:** o remoto `upstream` é github.com/ticketz-oss/ticketz. Para facilitar a mesclagem, o
   código novo fica em arquivos próprios (`helpers/*Rules.ts`, `services/SlaServices`, `services/KanbanServices`,
-  `pages/Sla`, `pages/Kanban`, `translate/languages/komunick.js`) e as mudanças em arquivos do upstream são pequenas;
-  os trechos maiores levam um comentário "Zap Komunick".
+  `pages/Sla`, `pages/Kanban`, `pages/CloseReasons`, `components/ScheduleExtras`, `translate/languages/komunick.js`)
+  e as mudanças em arquivos do upstream são pequenas; os trechos maiores levam um comentário "Zap Komunick".
+- **Cores e visual** vêm dos tokens de `frontend/src/theme/komunick.js` (`theme.komunick.*`); não escreva cor fixa por
+  tema (`theme.mode === "light" ? ... : ...`) em código novo.
 - **Textos novos da interface** vão em `frontend/src/translate/languages/komunick.js` (pt, pt_PT, en, es), mesclado
   sobre os dicionários do upstream; não edite `pt.js`/`en.js` para recursos do fork.
 - **Regras de negócio** do fork ficam em funções puras em `backend/src/helpers/` com teste em

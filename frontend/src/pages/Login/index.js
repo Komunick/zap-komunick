@@ -5,7 +5,6 @@ import Button from "@material-ui/core/Button";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import TextField from "@material-ui/core/TextField";
 import Link from "@material-ui/core/Link";
-import Grid from "@material-ui/core/Grid";
 import MenuItem from "@material-ui/core/MenuItem";
 import Popover from "@material-ui/core/Popover";
 import Fade from "@material-ui/core/Fade";
@@ -13,12 +12,17 @@ import Paper from "@material-ui/core/Paper";
 import MenuList from "@material-ui/core/MenuList";
 import IconButton from "@material-ui/core/IconButton";
 import InputAdornment from "@material-ui/core/InputAdornment";
-import { makeStyles, useTheme } from "@material-ui/core/styles";
+import Tooltip from "@material-ui/core/Tooltip";
+import { alpha, makeStyles, useTheme } from "@material-ui/core/styles";
 import Brightness4Icon from "@material-ui/icons/Brightness4";
 import Brightness7Icon from "@material-ui/icons/Brightness7";
 import LanguageIcon from "@material-ui/icons/Translate";
 import Visibility from "@material-ui/icons/Visibility";
 import VisibilityOff from "@material-ui/icons/VisibilityOff";
+import MailOutlineIcon from "@material-ui/icons/MailOutline";
+import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
+import CheckCircleIcon from "@material-ui/icons/CheckCircle";
+import WhatsAppIcon from "@material-ui/icons/WhatsApp";
 import Typography from "@material-ui/core/Typography";
 
 import { i18n } from "../../translate/i18n";
@@ -29,6 +33,11 @@ import useSettings from "../../hooks/useSettings";
 import { getBackendURL } from "../../services/config";
 import ColorModeContext from "../../layout/themeContext";
 import { loadJSON } from "../../helpers/loadJSON";
+import { BRAND_BLACK, BRAND_GREEN } from "../../theme/komunick";
+
+// Zap Komunick: two column sign in (form + brand panel), following the
+// authentication layout of the Komunick Patterns. Whitelabel side image and
+// background content still replace the brand panel when configured.
 
 const gitinfo = loadJSON("/gitinfo.json");
 
@@ -67,284 +76,311 @@ const useStyles = makeStyles(theme => ({
     position: "fixed",
     inset: 0,
     display: "flex",
-    flexDirection: "column",
+    backgroundColor: theme.palette.background.default,
     overflow: "hidden"
   },
-  backgroundLayer: {
-    position: "absolute",
-    inset: 0,
-    background: `linear-gradient(to right, ${theme.palette.background.default}, ${theme.palette.background.default}, ${theme.palette.primary.main}, ${theme.palette.background.default}, ${theme.palette.background.default})`,
-    backgroundColor: theme.palette.background.default,
-    backgroundSize: "200% 200%",
-    animation: "$gradientDrift 18s ease-in-out infinite",
-    willChange: "background-position",
-    "@media (prefers-reduced-motion: reduce)": {
-      animation: "none"
-    }
-  },
-  backgroundLayerImage: {
-    position: "absolute",
-    inset: 0,
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    animation: "none",
-    willChange: "auto"
-  },
-  backgroundVideo: {
-    position: "absolute",
-    inset: 0,
-    width: "100%",
-    height: "100%",
-    objectFit: "cover"
-  },
-  content: {
+  formSide: {
     position: "relative",
-    zIndex: 1,
-    flex: 1,
+    flex: "1 1 50%",
+    display: "flex",
+    flexDirection: "column",
+    padding: theme.spacing(4, 6),
+    backgroundColor: theme.palette.background.paper,
     overflowY: "auto",
+    [theme.breakpoints.down("sm")]: {
+      padding: theme.spacing(3, 2.5)
+    }
+  },
+  formTop: {
     display: "flex",
     alignItems: "center",
-    justifyContent: "center",
-    padding: theme.spacing(3),
-    [theme.breakpoints.down("xs")]: {
-      padding: theme.spacing(1.5)
-    }
-  },
-  themeToggle: {
-    position: "absolute",
-    top: theme.spacing(2),
-    right: theme.spacing(2),
-    zIndex: 2,
-    color: theme.palette.type === "light" ? "#142033" : "#fff",
-    background:
-      theme.palette.type === "light"
-        ? "rgba(255,255,255,0.68)"
-        : "rgba(6,12,22,0.5)",
-    border:
-      theme.palette.type === "light"
-        ? "1px solid rgba(255,255,255,0.8)"
-        : "1px solid rgba(255,255,255,0.18)",
-    backdropFilter: "blur(12px)",
-    "&:hover": {
-      background:
-        theme.palette.type === "light"
-          ? "rgba(255,255,255,0.84)"
-          : "rgba(10,18,31,0.68)"
-    },
-    [theme.breakpoints.down("xs")]: {
-      top: theme.spacing(1),
-      right: theme.spacing(1)
-    }
-  },
-  languageToggle: {
-    position: "absolute",
-    top: theme.spacing(2),
-    right: theme.spacing(10),
-    zIndex: 2,
-    color: theme.palette.type === "light" ? "#142033" : "#fff",
-    background:
-      theme.palette.type === "light"
-        ? "rgba(255,255,255,0.68)"
-        : "rgba(6,12,22,0.5)",
-    border:
-      theme.palette.type === "light"
-        ? "1px solid rgba(255,255,255,0.8)"
-        : "1px solid rgba(255,255,255,0.18)",
-    backdropFilter: "blur(12px)",
-    "&:hover": {
-      background:
-        theme.palette.type === "light"
-          ? "rgba(255,255,255,0.84)"
-          : "rgba(10,18,31,0.68)"
-    },
-    [theme.breakpoints.down("xs")]: {
-      top: theme.spacing(1),
-      right: theme.spacing(7)
-    }
-  },
-  langMenu: {
-    zIndex: 3
-  },
-  langMenuPaper: {
-    minWidth: 160,
-    borderRadius: theme.spacing(1),
-    overflow: "hidden",
-    transformOrigin: "top center",
-    transition: "transform 180ms ease, opacity 180ms ease"
-  },
-  layout: {
-    width: "100%",
-    maxWidth: 980,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: theme.spacing(2),
-    [theme.breakpoints.down("sm")]: {
-      maxWidth: 440
-    }
-  },
-  loginBox: {
-    width: 780,
-    maxWidth: "100%",
-    display: "flex",
-    alignItems: "center",
-    overflow: "hidden",
-    borderRadius: 28,
-    backgroundColor: theme.palette.background.paper,
-    boxShadow:
-      theme.palette.type === "light"
-        ? "0 24px 72px rgba(45, 67, 89, 0.18)"
-        : "0 24px 80px rgba(0,0,0,0.35)",
-    border: `1px solid ${theme.palette.backgroundContrast.border}`,
-    [theme.breakpoints.down("sm")]: {
-      display: "block",
-      maxWidth: 420
-    }
-  },
-  mediaPane: {
-    position: "relative",
-    flex: "0 0 clamp(280px, 34vw, 360px)",
-    alignSelf: "stretch",
-    minHeight: 0,
-    overflow: "hidden",
-    backgroundColor: theme.palette.background.default,
-    [theme.breakpoints.down("sm")]: {
-      display: "none"
-    }
-  },
-  sidePanelImage: {
-    position: "absolute",
-    inset: 0,
-    display: "block",
-    width: "100%",
-    height: "100%",
-    objectFit: "cover"
-  },
-  formColumn: {
-    flex: "0 0 420px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: theme.spacing(2),
-    [theme.breakpoints.down("sm")]: {
-      width: "100%"
-    }
-  },
-  formCardWrap: {
-    width: "100%"
-  },
-  paper: {
-    width: "100%",
-    backgroundColor: theme.palette.background.paper,
-    color: theme.palette.text.primary,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    padding: "32px 32px 28px",
-    minHeight: 0,
-    borderRadius: 0,
-    boxShadow: "none",
-    border: "none",
-    [theme.breakpoints.down("xs")]: {
-      padding: "24px 16px 20px",
-      borderRadius: 16
-    },
-    [theme.breakpoints.down("sm")]: {
-      borderRadius: 24
-    }
-  },
-  form: {
-    width: "100%",
-    marginTop: theme.spacing(1)
-  },
-  submit: {
-    margin: theme.spacing(2, 0, 1)
+    justifyContent: "space-between",
+    gap: theme.spacing(1)
   },
   logoImg: {
-    width: "100%",
+    height: 40,
     maxWidth: 200,
-    margin: "0 auto 8px",
+    objectFit: "contain",
     content: `url("${theme.calculatedLogo()}")`
   },
-  linksContainer: {
+  topActions: {
+    display: "flex",
+    gap: theme.spacing(0.5)
+  },
+  topButton: {
+    border: `1px solid ${theme.palette.divider}`,
+    color: theme.palette.text.secondary
+  },
+  formCenter: {
+    flex: 1,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: theme.spacing(4, 0)
+  },
+  formBox: {
     width: "100%",
-    maxWidth: 980,
+    maxWidth: 400
+  },
+  title: {
+    fontWeight: 800,
+    fontSize: "1.9rem",
+    letterSpacing: "-0.02em",
+    marginBottom: theme.spacing(1)
+  },
+  subtitle: {
+    color: theme.palette.text.secondary,
+    marginBottom: theme.spacing(3)
+  },
+  label: {
+    fontSize: 13,
+    fontWeight: 600,
+    marginBottom: 6,
+    marginTop: theme.spacing(2),
+    display: "block"
+  },
+  inputIcon: {
+    color: theme.palette.text.secondary,
+    fontSize: 20
+  },
+  submit: {
+    marginTop: theme.spacing(3),
+    height: 48,
+    fontSize: 15,
+    borderRadius: 12
+  },
+  signup: {
+    marginTop: theme.spacing(2.5),
+    color: theme.palette.text.secondary,
+    fontSize: 14
+  },
+  linksContainer: {
     display: "flex",
     flexWrap: "wrap",
-    justifyContent: "center",
     gap: theme.spacing(1),
-    [theme.breakpoints.down("sm")]: {
-      maxWidth: 420
-    }
+    marginTop: theme.spacing(3)
   },
   footerLink: {
     display: "inline-flex",
     alignItems: "center",
-    justifyContent: "center",
-    minHeight: 40,
-    padding: theme.spacing(1, 2),
+    padding: theme.spacing(0.75, 1.75),
     borderRadius: 999,
-    textDecoration: "none",
-    color: theme.palette.type === "light" ? "#142033" : "#fff",
+    border: `1px solid ${theme.palette.divider}`,
+    color: theme.palette.text.primary,
     fontWeight: 600,
-    fontSize: "0.85rem",
-    letterSpacing: 0.2,
-    lineHeight: 1.25,
-    textAlign: "center",
-    background:
-      theme.palette.type === "light"
-        ? "rgba(255,255,255,0.72)"
-        : "rgba(6,12,22,0.62)",
-    border:
-      theme.palette.type === "light"
-        ? "1px solid rgba(255,255,255,0.82)"
-        : "1px solid rgba(255,255,255,0.18)",
-    boxShadow:
-      theme.palette.type === "light"
-        ? "0 12px 28px rgba(45, 67, 89, 0.12)"
-        : "none",
-    backdropFilter: "blur(14px)",
-    transition: "transform 160ms ease, background-color 160ms ease",
+    fontSize: 13,
+    textDecoration: "none",
     "&:hover": {
-      transform: "translateY(-1px)",
-      background:
-        theme.palette.type === "light"
-          ? "rgba(255,255,255,0.9)"
-          : "rgba(10,18,31,0.78)",
+      backgroundColor: theme.komunick.hover,
       textDecoration: "none"
     }
   },
-  versionInfo: {
-    position: "absolute",
-    right: theme.spacing(2),
-    bottom: theme.spacing(1.25),
-    zIndex: 2,
-    fontSize: "12px",
-    fontWeight: "bold",
-    textAlign: "right",
-    color: theme.palette.type === "light" ? "#0e1726" : "#ffffff",
-    textShadow:
-      theme.palette.type === "light"
-        ? "1px 0 2px rgba(255,255,255,0.9), -1px 0 2px rgba(255,255,255,0.9), 0 1px 2px rgba(255,255,255,0.9), 0 -1px 2px rgba(255,255,255,0.9), 0 2px 6px rgba(0,0,0,0.35)"
-        : "1px 0 2px rgba(0,0,0,0.9), -1px 0 2px rgba(0,0,0,0.9), 0 1px 2px rgba(0,0,0,0.9), 0 -1px 2px rgba(0,0,0,0.9), 0 2px 6px rgba(0,0,0,0.65)",
-    [theme.breakpoints.down("xs")]: {
-      right: theme.spacing(1),
-      bottom: theme.spacing(0.75),
-      fontSize: "11px"
+  formFooter: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    color: theme.palette.text.secondary,
+    fontSize: 12
+  },
+  brandSide: {
+    position: "relative",
+    flex: "1 1 50%",
+    margin: theme.spacing(2),
+    marginLeft: 0,
+    borderRadius: 28,
+    overflow: "hidden",
+    color: "#fff",
+    background: `radial-gradient(120% 90% at 85% 10%, ${alpha(
+      BRAND_GREEN,
+      0.55
+    )} 0%, transparent 55%), linear-gradient(160deg, #0F3A12 0%, ${BRAND_BLACK} 70%)`,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    padding: theme.spacing(6),
+    [theme.breakpoints.down("sm")]: {
+      display: "none"
     }
   },
-  "@keyframes gradientDrift": {
-    "0%": {
-      backgroundPosition: "0% 50%"
-    },
-    "50%": {
-      backgroundPosition: "100% 50%"
-    },
-    "100%": {
-      backgroundPosition: "0% 50%"
+  brandMedia: {
+    position: "absolute",
+    inset: 0,
+    width: "100%",
+    height: "100%",
+    objectFit: "cover"
+  },
+  route: {
+    position: "absolute",
+    right: -40,
+    top: 40,
+    width: "70%",
+    opacity: 0.35,
+    pointerEvents: "none"
+  },
+  heroTitle: {
+    position: "relative",
+    fontWeight: 800,
+    fontSize: "2.4rem",
+    lineHeight: 1.1,
+    letterSpacing: "-0.02em",
+    maxWidth: 460
+  },
+  heroSubtitle: {
+    position: "relative",
+    marginTop: theme.spacing(2),
+    maxWidth: 440,
+    color: "rgba(255,255,255,0.78)",
+    fontSize: 16
+  },
+  points: {
+    position: "relative",
+    display: "flex",
+    flexWrap: "wrap",
+    gap: theme.spacing(1),
+    marginTop: theme.spacing(3)
+  },
+  point: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    padding: "6px 12px",
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.10)",
+    border: "1px solid rgba(255,255,255,0.18)",
+    fontSize: 13,
+    fontWeight: 600
+  },
+  pointIcon: {
+    fontSize: 16,
+    color: BRAND_GREEN
+  },
+  preview: {
+    position: "relative",
+    alignSelf: "flex-end",
+    width: "100%",
+    maxWidth: 420,
+    borderRadius: 20,
+    padding: theme.spacing(2),
+    backgroundColor: "rgba(255,255,255,0.08)",
+    border: "1px solid rgba(255,255,255,0.16)",
+    backdropFilter: "blur(10px)"
+  },
+  previewRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: theme.spacing(1.5),
+    padding: theme.spacing(1.25),
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.92)",
+    color: "#101814",
+    "& + &": {
+      marginTop: theme.spacing(1)
     }
+  },
+  previewAvatar: {
+    position: "relative",
+    width: 38,
+    height: 38,
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: 700,
+    color: "#fff",
+    flex: "none"
+  },
+  previewChannel: {
+    position: "absolute",
+    right: -3,
+    bottom: -3,
+    fontSize: 15,
+    color: "#25D366",
+    backgroundColor: "#fff",
+    borderRadius: "50%"
+  },
+  previewText: {
+    flex: 1,
+    minWidth: 0
+  },
+  previewName: {
+    fontWeight: 700,
+    fontSize: 14
+  },
+  previewMessage: {
+    fontSize: 12,
+    color: "#5C6862",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis"
+  },
+  previewChip: {
+    fontSize: 11,
+    fontWeight: 700,
+    borderRadius: 8,
+    padding: "3px 8px",
+    whiteSpace: "nowrap"
+  },
+  langMenuPaper: {
+    minWidth: 160,
+    borderRadius: 12,
+    overflow: "hidden"
   }
 }));
+
+const RouteGraphic = ({ className }) => (
+  <svg
+    className={className}
+    viewBox="0 0 400 300"
+    fill="none"
+    aria-hidden="true"
+  >
+    <path
+      d="M10 250 C 90 250, 90 150, 170 150 S 250 60, 330 60 L 390 60"
+      stroke={BRAND_GREEN}
+      strokeWidth="3"
+      strokeDasharray="2 10"
+      strokeLinecap="round"
+    />
+    {[
+      [10, 250],
+      [170, 150],
+      [330, 60]
+    ].map(([cx, cy]) => (
+      <g key={`${cx}-${cy}`}>
+        <circle cx={cx} cy={cy} r="14" fill={alpha(BRAND_GREEN, 0.25)} />
+        <circle cx={cx} cy={cy} r="6" fill={BRAND_GREEN} />
+      </g>
+    ))}
+  </svg>
+);
+
+// illustrative rows only (no real data)
+const previewRows = [
+  {
+    initials: "CM",
+    color: "#1F7F1B",
+    nameKey: "login.hero.preview.client1",
+    messageKey: "login.hero.preview.message1",
+    chip: "login.hero.preview.chipSla",
+    chipStyle: { backgroundColor: "#FDE7E7", color: "#B42318" }
+  },
+  {
+    initials: "PA",
+    color: "#2E6BE6",
+    nameKey: "login.hero.preview.client2",
+    messageKey: "login.hero.preview.message2",
+    chip: "login.hero.preview.chipWallet",
+    chipStyle: { backgroundColor: "#E5F4E3", color: "#1F7F1B" }
+  },
+  {
+    initials: "LF",
+    color: "#B7791F",
+    nameKey: "login.hero.preview.client3",
+    messageKey: "login.hero.preview.message3",
+    chip: "login.hero.preview.chipKanban",
+    chipStyle: { backgroundColor: "#FFF4DB", color: "#8A5A00" }
+  }
+];
 
 const Login = () => {
   const classes = useStyles();
@@ -409,219 +445,264 @@ const Login = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const backgroundAssetUrl = getPublicAssetUrl(backgroundContent);
   const sidePanelImageUrl = getPublicAssetUrl(sidePanelImage);
-  const shouldRenderBackgroundVideo = isVideoFile(backgroundContent);
-  const showSidePanelImage = !!sidePanelImageUrl;
+  const backgroundAssetUrl = getPublicAssetUrl(backgroundContent);
   const isLightMode = theme.palette.type === "light";
+
+  const renderBrandMedia = () => {
+    if (sidePanelImageUrl) {
+      return (
+        <img
+          className={classes.brandMedia}
+          src={sidePanelImageUrl}
+          alt={i18n.t("login.title")}
+        />
+      );
+    }
+    if (backgroundAssetUrl && isVideoFile(backgroundContent)) {
+      return (
+        <video className={classes.brandMedia} autoPlay loop muted playsInline>
+          <source src={backgroundAssetUrl} />
+        </video>
+      );
+    }
+    if (backgroundAssetUrl) {
+      return (
+        <img
+          className={classes.brandMedia}
+          src={backgroundAssetUrl}
+          alt={i18n.t("login.title")}
+        />
+      );
+    }
+    return null;
+  };
+
+  const brandMedia = renderBrandMedia();
 
   return (
     <div className={classes.root}>
       <CssBaseline />
-      <IconButton
-        className={classes.languageToggle}
-        onClick={event => setLangMenuAnchor(event.currentTarget)}
-        aria-label={i18n.t("mainDrawer.appBar.i18n.language")}
-      >
-        <LanguageIcon />
-      </IconButton>
-      <Popover
-        className={classes.langMenu}
-        open={Boolean(langMenuAnchor)}
-        anchorEl={langMenuAnchor}
-        onClose={() => setLangMenuAnchor(null)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-        transformOrigin={{ vertical: "top", horizontal: "center" }}
-        TransitionComponent={Fade}
-        TransitionProps={{ timeout: 180 }}
-        PaperProps={{
-          style: {
-            marginTop: 6,
-            overflow: "visible",
-            background: "transparent",
-            boxShadow: "none"
-          }
-        }}
-        disableScrollLock
-      >
-        <Paper className={classes.langMenuPaper} elevation={4}>
-          <MenuList>
-            {Object.keys(messages).map(lang => (
-              <MenuItem
-                key={lang}
-                onClick={() => handleChooseLanguage(lang)}
-                selected={currentLanguage === lang}
-                style={{
-                  fontWeight: currentLanguage === lang ? "bold" : "normal"
-                }}
+      <div className={classes.formSide}>
+        <div className={classes.formTop}>
+          <img className={classes.logoImg} alt={theme.appName || "logo"} />
+          <div className={classes.topActions}>
+            <Tooltip title={i18n.t("mainDrawer.appBar.i18n.language")}>
+              <IconButton
+                size="small"
+                className={classes.topButton}
+                onClick={event => setLangMenuAnchor(event.currentTarget)}
+                aria-label={i18n.t("mainDrawer.appBar.i18n.language")}
               >
-                {messages[lang].translations.mainDrawer.appBar.i18n.language}
-              </MenuItem>
-            ))}
-          </MenuList>
-        </Paper>
-      </Popover>
-      <IconButton
-        className={classes.themeToggle}
-        onClick={colorMode.toggleColorMode}
-        aria-label={
-          isLightMode ? "Switch to dark mode" : "Switch to light mode"
-        }
-      >
-        {isLightMode ? <Brightness4Icon /> : <Brightness7Icon />}
-      </IconButton>
-      {shouldRenderBackgroundVideo ? (
-        <video
-          className={classes.backgroundVideo}
-          autoPlay
-          loop
-          muted
-          playsInline
+                <LanguageIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <IconButton
+              size="small"
+              className={classes.topButton}
+              onClick={colorMode.toggleColorMode}
+              aria-label={
+                isLightMode
+                  ? i18n.t("login.darkMode")
+                  : i18n.t("login.lightMode")
+              }
+            >
+              {isLightMode ? (
+                <Brightness4Icon fontSize="small" />
+              ) : (
+                <Brightness7Icon fontSize="small" />
+              )}
+            </IconButton>
+          </div>
+        </div>
+        <Popover
+          open={Boolean(langMenuAnchor)}
+          anchorEl={langMenuAnchor}
+          onClose={() => setLangMenuAnchor(null)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+          transformOrigin={{ vertical: "top", horizontal: "right" }}
+          TransitionComponent={Fade}
+          PaperProps={{ className: classes.langMenuPaper }}
+          disableScrollLock
         >
-          <source src={backgroundAssetUrl} />
-        </video>
-      ) : (
-        <div
-          className={`${classes.backgroundLayer}${backgroundAssetUrl ? ` ${classes.backgroundLayerImage}` : ""}`}
-          style={
-            backgroundAssetUrl
-              ? { backgroundImage: `url("${backgroundAssetUrl}")` }
-              : undefined
-          }
-        />
-      )}
-      <div className={classes.content}>
-        <div
-          className={classes.layout}
-          style={!showSidePanelImage ? { maxWidth: 440 } : undefined}
-        >
-          <div
-            className={classes.loginBox}
-            style={
-              !showSidePanelImage ? { width: "100%", maxWidth: 420 } : undefined
-            }
-          >
-            {showSidePanelImage && (
-              <div className={classes.mediaPane}>
-                <img
-                  className={classes.sidePanelImage}
-                  src={sidePanelImageUrl}
-                  alt={i18n.t("login.title")}
-                />
+          <Paper elevation={0}>
+            <MenuList>
+              {Object.keys(messages).map(lang => (
+                <MenuItem
+                  key={lang}
+                  onClick={() => handleChooseLanguage(lang)}
+                  selected={currentLanguage === lang}
+                >
+                  {messages[lang].translations.mainDrawer.appBar.i18n.language}
+                </MenuItem>
+              ))}
+            </MenuList>
+          </Paper>
+        </Popover>
+
+        <div className={classes.formCenter}>
+          <div className={classes.formBox}>
+            <Typography component="h1" className={classes.title}>
+              {i18n.t("login.welcome")}
+            </Typography>
+            <Typography className={classes.subtitle}>
+              {i18n.t("login.welcomeSubtitle")}
+            </Typography>
+            <form noValidate onSubmit={handlSubmit}>
+              <label className={classes.label} htmlFor="email">
+                {i18n.t("login.form.email")}
+              </label>
+              <TextField
+                variant="outlined"
+                required
+                fullWidth
+                id="email"
+                name="email"
+                value={user.email}
+                onChange={handleChangeInput}
+                autoComplete="email"
+                autoFocus
+                inputProps={{ "aria-label": i18n.t("login.form.email") }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <MailOutlineIcon className={classes.inputIcon} />
+                    </InputAdornment>
+                  )
+                }}
+              />
+              <label className={classes.label} htmlFor="password">
+                {i18n.t("login.form.password")}
+              </label>
+              <TextField
+                variant="outlined"
+                required
+                fullWidth
+                name="password"
+                type={showPassword ? "text" : "password"}
+                id="password"
+                value={user.password}
+                onChange={handleChangeInput}
+                autoComplete="current-password"
+                inputProps={{ "aria-label": i18n.t("login.form.password") }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockOutlinedIcon className={classes.inputIcon} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label={
+                          showPassword
+                            ? i18n.t("common.hidePassword")
+                            : i18n.t("common.showPassword")
+                        }
+                        onClick={() => setShowPassword(!showPassword)}
+                        onMouseDown={event => event.preventDefault()}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  )
+                }}
+              />
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                color="primary"
+                className={classes.submit}
+              >
+                {i18n.t("login.buttons.submit")}
+              </Button>
+              {allowSignup && (
+                <Typography className={classes.signup}>
+                  {i18n.t("login.noAccount")}{" "}
+                  <Link component={RouterLink} to="/signup">
+                    {i18n.t("login.buttons.register")}
+                  </Link>
+                </Typography>
+              )}
+            </form>
+            {loginLinks.length > 0 && (
+              <div className={classes.linksContainer}>
+                {loginLinks.map((link, index) => (
+                  <a
+                    className={classes.footerLink}
+                    href={link.url}
+                    key={`${link.url}-${index}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {link.title}
+                  </a>
+                ))}
               </div>
             )}
-            <div className={classes.formColumn}>
-              <div className={classes.formCardWrap}>
-                <div className={classes.paper}>
-                  <div>
-                    <img
-                      className={classes.logoImg}
-                      alt={i18n.t("login.title")}
-                    />
-                  </div>
-                  <form
-                    className={classes.form}
-                    noValidate
-                    onSubmit={handlSubmit}
-                  >
-                    <TextField
-                      variant="outlined"
-                      margin="normal"
-                      required
-                      fullWidth
-                      id="email"
-                      label={i18n.t("login.form.email")}
-                      name="email"
-                      value={user.email}
-                      onChange={handleChangeInput}
-                      autoComplete="email"
-                      autoFocus
-                    />
-                    <TextField
-                      variant="outlined"
-                      margin="normal"
-                      required
-                      fullWidth
-                      name="password"
-                      label={i18n.t("login.form.password")}
-                      type={showPassword ? "text" : "password"}
-                      id="password"
-                      value={user.password}
-                      onChange={handleChangeInput}
-                      autoComplete="current-password"
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton
-                              aria-label={
-                                showPassword
-                                  ? i18n.t("common.hidePassword")
-                                  : i18n.t("common.showPassword")
-                              }
-                              onClick={() => setShowPassword(!showPassword)}
-                              onMouseDown={event => event.preventDefault()}
-                              edge="end"
-                            >
-                              {showPassword ? (
-                                <VisibilityOff />
-                              ) : (
-                                <Visibility />
-                              )}
-                            </IconButton>
-                          </InputAdornment>
-                        )
-                      }}
-                    />
-                    <Button
-                      type="submit"
-                      fullWidth
-                      variant="contained"
-                      color="primary"
-                      className={classes.submit}
-                    >
-                      {i18n.t("login.buttons.submit")}
-                    </Button>
-                    {allowSignup && (
-                      <Grid container>
-                        <Grid item>
-                          <Link
-                            href="#"
-                            variant="body2"
-                            component={RouterLink}
-                            to="/signup"
-                          >
-                            {i18n.t("login.buttons.register")}
-                          </Link>
-                        </Grid>
-                      </Grid>
-                    )}
-                  </form>
-                </div>
-              </div>
-            </div>
           </div>
-          {loginLinks.length > 0 && (
-            <div className={classes.linksContainer}>
-              {loginLinks.map((link, index) => (
-                <a
-                  className={classes.footerLink}
-                  href={link.url}
-                  key={`${link.url}-${index}`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {link.title}
-                </a>
-              ))}
-            </div>
-          )}
+        </div>
+
+        <div className={classes.formFooter}>
+          <span>
+            © {new Date().getFullYear()} {theme.appName}
+          </span>
+          <span>
+            {gitinfo.tagName ||
+              `${gitinfo.branchName || "N/A"} ${gitinfo.commitHash || "N/A"}`}
+          </span>
         </div>
       </div>
-      <Typography className={classes.versionInfo}>
-        {`${gitinfo.tagName || `${gitinfo.branchName || "N/A"} ${gitinfo.commitHash || "N/A"}`}`}
-        {" / "}
-        {`${gitinfo.buildTimestamp || "N/A"}`}
-      </Typography>
+
+      <div className={classes.brandSide}>
+        {brandMedia || (
+          <>
+            <RouteGraphic className={classes.route} />
+            <div>
+              <Typography component="h2" className={classes.heroTitle}>
+                {i18n.t("login.hero.title")}
+              </Typography>
+              <Typography className={classes.heroSubtitle}>
+                {i18n.t("login.hero.subtitle")}
+              </Typography>
+              <div className={classes.points}>
+                {["sla", "wallet", "kanban"].map(point => (
+                  <span key={point} className={classes.point}>
+                    <CheckCircleIcon className={classes.pointIcon} />
+                    {i18n.t(`login.hero.points.${point}`)}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className={classes.preview} aria-hidden="true">
+              {previewRows.map(row => (
+                <div key={row.initials} className={classes.previewRow}>
+                  <div
+                    className={classes.previewAvatar}
+                    style={{ backgroundColor: row.color }}
+                  >
+                    {row.initials}
+                    <WhatsAppIcon className={classes.previewChannel} />
+                  </div>
+                  <div className={classes.previewText}>
+                    <div className={classes.previewName}>
+                      {i18n.t(row.nameKey)}
+                    </div>
+                    <div className={classes.previewMessage}>
+                      {i18n.t(row.messageKey)}
+                    </div>
+                  </div>
+                  <span className={classes.previewChip} style={row.chipStyle}>
+                    {i18n.t(row.chip)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };

@@ -14,7 +14,8 @@ const safeSettingsKeys = new Set([
   "CheckMsgIsGroup",
   "soundGroupNotifications",
   "tagsMode",
-  "slaMinutes"
+  "slaMinutes",
+  "closeReasonRequired"
 ]);
 
 const useSettings = () => {

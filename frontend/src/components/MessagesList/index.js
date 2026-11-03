@@ -77,8 +77,9 @@ const useStyles = makeStyles(theme => ({
     marginBottom: 5
   },
 
+  // Zap Komunick: chat colors come from the theme tokens (theme/komunick.js)
   stickedMessages: {
-    backgroundColor: theme.mode === "light" ? "#dfdfdf" : "#505050",
+    backgroundColor: theme.komunick.chatBackground,
     flexDirection: "column",
     flexGrow: 1,
     padding: "5px 20px 20px 20px",
@@ -105,7 +106,7 @@ const useStyles = makeStyles(theme => ({
   },
 
   messagesList: {
-    backgroundColor: theme.mode === "light" ? "#dfdfdf" : "#505050",
+    backgroundColor: theme.komunick.chatBackground,
     display: "flex",
     flexDirection: "column",
     flexGrow: 1,
@@ -139,8 +140,8 @@ const useStyles = makeStyles(theme => ({
     },
 
     whiteSpace: "pre-wrap",
-    backgroundColor: theme.mode === "light" ? "#ffffff" : "#024481",
-    color: theme.mode === "light" ? "#303030" : "#ffffff",
+    backgroundColor: theme.komunick.bubbleTheirs,
+    color: theme.komunick.text,
     alignSelf: "flex-start",
     borderTopLeftRadius: 0,
     borderTopRightRadius: 8,
@@ -158,7 +159,7 @@ const useStyles = makeStyles(theme => ({
   quotedContainerLeft: {
     margin: "-3px -80px 6px -6px",
     overflow: "hidden",
-    backgroundColor: theme.mode === "light" ? "#f0f0f0" : "#1c2134",
+    backgroundColor: theme.komunick.bubbleTheirsQuoted,
     borderRadius: "7.5px",
     display: "flex",
     position: "relative",
@@ -201,8 +202,8 @@ const useStyles = makeStyles(theme => ({
       right: 0
     },
     whiteSpace: "pre-wrap",
-    backgroundColor: theme.mode === "light" ? "#dcf8c6" : "#005c4b",
-    color: theme.mode === "light" ? "#303030" : "#ffffff",
+    backgroundColor: theme.komunick.bubbleMine,
+    color: theme.komunick.text,
     alignSelf: "flex-end",
     borderTopLeftRadius: 8,
     borderTopRightRadius: 8,
@@ -220,7 +221,7 @@ const useStyles = makeStyles(theme => ({
   quotedContainerRight: {
     margin: "-3px -80px 6px -6px",
     overflowY: "hidden",
-    backgroundColor: theme.mode === "light" ? "#cfe9ba" : "#075e54",
+    backgroundColor: theme.komunick.bubbleMineQuoted,
     borderRadius: "7.5px",
     display: "flex",
     position: "relative"
@@ -373,7 +374,7 @@ const useStyles = makeStyles(theme => ({
   },
 
   timestampStickerLeft: {
-    backgroundColor: theme.mode === "light" ? "#ffffff" : "#024481",
+    backgroundColor: theme.komunick.bubbleTheirs,
     borderRadius: 8,
     padding: 5,
     boxShadow:
@@ -381,7 +382,7 @@ const useStyles = makeStyles(theme => ({
   },
 
   timestampStickerRight: {
-    backgroundColor: theme.mode === "light" ? "#dcf8c6" : "#128c7e",
+    backgroundColor: theme.komunick.bubbleMine,
     borderTopLeftRadius: 8,
     borderTopRightRadius: 8,
     borderBottomLeftRadius: 8,

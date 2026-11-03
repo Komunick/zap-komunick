@@ -15,6 +15,7 @@ import SendIcon from "@material-ui/icons/Send";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { useDate } from "../../hooks/useDate";
 import api from "../../services/api";
+import { i18n } from "../../translate/i18n";
 
 import { green } from "@material-ui/core/colors";
 import AttachFileIcon from "@material-ui/icons/AttachFile";
@@ -52,14 +53,29 @@ const useStyles = makeStyles(theme => ({
     overflowY: "auto",
     height: "100%",
     ...theme.scrollbarStyles,
-    backgroundColor: theme.palette.chatlist.main
+    backgroundColor: theme.komunick.chatBackground
   },
   inputArea: {
     position: "relative",
-    height: "auto"
+    height: "auto",
+    paddingTop: 8,
+    backgroundColor: theme.komunick.chatBackground
   },
   input: {
-    padding: "20px"
+    display: "flex",
+    // Zap Komunick: same composer as the tickets, a rounded bar in its own
+    // tone over the conversation background
+    margin: "0 12px 10px",
+    width: "calc(100% - 24px)",
+    padding: "4px 6px",
+    borderRadius: 26,
+    border: `1px solid ${theme.komunick.composerBorder}`,
+    backgroundColor: theme.komunick.composer,
+    boxShadow: theme.komunick.composerShadow,
+    "&:focus-within": {
+      borderColor: theme.komunick.accent
+    },
+    "&:before, &:after": { display: "none" }
   },
   buttonSend: {
     margin: theme.spacing(1)
@@ -572,6 +588,7 @@ export default function ChatMessages({
                 <React.Fragment>
                   <Input
                     multiline
+                    placeholder={i18n.t("messagesInput.placeholderOpen")}
                     value={contentMessage}
                     onKeyUp={e => {
                       if (e.key === "Enter" && contentMessage.trim() !== "") {

@@ -4,6 +4,7 @@ import Grid from "@material-ui/core/Grid";
 import MenuItem from "@material-ui/core/MenuItem";
 import FormControl from "@material-ui/core/FormControl";
 import InputLabel from "@material-ui/core/InputLabel";
+import FormHelperText from "@material-ui/core/FormHelperText";
 import Select from "@material-ui/core/Select";
 import useSettings from "../../hooks/useSettings";
 import { i18nToast } from "../../helpers/i18nToast";
@@ -136,6 +137,7 @@ export default function Options(props) {
   const [slaMinutes, setSlaMinutes] = useState("0");
   const [slaOldTicketHours, setSlaOldTicketHours] = useState("72");
   const [walletAutoAssign, setWalletAutoAssign] = useState("disabled");
+  const [closeReasonRequired, setCloseReasonRequired] = useState("disabled");
 
   const [queues, setQueues] = useState([]);
   const { findAll: findAllQueues } = useQueues();
@@ -335,6 +337,10 @@ export default function Options(props) {
         s => s.key === "walletAutoAssign"
       );
       setWalletAutoAssign(walletAutoAssignSetting?.value || "disabled");
+      const closeReasonRequiredSetting = settings.find(
+        s => s.key === "closeReasonRequired"
+      );
+      setCloseReasonRequired(closeReasonRequiredSetting?.value || "disabled");
 
       const gracePeriod = settings.find(s => s.key === "gracePeriod");
       setGracePeriod(gracePeriod?.value || 0);
@@ -1013,6 +1019,35 @@ export default function Options(props) {
                 {i18n.t("settings.wallet.options.enabled")}
               </MenuItem>
             </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid xs={12} sm={6} md={4} item>
+          <FormControl className={classes.selectContainer}>
+            <InputLabel id="close-reason-required-label">
+              {i18n.t("settings.closeReason.required")}
+            </InputLabel>
+            <Select
+              labelId="close-reason-required-label"
+              value={closeReasonRequired}
+              onChange={async e => {
+                handleSetting(
+                  "closeReasonRequired",
+                  e.target.value,
+                  setCloseReasonRequired
+                );
+              }}
+            >
+              <MenuItem value={"disabled"}>
+                {i18n.t("settings.closeReason.options.disabled")}
+              </MenuItem>
+              <MenuItem value={"enabled"}>
+                {i18n.t("settings.closeReason.options.enabled")}
+              </MenuItem>
+            </Select>
+            <FormHelperText>
+              {i18n.t("settings.closeReason.requiredHelper")}
+            </FormHelperText>
           </FormControl>
         </Grid>
 

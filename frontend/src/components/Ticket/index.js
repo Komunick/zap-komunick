@@ -5,8 +5,10 @@ import { toast } from "react-toastify";
 import clsx from "clsx";
 
 import { Paper, makeStyles } from "@material-ui/core";
+import useMediaQuery from "@material-ui/core/useMediaQuery";
 
 import ContactDrawer from "../ContactDrawer";
+import CustomerPanel from "../CustomerPanel";
 import MessageInput from "../MessageInputCustom/";
 import TicketHeader from "../TicketHeader";
 import TicketInfo from "../TicketInfo";
@@ -77,6 +79,9 @@ const Ticket = () => {
 
   const { user } = useContext(AuthContext);
 
+  // Zap Komunick: on wide screens the customer panel is fixed beside the
+  // conversation; below that the contact drawer keeps opening on click
+  const wide = useMediaQuery("(min-width:1400px)");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [contact, setContact] = useState({});
@@ -184,7 +189,7 @@ const Ticket = () => {
         <TicketInfo
           contact={contact}
           ticket={ticket}
-          onClick={handleDrawerOpen}
+          onClick={wide ? undefined : handleDrawerOpen}
         />
       );
     }
@@ -210,12 +215,12 @@ const Ticket = () => {
         variant="outlined"
         elevation={0}
         className={clsx(classes.mainWrapper, {
-          [classes.mainWrapperShift]: drawerOpen
+          [classes.mainWrapperShift]: drawerOpen && !wide
         })}
       >
         <div
           className={clsx({
-            [classes.drawerShade]: drawerOpen
+            [classes.drawerShade]: drawerOpen && !wide
           })}
           onClick={() => setDrawerOpen(false)}
         ></div>
@@ -233,13 +238,17 @@ const Ticket = () => {
           <EditMessageProvider>{renderMessagesList()}</EditMessageProvider>
         </ReplyMessageProvider>
       </Paper>
-      <ContactDrawer
-        open={drawerOpen}
-        handleDrawerClose={handleDrawerClose}
-        contact={contact}
-        loading={loading}
-        ticket={ticket}
-      />
+      {wide ? (
+        <CustomerPanel ticket={ticket} contact={contact} loading={loading} />
+      ) : (
+        <ContactDrawer
+          open={drawerOpen}
+          handleDrawerClose={handleDrawerClose}
+          contact={contact}
+          loading={loading}
+          ticket={ticket}
+        />
+      )}
     </div>
   );
 };

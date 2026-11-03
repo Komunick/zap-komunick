@@ -1,15 +1,13 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { useHistory } from "react-router-dom";
+import clsx from "clsx";
 
-import { makeStyles } from "@material-ui/core/styles";
+import { alpha, makeStyles } from "@material-ui/core/styles";
 import Paper from "@material-ui/core/Paper";
 import SearchIcon from "@material-ui/icons/Search";
 import InputBase from "@material-ui/core/InputBase";
 import Tabs from "@material-ui/core/Tabs";
 import Tab from "@material-ui/core/Tab";
-import Badge from "@material-ui/core/Badge";
-import MoveToInboxIcon from "@material-ui/icons/MoveToInbox";
-import CheckBoxIcon from "@material-ui/icons/CheckBox";
 
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Switch from "@material-ui/core/Switch";
@@ -17,16 +15,19 @@ import Switch from "@material-ui/core/Switch";
 import NewTicketModal from "../NewTicketModal";
 import TicketsList from "../TicketsListCustom";
 import TabPanel from "../TabPanel";
+import { EMPTY_FILTERS, TicketsFilterButton } from "../TicketsFilters";
+import {
+  BulkBar,
+  BulkSelectionContext,
+  useBulkSelectionState
+} from "../TicketsBulk";
 
 import { i18n } from "../../translate/i18n";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { Can } from "../Can";
-import TicketsQueueSelect from "../TicketsQueueSelect";
 import { Box, Button } from "@material-ui/core";
 import { TagsFilter } from "../TagsFilter";
 import { UsersFilter } from "../UsersFilter";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPeopleGroup } from "@fortawesome/free-solid-svg-icons";
 import useSettings from "../../hooks/useSettings";
 import { ContactSelect } from "../ContactSelect";
 
@@ -42,10 +43,147 @@ const useStyles = makeStyles(theme => ({
   },
 
   tabsHeader: {
-    flex: "none"
-    // backgroundColor: "#eee",
+    flex: "none",
+    // Zap Komunick: segmented pills
+    padding: 6,
+    borderBottom: `1px solid ${theme.palette.divider}`,
+    "& .MuiTabs-indicator": {
+      display: "none"
+    },
+    "& .MuiTab-root": {
+      minHeight: 40,
+      borderRadius: 10,
+      color: theme.palette.text.secondary
+    },
+    "& .MuiTab-wrapper": {
+      flexDirection: "row",
+      gap: 6
+    },
+    "& .MuiTab-labelIcon .MuiTab-wrapper > *:first-child": {
+      marginBottom: 0,
+      fontSize: 20
+    },
+    "& .Mui-selected": {
+      color: theme.palette.primary.main,
+      backgroundColor: alpha(theme.palette.primary.main, 0.1)
+    }
   },
 
+  statusTabs: {
+    margin: theme.spacing(0, 1),
+    minHeight: 40,
+    borderRadius: 12,
+    backgroundColor: theme.komunick.subtle,
+    border: `1px solid ${theme.palette.divider}`,
+    "& .MuiTabs-indicator": {
+      display: "none"
+    },
+    "& .MuiTab-root": {
+      minHeight: 36,
+      margin: 2,
+      borderRadius: 10,
+      color: theme.palette.text.secondary
+    },
+    "& .Mui-selected": {
+      color: theme.palette.text.primary,
+      backgroundColor: theme.palette.background.paper,
+      boxShadow: theme.komunick.shadow
+    }
+  },
+
+  // Zap Komunick: one row of views (Meus, Aguardando, Pausados, Resolvidos)
+  visions: {
+    flex: "none",
+    minHeight: 44,
+    padding: "0 8px",
+    borderBottom: `1px solid ${theme.palette.divider}`,
+    "& .MuiTab-root": {
+      minWidth: 0,
+      minHeight: 44,
+      padding: "6px 12px",
+      textTransform: "none",
+      fontWeight: 600,
+      fontSize: 14,
+      color: theme.palette.text.secondary
+    },
+    "& .Mui-selected": {
+      color: theme.palette.text.primary
+    },
+    "& .MuiTabs-indicator": {
+      height: 2,
+      backgroundColor: theme.komunick.accent
+    }
+  },
+  visionSearch: {
+    minWidth: 44,
+    marginLeft: "auto"
+  },
+  count: {
+    marginLeft: 6,
+    minWidth: 20,
+    padding: "1px 6px",
+    borderRadius: 10,
+    fontSize: 11,
+    fontWeight: 700,
+    lineHeight: "16px",
+    textAlign: "center",
+    color: theme.palette.text.secondary,
+    backgroundColor: theme.komunick.tagBackground
+  },
+  countHot: {
+    color: "#FFFFFF",
+    backgroundColor: theme.palette.primary.main
+  },
+  queueRow: {
+    flex: "none",
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    padding: "0 12px 8px",
+    overflowX: "auto",
+    "&::-webkit-scrollbar": { height: 0 }
+  },
+  queueLabel: {
+    fontSize: 12,
+    fontWeight: 600,
+    color: theme.palette.text.secondary,
+    marginRight: 2
+  },
+  queueChip: {
+    flex: "none",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    height: 26,
+    padding: "0 10px",
+    borderRadius: 13,
+    border: `1px solid ${theme.palette.divider}`,
+    backgroundColor: "transparent",
+    color: theme.palette.text.secondary,
+    fontFamily: "inherit",
+    fontSize: 12,
+    fontWeight: 600,
+    cursor: "pointer",
+    "&:hover": {
+      borderColor: theme.komunick.borderStrong
+    }
+  },
+  queueChipOn: {
+    color: theme.palette.text.primary,
+    borderColor: theme.komunick.accent,
+    backgroundColor: theme.komunick.selectedRow
+  },
+  queueDot: {
+    width: 8,
+    height: 8,
+    borderRadius: "50%"
+  },
+  bulkButton: {
+    marginLeft: 6,
+    textTransform: "none",
+    fontWeight: 600,
+    color: theme.palette.text.secondary
+  },
   settingsIcon: {
     alignSelf: "center",
     marginLeft: "auto",
@@ -53,13 +191,11 @@ const useStyles = makeStyles(theme => ({
   },
 
   tabWithGroups: {
-    minWidth: 90,
-    width: 90
+    minWidth: 72
   },
 
   tab: {
-    minWidth: 120,
-    width: 120
+    minWidth: 90
   },
 
   ticketOptionsBox: {
@@ -92,8 +228,21 @@ const useStyles = makeStyles(theme => ({
     borderRadius: 30
   },
 
+  // Zap Komunick: the count sits after the label, not over its last letters
   badge: {
-    right: "-10px"
+    alignItems: "center",
+    "& .MuiBadge-badge": {
+      position: "static",
+      transform: "none",
+      marginLeft: 8,
+      minWidth: 20,
+      height: 20,
+      borderRadius: 10,
+      fontWeight: 700
+    },
+    "& .MuiBadge-invisible": {
+      display: "none"
+    }
   },
   show: {
     display: "block"
@@ -172,6 +321,72 @@ const TicketsManagerTabs = () => {
     setTab(newValue);
   };
 
+  const view = tab === "open" ? (tabOpen === "open" ? "mine" : "waiting") : tab;
+
+  // Zap Komunick: selection for the actions in bulk (RF-011); each view has
+  // its own list, and the closed tickets have no bulk action
+  const selection = useBulkSelectionState();
+
+  // Zap Komunick: filter panel (RF-012), kept in this browser
+  const [filters, setFilters] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("ticketFilters"));
+      return saved ? { ...EMPTY_FILTERS, ...saved } : EMPTY_FILTERS;
+    } catch (e) {
+      return EMPTY_FILTERS;
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem("ticketFilters", JSON.stringify(filters));
+    } catch (e) {
+      // storage blocked: the filters last until the page is reloaded
+    }
+  }, [filters]);
+  const bulkListKey = {
+    mine: "open",
+    waiting: "pending",
+    paused: "paused",
+    groups: "groups",
+    search: "search"
+  }[view];
+
+  useEffect(() => {
+    selection.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view]);
+
+  const handleChangeView = (e, newValue) => {
+    if (newValue === "mine" || newValue === "waiting") {
+      setTab("open");
+      setTabOpen(newValue === "mine" ? "open" : "pending");
+      return;
+    }
+    handleChangeTab(e, newValue);
+  };
+
+  const toggleQueue = queueId => {
+    setSelectedQueueIds(current => {
+      if (current.includes(queueId)) {
+        return current.length > 1
+          ? current.filter(id => id !== queueId)
+          : current;
+      }
+      return [...current, queueId];
+    });
+  };
+
+  const visionLabel = (text, count, hot) => (
+    <span>
+      {text}
+      {count !== undefined && count > 0 && (
+        <span className={clsx(classes.count, hot && classes.countHot)}>
+          {count > 999 ? "999+" : count}
+        </span>
+      )}
+    </span>
+  );
+
   const handleChangeTabOpen = (e, newValue) => {
     setTabOpen(newValue);
   };
@@ -200,213 +415,220 @@ const TicketsManagerTabs = () => {
   };
 
   return (
-    <Paper elevation={0} variant="outlined" className={classes.ticketsWrapper}>
-      <NewTicketModal
-        modalOpen={newTicketModalOpen}
-        onClose={ticket => {
-          handleCloseOrOpenTicket(ticket);
-        }}
-      />
-      <Paper elevation={0} square className={classes.tabsHeader}>
-        <Tabs
-          value={tab}
-          onChange={handleChangeTab}
-          variant="fullWidth"
-          indicatorColor="primary"
-          textColor="primary"
-          aria-label="icon label tabs example"
-        >
-          <Tab
-            value={"open"}
-            icon={<MoveToInboxIcon />}
-            label={i18n.t("tickets.tabs.open.title")}
-            classes={{
-              root: showTabGroups ? classes.tabWithGroups : classes.tab
-            }}
-          />
-
-          {showTabGroups && (
-            <Tab
-              value={"groups"}
-              icon={
-                <FontAwesomeIcon
-                  className={classes.icon24}
-                  icon={faPeopleGroup}
-                />
-              }
-              label={i18n.t("tickets.tabs.groups.title")}
-              classes={{ root: classes.tabWithGroups }}
-            />
-          )}
-
-          <Tab
-            value={"closed"}
-            icon={<CheckBoxIcon />}
-            label={i18n.t("tickets.tabs.closed.title")}
-            classes={{
-              root: showTabGroups ? classes.tabWithGroups : classes.tab
-            }}
-          />
-
-          <Tab
-            value={"search"}
-            icon={<SearchIcon />}
-            label={i18n.t("tickets.tabs.search.title")}
-            classes={{
-              root: showTabGroups ? classes.tabWithGroups : classes.tab
-            }}
-          />
-        </Tabs>
-      </Paper>
-      <Paper square elevation={0} className={classes.ticketOptionsBox}>
-        {tab === "search" ? (
-          <div className={classes.serachInputWrapper}>
-            <SearchIcon className={classes.searchIcon} />
-            <InputBase
-              className={classes.searchInput}
-              inputRef={searchInputRef}
-              placeholder={i18n.t("tickets.search.placeholder")}
-              type="search"
-              onChange={handleSearch}
-            />
-          </div>
-        ) : (
-          <>
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={() => setNewTicketModalOpen(true)}
-            >
-              {i18n.t("ticketsManager.buttons.newTicket")}
-            </Button>
-            {tab === "open" && (
-              <Can
-                role={user.profile}
-                perform="tickets-manager:showall"
-                yes={() => (
-                  <FormControlLabel
-                    label={i18n.t("tickets.buttons.showAll")}
-                    labelPlacement="start"
-                    control={
-                      <Switch
-                        size="small"
-                        checked={showAllTickets}
-                        onChange={() =>
-                          setShowAllTickets(prevState => !prevState)
-                        }
-                        name="showAllTickets"
-                        color="primary"
-                      />
-                    }
-                  />
-                )}
-              />
-            )}
-          </>
-        )}
-        <TicketsQueueSelect
-          style={{ marginLeft: 6 }}
-          selectedQueueIds={selectedQueueIds}
-          userQueues={user?.queues}
-          onChange={values => setSelectedQueueIds(values)}
+    <BulkSelectionContext.Provider value={selection}>
+      <Paper
+        elevation={0}
+        variant="outlined"
+        className={classes.ticketsWrapper}
+      >
+        <NewTicketModal
+          modalOpen={newTicketModalOpen}
+          onClose={ticket => {
+            handleCloseOrOpenTicket(ticket);
+          }}
         />
-      </Paper>
-      <TabPanel value={tab} name="open" className={classes.ticketsWrapper}>
         <Tabs
-          value={tabOpen}
-          onChange={handleChangeTabOpen}
+          value={view}
+          onChange={handleChangeView}
+          variant="scrollable"
+          scrollButtons="off"
           indicatorColor="primary"
           textColor="primary"
-          variant="fullWidth"
+          className={classes.visions}
+          aria-label={i18n.t("tickets.views.label")}
         >
           <Tab
-            label={
-              <Badge
-                className={classes.badge}
-                badgeContent={openCount}
-                color="primary"
-                max={999}
-              >
-                {i18n.t("ticketsList.assignedHeader")}
-              </Badge>
-            }
-            value={"open"}
+            value="mine"
+            label={visionLabel(
+              showAllTickets
+                ? i18n.t("tickets.views.inService")
+                : i18n.t("tickets.views.mine"),
+              openCount
+            )}
           />
           <Tab
-            label={
-              <Badge
-                className={classes.badge}
-                badgeContent={pendingCount}
-                color="secondary"
-                max={999}
-              >
-                {i18n.t("ticketsList.pendingHeader")}
-              </Badge>
-            }
-            value={"pending"}
+            value="waiting"
+            label={visionLabel(
+              i18n.t("tickets.views.waiting"),
+              pendingCount,
+              true
+            )}
+          />
+          <Tab value="paused" label={i18n.t("tickets.tabs.paused.title")} />
+          {showTabGroups && (
+            <Tab value="groups" label={i18n.t("tickets.tabs.groups.title")} />
+          )}
+          <Tab value="closed" label={i18n.t("tickets.tabs.closed.title")} />
+          <Tab
+            value="search"
+            className={classes.visionSearch}
+            icon={<SearchIcon fontSize="small" />}
+            aria-label={i18n.t("tickets.tabs.search.title")}
           />
         </Tabs>
-        <Paper className={classes.ticketsWrapper}>
+        <Paper square elevation={0} className={classes.ticketOptionsBox}>
+          {tab === "search" ? (
+            <div className={classes.serachInputWrapper}>
+              <SearchIcon className={classes.searchIcon} />
+              <InputBase
+                className={classes.searchInput}
+                inputRef={searchInputRef}
+                placeholder={i18n.t("tickets.search.placeholder")}
+                type="search"
+                onChange={handleSearch}
+              />
+              <TicketsFilterButton filters={filters} onChange={setFilters} />
+            </div>
+          ) : (
+            <>
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => setNewTicketModalOpen(true)}
+              >
+                {i18n.t("ticketsManager.buttons.newTicket")}
+              </Button>
+              <TicketsFilterButton filters={filters} onChange={setFilters} />
+              {bulkListKey && !selection.selecting && (
+                <Button
+                  size="small"
+                  className={classes.bulkButton}
+                  onClick={selection.start}
+                >
+                  {i18n.t("tickets.bulk.select")}
+                </Button>
+              )}
+              {tab === "open" && (
+                <Can
+                  role={user.profile}
+                  perform="tickets-manager:showall"
+                  yes={() => (
+                    <FormControlLabel
+                      label={i18n.t("tickets.buttons.showAll")}
+                      labelPlacement="start"
+                      control={
+                        <Switch
+                          size="small"
+                          checked={showAllTickets}
+                          onChange={() =>
+                            setShowAllTickets(prevState => !prevState)
+                          }
+                          name="showAllTickets"
+                          color="primary"
+                        />
+                      }
+                    />
+                  )}
+                />
+              )}
+            </>
+          )}
+        </Paper>
+        {(user?.queues || []).length > 0 && (
+          <div className={classes.queueRow}>
+            <span className={classes.queueLabel}>
+              {i18n.t("tickets.views.queues")}
+            </span>
+            {(user?.queues || []).map(queue => (
+              <button
+                key={queue.id}
+                type="button"
+                aria-pressed={selectedQueueIds.includes(queue.id)}
+                className={clsx(
+                  classes.queueChip,
+                  selectedQueueIds.includes(queue.id) && classes.queueChipOn
+                )}
+                onClick={() => toggleQueue(queue.id)}
+              >
+                <span
+                  className={classes.queueDot}
+                  style={{ backgroundColor: queue.color || "#7C7C7C" }}
+                />
+                {queue.name}
+              </button>
+            ))}
+          </div>
+        )}
+        {selection.selecting && bulkListKey && (
+          <BulkBar selection={selection} listKey={bulkListKey} />
+        )}
+        <TabPanel value={tab} name="open" className={classes.ticketsWrapper}>
+          <Paper className={classes.ticketsWrapper}>
+            <TicketsList
+              filters={filters}
+              status="open"
+              showAll={showAllTickets}
+              selectedQueueIds={selectedQueueIds}
+              updateCount={val => setOpenCount(val)}
+              style={applyPanelStyle("open")}
+              setTabOpen={setTabOpen}
+              showTabGroups={showTabGroups}
+            />
+            <TicketsList
+              filters={filters}
+              status="pending"
+              selectedQueueIds={selectedQueueIds}
+              updateCount={val => setPendingCount(val)}
+              style={applyPanelStyle("pending")}
+              setTabOpen={setTabOpen}
+              showTabGroups={showTabGroups}
+            />
+          </Paper>
+        </TabPanel>
+        <TabPanel value={tab} name="paused" className={classes.ticketsWrapper}>
           <TicketsList
-            status="open"
+            filters={filters}
+            status="paused"
             showAll={showAllTickets}
             selectedQueueIds={selectedQueueIds}
-            updateCount={val => setOpenCount(val)}
-            style={applyPanelStyle("open")}
-            setTabOpen={setTabOpen}
             showTabGroups={showTabGroups}
           />
+        </TabPanel>
+        <TabPanel value={tab} name="closed" className={classes.ticketsWrapper}>
           <TicketsList
-            status="pending"
+            filters={filters}
+            status="closed"
+            showAll={true}
             selectedQueueIds={selectedQueueIds}
-            updateCount={val => setPendingCount(val)}
-            style={applyPanelStyle("pending")}
-            setTabOpen={setTabOpen}
             showTabGroups={showTabGroups}
           />
-        </Paper>
-      </TabPanel>
-      <TabPanel value={tab} name="closed" className={classes.ticketsWrapper}>
-        <TicketsList
-          status="closed"
-          showAll={true}
-          selectedQueueIds={selectedQueueIds}
-          showTabGroups={showTabGroups}
-        />
-      </TabPanel>
-      <TabPanel value={tab} name="groups" className={classes.ticketsWrapper}>
-        <TicketsList
-          groups={true}
-          showAll={true}
-          selectedQueueIds={selectedQueueIds}
-          showTabGroups={showTabGroups}
-        />
-      </TabPanel>
-      <TabPanel value={tab} name="search" className={classes.ticketsWrapper}>
-        <Box style={{ paddingRight: 10, paddingLeft: 10 }}>
-          <ContactSelect
-            onSelected={contactId => {
-              setSelectedContact(contactId);
-            }}
-            allowCreate={false}
+        </TabPanel>
+        <TabPanel value={tab} name="groups" className={classes.ticketsWrapper}>
+          <TicketsList
+            filters={filters}
+            groups={true}
+            showAll={true}
+            selectedQueueIds={selectedQueueIds}
+            showTabGroups={showTabGroups}
           />
-        </Box>
-        <TagsFilter onFiltered={handleSelectedTags} />
-        {profile === "admin" && (
-          <UsersFilter onFiltered={handleSelectedUsers} />
-        )}
-        <TicketsList
-          isSearch={true}
-          searchParam={searchParam}
-          showAll={true}
-          contactId={selectedContact}
-          tags={selectedTags}
-          users={selectedUsers}
-          selectedQueueIds={selectedQueueIds}
-          showTabGroups={showTabGroups}
-        />
-      </TabPanel>
-    </Paper>
+        </TabPanel>
+        <TabPanel value={tab} name="search" className={classes.ticketsWrapper}>
+          <Box style={{ paddingRight: 10, paddingLeft: 10 }}>
+            <ContactSelect
+              onSelected={contactId => {
+                setSelectedContact(contactId);
+              }}
+              allowCreate={false}
+            />
+          </Box>
+          <TagsFilter onFiltered={handleSelectedTags} />
+          {profile === "admin" && (
+            <UsersFilter onFiltered={handleSelectedUsers} />
+          )}
+          <TicketsList
+            filters={filters}
+            isSearch={true}
+            searchParam={searchParam}
+            showAll={true}
+            contactId={selectedContact}
+            tags={selectedTags}
+            users={selectedUsers}
+            selectedQueueIds={selectedQueueIds}
+            showTabGroups={showTabGroups}
+          />
+        </TabPanel>
+      </Paper>
+    </BulkSelectionContext.Provider>
   );
 };
 

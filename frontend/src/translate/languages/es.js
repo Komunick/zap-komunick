@@ -1386,9 +1386,7 @@ const messages = {
       wavoipModal: {
         title: "Ingrese el token de su conexión en Wavoip",
         instructions:
-          "Accediendo a la siguiente dirección puede crear una cuenta con 50 llamadas gratuitas para prueba",
-        coupon:
-          "¡Al contratar el servicio use el cupón TICKETZ para ganar un descuento!"
+          "Accediendo a la siguiente dirección puede crear una cuenta con 50 llamadas gratuitas para prueba"
       },
       openHours: {
         title: "Horarios de Atención",

@@ -1,4 +1,5 @@
 import { subHours } from "date-fns";
+import { ACTIVE_TICKET_STATUSES } from "../../helpers/TicketPauseAndClose";
 import { Op } from "sequelize";
 import Contact from "../../models/Contact";
 import Ticket from "../../models/Ticket";
@@ -22,7 +23,7 @@ const FindOrCreateTicketServiceMeta = async (
   let ticket = await Ticket.findOne({
     where: {
       status: {
-        [Op.or]: ["open", "pending"]
+        [Op.or]: ACTIVE_TICKET_STATUSES
       },
       contactId: contact.id,
       companyId,

@@ -23,9 +23,15 @@ const ShowTicketUUIDService = async (uuid: string): Promise<Ticket> => {
           "profilePicUrl",
           "profileHiresPictureUrl",
           "presence",
-          "disableBot"
+          "disableBot",
+          "walletUserId"
         ],
-        include: ["tags", "extraInfo"]
+        // Zap Komunick: the customer panel shows the wallet owner
+        include: [
+          "tags",
+          "extraInfo",
+          { model: User, as: "walletUser", attributes: ["id", "name"] }
+        ]
       },
       {
         model: User,

@@ -36,6 +36,7 @@ import wavoipRoutes from "./wavoipRoutes";
 import dockerRoutes from "./dockerRoutes";
 import slaRoutes from "./slaRoutes";
 import kanbanRoutes from "./kanbanRoutes";
+import closeReasonRoutes from "./closeReasonRoutes";
 
 const routes = Router();
 
@@ -76,5 +77,6 @@ routes.use(wavoipRoutes);
 routes.use(dockerRoutes);
 routes.use(slaRoutes);
 routes.use(kanbanRoutes);
+routes.use(closeReasonRoutes);
 
 export default routes;

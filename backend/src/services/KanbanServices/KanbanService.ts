@@ -9,6 +9,7 @@ import User from "../../models/User";
 import ShowTicketService from "../TicketServices/ShowTicketService";
 import { websocketUpdateTicket } from "../TicketServices/UpdateTicketService";
 import { laneOf, OPEN_LANE, planKanbanMove } from "../../helpers/KanbanRules";
+import { ACTIVE_TICKET_STATUSES } from "../../helpers/TicketPauseAndClose";
 
 // Zap Komunick: Kanban board by tags (docs/PRD.md, RF-004)
 
@@ -45,7 +46,7 @@ export const ListKanbanService = async (
 
   const where: WhereOptions<Ticket> = {
     companyId,
-    status: { [Op.or]: ["open", "pending"] }
+    status: { [Op.or]: ACTIVE_TICKET_STATUSES }
   };
 
   // same visibility as the ticket list: attendants see their own tickets and
