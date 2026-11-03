@@ -75,6 +75,8 @@ const CommandPalette = ({ open, onClose }) => {
 
   const [query, setQuery] = useState("");
   const [tickets, setTickets] = useState([]);
+  // Zap Komunick: clients too, also without any ticket (RF-018)
+  const [clients, setClients] = useState([]);
   const [active, setActive] = useState(0);
 
   useEffect(() => {
@@ -97,6 +99,7 @@ const CommandPalette = ({ open, onClose }) => {
     const text = query.trim();
     if (text.length < 2) {
       setTickets([]);
+      setClients([]);
       return undefined;
     }
 
@@ -115,6 +118,14 @@ const CommandPalette = ({ open, onClose }) => {
         setTickets((data.tickets || []).slice(0, 6));
       } catch (err) {
         setTickets([]);
+      }
+      try {
+        const { data } = await api.get("/contacts", {
+          params: { searchParam: text, pageNumber: 1 }
+        });
+        setClients((data.contacts || []).filter(c => !c.isGroup).slice(0, 5));
+      } catch (err) {
+        setClients([]);
       }
     }, 300);
 
@@ -135,18 +146,35 @@ const CommandPalette = ({ open, onClose }) => {
         label: formatWhatsappContactName(ticket.contact, ticket),
         hint: (ticket.lastMessage || "").replace(/[*_~`]/g, "").split("\n")[0],
         to: `/tickets/${ticket.uuid}`
-      }))
+      })),
+      ...clients
+        .filter(client => !tickets.some(t => t.contactId === client.id))
+        .map(client => ({
+          key: `client-${client.id}`,
+          group: i18n.t("clients.title"),
+          label: client.name,
+          hint: i18n.t("clients.talkTo", { number: client.number }),
+          client
+        }))
     ],
-    [pages, tickets]
+    [pages, tickets, clients]
   );
 
   useEffect(() => {
     setActive(0);
-  }, [query, tickets.length]);
+  }, [query, tickets.length, clients.length]);
 
   const go = result => {
     if (!result) return;
     onClose();
+    if (result.client) {
+      window.mentionClick({
+        contactId: result.client.id,
+        name: result.client.name,
+        number: result.client.number
+      });
+      return;
+    }
     history.push(result.to);
   };
 

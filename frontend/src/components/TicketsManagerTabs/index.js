@@ -30,6 +30,7 @@ import { TagsFilter } from "../TagsFilter";
 import { UsersFilter } from "../UsersFilter";
 import useSettings from "../../hooks/useSettings";
 import { ContactSelect } from "../ContactSelect";
+import ClientMatches from "../ClientMatches";
 
 const useStyles = makeStyles(theme => ({
   ticketsWrapper: {
@@ -611,6 +612,7 @@ const TicketsManagerTabs = () => {
               allowCreate={false}
             />
           </Box>
+          <ClientMatches searchParam={searchParam} />
           <TagsFilter onFiltered={handleSelectedTags} />
           {profile === "admin" && (
             <UsersFilter onFiltered={handleSelectedUsers} />

@@ -114,6 +114,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Operação
 
+- Clientes da agenda do WhatsApp entram em Contatos automaticamente (sem trocar nomes já cadastrados; configuração
+  "Agenda do WhatsApp em Contatos"), e dá para abrir conversa com qualquer cliente pela paleta (Ctrl K, grupo
+  "Clientes") e pela busca de Atendimentos (botão "Conversar").
 - Histórico completo do cliente na conversa: as mensagens de atendimentos anteriores (inclusive resolvidos)
   aparecem com uma divisória por atendimento, respeitando a privacidade por fila nos atendimentos anteriores.
 - Contexto na transferência: nota interna e mensagens destacadas para o setor que recebe, mostradas num cartão na
