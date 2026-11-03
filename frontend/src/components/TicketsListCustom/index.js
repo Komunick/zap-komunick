@@ -13,6 +13,7 @@ import Paper from "@material-ui/core/Paper";
 import TicketListItem from "../TicketListItemCustom";
 import TicketsListSkeleton from "../TicketsListSkeleton";
 import { BulkSelectionContext } from "../TicketsBulk";
+import { countFilters, ticketMatchesFilters } from "../TicketsFilters";
 
 import useTickets from "../../hooks/useTickets";
 import { i18n } from "../../translate/i18n";
@@ -191,8 +192,10 @@ const TicketsListCustom = props => {
     updateCount,
     style,
     setTabOpen,
-    showTabGroups
+    showTabGroups,
+    filters
   } = props;
+  const filtersKey = JSON.stringify(filters || {});
   const classes = useStyles();
   const [paginationCursor, setPaginationCursor] = useState({
     nextUpdatedAt: null,
@@ -257,7 +260,8 @@ const TicketsListCustom = props => {
     contactId,
     tags,
     users,
-    selectedQueueIds
+    selectedQueueIds,
+    filtersKey
   ]);
 
   const {
@@ -279,7 +283,8 @@ const TicketsListCustom = props => {
     contactId,
     tags: JSON.stringify(tags),
     users: JSON.stringify(users),
-    queueIds: JSON.stringify(selectedQueueIds)
+    queueIds: JSON.stringify(selectedQueueIds),
+    filters
   });
 
   useEffect(() => {
@@ -299,8 +304,19 @@ const TicketsListCustom = props => {
     const companyId = localStorage.getItem("companyId");
     const socket = socketManager.GetSocket(companyId);
 
+    // Zap Komunick: the filter panel also applies to realtime updates (RF-012)
+    const filterContext = {
+      isAdmin: profile === "admin",
+      userId: user?.id,
+      slaMinutes: Number(slaMinutes) || 0
+    };
+    const filtersActive = !!filters && countFilters(filters) > 0;
+    const matchesPanel = ticket =>
+      ticketMatchesFilters(ticket, filters, filterContext);
+
     const shouldUpdateTicket = ticket => {
       return (
+        matchesPanel(ticket) &&
         (!isSearch || !searchParam) &&
         (!contactId || ticket.contactId === contactId) &&
         (!tags?.length ||
@@ -327,6 +343,15 @@ const TicketsListCustom = props => {
     };
 
     const onCompanyTicket = data => {
+      if (
+        data.action === "update" &&
+        filtersActive &&
+        !matchesPanel(data.ticket)
+      ) {
+        dispatch({ type: "DELETE_TICKET", payload: data.ticket?.id });
+        return;
+      }
+
       if (data.action === "updateUnread") {
         dispatch({
           type: "RESET_UNREAD",
@@ -468,7 +493,9 @@ const TicketsListCustom = props => {
     profile,
     queues,
     socketManager,
-    refetchTickets
+    refetchTickets,
+    filtersKey,
+    slaMinutes
   ]);
 
   useEffect(() => {

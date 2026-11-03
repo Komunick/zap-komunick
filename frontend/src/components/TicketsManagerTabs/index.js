@@ -15,6 +15,7 @@ import Switch from "@material-ui/core/Switch";
 import NewTicketModal from "../NewTicketModal";
 import TicketsList from "../TicketsListCustom";
 import TabPanel from "../TabPanel";
+import { EMPTY_FILTERS, TicketsFilterButton } from "../TicketsFilters";
 import {
   BulkBar,
   BulkSelectionContext,
@@ -325,6 +326,23 @@ const TicketsManagerTabs = () => {
   // Zap Komunick: selection for the actions in bulk (RF-011); each view has
   // its own list, and the closed tickets have no bulk action
   const selection = useBulkSelectionState();
+
+  // Zap Komunick: filter panel (RF-012), kept in this browser
+  const [filters, setFilters] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("ticketFilters"));
+      return saved ? { ...EMPTY_FILTERS, ...saved } : EMPTY_FILTERS;
+    } catch (e) {
+      return EMPTY_FILTERS;
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem("ticketFilters", JSON.stringify(filters));
+    } catch (e) {
+      // storage blocked: the filters last until the page is reloaded
+    }
+  }, [filters]);
   const bulkListKey = {
     mine: "open",
     waiting: "pending",
@@ -459,6 +477,7 @@ const TicketsManagerTabs = () => {
                 type="search"
                 onChange={handleSearch}
               />
+              <TicketsFilterButton filters={filters} onChange={setFilters} />
             </div>
           ) : (
             <>
@@ -469,6 +488,7 @@ const TicketsManagerTabs = () => {
               >
                 {i18n.t("ticketsManager.buttons.newTicket")}
               </Button>
+              <TicketsFilterButton filters={filters} onChange={setFilters} />
               {bulkListKey && !selection.selecting && (
                 <Button
                   size="small"
@@ -535,6 +555,7 @@ const TicketsManagerTabs = () => {
         <TabPanel value={tab} name="open" className={classes.ticketsWrapper}>
           <Paper className={classes.ticketsWrapper}>
             <TicketsList
+              filters={filters}
               status="open"
               showAll={showAllTickets}
               selectedQueueIds={selectedQueueIds}
@@ -544,6 +565,7 @@ const TicketsManagerTabs = () => {
               showTabGroups={showTabGroups}
             />
             <TicketsList
+              filters={filters}
               status="pending"
               selectedQueueIds={selectedQueueIds}
               updateCount={val => setPendingCount(val)}
@@ -555,6 +577,7 @@ const TicketsManagerTabs = () => {
         </TabPanel>
         <TabPanel value={tab} name="paused" className={classes.ticketsWrapper}>
           <TicketsList
+            filters={filters}
             status="paused"
             showAll={showAllTickets}
             selectedQueueIds={selectedQueueIds}
@@ -563,6 +586,7 @@ const TicketsManagerTabs = () => {
         </TabPanel>
         <TabPanel value={tab} name="closed" className={classes.ticketsWrapper}>
           <TicketsList
+            filters={filters}
             status="closed"
             showAll={true}
             selectedQueueIds={selectedQueueIds}
@@ -571,6 +595,7 @@ const TicketsManagerTabs = () => {
         </TabPanel>
         <TabPanel value={tab} name="groups" className={classes.ticketsWrapper}>
           <TicketsList
+            filters={filters}
             groups={true}
             showAll={true}
             selectedQueueIds={selectedQueueIds}
@@ -591,6 +616,7 @@ const TicketsManagerTabs = () => {
             <UsersFilter onFiltered={handleSelectedUsers} />
           )}
           <TicketsList
+            filters={filters}
             isSearch={true}
             searchParam={searchParam}
             showAll={true}
