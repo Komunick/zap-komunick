@@ -134,6 +134,11 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- Financeiro sai dos menus e a aba Containers Docker sai de Configurações, no desktop e no celular. API e os demais
+  itens continuam disponíveis conforme as permissões existentes; a infraestrutura de publicação é preservada.
+- Endosso SuperChat usa a logo oficial completa Komunick Inteligência e Tecnologia, com versões vertical e horizontal.
+  O navegador usa um endereço próprio para o favicon SuperChat, preservando ícones Whitelabel personalizados.
+
 - Marca padrão passa a SuperChat, com logo `superChat`, endosso `Powered by Komunick` e símbolo próprio nos ícones.
   Nomes antigos de produto são apresentados com a nova marca, preservando personalizações de empresas, créditos
   upstream e dados existentes. A identidade se adapta aos dois temas, menu recolhido e celular. Novos cadastros 2FA

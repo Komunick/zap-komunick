@@ -3,7 +3,7 @@
   "name": "SuperChat - Atendimento pelo WhatsApp",
   "icons": [
     {
-      "src": "vector/favicon.svg",
+      "src": "vector/superchat-icon.svg",
       "sizes": "any",
       "type": "image/svg+xml"
     },

@@ -39,7 +39,6 @@ import ListIcon from "@material-ui/icons/ListAlt";
 import LoyaltyRoundedIcon from "@material-ui/icons/LoyaltyRounded";
 import AnnouncementIcon from "@material-ui/icons/Announcement";
 import ForumIcon from "@material-ui/icons/Forum";
-import LocalAtmIcon from "@material-ui/icons/LocalAtm";
 import RotateRight from "@material-ui/icons/RotateRight";
 import ViewColumnIcon from "@material-ui/icons/ViewColumn";
 import AlarmIcon from "@material-ui/icons/Alarm";
@@ -610,12 +609,6 @@ const MainListItems = props => {
                 primary={i18n.t("mainDrawer.listItems.messagesAPI")}
                 icon={<CodeRoundedIcon />}
               />
-              <ListItemLink
-                to="/financeiro"
-                primary={i18n.t("mainDrawer.listItems.financeiro")}
-                icon={<LocalAtmIcon />}
-              />
-
               <ListItemLink
                 to="/settings"
                 primary={i18n.t("mainDrawer.listItems.settings")}

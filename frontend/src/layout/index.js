@@ -211,6 +211,11 @@ const useStyles = makeStyles(theme => ({
     padding: "12px 0 8px",
     gap: 8
   },
+  sidebarBrandHeader: {
+    minHeight: 116,
+    paddingTop: 8,
+    paddingBottom: 8
+  },
   sidebarLogo: {
     display: "flex",
     alignItems: "center",
@@ -538,12 +543,16 @@ const useStyles = makeStyles(theme => ({
     marginLeft: 0
   },
   barLogo: {
-    width: 180,
+    width: 336,
     height: 56,
     objectFit: "contain",
     flexShrink: 0,
     marginRight: 14,
     cursor: "pointer"
+  },
+  barLogoCompact: {
+    width: 36,
+    height: 36
   },
   searchSlot: {
     flex: 1,
@@ -666,6 +675,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
   const { user } = useContext(AuthContext);
 
   const theme = useTheme();
+  const compactHeaderLogo = useMediaQuery(theme.breakpoints.down("md"));
 
   // the light, warm side menu of the Painel layout (light theme only)
   useEffect(() => {
@@ -958,6 +968,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
           <div
             className={clsx(
               classes.sidebarHeader,
+              drawerOpen && !painelDesktop && classes.sidebarBrandHeader,
               !drawerOpen && classes.sidebarHeaderClosed
             )}
           >
@@ -1062,7 +1073,12 @@ const LoggedInLayout = ({ children, themeToggle }) => {
         >
           {(focoDesktop || painelDesktop) && (
             <BrandLogo
-              className={classes.barLogo}
+              className={clsx(
+                classes.barLogo,
+                compactHeaderLogo && classes.barLogoCompact
+              )}
+              variant="header"
+              compact={compactHeaderLogo}
               onClick={() => history.push("/tickets")}
             />
           )}

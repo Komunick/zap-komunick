@@ -59,11 +59,11 @@ import api from "../../services/api";
 import { getBackendURL } from "../../services/config";
 import { i18nToast } from "../../helpers/i18nToast";
 import { i18n } from "../../translate/i18n.js";
-import { resolveProductName } from "../../helpers/productBrand";
+import { PRODUCT_ICON, resolveProductName } from "../../helpers/productBrand";
 
 const defaultLogoLight = "/vector/logo.svg";
 const defaultLogoDark = "/vector/logo-dark.svg";
-const defaultLogoFavicon = "/vector/favicon.svg";
+const defaultLogoFavicon = PRODUCT_ICON;
 const LOGIN_LINKS_KEY = "loginPageLinks";
 const LOGIN_SIDE_PANEL_IMAGE_KEY = "loginSidePanelImage";
 const LOGIN_BACKGROUND_CONTENT_KEY = "loginBackgroundContent";

@@ -65,6 +65,11 @@ confirmadas de inspiração e observações do sistema atual; estas não viram r
   oficial preservada. Reutilize `components/BrandLogo`; a sidebar preta precisa da variante clara nos dois temas.
   Preserve uploads Whitelabel, URLs AGPL, identificadores técnicos e históricos. Não renomeie banco/Compose/repositório
   como parte de uma troca visual. Ver `docs/specs/superchat-identidade.md` e `public/vector/README.md`.
+  A assinatura completa usa `vector/komunick-completa.svg`, publicado pela própria Komunick e com PNG embutido.
+  Preserve o arquivo original; use a variante horizontal em cabeçalhos e a vertical no menu, login e Sobre.
+  O favicon padrão tem endereço próprio em `vector/superchat-icon.svg`; mantenha os aliases e uploads personalizados.
+- **Navegação:** Financeiro não aparece nos menus. Configurações não oferece a aba, seletor ou painel Containers Docker.
+  APIs e arquivos de publicação continuam preservados. Ver `docs/specs/superchat-navegacao-marca.md`.
 - **Cores e visual** vêm dos tokens de `frontend/src/theme/komunick.js` (`theme.komunick.*`); não escreva cor fixa por
   tema (`theme.mode === "light" ? ... : ...`) em código novo.
 - **Textos novos da interface** vão em `frontend/src/translate/languages/komunick.js` (pt, pt_PT, en, es), mesclado

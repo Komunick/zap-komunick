@@ -31,7 +31,7 @@ export const manifest = async (
       {
         src: logoFavicon
           ? `/backend/public/${logoFavicon}`
-          : "/vector/favicon.svg",
+          : "/vector/superchat-icon.svg",
         sizes: "512x512 192x192 64x64 32x32 24x24 16x16",
         type: mimeFavicon
       }

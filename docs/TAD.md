@@ -89,14 +89,22 @@ tema com `createKomunickTheme`, que mescla esses valores sobre o tema do upstrea
 componentes do Ticketz usam. Cores que o upstream escreve direto nos componentes foram trocadas pelos tokens só onde
 apareciam (chat em `MessagesList`, barra do topo em `layout/index.js`, itens da lista e abas). Logo e ícones padrão
 estão em `public/vector/` e nos PNGs de `public/`; o Whitelabel da empresa continua por cima deles.
-A marca padrão é SuperChat: `BrandLogo` escolhe o lockup `superChat` com endosso oficial Komunick ou o símbolo compacto.
-A sidebar preta usa a variante clara do logo nos dois temas; imagens personalizadas continuam respeitadas.
-Os SVGs contêm contornos, sem fonte ou rede externa para renderizar a marca. A geometria original da Komunick é
-preservada separadamente em `vector/komunick.svg` e no endosso. `productBrand` normaliza somente nomes de produto
+A marca padrão é SuperChat. `BrandLogo` usa a composição vertical no login, Sobre e menu aberto; a composição
+horizontal atende aos cabeçalhos Foco/Painel e o símbolo compacto ocupa trilhos e cabeçalhos estreitos.
+A sidebar preta usa a variante para fundo escuro nos dois temas; imagens personalizadas continuam respeitadas.
+SuperChat e Powered by usam contornos. O endosso completo vem do SVG oficial publicado pela Komunick, preservado
+integralmente em `vector/komunick-completa.svg`, com seu PNG embutido de 173×48. Ampliações têm o limite dessa imagem.
+Nenhum dos ativos depende de fonte ou imagem externa durante a renderização. O wordmark anterior fica preservado em
+`vector/komunick.svg`. `productBrand` normaliza somente nomes de produto
 legados na apresentação; a leitura pública não reescreve configurações, mensagens ou históricos. Títulos iniciais,
 PWA e nomes de downloads usam SuperChat, incluindo falhas de leitura da configuração. O issuer padrão de novos
 cadastros 2FA muda só o rótulo; inscrições existentes e segredos permanecem válidos. Veja
-[identidade SuperChat](specs/superchat-identidade.md). A Direção B do
+[identidade SuperChat](specs/superchat-identidade.md) e [navegação e marca](specs/superchat-navegacao-marca.md).
+O favicon padrão usa `vector/superchat-icon.svg`; o endereço antigo continua compatível. HTML, React e PWA usam o
+endereço próprio da marca, enquanto Whitelabel mantém seus ícones personalizados. Financeiro fica fora de
+`MainListItems`; Foco/Mais/paleta não oferecem esse item. Configurações não monta ContainersManager nem oferece a
+seção Docker nos controles de desktop ou celular. Rotas, APIs e infraestrutura de publicação não mudam.
+A Direção B do
 Stitch entra como tokens: `sidebar*` (menu preto, igual nos dois temas), `accent`, `selectedRow`, `tagBackground` e
 `bubbleMineBorder`, usados em `layout/index.js`, `layout/MainListItems.js` e `TicketListItemCustom`.
 

@@ -1,4 +1,5 @@
 export const PRODUCT_NAME = "SuperChat";
+export const PRODUCT_ICON = "/vector/superchat-icon.svg";
 
 const legacyNames = new Set([
   "ticketz",

@@ -19,12 +19,16 @@ import {
 } from "./theme/komunick";
 
 import Routes from "./routes";
-import { PRODUCT_NAME, resolveProductName } from "./helpers/productBrand";
+import {
+  PRODUCT_ICON,
+  PRODUCT_NAME,
+  resolveProductName
+} from "./helpers/productBrand";
 
 const queryClient = new QueryClient();
 const defaultLogoLight = "/vector/logo.svg";
 const defaultLogoDark = "/vector/logo-dark.svg";
-const defaultLogoFavicon = "/vector/favicon.svg";
+const defaultLogoFavicon = PRODUCT_ICON;
 
 const systemColorScheme = () =>
   window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches

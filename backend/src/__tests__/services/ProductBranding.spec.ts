@@ -141,7 +141,7 @@ describe("PWA and version names use the real public settings reader", () => {
   });
 
   it.each([
-    [undefined, "/vector/favicon.svg", "image/svg+xml"],
+    [undefined, "/vector/superchat-icon.svg", "image/svg+xml"],
     ["custom-icon.png", "/backend/public/custom-icon.png", "image/png"]
   ])("preserves the PWA icon contract for %p", async (icon, src, type) => {
     (Setting.findOne as jest.Mock).mockImplementation(async ({ where }) => {

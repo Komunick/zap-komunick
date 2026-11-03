@@ -14,10 +14,11 @@ merge ou deploy e mantém o WhatsApp desconectado.
 - A referência “Deploy” não existe como texto literal no código. A seção operacional encontrada é Containers Docker
   em Configurações, com atualizações e reinícios. A interpretação usada neste recorte é retirar essa aba, a opção do
   seletor móvel e seu painel, preservando APIs, scripts, CI e infraestrutura de publicação. A pergunta de identificação
-  foi enviada ao usuário; outra referência exige ajustar o alvo antes da parte correspondente.
+  foi respondida pelo usuário, que confirmou a remoção de Containers Docker.
 - Aplicar o arquivo oficial completo de Komunick Inteligência e Tecnologia no endosso. Preservar a marca original,
-  proporções e cores; não reconstruir uma assinatura e apresentá-la como oficial. A versão completa ainda depende de
-  uma fonte verificável: os ativos locais conhecidos contêm somente o wordmark “komunick”.
+  proporções e cores; não reconstruir uma assinatura e apresentá-la como oficial. O arquivo completo foi localizado no header e no rodapé de `https://www.komunick.com/`:
+  `https://www.komunick.com/assets/brand/komunick-logo-slogan-leve.svg`. Preservar o SVG oficial, que contém PNG embutido,
+  e usar composições vertical e horizontal conforme o espaço disponível.
 - Título padrão SuperChat desde a inicialização e após carregar configurações. Preservar os nomes Whitelabel distintos.
   Usar um endereço próprio para o símbolo SuperChat no favicon, diferenciando-o dos endereços antigos sujeitos a cache.
   Conferir HTML, React e PWA, preservando ícones personalizados e aliases antigos compatíveis.
@@ -39,4 +40,4 @@ merge ou deploy e mantém o WhatsApp desconectado.
 - [PRD RF-009](../PRD.md) e [identidade SuperChat](superchat-identidade.md).
 - Base: PR31, revisão `a4a04f9cc6e3bd98e1d921660fab50d65f2adc6b`.
 - [Workflow de entrega](../DELIVERY-WORKFLOW.md) e [princípios](../PRINCIPLES.md).
-- Ativo completo da marca: fonte pendente de identificação; preservar a versão oficial existente até obtê-la.
+- Ativo completo da marca: fonte primária pública acima, com proveniência em `frontend/public/vector/README.md`.

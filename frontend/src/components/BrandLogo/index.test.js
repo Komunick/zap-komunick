@@ -30,7 +30,7 @@ test.each(["light", "dark"])(
     showLogo({ mode });
     expect(
       screen.getByRole("img", {
-        name: "SuperChat — Powered by Komunick Inteligência"
+        name: "SuperChat — Powered by Komunick Inteligência e Tecnologia"
       })
     ).toHaveAttribute(
       "src",
@@ -54,7 +54,7 @@ it("uses a compact symbol when the menu is collapsed", () => {
   showLogo({ compact: true });
   expect(screen.getByRole("img", { name: "SuperChat" })).toHaveAttribute(
     "src",
-    "/vector/favicon.svg"
+    "/vector/superchat-icon.svg"
   );
 });
 
@@ -74,5 +74,38 @@ it("preserves the configured compact icon", () => {
   expect(screen.getByRole("img")).toHaveAttribute(
     "src",
     "/public/custom-icon.png"
+  );
+});
+
+test.each(["light", "dark"])(
+  "uses the official endorsement in the horizontal header in %s",
+  mode => {
+    showLogo({
+      mode,
+      variant: "header",
+      logo: mode === "dark" ? "/vector/logo-dark.svg" : "/vector/logo.svg"
+    });
+    expect(
+      screen.getByRole("img", {
+        name: "SuperChat — Powered by Komunick Inteligência e Tecnologia"
+      })
+    ).toHaveAttribute(
+      "src",
+      mode === "dark"
+        ? "/vector/logo-header-dark.svg"
+        : "/vector/logo-header.svg"
+    );
+  }
+);
+
+it("preserves the company image in the horizontal header", () => {
+  showLogo({
+    name: "Empresa Fictícia",
+    variant: "header",
+    logo: "/public/company-wide.svg"
+  });
+  expect(screen.getByRole("img", { name: "Empresa Fictícia" })).toHaveAttribute(
+    "src",
+    "/public/company-wide.svg"
   );
 });
