@@ -43,8 +43,9 @@ o DNS correto. A preparacao atual nao mudou nenhum registro.
 - Apenas o nginx interno pode encaminhar IP ao backend. O nginx confia somente
   no ingresso local previsto; o fragmento Caddy sobrescreve X-Forwarded-For vindo
   do cliente. O modo inicial Somente DNS preserva essa origem direta.
-- A limitacao dos links publicos legados de anexos continua descrita no PR #21 e
-  em DEPLOY/RF-023; preparar o deploy nao muda armazenamento ou entrega antigos.
+- Arquivos dos atendimentos mantem os links publicos do RF-023. Anexos do chat
+  interno usam entrega privada por mensagem e precisam do cutover abaixo nas
+  instalacoes existentes; a nova versao recusa iniciar com copias publicas conhecidas.
 
 ## Pacote e segredos
 
@@ -170,6 +171,37 @@ isolado; o preflight de ativacao recusa esses ajustes de QA. Seus envs e dados s
 ficticios; nunca promover esse banco de teste. Para validar coexistencia, usar
 credenciais distintas, conferir a configuracao publica de cada dominio e a recusa
 de senha/token do outro ambiente. Remover somente as fixtures rastreadas do teste.
+
+## Cutover de anexos privados do chat interno
+
+Este procedimento altera arquivos da instalacao escolhida; nao e uma migration SQL.
+Somente executar na janela autorizada para aquele perfil, com o pacote novo congelado,
+backup verificado e **todos os escritores e ingressos da versao antiga parados** antes
+de `--execute`. Nao copiar dados do notebook nem executar nos dois perfis por implicacao.
+
+No diretorio operacional do perfil, usar o array `compose` com o mesmo projeto/env
+ja conferido acima e as imagens novas selecionadas, sem iniciar a aplicacao. O one-off
+substitui o entrypoint para rodar somente o CLI, sem bootstrap ou servidor HTTP:
+
+```bash
+"${compose[@]}" run --rm --no-deps --entrypoint node backend dist/scripts/migrateChatMedia.js
+# Examinar inventario e conflitos; somente depois parar todos os escritores/ingressos.
+"${compose[@]}" stop frontend backend
+"${compose[@]}" run --rm --no-deps --entrypoint node backend dist/scripts/migrateChatMedia.js --execute --report
+"${compose[@]}" run --rm --no-deps --entrypoint node backend dist/scripts/migrateChatMedia.js --check
+"${compose[@]}" up -d --pull never backend frontend
+```
+
+A saida padrao contem somente contagens. O relatorio detalhado fica em
+`private/chat-media-migration-report.json`, com acesso restrito. Referencias compartilhadas,
+destinos divergentes, nomes invalidos ou links de filesystem bloqueiam antes de remover
+arquivos. Ausencias anteriores sao inventariadas e continuam indisponiveis. Nao apagar
+arquivos desconhecidos para obter um check verde. Uma interrupcao preserva dados para
+exame e reexecucao do CLI; nao voltar automaticamente ao codigo que publica anexos.
+
+Validar hashes e acesso privado autenticado, antigas URLs negadas inclusive por Range/HEAD,
+reproducao/download e um arquivo publico de outro modulo. A protecao nova nao revoga copias
+ja baixadas nem caches antigos externos ao servidor. Nao publicar enquanto houver conflito.
 
 ## Backup e recuperacao
 

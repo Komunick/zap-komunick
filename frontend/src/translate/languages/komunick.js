@@ -319,7 +319,9 @@ const pt = {
     playVideo: "Reproduzir vídeo",
     pauseVideo: "Pausar vídeo",
     openMedia: "Ampliar mídia",
-    download: "Baixar arquivo"
+    download: "Baixar arquivo",
+    downloadBlocked:
+      "Permita abrir a janela de download no navegador e tente novamente."
   },
   dashboardPage: {
     hello: "Olá, {{name}}!",
@@ -613,6 +615,10 @@ const pt = {
     businessDaysTooltip: "Só em dia útil"
   },
   backendErrors: {
+    ERR_CHAT_MEDIA_STORAGE_UNSAFE:
+      "Os anexos estão temporariamente indisponíveis. Tente novamente.",
+    ERR_CHAT_MEDIA_UNAVAILABLE:
+      "Anexo temporariamente indisponível. Tente novamente.",
     ERR_NO_CHAT_FOUND: "Conversa não encontrada ou indisponível.",
     ERR_CHAT_DIRECT_READONLY:
       "Conversas diretas não podem ser editadas ou excluídas.",
@@ -961,7 +967,9 @@ const en = {
     playVideo: "Play video",
     pauseVideo: "Pause video",
     openMedia: "Expand media",
-    download: "Download file"
+    download: "Download file",
+    downloadBlocked:
+      "Allow the browser to open the download window and try again."
   },
   dashboardPage: {
     hello: "Hi, {{name}}!",
@@ -1256,6 +1264,10 @@ const en = {
     businessDaysTooltip: "Business days only"
   },
   backendErrors: {
+    ERR_CHAT_MEDIA_STORAGE_UNSAFE:
+      "Attachments are temporarily unavailable. Please try again.",
+    ERR_CHAT_MEDIA_UNAVAILABLE:
+      "Attachment temporarily unavailable. Please try again.",
     ERR_NO_CHAT_FOUND: "Conversation not found or unavailable.",
     ERR_CHAT_DIRECT_READONLY:
       "Direct conversations cannot be edited or deleted.",
@@ -1607,7 +1619,9 @@ const es = {
     playVideo: "Reproducir vídeo",
     pauseVideo: "Pausar vídeo",
     openMedia: "Ampliar multimedia",
-    download: "Descargar archivo"
+    download: "Descargar archivo",
+    downloadBlocked:
+      "Permite abrir la ventana de descarga en el navegador e inténtalo de nuevo."
   },
   dashboardPage: {
     hello: "¡Hola, {{name}}!",
@@ -1901,6 +1915,10 @@ const es = {
     businessDaysTooltip: "Solo en día hábil"
   },
   backendErrors: {
+    ERR_CHAT_MEDIA_STORAGE_UNSAFE:
+      "Los adjuntos no están disponibles temporalmente. Inténtalo de nuevo.",
+    ERR_CHAT_MEDIA_UNAVAILABLE:
+      "Adjunto temporalmente no disponible. Inténtalo de nuevo.",
     ERR_NO_CHAT_FOUND: "Conversación no encontrada o no disponible.",
     ERR_CHAT_DIRECT_READONLY:
       "Las conversaciones directas no se pueden editar ni eliminar.",

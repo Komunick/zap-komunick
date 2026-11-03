@@ -25,11 +25,14 @@ jest.mock("../../middleware/isAuth", () => ({
     next();
   }
 }));
-jest.mock(
-  "../../services/ChatService/AuthorizeChatService",
-  () => ({ __esModule: true, default: jest.fn() }),
-  { virtual: true }
-);
+jest.mock("../../middleware/authenticateChatMedia", () => ({
+  __esModule: true,
+  default: (_req: Request, _res: Response, next: NextFunction) => next()
+}));
+jest.mock("../../services/ChatService/AuthorizeChatService", () => ({
+  __esModule: true,
+  default: jest.fn()
+}));
 jest.mock("../../controllers/ChatController", () =>
   Object.fromEntries(
     [
@@ -68,6 +71,7 @@ it("rejects a denied chat before admitting bytes to storage or controller", asyn
   const response = await request(app())
     .post("/chats/301/messages")
     .attach("medias", Buffer.from("Fictional attachment"), "fixture.txt");
+  expect(response.body).toEqual({ error: "ERR_NO_CHAT_FOUND" });
   expect(response.status).toBe(404);
   expect(mockStorageAdmission).not.toHaveBeenCalled();
   expect(ChatController.saveMessage).not.toHaveBeenCalled();
@@ -78,6 +82,7 @@ it("allows a participant into storage only after checking the authenticated cont
   const response = await request(app())
     .post("/chats/301/messages")
     .attach("medias", Buffer.from("Fictional attachment"), "fixture.txt");
+  expect(response.body).toEqual({ ok: true });
   expect(response.status).toBe(200);
   expect(AuthorizeChatService).toHaveBeenCalledWith("301", {
     userId: "101",

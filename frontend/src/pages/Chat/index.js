@@ -222,7 +222,14 @@ export function ChatModal({
   );
 }
 
+// Zap Komunick: identity changes discard this chat's cached messages, pending
+// requests and native media, even when a surrounding route remains mounted.
 function Chat(props) {
+  const { user } = useContext(AuthContext);
+  return <ChatSession key={`${user.companyId}:${user.id}`} {...props} />;
+}
+
+function ChatSession(props) {
   const classes = useStyles();
   const { user } = useContext(AuthContext);
   const history = useHistory();
