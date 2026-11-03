@@ -45,7 +45,7 @@ import Grid from "@material-ui/core/Grid";
 import FormControl from "@material-ui/core/FormControl";
 import TextField from "@material-ui/core/TextField";
 import Button from "@material-ui/core/Button";
-import { makeStyles } from "@material-ui/core/styles";
+import { makeStyles, useTheme } from "@material-ui/core/styles";
 import OnlyForSuperUser from "../OnlyForSuperUser";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import useSettings from "../../hooks/useSettings";
@@ -233,6 +233,7 @@ const useStyles = makeStyles(theme => ({
 export default function Whitelabel(props) {
   const { settings } = props;
   const classes = useStyles();
+  const theme = useTheme();
   const [settingsLoaded, setSettingsLoaded] = useState({});
   const [loginLinks, setLoginLinks] = useState([createEmptyLink()]);
 
