@@ -35,6 +35,7 @@ import Subscription from "../pages/Subscription/";
 import Kanban from "../pages/Kanban/";
 import Sla from "../pages/Sla/";
 import OnlineUsers from "../pages/OnlineUsers/";
+import Metrics from "../pages/Metrics/";
 import CloseReasons from "../pages/CloseReasons/";
 
 const Routes = () => {
@@ -85,6 +86,7 @@ const Routes = () => {
                 <Route exact path="/todolist" component={ToDoList} isPrivate />
                 <Route exact path="/kanban" component={Kanban} isPrivate />
                 <Route exact path="/sla" component={Sla} isPrivate />
+                <Route exact path="/metrics" component={Metrics} isPrivate />
                 <Route
                   exact
                   path="/users-online"

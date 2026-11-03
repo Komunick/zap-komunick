@@ -14,6 +14,7 @@ export const buildNavItems = isAdmin => {
     ...(isAdmin
       ? [
           { id: "sla", to: "/sla", label: t("sla") },
+          { id: "metrics", to: "/metrics", label: t("metrics") },
           { id: "onlineUsers", to: "/users-online", label: t("onlineUsers") }
         ]
       : []),

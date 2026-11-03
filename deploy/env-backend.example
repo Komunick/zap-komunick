@@ -1,8 +1,8 @@
 # Zap Komunick: backend environment. Copy to ".env-backend-komunick" in the
 # repository root (docs/DEPLOY.md). Never commit the filled-in file.
 
-# Subdomain of the installation (the same in the frontend file)
-FRONTEND_HOST=atendimento.komunick.com
+# Address of the installation (the same in the frontend file)
+FRONTEND_HOST=superchat.komunick.com
 # E-mail of the first administrator (created on the first start)
 EMAIL_ADDRESS=contato@komunick.com
 # Password of the first administrator. Change it again after the first login.

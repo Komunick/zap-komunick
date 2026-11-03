@@ -38,6 +38,7 @@ const pt = {
     listItems: {
       kanban: "Kanban",
       sla: "Painel de SLA",
+      metrics: "Métricas",
       onlineUsers: "Usuários online",
       closeReasons: "Motivos de finalização"
     }
@@ -326,6 +327,56 @@ const pt = {
     same: "Escolha um responsável diferente",
     transfer: "Transferir"
   },
+  metrics: {
+    title: "Métricas",
+    subtitle:
+      "Como a equipe atendeu no período: volume, tempos, prazo e motivos.",
+    export: "Exportar CSV",
+    period: "Período",
+    days: "{{count}} dias",
+    custom: "Personalizado",
+    from: "De",
+    to: "Até",
+    queue: "Fila",
+    user: "Atendente",
+    allQueues: "Todas as filas",
+    allUsers: "Todos os atendentes",
+    loading: "Carregando...",
+    nothing: "Nada no período.",
+    noQueue: "Sem fila",
+    noUser: "Sem atendente",
+    noReason: "Sem motivo",
+    byDay: "Atendimentos por dia",
+    byQueue: "Por fila",
+    byUser: "Por atendente",
+    closeReasons: "Motivos de finalização",
+    heatmap: "Horários de maior movimento (atendimentos abertos)",
+    heatCell: "{{day}} às {{hour}}h: {{count}}",
+    weekdays: "Dom,Seg,Ter,Qua,Qui,Sex,Sáb",
+    kpi: {
+      created: "Atendimentos",
+      finished: "Finalizados",
+      avgWait: "Tempo médio de espera",
+      avgService: "Tempo médio de atendimento",
+      sla: "Respondidos no prazo",
+      slaHint: "Prazo de {{minutes}} min",
+      slaOff: "Prazo de SLA desligado",
+      newContacts: "Novos contatos",
+      rating: "Nota média",
+      ratingHint: "{{count}} avaliação(ões)"
+    },
+    cols: {
+      queue: "Fila",
+      user: "Atendente",
+      created: "Atendimentos",
+      finished: "Finalizados",
+      avgWait: "Espera média",
+      avgService: "Atendimento médio",
+      sla: "No prazo",
+      rating: "Nota",
+      count: "Quantidade"
+    }
+  },
   about: {
     licensesourcecode: "Código-fonte desta versão",
     basedOnTicketz: "Baseado no Ticketz (código original)"
@@ -518,6 +569,7 @@ const en = {
     listItems: {
       kanban: "Kanban",
       sla: "SLA panel",
+      metrics: "Metrics",
       onlineUsers: "Users online",
       closeReasons: "Close reasons"
     }
@@ -804,6 +856,56 @@ const en = {
     same: "Pick a different owner",
     transfer: "Move"
   },
+  metrics: {
+    title: "Metrics",
+    subtitle:
+      "How the team handled the period: volume, times, deadline and reasons.",
+    export: "Export CSV",
+    period: "Period",
+    days: "{{count}} days",
+    custom: "Custom",
+    from: "From",
+    to: "To",
+    queue: "Queue",
+    user: "Attendant",
+    allQueues: "All queues",
+    allUsers: "All attendants",
+    loading: "Loading...",
+    nothing: "Nothing in the period.",
+    noQueue: "No queue",
+    noUser: "No attendant",
+    noReason: "No reason",
+    byDay: "Tickets per day",
+    byQueue: "Per queue",
+    byUser: "Per attendant",
+    closeReasons: "Close reasons",
+    heatmap: "Busiest hours (tickets opened)",
+    heatCell: "{{day}} at {{hour}}h: {{count}}",
+    weekdays: "Sun,Mon,Tue,Wed,Thu,Fri,Sat",
+    kpi: {
+      created: "Tickets",
+      finished: "Closed",
+      avgWait: "Average wait",
+      avgService: "Average service",
+      sla: "Answered in time",
+      slaHint: "{{minutes}} min deadline",
+      slaOff: "SLA deadline off",
+      newContacts: "New contacts",
+      rating: "Average rating",
+      ratingHint: "{{count}} rating(s)"
+    },
+    cols: {
+      queue: "Queue",
+      user: "Attendant",
+      created: "Tickets",
+      finished: "Closed",
+      avgWait: "Avg wait",
+      avgService: "Avg service",
+      sla: "In time",
+      rating: "Rating",
+      count: "Count"
+    }
+  },
   about: {
     licensesourcecode: "Source code of this version",
     basedOnTicketz: "Based on Ticketz (original code)"
@@ -996,6 +1098,7 @@ const es = {
     listItems: {
       kanban: "Kanban",
       sla: "Panel de SLA",
+      metrics: "Métricas",
       onlineUsers: "Usuarios en línea",
       closeReasons: "Motivos de cierre"
     }
@@ -1282,6 +1385,56 @@ const es = {
     nobody: "Nadie (quitar de la cartera)",
     same: "Elija un responsable diferente",
     transfer: "Transferir"
+  },
+  metrics: {
+    title: "Métricas",
+    subtitle:
+      "Cómo atendió el equipo en el período: volumen, tiempos, plazo y motivos.",
+    export: "Exportar CSV",
+    period: "Período",
+    days: "{{count}} días",
+    custom: "Personalizado",
+    from: "Desde",
+    to: "Hasta",
+    queue: "Cola",
+    user: "Atendente",
+    allQueues: "Todas las colas",
+    allUsers: "Todos los atendentes",
+    loading: "Cargando...",
+    nothing: "Nada en el período.",
+    noQueue: "Sin cola",
+    noUser: "Sin atendente",
+    noReason: "Sin motivo",
+    byDay: "Atenciones por día",
+    byQueue: "Por cola",
+    byUser: "Por atendente",
+    closeReasons: "Motivos de finalización",
+    heatmap: "Horarios de mayor movimiento (atenciones abiertas)",
+    heatCell: "{{day}} a las {{hour}}h: {{count}}",
+    weekdays: "Dom,Lun,Mar,Mié,Jue,Vie,Sáb",
+    kpi: {
+      created: "Atenciones",
+      finished: "Finalizadas",
+      avgWait: "Espera media",
+      avgService: "Atención media",
+      sla: "Respondidas en plazo",
+      slaHint: "Plazo de {{minutes}} min",
+      slaOff: "Plazo de SLA desactivado",
+      newContacts: "Contactos nuevos",
+      rating: "Nota media",
+      ratingHint: "{{count}} evaluación(es)"
+    },
+    cols: {
+      queue: "Cola",
+      user: "Atendente",
+      created: "Atenciones",
+      finished: "Finalizadas",
+      avgWait: "Espera media",
+      avgService: "Atención media",
+      sla: "En plazo",
+      rating: "Nota",
+      count: "Cantidad"
+    }
   },
   about: {
     licensesourcecode: "Código fuente de esta versión",

@@ -43,6 +43,7 @@ import LocalAtmIcon from "@material-ui/icons/LocalAtm";
 import RotateRight from "@material-ui/icons/RotateRight";
 import ViewColumnIcon from "@material-ui/icons/ViewColumn";
 import AlarmIcon from "@material-ui/icons/Alarm";
+import InsertChartOutlinedIcon from "@material-ui/icons/InsertChartOutlined";
 import SupervisedUserCircleOutlinedIcon from "@material-ui/icons/SupervisedUserCircleOutlined";
 import AssignmentTurnedInOutlinedIcon from "@material-ui/icons/AssignmentTurnedInOutlined";
 import { i18n } from "../translate/i18n";
@@ -464,6 +465,12 @@ const MainListItems = props => {
                 to="/sla"
                 primary={i18n.t("mainDrawer.listItems.sla")}
                 icon={<AlarmIcon />}
+              />
+              <ListItemLink
+                small
+                to="/metrics"
+                primary={i18n.t("mainDrawer.listItems.metrics")}
+                icon={<InsertChartOutlinedIcon />}
               />
               <ListItemLink
                 small

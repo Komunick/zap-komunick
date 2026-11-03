@@ -29,7 +29,8 @@ os atendimentos em etapas e controla quando cada atendente pode entrar; lembrete
 etiquetas (RF-004), horário de acesso por usuário (RF-005), agendamento recorrente (RF-006), pausar atendimento e motivo
 de finalização (RF-007), agendamento para vários contatos com anexo e dia útil (RF-008) e a identidade visual da
 Komunick (RF-009) o chat interno com conversas e contatos (RF-010) , as
-ações em lote nos atendimentos (RF-011), os filtros completos da lista (RF-012), os usuários online (RF-013) e a carteira em lote (RF-014), sobre o Ticketz como ele é hoje (filas, chatbot, etiquetas, agendamentos, perfis admin e usuário).
+ações em lote nos atendimentos (RF-011), os filtros completos da lista (RF-012), os usuários online (RF-013), a carteira em lote (RF-014) e o painel de métricas
+(RF-015), sobre o Ticketz como ele é hoje (filas, chatbot, etiquetas, agendamentos, perfis admin e usuário).
 A segunda entrega saiu da comparação com o ZapContábil feita em 21/10/2026 numa conta de cliente, só olhando, sem mudar
 nada nela.
 
@@ -404,6 +405,28 @@ passar a carteira inteira de quem sai para quem fica.
 Dado uma atendente que sai da empresa com 120 clientes na carteira,
 quando o gestor escolhe "Transferir carteira" dela para outro atendente,
 então os 120 passam para o novo responsável, e as próximas conversas desses clientes já entram na fila dele.
+
+### RF-015 — Painel de métricas
+
+**Objetivo:** o gestor acompanhar volume, tempos e qualidade do atendimento num período, por fila e por atendente,
+sem montar planilha.
+
+- Página "Métricas" (menu Gerência, só administradores), com período em botões (7, 30, 90 dias ou personalizado, até
+  366 dias) e filtros de fila e de atendente.
+- Indicadores: atendimentos abertos no período, finalizados, tempo médio de espera, tempo médio de atendimento,
+  respondidos no prazo do SLA (desligado quando o prazo está desligado), novos contatos e nota média das avaliações.
+- Atendimentos por dia (abertos e finalizados), tabela por fila e por atendente (atendimentos, finalizados, espera e
+  atendimento médios, no prazo, nota), motivos de finalização com a porcentagem e mapa dos horários de maior
+  movimento (dia da semana por hora, no fuso de São Paulo).
+- "Exportar CSV" baixa o que está na tela, separado por ponto e vírgula (abre direto no Excel em português).
+- Um atendimento é um ciclo de atendimento (aceitar, pausar e retomar, finalizar); conversas de grupo ficam de fora.
+
+**Cenário de sucesso:**
+
+Dado um mês com 400 atendimentos na fila Fiscal,
+quando o gestor abre "Métricas" com 30 dias e a fila Fiscal,
+então vê quantos foram finalizados, quanto tempo os clientes esperaram em média, quantos foram respondidos no prazo e
+quem finalizou mais, e baixa a planilha para a reunião.
 
 ## 4. Restrições e cuidados
 
