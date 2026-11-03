@@ -318,6 +318,10 @@ referências do Dribbble (painéis de atendimento e CRMs de 2025 e 2026).
   aberto e 72 px só com ícones (a lista rola quando não cabe na tela).
 - "Tarefas" fica oculto no menu lateral, nas abas de navegação e na paleta Ctrl K. A página continua acessível pelo
   endereço `/todolist`.
+- Financeiro fica fora da navegação em todos os layouts. A interface de atualização e reinício de contêineres também
+  fica fora de Configurações, incluindo a opção móvel; APIs e infraestrutura de publicação são preservadas.
+  Ver [navegação e marca](specs/superchat-navegacao-marca.md). A marca do navegador usa título SuperChat e um endereço
+  próprio para seu favicon padrão, preservando personalizações Whitelabel.
 - Login em duas colunas (formulário e painel da marca); no celular, só o formulário.
 - Após autenticar, usuário comum entra em `/tickets`; administrador com interface administrativa disponível entra
   em `/`. A restauração da sessão e o redirecionamento não montam o dashboard para perfis sem acesso à sua interface.
