@@ -22,6 +22,7 @@ import Schedule from "./Schedule";
 import ContactTag from "./ContactTag";
 import Tag from "./Tag";
 import WhatsappLidMap from "./WhatsappLidMap";
+import User from "./User";
 
 @Table
 class Contact extends Model {
@@ -91,6 +92,14 @@ class Contact extends Model {
 
   @BelongsTo(() => Company)
   company: Company;
+
+  // client wallet: user responsible for this contact
+  @ForeignKey(() => User)
+  @Column
+  walletUserId: number;
+
+  @BelongsTo(() => User, "walletUserId")
+  walletUser: User;
 
   @HasMany(() => Schedule, {
     onUpdate: "CASCADE",

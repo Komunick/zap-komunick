@@ -1,6 +1,11 @@
 [![en](https://img.shields.io/badge/lang-en-red.svg)](README.md)
 [![pt-br](https://img.shields.io/badge/lang-pt--br-green.svg)](README.pt.md)
 
+> **Zap Komunick** — fork do Ticketz mantido pela [Komunick](https://komunick.com), com painel de SLA, carteira
+> de clientes, Kanban por etiquetas, horário de acesso por usuário e agendamento recorrente. O que mudou está em
+> [CHANGELOG.md](CHANGELOG.md), [docs/PRD.md](docs/PRD.md) e [docs/TAD.md](docs/TAD.md); para desenvolver, veja o
+> [AGENTS.md](AGENTS.md). Código sob AGPL-3.0, como o original: [ticketz-oss/ticketz](https://github.com/ticketz-oss/ticketz).
+
 # Sobre o projeto
 
 Ticketz é um comunicador com recursos de CRM e helpdesk que utiliza

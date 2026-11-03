@@ -41,7 +41,8 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     name,
     profile,
     companyId: bodyCompanyId,
-    queueIds
+    queueIds,
+    accessHours
   } = req.body;
   let userCompanyId: number | null = null;
 
@@ -67,7 +68,8 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     name,
     profile,
     companyId: newUserCompanyId,
-    queueIds
+    queueIds,
+    accessHours
   });
 
   const io = getIO();

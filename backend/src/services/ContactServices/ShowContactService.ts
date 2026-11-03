@@ -1,6 +1,7 @@
 import Contact from "../../models/Contact";
 import AppError from "../../errors/AppError";
 import Company from "../../models/Company";
+import User from "../../models/User";
 
 const ShowContactService = async (
   id: string | number,
@@ -14,6 +15,11 @@ const ShowContactService = async (
         model: Company,
         as: "company",
         attributes: ["id", "language"]
+      },
+      {
+        model: User,
+        as: "walletUser",
+        attributes: ["id", "name"]
       }
     ]
   });

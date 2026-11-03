@@ -1,0 +1,47 @@
+name: Validate backend changes
+
+on:
+  pull_request:
+    branches: [dev]
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "24.22.1"
+
+jobs:
+  backend_checks:
+    name: Backend tests, types and contact search lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - name: Install locked dependencies without lifecycle scripts
+        working-directory: backend
+        run: npm ci --ignore-scripts --legacy-peer-deps --no-audit --no-fund
+      - name: Generate translation keys and check TypeScript
+        working-directory: backend
+        run: |
+          node node_modules/ts-node/dist/bin.js src/scripts/extractTranslationKeys.ts
+          node node_modules/typescript/bin/tsc --noEmit
+      - name: Lint contact search and its regression tests
+        working-directory: backend
+        run: >-
+          node node_modules/eslint/bin/eslint.js
+          src/services/ContactServices/ListContactsService.ts
+          src/__tests__/services/ListContactsService.spec.ts
+          --max-warnings=0
+      - name: Run all backend tests without database lifecycle hooks
+        working-directory: backend
+        env:
+          NODE_ENV: test
+          CI: "true"
+        run: node node_modules/jest/bin/jest.js --runInBand --bail=0 --coverage=false --watchman=false

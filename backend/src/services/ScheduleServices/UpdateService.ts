@@ -3,6 +3,7 @@ import * as Yup from "yup";
 import AppError from "../../errors/AppError";
 import Schedule from "../../models/Schedule";
 import ShowService from "./ShowService";
+import { validateRecurrence } from "./CreateService";
 
 interface ScheduleData {
   id?: number;
@@ -13,6 +14,8 @@ interface ScheduleData {
   companyId?: number;
   ticketId?: number;
   userId?: number;
+  recurrence?: string;
+  recurrenceEndAt?: Date | string | null;
 }
 
 interface Request {
@@ -44,13 +47,37 @@ const UpdateUserService = async ({
     throw new AppError(err.message);
   }
 
+  // Zap Komunick: recurrence (docs/PRD.md, RF-006)
+  const recurrence = scheduleData.recurrence ?? schedule.recurrence ?? "none";
+  const recurrenceEndAt =
+    scheduleData.recurrenceEndAt !== undefined
+      ? scheduleData.recurrenceEndAt
+      : schedule.recurrenceEndAt;
+  const effectiveSendAt = sendAt || schedule.sendAt;
+  validateRecurrence(recurrence, effectiveSendAt, recurrenceEndAt);
+  const repeats = recurrence !== "none";
+  // editing the date or the recurrence starts the series again from there;
+  // other edits keep the original anchor (e.g. monthly on the 31st)
+  const restartSeries =
+    !schedule.recurrenceAnchorAt ||
+    recurrence !== (schedule.recurrence || "none") ||
+    new Date(effectiveSendAt).getTime() !== new Date(schedule.sendAt).getTime();
+
   await schedule.update({
     body,
     sendAt,
     sentAt,
     contactId,
     ticketId,
-    userId
+    userId,
+    recurrence,
+    recurrenceEndAt:
+      repeats && recurrenceEndAt ? new Date(recurrenceEndAt) : null,
+    recurrenceAnchorAt: repeats
+      ? restartSeries
+        ? effectiveSendAt
+        : schedule.recurrenceAnchorAt
+      : null
   });
 
   await schedule.reload();

@@ -87,6 +87,10 @@ class Ticket extends Model<Ticket> {
   @Column
   chatbot: boolean;
 
+  // since when the client is waiting for a human reply (SLA panel)
+  @Column
+  unansweredSince: Date;
+
   @ForeignKey(() => QueueOption)
   @Column
   queueOptionId: number;

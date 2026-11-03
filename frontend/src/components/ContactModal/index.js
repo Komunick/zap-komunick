@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 
 import * as Yup from "yup";
 import { Formik, FieldArray, Form, Field } from "formik";
@@ -18,6 +18,7 @@ import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Switch from "@material-ui/core/Switch";
+import MenuItem from "@material-ui/core/MenuItem";
 
 import { i18n } from "../../translate/i18n";
 
@@ -27,6 +28,7 @@ import { SelectLanguage } from "../SelectLanguage";
 import { TagsContainer } from "../TagsContainer";
 import { PhoneNumberInput } from "../PhoneNumberInput";
 import useSettings from "../../hooks/useSettings";
+import { AuthContext } from "../../context/Auth/AuthContext";
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -71,6 +73,10 @@ const ContactSchema = Yup.object().shape({
 const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
   const classes = useStyles();
   const { getSetting } = useSettings();
+  const { user } = useContext(AuthContext);
+  const isAdmin = user?.profile === "admin";
+  const [walletUsers, setWalletUsers] = useState([]);
+  const originalWalletUserId = useRef(null);
 
   const initialState = {
     name: "",
@@ -99,6 +105,7 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 
       try {
         const { data } = await api.get(`/contacts/${contactId}`);
+        originalWalletUserId.current = data.walletUserId || null;
         setContact(data);
       } catch (err) {
         toastError(err);
@@ -108,8 +115,25 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
     fetchContact();
   }, [contactId, open, initialValues]);
 
+  // Zap Komunick: client wallet (docs/PRD.md, RF-003)
+  useEffect(() => {
+    if (!open || !isAdmin) return;
+    api
+      .get("/users/list")
+      .then(({ data }) => setWalletUsers(data))
+      .catch(toastError);
+  }, [open, isAdmin]);
+
+  const saveWallet = async (id, walletUserId) => {
+    const current = contactId ? originalWalletUserId.current : null;
+    const next = walletUserId || null;
+    if (!isAdmin || !id || current === next) return;
+    await api.put(`/contacts/${id}/wallet`, { walletUserId: next });
+  };
+
   const handleClose = () => {
     onClose();
+    originalWalletUserId.current = null;
     setContact(initialState);
   };
 
@@ -117,9 +141,11 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
     try {
       if (contactId) {
         await api.put(`/contacts/${contactId}`, values);
+        await saveWallet(contactId, values.walletUserId);
         handleClose();
       } else {
         const { data } = await api.post("/contacts", values);
+        await saveWallet(data?.id, values.walletUserId);
         if (onSave) {
           onSave(data);
         }
@@ -220,6 +246,28 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
                     }
                   />
                 </>
+                {isAdmin && !values.isGroup && (
+                  <div>
+                    <Field
+                      as={TextField}
+                      select
+                      label={i18n.t("wallet.owner")}
+                      helperText={i18n.t("wallet.ownerHelper")}
+                      name="walletUserId"
+                      value={values.walletUserId || ""}
+                      fullWidth
+                      margin="dense"
+                      variant="outlined"
+                    >
+                      <MenuItem value="">{i18n.t("wallet.none")}</MenuItem>
+                      {walletUsers.map(walletUser => (
+                        <MenuItem key={walletUser.id} value={walletUser.id}>
+                          {walletUser.name}
+                        </MenuItem>
+                      ))}
+                    </Field>
+                  </div>
+                )}
                 {contactId && showTags && <TagsContainer contact={contact} />}
                 {contactId && (
                   <>

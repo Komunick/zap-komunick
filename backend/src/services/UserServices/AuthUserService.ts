@@ -11,6 +11,7 @@ import Company from "../../models/Company";
 import Setting from "../../models/Setting";
 import { GetCompanySetting } from "../../helpers/CheckSettings";
 import UpdateSettingService from "../SettingServices/UpdateSettingService";
+import { canAccessNow } from "../../helpers/AccessHours";
 
 interface SerializedUser {
   id: number;
@@ -52,6 +53,10 @@ const AuthUserService = async ({
 
   if (!(await user.checkPassword(password))) {
     throw new AppError("ERR_INVALID_CREDENTIALS", 401);
+  }
+
+  if (!canAccessNow(user)) {
+    throw new AppError("ERR_OUT_OF_ACCESS_HOURS", 401);
   }
 
   if (user.super && language) {

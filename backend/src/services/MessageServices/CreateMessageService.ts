@@ -42,11 +42,35 @@ export const websocketCreateMessage = (message: Message) => {
     });
 };
 
+/**
+ * SLA panel: keeps since when the client is waiting for a human reply. A
+ * message sent by the company only counts as a reply when an attendant has
+ * the ticket (status open); chatbot and queue messages do not stop the clock.
+ */
+const updateUnansweredSince = async (message: Message) => {
+  const { ticket } = message;
+
+  if (!message.fromMe && !ticket.unansweredSince) {
+    await ticket.update({ unansweredSince: message.createdAt || new Date() });
+  } else if (
+    message.fromMe &&
+    ticket.unansweredSince &&
+    ticket.status === "open"
+  ) {
+    await ticket.update({ unansweredSince: null });
+  }
+};
+
 const CreateMessageService = async ({
   messageData,
   companyId,
   skipWebsocket
 }: Request): Promise<Message> => {
+  const isNewMessage = !(await Message.findOne({
+    where: { id: messageData.id, ticketId: messageData.ticketId },
+    attributes: ["id"]
+  }));
+
   await Message.upsert({ ...messageData, companyId });
 
   const message = await Message.findOne({
@@ -100,6 +124,10 @@ const CreateMessageService = async ({
 
   if (message.ticket.queueId !== null && message.queueId === null) {
     await message.update({ queueId: message.ticket.queueId });
+  }
+
+  if (isNewMessage) {
+    await updateUnansweredSince(message);
   }
 
   if (!message) {

@@ -16,7 +16,8 @@ const ShowUserService = async (
       "companyId",
       "profile",
       "super",
-      "tokenVersion"
+      "tokenVersion",
+      "accessHours"
     ],
     include: [
       {

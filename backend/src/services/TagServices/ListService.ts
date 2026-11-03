@@ -54,7 +54,14 @@ const ListService = async ({
         required: false
       }
     ],
-    attributes: ["id", "name", "color", "ticketsCount", "contactsCount"]
+    attributes: [
+      "id",
+      "name",
+      "color",
+      "kanban",
+      "ticketsCount",
+      "contactsCount"
+    ]
   });
 
   return {

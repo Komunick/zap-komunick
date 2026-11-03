@@ -53,6 +53,16 @@ class Schedule extends Model<Schedule> {
   @Column(DataType.STRING)
   status: string;
 
+  // none, daily, weekly, monthly or yearly
+  @Column({ type: DataType.STRING, defaultValue: "none" })
+  recurrence: string;
+
+  @Column
+  recurrenceEndAt: Date;
+
+  @Column
+  recurrenceAnchorAt: Date;
+
   @CreatedAt
   createdAt: Date;
 

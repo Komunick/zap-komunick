@@ -1,0 +1,101 @@
+# Ambiente de desenvolvimento completo em contêineres (Postgres, Redis, backend e
+# frontend com o código montado e recarga automática). Útil em máquinas sem Node
+# instalado, como o Windows. Somente para desenvolvimento local.
+#
+#   docker compose -f docker-compose-dev-app.yaml up -d
+#
+# Frontend: http://localhost:5420   Backend: http://localhost:5421
+# Login padrão: admin@ticketz.host / 123456
+
+name: zap-komunick-dev
+
+volumes:
+  postgres_data:
+  redis_data:
+  backend_node_modules:
+  frontend_node_modules:
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=ticketz
+      - POSTGRES_DB=ticketz
+      - POSTGRES_HOST_AUTH_METHOD=trust
+      - TZ=America/Sao_Paulo
+    ports:
+      - 127.0.0.1:${DEV_POSTGRES_PORT:-5462}:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ticketz"]
+      interval: 5s
+      retries: 20
+
+  redis:
+    image: redis:alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
+  backend:
+    image: node:24
+    working_dir: /app/backend
+    volumes:
+      - ./backend:/app/backend
+      - backend_node_modules:/app/backend/node_modules
+    environment:
+      - NODE_ENV=
+      - PORT=8080
+      - BACKEND_URL=http://localhost:${DEV_BACKEND_PORT:-5421}
+      - FRONTEND_URL=http://localhost:${DEV_FRONTEND_PORT:-5420}
+      - DB_DIALECT=postgres
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=ticketz
+      - DB_NAME=ticketz
+      - REDIS_URI=redis://redis:6379
+      - REDIS_OPT_LIMITER_MAX=1
+      - REDIS_OPT_LIMITER_DURATION=3000
+      - USER_LIMIT=10000
+      - CONNECTIONS_LIMIT=100000
+      - CLOSED_SEND_BY_ME=true
+      - TZ=America/Sao_Paulo
+      - LOG_LEVEL=info
+    command: >
+      sh -c "npm ci --no-audit --no-fund
+      && npm run generate:i18nkeys
+      && npm run build
+      && npx sequelize db:migrate
+      && npx sequelize db:seed:all
+      && npx ts-node-dev --poll --respawn --transpile-only --ignore node_modules src/server.ts"
+    ports:
+      - 127.0.0.1:${DEV_BACKEND_PORT:-5421}:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  frontend:
+    image: node:24
+    working_dir: /app/frontend
+    volumes:
+      - ./frontend:/app/frontend
+      - frontend_node_modules:/app/frontend/node_modules
+    environment:
+      - NODE_OPTIONS=--openssl-legacy-provider
+      - PORT=3000
+      - BROWSER=none
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+      - WDS_SOCKET_PORT=${DEV_FRONTEND_PORT:-5420}
+    command: >
+      sh -c "printf '{\"BACKEND_PROTOCOL\":\"http\",\"BACKEND_HOST\":\"localhost\",\"BACKEND_PORT\":\"${DEV_BACKEND_PORT:-5421}\"}' > public/config-dev.json
+      && cp public/config-dev.json public/config.json
+      && npm ci --no-audit --no-fund
+      && npx react-scripts start"
+    ports:
+      - 127.0.0.1:${DEV_FRONTEND_PORT:-5420}:3000
+    depends_on:
+      - backend

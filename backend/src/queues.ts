@@ -28,6 +28,7 @@ import { parseToMilliseconds } from "./helpers/parseToMilliseconds";
 import { startCampaignQueues } from "./queues/campaign";
 import { clearRepeatableJobsFromQueues } from "./queues/repeatableJobs";
 import OutOfTicketMessage from "./models/OutOfTicketMessages";
+import CreateNextOccurrenceService from "./services/ScheduleServices/CreateNextOccurrenceService";
 import { getJidOf } from "./services/WbotServices/getJidOf";
 import { _t } from "./services/TranslationServices/i18nService";
 import { makeRandomId } from "./helpers/MakeRandomId";
@@ -174,6 +175,14 @@ async function handleSendScheduledMessage(job) {
       "SendScheduledMessage -> SendMessage: error"
     );
     throw e;
+  } finally {
+    // a failed send keeps its error status, but the series goes on
+    await CreateNextOccurrenceService(scheduleRecord).catch(error => {
+      logger.error(
+        { message: error?.message, scheduleId: scheduleRecord?.id },
+        "SendScheduledMessage -> CreateNextOccurrence: error"
+      );
+    });
   }
 }
 

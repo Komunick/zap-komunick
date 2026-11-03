@@ -63,6 +63,11 @@ class User extends Model<User> {
   @Column
   super: boolean;
 
+  // weekdays (0 = Sunday) and "HH:mm" range in which the user may access the
+  // system; null means no restriction
+  @Column(DataType.JSONB)
+  accessHours: { weekdays: number[]; start: string; end: string } | null;
+
   @CreatedAt
   createdAt: Date;
 

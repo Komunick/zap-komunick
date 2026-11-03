@@ -1,11 +1,13 @@
 import { Sequelize, Op } from "sequelize";
 import sequelize from "../../database";
 import Contact from "../../models/Contact";
+import User from "../../models/User";
 
 interface Request {
   searchParam?: string;
   pageNumber?: string;
   companyId: number;
+  walletUserId?: number;
 }
 
 interface Response {
@@ -17,7 +19,8 @@ interface Response {
 const ListContactsService = async ({
   searchParam = "",
   pageNumber = "1",
-  companyId
+  companyId,
+  walletUserId
 }: Request): Promise<Response> => {
   const normalizedSearchParam = searchParam.toLowerCase().trim();
   const whereCondition = {
@@ -39,14 +42,18 @@ const ListContactsService = async ({
     ],
     companyId: {
       [Op.eq]: companyId
-    }
+    },
+    ...(walletUserId ? { walletUserId } : {})
   };
   const limit = 20;
   const offset = limit * (+pageNumber - 1);
 
   const { count, rows: contacts } = await Contact.findAndCountAll({
     where: whereCondition,
-    include: ["tags"],
+    include: [
+      "tags",
+      { model: User, as: "walletUser", attributes: ["id", "name"] }
+    ],
     limit,
     offset,
     order: [[Sequelize.col("Contact.name"), "ASC"]]
