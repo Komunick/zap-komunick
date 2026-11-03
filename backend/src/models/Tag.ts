@@ -34,6 +34,10 @@ class Tag extends Model {
   @Column
   kanban: number;
 
+  // Zap Komunick: sectors that use the tag; null = every sector (RF-019)
+  @Column(DataType.JSONB)
+  queueIds: number[] | null;
+
   @HasMany(() => TicketTag)
   ticketTags: TicketTag[];
 

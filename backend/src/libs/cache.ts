@@ -113,6 +113,29 @@ export function get(key: string) {
   return redisClient.get(key);
 }
 
+// Atomic claims and bounded attempts for the 2FA flow, shared by all workers.
+export async function setIfAbsent(
+  key: string,
+  value: string,
+  seconds: number
+): Promise<boolean> {
+  return (await getRedisClient().set(key, value, "EX", seconds, "NX")) === "OK";
+}
+
+export async function incrementWithExpiry(
+  key: string,
+  seconds: number
+): Promise<number> {
+  return Number(
+    await getRedisClient().eval(
+      "local n=redis.call('INCR',KEYS[1]); if n==1 then redis.call('EXPIRE',KEYS[1],ARGV[1]); end; return n",
+      1,
+      key,
+      seconds
+    )
+  );
+}
+
 export function getKeys(pattern: string) {
   const redisClient = getRedisClient();
   return redisClient.keys(pattern);
@@ -174,6 +197,8 @@ export async function disconnectCache(): Promise<void> {
 }
 
 export const cacheLayer = {
+  setIfAbsent,
+  incrementWithExpiry,
   set,
   setFromParams,
   get,

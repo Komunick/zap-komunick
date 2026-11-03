@@ -17,7 +17,8 @@ const ShowUserService = async (
       "profile",
       "super",
       "tokenVersion",
-      "accessHours"
+      "accessHours",
+      "twoFactorEnabled"
     ],
     include: [
       {

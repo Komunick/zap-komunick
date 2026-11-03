@@ -97,3 +97,29 @@ describe("parseBulkRequest", () => {
     expect(BULK_FROM_STATUSES.close).not.toContain("closed");
   });
 });
+
+describe("parseBulkRequest - tag", () => {
+  it("tags with up to 20 distinct tags, from any status", () => {
+    expect(
+      parseBulkRequest({ action: "tag", ticketIds: [1], tagIds: [3, 3, 4] }, 7)
+        .data
+    ).toEqual({ tagIds: [3, 4] });
+    expect(
+      parseBulkRequest({ action: "tag", ticketIds: [1], tagIds: [] }, 7).error
+    ).toBe("ERR_BULK_NO_TAGS");
+    expect(BULK_FROM_STATUSES.tag).toContain("closed");
+  });
+
+  it("accepts exactly 20 distinct tags and rejects 21", () => {
+    const tagIds = Array.from({ length: 20 }, (_, index) => index + 1);
+    expect(
+      parseBulkRequest({ action: "tag", ticketIds: [1], tagIds }, 7).data
+    ).toEqual({ tagIds });
+    expect(
+      parseBulkRequest(
+        { action: "tag", ticketIds: [1], tagIds: [...tagIds, 21] },
+        7
+      ).error
+    ).toBe("ERR_BULK_NO_TAGS");
+  });
+});

@@ -41,10 +41,21 @@ export const buildNavItems = isAdmin => {
             label: t("closeReasons")
           },
           { id: "messagesAPI", to: "/messages-api", label: t("messagesAPI") },
+          {
+            id: "ipAllowlist",
+            to: "/ip-allowlist",
+            label: i18n.t("securityIp.title")
+          },
+          { id: "auditLogs", to: "/audit-logs", label: i18n.t("audit.title") },
           { id: "settings", to: "/settings", label: t("settings") }
         ]
       : []),
-    { id: "tasks", to: "/todolist", label: t("tasks") },
+    {
+      id: "accountSecurity",
+      to: "/account-security",
+      label: i18n.t("accountSecurity.title")
+    },
+    // Zap Komunick: "Tarefas" hidden (27/10/2026); /todolist still works
     { id: "helps", to: "/helps", label: t("helps") }
   ];
 

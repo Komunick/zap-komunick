@@ -37,6 +37,7 @@ type IndexQuery = {
   searchParam: string;
   pageNumber: string;
   walletUserId?: string;
+  tagIds?: string;
 };
 
 type IndexGetContactQuery = {
@@ -57,7 +58,23 @@ interface ContactData {
 }
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
-  const { searchParam, pageNumber, walletUserId } = req.query as IndexQuery;
+  const {
+    searchParam,
+    pageNumber,
+    walletUserId,
+    tagIds: tagIdsText
+  } = req.query as IndexQuery;
+
+  // Zap Komunick: filter by tags (RF-019); only whole positive ids
+  let tagIds: number[] = [];
+  try {
+    tagIds = (JSON.parse(tagIdsText || "[]") as unknown[])
+      .map(Number)
+      .filter(n => Number.isInteger(n) && n > 0)
+      .slice(0, 20);
+  } catch {
+    throw new AppError("ERR_INVALID_TAG_FILTER", 400);
+  }
   const { companyId } = req.user;
 
   const { contacts, count, hasMore } = await ListContactsService({
@@ -68,7 +85,8 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
       walletUserId === "me"
         ? Number(req.user.id)
         : Number(walletUserId) || undefined,
-    withoutWallet: walletUserId === "none"
+    withoutWallet: walletUserId === "none",
+    tagIds
   });
 
   return res.json({ contacts, count, hasMore });
@@ -435,9 +453,7 @@ export const updateWalletBulk = async (
     );
   });
 
-  return res
-    .status(200)
-    .json({ updated: updated.length, skippedGroups });
+  return res.status(200).json({ updated: updated.length, skippedGroups });
 };
 
 export const updateWallet = async (

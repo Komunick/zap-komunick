@@ -33,6 +33,8 @@ import { generateColor } from "../../helpers/colorGenerator";
 import { getInitials } from "../../helpers/getInitials";
 import { BulkSelectionContext } from "../TicketsBulk";
 import CheckIcon from "@material-ui/icons/Check";
+import LocalOfferOutlinedIcon from "@material-ui/icons/LocalOfferOutlined";
+import { TagPickerPopover } from "../TagPicker";
 import pastRelativeDate from "../../helpers/pastRelativeDate";
 
 import {
@@ -437,6 +439,9 @@ const TicketListItemCustom = ({
     setCurrentTicket({ id, uuid, code });
   };
 
+  // Zap Komunick: tag the ticket from the list (RF-019)
+  const [tagAnchor, setTagAnchor] = useState(null);
+
   const showActions = groupActionButtons || !ticket.isGroup;
   const canAccept = ticket.status === "pending" && showActions;
   const canClose =
@@ -464,6 +469,13 @@ const TicketListItemCustom = ({
         justClose
         onClosed={() => history.push(`/tickets/`)}
       />
+      {tagAnchor && (
+        <TagPickerPopover
+          anchorEl={tagAnchor}
+          onClose={() => setTagAnchor(null)}
+          ticket={ticket}
+        />
+      )}
       <ListItem
         dense
         button
@@ -621,6 +633,18 @@ const TicketListItemCustom = ({
                   </IconButton>
                 </Tooltip>
               )}
+              <Tooltip title={i18n.t("tagPicker.action")}>
+                <IconButton
+                  size="small"
+                  aria-label={i18n.t("tagPicker.action")}
+                  onClick={e => {
+                    e.stopPropagation();
+                    setTagAnchor(e.currentTarget);
+                  }}
+                >
+                  <LocalOfferOutlinedIcon fontSize="inherit" />
+                </IconButton>
+              </Tooltip>
               {canClose && (
                 <Tooltip title="Fechar Conversa">
                   <IconButton

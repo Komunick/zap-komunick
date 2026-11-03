@@ -1,27 +1,31 @@
 import TicketNote from "../../models/TicketNote";
-import User from "../../models/User";
-import Contact from "../../models/Contact";
-import Ticket from "../../models/Ticket";
+import AuthorizeTicketContextService, {
+  ContextActor
+} from "../TicketServices/AuthorizeTicketContextService";
+import { ticketNoteScope } from "./TicketNoteScope";
 
 interface Params {
+  actor: ContextActor;
   contactId: number | string;
   ticketId: number | string;
 }
 
 const FindNotesByContactIdAndTicketId = async ({
   contactId,
-  ticketId
+  ticketId,
+  actor
 }: Params): Promise<TicketNote[]> => {
+  const { viewer } = await AuthorizeTicketContextService(
+    ticketId,
+    actor,
+    contactId
+  );
   const notes: TicketNote[] = await TicketNote.findAll({
     where: {
       contactId,
       ticketId
     },
-    include: [
-      { model: User, as: "user", attributes: ["id", "name", "email"] },
-      { model: Contact, as: "contact", attributes: ["id", "name"] },
-      { model: Ticket, as: "ticket", attributes: ["id", "status", "createdAt"] }
-    ],
+    include: ticketNoteScope(viewer),
     order: [["createdAt", "DESC"]]
   });
 

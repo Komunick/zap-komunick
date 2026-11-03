@@ -39,3 +39,9 @@ FACEBOOK_APP_ID=
 FACEBOOK_APP_SECRET=
 # Token of the Meta webhooks (only with official channels): random value
 VERIFY_TOKEN=
+
+# Backend-only encryption key: 32 random bytes encoded as base64. Keep a secure
+# backup separately from the database. Never put this value in frontend config.
+CREDENTIALS_MASTER_KEY=
+# Only during a controlled master-key rotation; remove after re-encryption.
+CREDENTIALS_PREVIOUS_MASTER_KEY=

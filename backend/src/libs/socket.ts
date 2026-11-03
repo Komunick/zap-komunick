@@ -47,11 +47,11 @@ import AppError from "../errors/AppError";
 import { logger, setSocketIo, socketSendBuffer } from "../utils/logger";
 import User from "../models/User";
 import Queue from "../models/Queue";
-import Ticket from "../models/Ticket";
 import authConfig from "../config/auth";
 import { CounterManager } from "./counter";
 import UserSocketSession from "../models/UserSocketSession";
-import { GetCompanySetting } from "../helpers/CheckSettings";
+import AuthorizeTicketContextService from "../services/TicketServices/AuthorizeTicketContextService";
+import { refreshSocketContextRooms } from "../services/SocketServices/TicketContextSocketService";
 import { DecoupledDriverServices } from "../services/DecoupledDriverServices/DecoupledDriverServices";
 import { corsOrigin } from "../helpers/corsOrigin";
 
@@ -66,9 +66,7 @@ const joinTicketChannel = async (
   counters: CounterManager
 ) => {
   const c = counters.incrementCounter(`ticket-${ticketId}`);
-  if (c === 1) {
-    socket.join(ticketId);
-  }
+  await socket.join(ticketId);
   logger.debug(`joinChatbox[${c}]: Channel: ${ticketId} by user ${user.id}`);
 };
 
@@ -160,6 +158,9 @@ export const initIO = (httpServer: Server): SocketIO => {
       });
     });
 
+    socket.data.contextActor = { userId: user.id, companyId: user.companyId };
+    socket.data.ticketStatuses = [];
+    socket.data.ticketNotifications = false;
     socket.join(`company-${user.companyId}-mainchannel`);
     socket.join(`user-${user.id}`);
 
@@ -222,45 +223,12 @@ export const initIO = (httpServer: Server): SocketIO => {
       if (!ticketId || ticketId === "undefined") {
         return;
       }
-      Ticket.findByPk(ticketId).then(
-        async ticket => {
-          if (
-            ticket &&
-            ticket.companyId === user.companyId &&
-            (ticket.userId === user.id || user.profile === "admin")
-          ) {
-            joinTicketChannel(socket, ticketId, user, counters);
-          } else if (
-            ticket.isGroup &&
-            (await GetCompanySetting(
-              user.companyId,
-              "groupsTab",
-              "disabled"
-            )) === "enabled"
-          ) {
-            let queueFound = false;
-            user.queues.forEach(queue => {
-              if (queue.id === ticket.queueId) {
-                queueFound = true;
-              }
-            });
-            if (queueFound) {
-              joinTicketChannel(socket, ticketId, user, counters);
-            } else {
-              logger.info(
-                `Invalid attempt to join channel of ticket ${ticketId} by user ${user.id}`
-              );
-            }
-          } else {
-            logger.info(
-              `Invalid attempt to join channel of ticket ${ticketId} by user ${user.id}`
-            );
-          }
-        },
-        error => {
-          logger.error(error, `Error fetching ticket ${ticketId}`);
-        }
-      );
+      try {
+        await AuthorizeTicketContextService(ticketId, socket.data.contextActor);
+        await joinTicketChannel(socket, ticketId, user, counters);
+      } catch {
+        await socket.leave(ticketId);
+      }
     });
 
     socket.on("leaveChatBox", async (ticketId: string) => {
@@ -282,16 +250,8 @@ export const initIO = (httpServer: Server): SocketIO => {
     socket.on("joinNotification", async () => {
       const c = counters.incrementCounter("notification");
       if (c === 1) {
-        if (user.profile === "admin") {
-          socket.join(`company-${user.companyId}-notification`);
-        } else {
-          user.queues.forEach(queue => {
-            logger.debug(
-              `User ${user.id} of company ${user.companyId} joined queue ${queue.id} channel.`
-            );
-            socket.join(`queue-${queue.id}-notification`);
-          });
-        }
+        socket.data.ticketNotifications = true;
+        await refreshSocketContextRooms(socket);
       }
       logger.debug(`joinNotification[${c}]: User: ${user.id}`);
     });
@@ -299,63 +259,39 @@ export const initIO = (httpServer: Server): SocketIO => {
     socket.on("leaveNotification", async () => {
       const c = counters.decrementCounter("notification");
       if (c === 0) {
-        if (user.profile === "admin") {
-          socket.leave(`company-${user.companyId}-notification`);
-        } else {
-          user.queues.forEach(queue => {
-            logger.debug(
-              `User ${user.id} of company ${user.companyId} leaved queue ${queue.id} channel.`
-            );
-            socket.leave(`queue-${queue.id}-notification`);
-          });
-        }
+        socket.data.ticketNotifications = false;
+        await refreshSocketContextRooms(socket);
       }
       logger.debug(`leaveNotification[${c}]: User: ${user.id}`);
     });
 
-    socket.on("joinTickets", (status: string) => {
+    socket.on("joinTickets", async (status: string) => {
+      if (!["pending", "open", "closed", "paused"].includes(status)) return;
       if (counters.incrementCounter(`status-${status}`) === 1) {
-        if (user.profile === "admin") {
-          logger.debug(
-            `Admin ${user.id} of company ${user.companyId} joined ${status} tickets channel.`
-          );
-          socket.join(`company-${user.companyId}-${status}`);
-        } else if (status === "pending") {
-          user.queues.forEach(queue => {
-            logger.debug(
-              `User ${user.id} of company ${user.companyId} joined queue ${queue.id} pending tickets channel.`
-            );
-            socket.join(`queue-${queue.id}-pending`);
-          });
-        } else {
-          logger.debug(`User ${user.id} cannot subscribe to ${status}`);
-        }
+        socket.data.ticketStatuses.push(status);
+        await refreshSocketContextRooms(socket);
       }
     });
 
-    socket.on("leaveTickets", (status: string) => {
+    socket.on("leaveTickets", async (status: string) => {
       if (counters.decrementCounter(`status-${status}`) === 0) {
-        if (user.profile === "admin") {
-          logger.debug(
-            `Admin ${user.id} of company ${user.companyId} leaved ${status} tickets channel.`
-          );
-          socket.leave(`company-${user.companyId}-${status}`);
-        } else if (status === "pending") {
-          user.queues.forEach(queue => {
-            logger.debug(
-              `User ${user.id} of company ${user.companyId} leaved queue ${queue.id} pending tickets channel.`
-            );
-            socket.leave(`queue-${queue.id}-pending`);
-          });
-        }
+        socket.data.ticketStatuses = socket.data.ticketStatuses.filter(
+          s => s !== status
+        );
+        await refreshSocketContextRooms(socket);
       }
     });
 
     socket.on("presenceUpdate", async parameters => {
-      const df = decoupledDriverServices.getFunction("presenceUpdate");
-
-      if (df) {
-        df(user, parameters);
+      try {
+        await AuthorizeTicketContextService(
+          parameters?.ticketId,
+          socket.data.contextActor
+        );
+        const df = decoupledDriverServices.getFunction("presenceUpdate");
+        if (df) await df(user, parameters);
+      } catch {
+        /* No external side effect without context access. */
       }
     });
 

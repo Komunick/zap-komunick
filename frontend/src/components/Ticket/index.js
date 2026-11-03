@@ -232,6 +232,8 @@ const Ticket = () => {
           <TagsContainer
             ticket={["ticket", "both"].includes(tagsMode) && ticket}
             contact={tagsMode === "contact" && contact}
+            queueId={ticket?.queueId}
+            ticketId={ticket?.id}
           />
         </Paper>
         <ReplyMessageProvider>

@@ -11,6 +11,7 @@ import TextField from "@material-ui/core/TextField";
 import Typography from "@material-ui/core/Typography";
 import { toast } from "react-toastify";
 
+import { TagChecklist, useSectorTags } from "../TagPicker";
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import { i18n } from "../../translate/i18n";
@@ -240,6 +241,50 @@ const CloseDialog = ({ open, onClose, onConfirm, busy, count }) => {
   );
 };
 
+// Zap Komunick: add tags to every picked ticket (RF-019)
+const TagDialog = ({ open, onClose, onConfirm, busy, count }) => {
+  const [tagIds, setTagIds] = useState([]);
+  const { tags, loading } = useSectorTags(open);
+
+  useEffect(() => {
+    if (open) setTagIds([]);
+  }, [open]);
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle>{i18n.t("tickets.bulk.tagTitle", { count })}</DialogTitle>
+      <DialogContent>
+        <Typography variant="body2" color="textSecondary">
+          {i18n.t("tickets.bulk.tagHelp")}
+        </Typography>
+        <TagChecklist
+          tags={tags}
+          loading={loading}
+          checkedIds={tagIds}
+          onToggle={id =>
+            setTagIds(prev =>
+              prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+            )
+          }
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} disabled={busy}>
+          {i18n.t("tickets.bulk.cancel")}
+        </Button>
+        <Button
+          color="primary"
+          variant="contained"
+          disabled={busy || tagIds.length === 0}
+          onClick={() => onConfirm({ tagIds })}
+        >
+          {i18n.t("tickets.bulk.tagConfirm")}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
 export const BulkBar = ({ selection, listKey }) => {
   const classes = useStyles();
   const [dialog, setDialog] = useState(null);
@@ -321,6 +366,16 @@ export const BulkBar = ({ selection, listKey }) => {
         </Button>
         <Button
           size="small"
+          variant="outlined"
+          color="primary"
+          className={classes.action}
+          disabled={busy || chosen.length === 0}
+          onClick={() => setDialog("tag")}
+        >
+          {i18n.t("tickets.bulk.tag")}
+        </Button>
+        <Button
+          size="small"
           variant="contained"
           color="primary"
           className={classes.action}
@@ -343,6 +398,13 @@ export const BulkBar = ({ selection, listKey }) => {
         busy={busy}
         onClose={() => setDialog(null)}
         onConfirm={extra => run("transfer", extra)}
+      />
+      <TagDialog
+        open={dialog === "tag"}
+        busy={busy}
+        count={chosen.length}
+        onClose={() => setDialog(null)}
+        onConfirm={extra => run("tag", extra)}
       />
       <CloseDialog
         open={dialog === "close"}

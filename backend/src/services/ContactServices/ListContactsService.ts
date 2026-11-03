@@ -9,6 +9,9 @@ interface Request {
   walletUserId?: number;
   // Zap Komunick: contacts without an owner (RF-014)
   withoutWallet?: boolean;
+  // Zap Komunick: contacts with any of these tags, on the contact or on one
+  // of its tickets (RF-019)
+  tagIds?: number[];
 }
 
 interface Response {
@@ -22,7 +25,8 @@ const ListContactsService = async ({
   pageNumber = "1",
   companyId,
   walletUserId,
-  withoutWallet
+  withoutWallet,
+  tagIds
 }: Request): Promise<Response> => {
   const normalizedSearchParam = searchParam.toLowerCase().trim();
   const whereCondition = {
@@ -46,13 +50,28 @@ const ListContactsService = async ({
       [Op.eq]: companyId
     },
     ...(walletUserId ? { walletUserId } : {}),
-    ...(withoutWallet ? { walletUserId: null, isGroup: false } : {})
+    ...(withoutWallet ? { walletUserId: null, isGroup: false } : {}),
+    ...(tagIds?.length
+      ? {
+          id: {
+            [Op.in]: Sequelize.literal(`(
+              SELECT ct."contactId" FROM "ContactTags" ct
+              WHERE ct."tagId" IN (${tagIds.map(Number).join(",")})
+              UNION
+              SELECT t."contactId" FROM "TicketTags" tt
+              JOIN "Tickets" t ON t.id = tt."ticketId"
+              WHERE tt."tagId" IN (${tagIds.map(Number).join(",")})
+            )`)
+          }
+        }
+      : {})
   };
   const limit = 20;
   const offset = limit * (+pageNumber - 1);
 
   const { count, rows: contacts } = await Contact.findAndCountAll({
     where: whereCondition,
+    distinct: true,
     include: [
       "tags",
       { model: User, as: "walletUser", attributes: ["id", "name"] }

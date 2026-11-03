@@ -17,8 +17,6 @@ import WhatsAppIcon from "@material-ui/icons/WhatsApp";
 import SearchIcon from "@material-ui/icons/Search";
 import TextField from "@material-ui/core/TextField";
 import InputAdornment from "@material-ui/core/InputAdornment";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import Switch from "@material-ui/core/Switch";
 
 import IconButton from "@material-ui/core/IconButton";
 import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
@@ -153,7 +151,10 @@ const Contacts = () => {
   const [loading, setLoading] = useState(false);
   const [pageNumber, setPageNumber] = useState(1);
   const [searchParam, setSearchParam] = useState("");
-  const [onlyMyWallet, setOnlyMyWallet] = useState(false);
+  // Zap Komunick: filter by wallet ("", "me", "none") and by tags (RF-019)
+  const [walletFilter, setWalletFilter] = useState("");
+  const [tagFilter, setTagFilter] = useState([]);
+  const [filterTags, setFilterTags] = useState([]);
   const [contacts, dispatch] = useReducer(reducer, []);
   const [selectedContactId, setSelectedContactId] = useState(null);
   const [contactModalOpen, setContactModalOpen] = useState(false);
@@ -201,9 +202,17 @@ const Contacts = () => {
     dispatch({ type: "RESET" });
     setPageNumber(1);
     setSelectedIds([]);
-  }, [searchParam, onlyMyWallet]);
+  }, [searchParam, walletFilter, tagFilter]);
 
   useEffect(() => {
+    api
+      .get("/tags/list")
+      .then(({ data }) => setFilterTags(data))
+      .catch(toastError);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
     setLoading(true);
     const delayDebounceFn = setTimeout(() => {
       const fetchContacts = async () => {
@@ -212,41 +221,68 @@ const Contacts = () => {
             params: {
               searchParam,
               pageNumber,
-              ...(onlyMyWallet ? { walletUserId: "me" } : {})
+              ...(walletFilter ? { walletUserId: walletFilter } : {}),
+              ...(tagFilter.length ? { tagIds: JSON.stringify(tagFilter) } : {})
             }
           });
+          if (!active) return;
           dispatch({ type: "LOAD_CONTACTS", payload: data.contacts });
           setHasMore(data.hasMore);
-          setLoading(false);
         } catch (err) {
-          toastError(err);
+          if (active) toastError(err);
+        } finally {
+          if (active) setLoading(false);
         }
       };
       fetchContacts();
     }, 500);
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchParam, pageNumber, onlyMyWallet, reloadKey]);
+    return () => {
+      active = false;
+      clearTimeout(delayDebounceFn);
+    };
+  }, [searchParam, pageNumber, walletFilter, tagFilter, reloadKey]);
 
   useEffect(() => {
     const companyId = localStorage.getItem("companyId");
     const socket = socketManager.GetSocket(companyId);
+    let reloadTimer;
+    const filtered = Boolean(searchParam || walletFilter || tagFilter.length);
+    // Contact events do not contain every ticket tag. Revalidate active
+    // filters on the server, once per burst of realtime updates.
+    const scheduleReload = () => {
+      clearTimeout(reloadTimer);
+      reloadTimer = setTimeout(() => {
+        dispatch({ type: "RESET" });
+        setPageNumber(1);
+        setSelectedIds([]);
+        setReloadKey(value => value + 1);
+      }, 200);
+    };
 
     const onContact = data => {
-      if (!searchParam && ["update", "create"].includes(data.action)) {
-        dispatch({ type: "UPDATE_CONTACTS", payload: data.contact });
+      if (["update", "create"].includes(data.action)) {
+        if (filtered) scheduleReload();
+        else dispatch({ type: "UPDATE_CONTACTS", payload: data.contact });
       }
 
       if (data.action === "delete") {
         dispatch({ type: "DELETE_CONTACT", payload: +data.contactId });
       }
     };
+    const onTicket = data => {
+      if (tagFilter.length && ["update", "delete"].includes(data.action)) {
+        scheduleReload();
+      }
+    };
 
     socket.on(`company-${companyId}-contact`, onContact);
+    socket.on(`company-${companyId}-ticket`, onTicket);
 
     return () => {
+      clearTimeout(reloadTimer);
       socket.disconnect();
     };
-  }, [socketManager, searchParam]);
+  }, [socketManager, searchParam, walletFilter, tagFilter]);
 
   const handleSearch = event => {
     setSearchParam(event.target.value.toLowerCase());
@@ -407,16 +443,49 @@ const Contacts = () => {
       <MainHeader>
         <Title>{i18n.t("contacts.title")}</Title>
         <MainHeaderButtonsWrapper>
-          <FormControlLabel
-            control={
-              <Switch
-                color="primary"
-                checked={onlyMyWallet}
-                onChange={e => setOnlyMyWallet(e.target.checked)}
-              />
-            }
-            label={i18n.t("wallet.myWallet")}
-          />
+          <TextField
+            select
+            size="small"
+            variant="outlined"
+            label={i18n.t("contactFilters.wallet")}
+            value={walletFilter}
+            onChange={e => setWalletFilter(e.target.value)}
+            style={{ minWidth: 150 }}
+          >
+            <MenuItem value="">{i18n.t("contactFilters.all")}</MenuItem>
+            <MenuItem value="me">{i18n.t("contactFilters.mine")}</MenuItem>
+            {isAdmin && (
+              <MenuItem value="none">{i18n.t("contactFilters.none")}</MenuItem>
+            )}
+          </TextField>
+          <TextField
+            select
+            size="small"
+            variant="outlined"
+            label={i18n.t("contactFilters.tags")}
+            value={tagFilter}
+            onChange={e => setTagFilter(e.target.value)}
+            SelectProps={{
+              multiple: true,
+              renderValue: ids =>
+                filterTags
+                  .filter(t => ids.includes(t.id))
+                  .map(t => t.name)
+                  .join(", ")
+            }}
+            style={{ minWidth: 150, maxWidth: 240 }}
+          >
+            {filterTags.map(tag => (
+              <MenuItem key={tag.id} value={tag.id}>
+                <Checkbox
+                  size="small"
+                  color="primary"
+                  checked={tagFilter.includes(tag.id)}
+                />
+                {tag.name}
+              </MenuItem>
+            ))}
+          </TextField>
           <TextField
             placeholder={i18n.t("contacts.searchPlaceholder")}
             type="search"
@@ -613,7 +682,7 @@ const Contacts = () => {
                 <TableRow>
                   <TableCell colSpan={isAdmin ? 7 : 6} align="center">
                     <Typography variant="body2" color="textSecondary">
-                      {onlyMyWallet
+                      {walletFilter === "me" && !tagFilter.length
                         ? i18n.t("wallet.emptyMine")
                         : i18n.t("wallet.empty")}
                     </Typography>

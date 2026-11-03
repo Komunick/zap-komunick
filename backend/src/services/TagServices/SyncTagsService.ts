@@ -9,12 +9,35 @@ import ShowContactService from "../ContactServices/ShowContactService";
 import { websocketUpdateContact } from "../ContactServices/UpdateContactService";
 import ShowTicketService from "../TicketServices/ShowTicketService";
 import { websocketUpdateTicket } from "../TicketServices/UpdateTicketService";
+import { companyTagIds, ticketTagIds } from "../../helpers/TagScope";
+
+// Zap Komunick: only tags of the same company, on a ticket or contact of the
+// same company (the ids come from the request)
+const ownTags = async (
+  tags: unknown,
+  companyId: number,
+  queueId?: number | null,
+  existingIds: number[] = []
+): Promise<Tag[]> => {
+  const companyTags = await Tag.findAll({
+    where: { companyId },
+    attributes: ["id", "queueIds"]
+  });
+  const requested =
+    queueId === undefined
+      ? companyTagIds(
+          tags,
+          companyTags.map(t => t.id)
+        )
+      : ticketTagIds(tags, companyTags, queueId, existingIds);
+  return requested.map(id => ({ id }) as Tag);
+};
 
 interface Request {
   tags: Tag[];
   ticketId?: number;
   contactId?: number;
-  companyId?: number;
+  companyId: number;
 }
 
 const SyncTicketTags = async ({
@@ -22,8 +45,16 @@ const SyncTicketTags = async ({
   ticketId,
   companyId
 }: Request): Promise<Ticket | null> => {
-  const ticket = await ShowTicketService(ticketId);
+  const ticket = await ShowTicketService(ticketId, companyId);
   const tagsMode = await GetCompanySetting(companyId, "tagsMode", "ticket");
+  const existing =
+    tagsMode === "contact" ? ticket.contact?.tags || [] : ticket.tags || [];
+  tags = await ownTags(
+    tags,
+    companyId,
+    ticket.queueId || null,
+    existing.map(t => t.id)
+  );
 
   if (["ticket", "both"].includes(tagsMode)) {
     const tagList = tags.map(t => ({ tagId: t.id, ticketId }));
@@ -39,6 +70,9 @@ const SyncTicketTags = async ({
   }
 
   await ticket.reload();
+  if (tagsMode === "contact") {
+    websocketUpdateContact(ticket.contact);
+  }
   websocketUpdateTicket(ticket);
 
   return ticket;
@@ -55,7 +89,8 @@ const SyncContactTags = async ({
     throw new AppError("ERR_INVALID_TAGMODE", 400);
   }
 
-  const contact = await ShowContactService(contactId);
+  const contact = await ShowContactService(contactId, companyId);
+  tags = await ownTags(tags, companyId);
 
   const tagList = tags.map(t => ({ tagId: t.id, contactId }));
 

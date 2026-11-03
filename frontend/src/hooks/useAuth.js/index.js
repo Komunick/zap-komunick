@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useCallback } from "react";
+import { useState, useEffect, useContext, useCallback, useRef } from "react";
 import { useHistory } from "react-router-dom";
 import { has, isArray } from "lodash";
 
@@ -12,6 +12,10 @@ import { clearAllCachedSettings } from "../../helpers/settingsCache";
 import moment from "moment";
 import { decodeToken } from "react-jwt";
 import { readStoredToken } from "../../helpers/storedToken";
+import {
+  isSignInRequest,
+  registerAuthResponseInterceptor
+} from "./authResponseInterceptor";
 
 let apiInterceptorsRegistered = false;
 
@@ -20,6 +24,9 @@ const useAuth = () => {
   const [isAuth, setIsAuth] = useState(false);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState({});
+  const [authenticating, setAuthenticating] = useState(false);
+  const signInRequest = useRef(null);
+  const signInSequence = useRef(0);
 
   const socketManager = useContext(SocketContext);
 
@@ -31,6 +38,11 @@ const useAuth = () => {
 
     api.interceptors.request.use(
       config => {
+        // Password and second-factor requests cannot restore another session.
+        if (isSignInRequest(config)) {
+          delete config.headers.Authorization;
+          return config;
+        }
         const token = readStoredToken();
         if (token) {
           config.headers["Authorization"] = `Bearer ${token}`;
@@ -39,37 +51,19 @@ const useAuth = () => {
         return config;
       },
       error => {
-        Promise.reject(error);
-      }
-    );
-
-    api.interceptors.response.use(
-      response => {
-        return response;
-      },
-      async error => {
-        const originalRequest = error.config;
-        if (error?.response?.status === 403 && !originalRequest._retry) {
-          originalRequest._retry = true;
-
-          const { data } = await api.post("/auth/refresh_token");
-          if (data) {
-            localStorage.setItem("token", JSON.stringify(data.token));
-            api.defaults.headers.Authorization = `Bearer ${data.token}`;
-          }
-          return api(originalRequest);
-        }
-        if (error?.response?.status === 401) {
-          clearAllCachedSettings();
-          localStorage.removeItem("token");
-          localStorage.removeItem("userId");
-          localStorage.removeItem("companyId");
-          api.defaults.headers.Authorization = undefined;
-          setIsAuth(false);
-        }
         return Promise.reject(error);
       }
     );
+
+    registerAuthResponseInterceptor(api, () => {
+      clearAllCachedSettings();
+      localStorage.removeItem("token");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("companyId");
+      api.defaults.headers.Authorization = undefined;
+      setUser({});
+      setIsAuth(false);
+    });
   }, []);
 
   useEffect(() => {
@@ -164,18 +158,67 @@ const useAuth = () => {
     }
   };
 
-  const handleLogin = async userData => {
-    setLoading(true);
+  // Zap Komunick: keep the password/challenge exchange separate from a
+  // completed session. Only the final response reaches posLogin (RF-016).
+  const cancelLogin = useCallback(() => {
+    signInSequence.current += 1;
+    signInRequest.current?.abort();
+    signInRequest.current = null;
+    setAuthenticating(false);
+  }, []);
 
+  const authenticate = async (url, payload) => {
+    if (signInRequest.current) return { cancelled: true };
+    const request = ++signInSequence.current;
+    const controller = new AbortController();
+    signInRequest.current = controller;
+    setAuthenticating(true);
     try {
-      const { data } = await api.post("/auth/login", userData);
+      const { data } = await api.post(url, payload, {
+        signal: controller.signal
+      });
+      if (request !== signInSequence.current) return { cancelled: true };
+      if (data.twoFactorRequired) {
+        if (typeof data.challenge !== "string" || !data.challenge) {
+          return { error: "ERR_2FA_CHALLENGE_EXPIRED" };
+        }
+        const expires = decodeToken(data.challenge)?.exp;
+        return {
+          twoFactorRequired: true,
+          challenge: data.challenge,
+          // The server validates expiry; this timestamp only guides the UI.
+          expiresAt:
+            typeof expires === "number"
+              ? expires * 1000
+              : Date.now() + 5 * 60 * 1000
+        };
+      }
       posLogin(data);
-      setLoading(false);
+      return { authenticated: true };
     } catch (err) {
-      toastError(err);
-      setLoading(false);
+      if (controller.signal.aborted || request !== signInSequence.current) {
+        return { cancelled: true };
+      }
+      return {
+        error: err.response?.data?.error || "ERR_UNKNOWN",
+        retryAfter: Number(err.response?.headers?.["retry-after"]) || 600
+      };
+    } finally {
+      if (request === signInSequence.current) {
+        signInRequest.current = null;
+        setAuthenticating(false);
+      }
     }
   };
+
+  const handleLogin = async userData => {
+    const result = await authenticate("/auth/login", userData);
+    if (result.error) toastError(result.error);
+    return result;
+  };
+
+  const handleVerifyTwoFactor = ({ challenge, code }) =>
+    authenticate("/auth/2fa", { challenge, code });
 
   const handleImpersonate = async companyId => {
     setLoading(true);
@@ -255,7 +298,10 @@ const useAuth = () => {
     isAuth,
     user,
     loading,
+    authenticating,
     handleLogin,
+    handleVerifyTwoFactor,
+    cancelLogin,
     handleImpersonate,
     handleLogout,
     getCurrentUserInfo

@@ -99,7 +99,14 @@ export const transcriber = async (
 
     return transcription.text;
   } catch (err) {
-    logger.error({ error: err.message }, "Error creating transcription");
+    // Provider errors may repeat the submitted API key. Retain only safe metadata.
+    logger.error(
+      {
+        provider: provider in providerConfig ? provider : "openai",
+        status: Number(err?.status) || undefined
+      },
+      "Error creating transcription"
+    );
     return null;
   }
 };
