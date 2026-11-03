@@ -4,6 +4,7 @@ import GetDefaultWhatsApp from "../../helpers/GetDefaultWhatsApp";
 import Ticket from "../../models/Ticket";
 import ShowContactService from "../ContactServices/ShowContactService";
 import { getIO } from "../../libs/socket";
+import { emitTicketContext } from "../SocketServices/TicketContextSocketService";
 import FindOrCreateATicketTrakingService from "./FindOrCreateATicketTrakingService";
 import Contact from "../../models/Contact";
 import { incrementCounter } from "../CounterServices/IncrementCounter";
@@ -82,10 +83,16 @@ const CreateTicketService = async ({
 
   const io = getIO();
 
-  io.to(ticket.id.toString()).emit("ticket", {
-    action: "update",
-    ticket
-  });
+  await emitTicketContext(
+    io,
+    ticket.id,
+    "ticket",
+    {
+      action: "update",
+      ticket
+    },
+    [ticket.id.toString()]
+  );
 
   return ticket;
 };

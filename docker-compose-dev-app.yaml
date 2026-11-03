@@ -62,6 +62,9 @@ services:
       - CLOSED_SEND_BY_ME=true
       - TZ=America/Sao_Paulo
       - LOG_LEVEL=info
+      # Backend-only master keys; leave empty to refuse new credential writes.
+      - CREDENTIALS_MASTER_KEY=${CREDENTIALS_MASTER_KEY:-}
+      - CREDENTIALS_PREVIOUS_MASTER_KEY=${CREDENTIALS_PREVIOUS_MASTER_KEY:-}
     command: >
       sh -c "npm ci --no-audit --no-fund
       && npm run generate:i18nkeys

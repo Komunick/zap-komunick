@@ -117,6 +117,27 @@ const pt = {
     badgeTooltip: "SLA estourado: cliente aguardando resposta há {{time}}"
   },
   settings: {
+    credentials: {
+      aiKey: "Chave de IA",
+      loading: "Consultando configuração…",
+      unavailable: "Não foi possível consultar a configuração.",
+      configured: "Chave configurada. O valor salvo não é exibido.",
+      notConfigured: "Nenhuma chave configurada.",
+      migrationPending:
+        "A chave antiga aguarda migração para armazenamento protegido.",
+      storageUnavailable:
+        "O armazenamento protegido precisa ser configurado no servidor antes de salvar uma chave.",
+      save: "Salvar nova chave",
+      remove: "Remover chave",
+      confirmRemove: "Confirmar remoção",
+      removeWarning:
+        "A transcrição de áudio que usa esta chave ficará indisponível até uma nova chave ser cadastrada. A remoção local não revoga a chave no fornecedor.",
+      cancel: "Cancelar",
+      migrate: "Proteger chave existente",
+      saved: "Configuração atualizada.",
+      requestError:
+        "Não foi possível atualizar ou consultar a chave. Tente novamente."
+    },
     closeReason: {
       group: "Finalização de atendimentos",
       required: "Exigir motivo ao finalizar",
@@ -696,6 +717,26 @@ const en = {
     badgeTooltip: "SLA breached: client waiting for a reply for {{time}}"
   },
   settings: {
+    credentials: {
+      aiKey: "AI key",
+      loading: "Checking configuration…",
+      unavailable: "Unable to check the configuration.",
+      configured: "Key configured. The saved value is never displayed.",
+      notConfigured: "No key configured.",
+      migrationPending:
+        "The old key is awaiting migration to protected storage.",
+      storageUnavailable:
+        "Protected storage must be configured on the server before saving a key.",
+      save: "Save new key",
+      remove: "Remove key",
+      confirmRemove: "Confirm removal",
+      removeWarning:
+        "Audio transcription using this key will be unavailable until a new key is added. Local removal does not revoke the key with the provider.",
+      cancel: "Cancel",
+      migrate: "Protect existing key",
+      saved: "Configuration updated.",
+      requestError: "Unable to update or check the key. Please try again."
+    },
     closeReason: {
       group: "Closing tickets",
       required: "Require a reason to close",
@@ -1275,6 +1316,27 @@ const es = {
     badgeTooltip: "SLA vencido: cliente esperando respuesta hace {{time}}"
   },
   settings: {
+    credentials: {
+      aiKey: "Clave de IA",
+      loading: "Consultando configuración…",
+      unavailable: "No se pudo consultar la configuración.",
+      configured: "Clave configurada. El valor guardado no se muestra.",
+      notConfigured: "Ninguna clave configurada.",
+      migrationPending:
+        "La clave anterior está pendiente de migración al almacenamiento protegido.",
+      storageUnavailable:
+        "El almacenamiento protegido debe configurarse en el servidor antes de guardar una clave.",
+      save: "Guardar nueva clave",
+      remove: "Eliminar clave",
+      confirmRemove: "Confirmar eliminación",
+      removeWarning:
+        "La transcripción de audio que usa esta clave no estará disponible hasta que se registre una nueva. La eliminación local no revoca la clave en el proveedor.",
+      cancel: "Cancelar",
+      migrate: "Proteger clave existente",
+      saved: "Configuración actualizada.",
+      requestError:
+        "No se pudo actualizar o consultar la clave. Inténtalo de nuevo."
+    },
     closeReason: {
       group: "Cierre de atenciones",
       required: "Exigir motivo al cerrar",
@@ -2321,6 +2383,59 @@ const securityMessages = {
   const { backendErrors, ...screens } = securityMessages[language];
   Object.assign(target, screens);
   Object.assign(target.backendErrors, backendErrors);
+});
+
+const credentialErrors = {
+  pt: {
+    ERR_INVALID_CREDENTIAL_KEY: "Identificador de credencial inválido.",
+    ERR_INVALID_CREDENTIAL_VALUE: "Informe uma chave válida.",
+    ERR_CREDENTIALS_MASTER_KEY_UNAVAILABLE:
+      "O armazenamento protegido precisa ser configurado no servidor.",
+    ERR_CREDENTIAL_DECRYPTION_FAILED:
+      "Não foi possível abrir a credencial protegida. Contate o responsável pelo servidor.",
+    ERR_CREDENTIAL_STORAGE_UNAVAILABLE:
+      "O armazenamento de credenciais está indisponível. Tente novamente.",
+    ERR_CREDENTIAL_MIGRATION_CONFLICT:
+      "Há configurações diferentes para a mesma chave. O responsável precisa resolver o conflito antes da migração.",
+    ERR_USE_CREDENTIALS_ROUTE:
+      "Use o formulário específico de credenciais para alterar esta chave."
+  },
+  en: {
+    ERR_INVALID_CREDENTIAL_KEY: "Invalid credential identifier.",
+    ERR_INVALID_CREDENTIAL_VALUE: "Enter a valid key.",
+    ERR_CREDENTIALS_MASTER_KEY_UNAVAILABLE:
+      "Protected storage must be configured on the server.",
+    ERR_CREDENTIAL_DECRYPTION_FAILED:
+      "Unable to open the protected credential. Contact the server administrator.",
+    ERR_CREDENTIAL_STORAGE_UNAVAILABLE:
+      "Credential storage is unavailable. Please try again.",
+    ERR_CREDENTIAL_MIGRATION_CONFLICT:
+      "There are different values for the same key. An administrator must resolve the conflict before migration.",
+    ERR_USE_CREDENTIALS_ROUTE:
+      "Use the dedicated credential form to change this key."
+  },
+  es: {
+    ERR_INVALID_CREDENTIAL_KEY: "Identificador de credencial no válido.",
+    ERR_INVALID_CREDENTIAL_VALUE: "Introduce una clave válida.",
+    ERR_CREDENTIALS_MASTER_KEY_UNAVAILABLE:
+      "El almacenamiento protegido debe configurarse en el servidor.",
+    ERR_CREDENTIAL_DECRYPTION_FAILED:
+      "No se pudo abrir la credencial protegida. Contacta con el administrador del servidor.",
+    ERR_CREDENTIAL_STORAGE_UNAVAILABLE:
+      "El almacenamiento de credenciales no está disponible. Inténtalo de nuevo.",
+    ERR_CREDENTIAL_MIGRATION_CONFLICT:
+      "Hay valores diferentes para la misma clave. Un administrador debe resolver el conflicto antes de la migración.",
+    ERR_USE_CREDENTIALS_ROUTE:
+      "Usa el formulario específico de credenciales para modificar esta clave."
+  }
+};
+
+[
+  ["pt", pt],
+  ["en", en],
+  ["es", es]
+].forEach(([language, target]) => {
+  Object.assign(target.backendErrors, credentialErrors[language]);
 });
 
 export const komunickMessages = {

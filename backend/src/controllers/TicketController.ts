@@ -22,6 +22,13 @@ import Tag from "../models/Tag";
 import { GetCompanySetting } from "../helpers/CheckSettings";
 import { ticketTagIds } from "../helpers/TagScope";
 import ListTicketsServiceKanban from "../services/TicketServices/ListTicketsServiceKanban";
+import AuthorizeTicketContextService, {
+  loadTicketViewer
+} from "../services/TicketServices/AuthorizeTicketContextService";
+import Contact from "../models/Contact";
+import Queue from "../models/Queue";
+import User from "../models/User";
+import { emitTicketContext } from "../services/SocketServices/TicketContextSocketService";
 
 type IndexQuery = {
   isSearch?: string;
@@ -56,7 +63,6 @@ const updateMutex = new Mutex();
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const {
     nextUpdatedAt,
-    nextTicketId,
     status,
     groups,
     date,
@@ -185,6 +191,32 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   const { contactId, userId, queueId }: TicketData = req.body;
   const { companyId } = req.user;
 
+  const viewer = await loadTicketViewer({ userId: req.user.id, companyId });
+  if (
+    !viewer.isAdmin &&
+    (!viewer.queueIds.includes(Number(queueId)) ||
+      Number(userId) !== Number(req.user.id))
+  ) {
+    throw new AppError("ERR_NO_PERMISSION", 403);
+  }
+  const contact = await Contact.findOne({
+    where: { id: contactId, companyId },
+    attributes: ["id"]
+  });
+  const owner = await User.findOne({
+    where: { id: userId, companyId },
+    attributes: ["id"]
+  });
+  const queue = queueId
+    ? await Queue.findOne({
+        where: { id: queueId, companyId },
+        attributes: ["id"]
+      })
+    : null;
+  if (!contact || !owner || (queueId && !queue)) {
+    throw new AppError("ERR_NO_PERMISSION", 403);
+  }
+
   const ticket = await CreateTicketService({
     contactId,
     userId,
@@ -193,12 +225,23 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   });
 
   const io = getIO();
-  io.to(`company-${companyId}-${ticket.status}`)
-    .to(`queue-${ticket.queueId}-${ticket.status}`)
-    .emit(`company-${companyId}-ticket`, {
+  await AuthorizeTicketContextService(ticket.id, {
+    userId: req.user.id,
+    companyId
+  });
+  await emitTicketContext(
+    io,
+    ticket.id,
+    `company-${companyId}-ticket`,
+    {
       action: "update",
       ticket
-    });
+    },
+    [
+      `company-${companyId}-${ticket.status}`,
+      `queue-${ticket.queueId}-${ticket.status}`
+    ]
+  );
 
   return res.status(200).json(ticket);
 };
@@ -207,6 +250,10 @@ export const show = async (req: Request, res: Response): Promise<Response> => {
   const { ticketId } = req.params;
   const { companyId } = req.user;
 
+  await AuthorizeTicketContextService(ticketId, {
+    userId: req.user.id,
+    companyId
+  });
   const contact = await ShowTicketService(ticketId, companyId);
 
   return res.status(200).json(contact);
@@ -218,7 +265,11 @@ export const showFromUUID = async (
 ): Promise<Response> => {
   const { uuid } = req.params;
 
-  const ticket: Ticket = await ShowTicketUUIDService(uuid);
+  const ticket: Ticket = await ShowTicketUUIDService(uuid, req.user.companyId);
+  await AuthorizeTicketContextService(ticket.id, {
+    userId: req.user.id,
+    companyId: req.user.companyId
+  });
 
   return res.status(200).json(ticket);
 };
@@ -228,6 +279,11 @@ export const update = async (
   res: Response
 ): Promise<Response> => {
   const { ticketId } = req.params;
+
+  await AuthorizeTicketContextService(ticketId, {
+    userId: req.user.id,
+    companyId: req.user.companyId
+  });
 
   // Zap Komunick: where the ticket was before, for the transfer note (RF-017)
   const before = await Ticket.findByPk(ticketId, {
@@ -300,6 +356,10 @@ export const bulk = async (req: Request, res: Response): Promise<Response> => {
   }
 
   const applyOne = async (ticketId: number) => {
+    await AuthorizeTicketContextService(ticketId, {
+      userId: reqUserId,
+      companyId
+    });
     if (parsed.action !== "tag") {
       await updateMutex.runExclusive(() =>
         UpdateTicketService({
@@ -356,7 +416,10 @@ export const remove = async (
   const { ticketId } = req.params;
   const { companyId } = req.user;
 
-  await ShowTicketService(ticketId, companyId);
+  await AuthorizeTicketContextService(ticketId, {
+    userId: req.user.id,
+    companyId
+  });
 
   const ticket = await DeleteTicketService(ticketId);
 
