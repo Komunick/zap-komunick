@@ -1,21 +1,17 @@
-import Chat from "../../models/Chat";
-import AppError from "../../errors/AppError";
+import AuthorizeChatService, {
+  ChatActor,
+  withChatTransaction
+} from "./AuthorizeChatService";
 
-const DeleteService = async (id: string): Promise<void> => {
-  const record = await Chat.findOne({
-    where: { id }
+const DeleteService = async (id: unknown, actor: ChatActor) =>
+  withChatTransaction(async transaction => {
+    const record = await AuthorizeChatService(id, actor, {
+      transaction,
+      manage: true,
+      write: true
+    });
+    const snapshot = record.toJSON() as typeof record;
+    await record.destroy({ transaction });
+    return snapshot;
   });
-
-  if (!record) {
-    throw new AppError("ERR_NO_CHAT_FOUND", 404);
-  }
-
-  // deleting would erase the history of both people
-  if (record.isDirect) {
-    throw new AppError("ERR_CHAT_DIRECT_READONLY", 403);
-  }
-
-  await record.destroy();
-};
-
 export default DeleteService;

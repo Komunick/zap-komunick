@@ -33,8 +33,6 @@ services:
       dockerfile: ./Dockerfile
     env_file:
       - .env-frontend-cloudflare
-    volumes:
-      - backend_public:/var/www/backend-public
     restart: always
     depends_on:
       - backend

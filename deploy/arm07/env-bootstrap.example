@@ -1,0 +1,3 @@
+# Somente o servico bootstrap recebe este arquivo. Nao e ambiente do runtime.
+EMAIL_ADDRESS=contato@komunick.com
+ADMIN_PASSWORD=

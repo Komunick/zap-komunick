@@ -14,6 +14,7 @@ import { i18nReady } from "./services/TranslationServices/i18nService";
 import { cacheLayer } from "./libs/cache";
 import { registerShutdownTrigger } from "./utils/shutdown";
 import CleanupReplacedContainerService from "./services/DockerServices/CleanupReplacedContainerService";
+import { assertChatMediaReady } from "./services/ChatService/ChatMediaMigrationService";
 
 // Hard-exit safety timer for graceful shutdown. Set in preShutdown and cleared
 // in finally so the process can never hang during a restart.
@@ -61,58 +62,72 @@ async function startServer() {
 }
 
 // wait for i18n initialization before starting the server
-i18nReady.then(() => {
-  // Create and start the server
-  const server = app.listen(process.env.PORT, async () => {
-    logger.info(`Server is listening on port: ${process.env.PORT}`);
+i18nReady
+  .then(async () => {
+    // Zap Komunick: a deployment cannot silently retain public chat attachments.
+    await assertChatMediaReady();
+    // Create and start the server
+    const server = app.listen(process.env.PORT, async () => {
+      logger.info(`Server is listening on port: ${process.env.PORT}`);
 
-    // Remove the old container after a self-update via the interface
-    CleanupReplacedContainerService();
+      // Remove the old container after a self-update via the interface
+      CleanupReplacedContainerService();
 
-    await startServer();
-  });
+      await startServer();
+    });
 
-  initIO(server);
+    initIO(server);
 
-  // Graceful Shutdown Setup
-  const shutdown = gracefulShutdown(server, {
-    signals: "SIGINT SIGTERM",
-    timeout: 30000,
-    // Hard-exit safety net: set it up first so the process can never hang,
-    // regardless of where the shutdown stalls (connection draining, cleanup,
-    // etc.). Cleared in `finally` once shutdown completes.
-    preShutdown: async () => {
-      logger.info("Shutdown initiated. Cleaning up...");
+    // Graceful Shutdown Setup
+    const shutdown = gracefulShutdown(server, {
+      signals: "SIGINT SIGTERM",
+      timeout: 30000,
+      // Hard-exit safety net: set it up first so the process can never hang,
+      // regardless of where the shutdown stalls (connection draining, cleanup,
+      // etc.). Cleared in `finally` once shutdown completes.
+      preShutdown: async () => {
+        logger.info("Shutdown initiated. Cleaning up...");
 
-      forceExitTimer = setTimeout(() => {
-        logger.warn("Shutdown timed out; forcing exit.");
-        process.exit(0);
-      }, 10000);
-      forceExitTimer.unref();
+        forceExitTimer = setTimeout(() => {
+          logger.warn("Shutdown timed out; forcing exit.");
+          process.exit(0);
+        }, 10000);
+        forceExitTimer.unref();
 
-      // Close Socket.IO first so open WebSocket connections are released and
-      // don't keep the HTTP server from draining.
-      logger.info("Closing Socket.IO connections...");
-      await closeIO();
-    },
-    onShutdown: async () => {
-      // Close WhatsApp sessions (without logout, so credentials are kept)
-      // and drain Bull queues so in-flight jobs can finish.
-      await Promise.allSettled([closeAllSessions(), closeAllQueues()]);
-    },
-    finally: () => {
-      if (forceExitTimer) {
-        clearTimeout(forceExitTimer);
-        forceExitTimer = null;
+        // Close Socket.IO first so open WebSocket connections are released and
+        // don't keep the HTTP server from draining.
+        logger.info("Closing Socket.IO connections...");
+        await closeIO();
+      },
+      onShutdown: async () => {
+        // Close WhatsApp sessions (without logout, so credentials are kept)
+        // and drain Bull queues so in-flight jobs can finish.
+        await Promise.allSettled([closeAllSessions(), closeAllQueues()]);
+      },
+      finally: () => {
+        if (forceExitTimer) {
+          clearTimeout(forceExitTimer);
+          forceExitTimer = null;
+        }
+        logger.info("Server has shut down.");
       }
-      logger.info("Server has shut down.");
-    }
-  });
+    });
 
-  // Expose the trigger so the restart endpoint can shut down gracefully
-  // instead of calling process.exit(0) directly.
-  registerShutdownTrigger(shutdown);
-});
+    // Expose the trigger so the restart endpoint can shut down gracefully
+    // instead of calling process.exit(0) directly.
+    registerShutdownTrigger(shutdown);
+  })
+  .catch(error => {
+    logger.error(
+      {
+        reason: /^ERR_[A-Z0-9_]+$/.test(error?.message)
+          ? error.message
+          : "ERR_STARTUP_READINESS"
+      },
+      "Startup refused before HTTP listen"
+    );
+    process.exit(1);
+  });
 
 // Global Exception Handlers
 process.on("uncaughtException", err => {

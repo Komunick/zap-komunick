@@ -8,6 +8,7 @@ import {
   InputAdornment,
   makeStyles,
   Paper,
+  Tooltip,
   Typography
 } from "@material-ui/core";
 import SendIcon from "@material-ui/icons/Send";
@@ -15,9 +16,15 @@ import SendIcon from "@material-ui/icons/Send";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { useDate } from "../../hooks/useDate";
 import api from "../../services/api";
+import { getBackendURL } from "../../services/config";
+import {
+  chatMediaPath,
+  chatMediaPreview,
+  chatMediaUrl,
+  releaseChatMedia
+} from "../../helpers/chatMedia";
 import { i18n } from "../../translate/i18n";
 
-import { green } from "@material-ui/core/colors";
 import AttachFileIcon from "@material-ui/icons/AttachFile";
 import CancelIcon from "@material-ui/icons/Cancel";
 import CircularProgress from "@material-ui/core/CircularProgress";
@@ -35,6 +42,17 @@ import MediaGalleryLightbox, {
   buildMediaGalleryData
 } from "../../components/MediaGalleryLightbox";
 
+const previewCandidate = message =>
+  message?.mediaPath && ["image", "audio", "video"].includes(message.mediaType);
+const previewKey = (scope, message) =>
+  [
+    scope,
+    message.id,
+    message.mediaPath,
+    message.mediaType,
+    message.updatedAt
+  ].join("|");
+
 const useStyles = makeStyles(theme => ({
   mainContainer: {
     display: "flex",
@@ -44,14 +62,16 @@ const useStyles = makeStyles(theme => ({
     overflow: "hidden",
     borderRadius: 0,
     height: "100%",
-    borderLeft: "1px solid rgba(0, 0, 0, 0.12)"
+    boxShadow: "none"
   },
   messageList: {
     position: "relative",
     display: "flex",
     flexDirection: "column",
     overflowY: "auto",
-    height: "100%",
+    flex: 1,
+    minHeight: 0,
+    padding: "12px 0",
     ...theme.scrollbarStyles,
     backgroundColor: theme.komunick.chatBackground
   },
@@ -60,6 +80,27 @@ const useStyles = makeStyles(theme => ({
     height: "auto",
     paddingTop: 8,
     backgroundColor: theme.komunick.chatBackground
+  },
+  status: {
+    padding: "10px 16px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexWrap: "wrap",
+    gap: 8,
+    color: theme.komunick.textSecondary,
+    textAlign: "center"
+  },
+  emptyHistory: {
+    margin: "auto",
+    padding: 24,
+    textAlign: "center",
+    color: theme.komunick.textSecondary
+  },
+  composerHint: {
+    padding: "0 20px 8px",
+    fontSize: 11,
+    color: theme.komunick.textSecondary
   },
   input: {
     display: "flex",
@@ -85,45 +126,43 @@ const useStyles = makeStyles(theme => ({
     margin: "10px",
     position: "relative",
     alignSelf: "flex-start",
-    backgroundColor: theme.palette.chatBubbleReceived.main,
-    color: theme.palette.chatBubbleReceived.contrastText,
-    minWidth: 100,
-    maxWidth: 600,
+    maxWidth: "min(600px, calc(100% - 32px))",
     borderRadius: 10,
     borderBottomLeftRadius: 0,
-    border: "1px solid rgba(0, 0, 0, 0.12)",
-    boxShadow:
-      theme.mode === "light" ? "0 1px 1px #b3b3b3" : "0 1px 1px #000000"
+    border: `1px solid ${theme.komunick.border}`,
+    boxShadow: theme.komunick.shadow,
+    color: theme.komunick.text,
+    backgroundColor: theme.komunick.bubbleTheirs,
+    overflowWrap: "anywhere",
+    minWidth: 0
   },
   boxRight: {
     padding: "10px 10px 5px",
     margin: "10px 10px 10px auto",
     position: "relative",
     alignSelf: "flex-end",
-    backgroundColor: theme.palette.chatBubbleFromMe.main,
-    color: theme.palette.chatBubbleFromMe.contrastText,
-    minWidth: 100,
-    maxWidth: 600,
+    maxWidth: "min(600px, calc(100% - 32px))",
     borderRadius: 10,
     borderBottomRightRadius: 0,
-    border: "1px solid rgba(0, 0, 0, 0.12)",
-    boxShadow:
-      theme.mode === "light" ? "0 1px 1px #b3b3b3" : "0 1px 1px #000000"
+    border: `1px solid ${theme.komunick.bubbleMineBorder}`,
+    boxShadow: theme.komunick.shadow,
+    color: theme.komunick.text,
+    backgroundColor: theme.komunick.bubbleMine,
+    overflowWrap: "anywhere",
+    minWidth: 0
   },
-
+  messageBody: { whiteSpace: "pre-wrap", overflowWrap: "anywhere" },
+  messageTime: {
+    marginTop: 5,
+    fontSize: 11,
+    textAlign: "right",
+    color: theme.komunick.textSecondary
+  },
   sendMessageIcons: {
-    color: "grey"
+    color: theme.komunick.textSecondary
   },
   uploadInput: {
     display: "none"
-  },
-  circleLoading: {
-    color: green[500],
-    opacity: "70%",
-    position: "absolute",
-    top: "20%",
-    left: "50%",
-    marginLeft: -12
   },
   viewMediaInputWrapper: {
     display: "flex",
@@ -131,10 +170,12 @@ const useStyles = makeStyles(theme => ({
     position: "relative",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#eee",
-    borderTop: "1px solid rgba(0, 0, 0, 0.12)"
+    gap: 8,
+    backgroundColor: theme.komunick.composer,
+    color: theme.komunick.text,
+    borderTop: `1px solid ${theme.komunick.composerBorder}`
   },
-
+  selectedFiles: { flex: 1, minWidth: 0, overflowWrap: "anywhere" },
   downloadMedia: {
     display: "flex",
     alignItems: "center",
@@ -145,6 +186,7 @@ const useStyles = makeStyles(theme => ({
   messageMedia: {
     objectFit: "cover",
     width: 250,
+    maxWidth: "100%",
     height: 200,
     borderTopLeftRadius: 8,
     borderTopRightRadius: 8,
@@ -153,6 +195,7 @@ const useStyles = makeStyles(theme => ({
   },
   videoPreviewWrapper: {
     width: 250,
+    maxWidth: "100%",
     height: 200,
     borderRadius: 8,
     overflow: "hidden",
@@ -189,20 +232,18 @@ const useStyles = makeStyles(theme => ({
   },
 
   cancelAudioIcon: {
-    color: "red"
+    color: theme.palette.error.main
   },
 
   audioLoading: {
-    color: green[500],
+    color: theme.komunick.accent,
     opacity: "70%"
   },
 
   sendAudioIcon: {
-    color: "green"
+    color: theme.komunick.accent
   }
 }));
-
-const Mp3Recorder = new MicRecorder({ bitRate: 128 });
 
 export default function ChatMessages({
   chat,
@@ -210,27 +251,110 @@ export default function ChatMessages({
   handleSendMessage,
   handleLoadMore,
   scrollToBottomRef,
-  pageInfo
+  pageInfo,
+  historyLoading = false,
+  historyError = false,
+  handleRetryMessages,
+  handleMediaSent
 }) {
   const classes = useStyles();
   const { user } = useContext(AuthContext);
   const { datetimeToClient } = useDate();
   const baseRef = useRef();
   const previewVideoRefs = useRef({});
+  const mediaNodesRef = useRef(new Map());
+  const downloadRequestRef = useRef(null);
+  const previewRequestsRef = useRef(new Map());
+  const sendingRef = useRef(false);
+  const mountedRef = useRef(true);
+  const inputRef = useRef();
+  const recordingRef = useRef(false);
+  const [recorder] = useState(() => new MicRecorder({ bitRate: 128 }));
 
   const [contentMessage, setContentMessage] = useState("");
   const [medias, setMedias] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [sendError, setSendError] = useState(false);
   const [recording, setRecording] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [previewVideoPlayingById, setPreviewVideoPlayingById] = useState({});
+  const [downloadBusy, setDownloadBusy] = useState(false);
+  const [mediaError, setMediaError] = useState("");
+  const [previews, setPreviews] = useState({});
+  const previewScope = `${user.companyId}:${user.id}:${chat.id}`;
+
+  useEffect(() => {
+    const requests = previewRequestsRef.current;
+    const activeKeys = new Set();
+    messages.filter(previewCandidate).forEach(message => {
+      const key = previewKey(previewScope, message);
+      activeKeys.add(key);
+      if (requests.has(key)) return;
+      const path = chatMediaPath(chat.id, message.id);
+      if (!path) return;
+      const request = { controller: new AbortController() };
+      requests.set(key, request);
+      api
+        .head(path, { signal: request.controller.signal, timeout: 30000 })
+        .then(({ headers }) => {
+          if (
+            !mountedRef.current ||
+            request.controller.signal.aborted ||
+            requests.get(key) !== request
+          )
+            return;
+          setPreviews(previous => ({
+            ...previous,
+            [key]: { decision: chatMediaPreview(headers) }
+          }));
+        })
+        .catch(error => {
+          if (
+            !mountedRef.current ||
+            request.controller.signal.aborted ||
+            requests.get(key) !== request
+          )
+            return;
+          setPreviews(previous => ({ ...previous, [key]: { decision: null } }));
+          setMediaError(
+            [401, 403, 404].includes(error?.response?.status)
+              ? "attachments.access"
+              : "attachments.failed"
+          );
+          setLightboxOpen(false);
+        });
+    });
+    requests.forEach((request, key) => {
+      if (!activeKeys.has(key)) {
+        request.controller.abort();
+        requests.delete(key);
+      }
+    });
+    setPreviews(previous => {
+      const entries = Object.entries(previous).filter(([key]) =>
+        activeKeys.has(key)
+      );
+      return entries.length === Object.keys(previous).length
+        ? previous
+        : Object.fromEntries(entries);
+    });
+    // A pending HEAD belongs to its attachment key, not to the messages array.
+    // Removed keys are cancelled above; unmount cancels all remaining requests.
+  }, [messages, chat.id, previewScope]);
 
   const lightboxMedia = useMemo(() => {
     return buildMediaGalleryData(messages, {
-      getMediaUrl: message => message?.mediaPath
+      getMediaUrl: message =>
+        message?.mediaPath &&
+        previews[previewKey(previewScope, message)]?.decision
+          ? chatMediaUrl(getBackendURL(), chat.id, message.id)
+          : null,
+      getMediaType: message =>
+        previews[previewKey(previewScope, message)]?.decision?.kind,
+      getFileName: message => message.mediaName || message.message
     });
-  }, [messages]);
+  }, [messages, chat.id, previews, previewScope]);
 
   const openLightboxForMessage = messageId => {
     const index = lightboxMedia.byMessageId[messageId];
@@ -239,6 +363,7 @@ export default function ChatMessages({
     }
 
     setLightboxIndex(index);
+    setMediaError("");
     setLightboxOpen(true);
   };
 
@@ -252,27 +377,34 @@ export default function ChatMessages({
     }
   };
 
-  const unreadMessages = chat => {
-    if (chat !== undefined) {
-      const currentUser = chat.users.find(u => u.userId === user.id);
-      return currentUser.unreads > 0;
-    }
-    return 0;
-  };
-
   useEffect(() => {
-    if (unreadMessages(chat) > 0) {
-      try {
-        api.post(`/chats/${chat.id}/read`, { userId: user.id });
-      } catch (err) {}
-    }
     scrollToBottomRef.current = scrollToBottom;
+    const mediaNodes = mediaNodesRef.current;
+    const previewRequests = previewRequestsRef.current;
+    return () => {
+      mountedRef.current = false;
+      scrollToBottomRef.current = null;
+      if (recordingRef.current) {
+        recorder.stop();
+        recordingRef.current = false;
+      }
+      const pendingDownload = downloadRequestRef.current;
+      downloadRequestRef.current = null;
+      if (pendingDownload) {
+        pendingDownload.controller.abort();
+        pendingDownload.close();
+      }
+      mediaNodes.forEach(entry => releaseChatMedia(entry.node));
+      mediaNodes.clear();
+      previewRequests.forEach(request => request.controller.abort());
+      previewRequests.clear();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleScroll = e => {
     const { scrollTop } = e.currentTarget;
-    if (!pageInfo.hasMore || loading) return;
+    if (!pageInfo.hasMore || historyLoading || historyError) return;
     if (scrollTop < 600) {
       handleLoadMore();
     }
@@ -285,6 +417,32 @@ export default function ChatMessages({
 
     const selectedMedias = Array.from(e.target.files);
     setMedias(selectedMedias);
+    setSendError(false);
+    e.target.value = "";
+  };
+
+  // Zap Komunick: only a confirmed send clears the draft; one in-flight
+  // operation owns this composer until it finishes or its chat unmounts.
+  const sendText = async () => {
+    if (sendingRef.current || !contentMessage.trim()) return;
+    sendingRef.current = true;
+    setLoading(true);
+    setSendError(false);
+    try {
+      const sent = await handleSendMessage(contentMessage);
+      if (mountedRef.current) {
+        if (sent === false) setSendError(true);
+        else setContentMessage("");
+      }
+    } catch {
+      if (mountedRef.current) setSendError(true);
+    } finally {
+      sendingRef.current = false;
+      if (mountedRef.current) {
+        setLoading(false);
+        setTimeout(() => inputRef.current?.focus(), 0);
+      }
+    }
   };
 
   const handleVideoPreviewPlayClick = (event, messageId) => {
@@ -312,41 +470,149 @@ export default function ChatMessages({
     previewVideo.pause();
   };
 
-  const checkMessageMedia = message => {
-    const mediaUrl = message.mediaPath;
+  const captureMedia = (messageId, kind) => {
+    const key = `${kind}:${messageId}`;
+    if (!mediaNodesRef.current.has(key)) {
+      const entry = { node: null };
+      // Keep this callback stable across renders: replacing a ref must not
+      // pause playback whenever its play/pause indicator updates.
+      entry.ref = node => {
+        if (entry.node === node) return;
+        releaseChatMedia(entry.node);
+        entry.node = node;
+        if (kind === "video") {
+          if (node) previewVideoRefs.current[messageId] = node;
+          else delete previewVideoRefs.current[messageId];
+        }
+      };
+      mediaNodesRef.current.set(key, entry);
+    }
+    return mediaNodesRef.current.get(key).ref;
+  };
 
-    if (message.mediaType === "image") {
+  const reportMediaError = () => {
+    setMediaError("attachments.access");
+    setLightboxOpen(false);
+  };
+
+  const downloadMedia = async messageId => {
+    if (downloadRequestRef.current) return;
+    const path = chatMediaPath(chat.id, messageId, true);
+    const url = chatMediaUrl(getBackendURL(), chat.id, messageId, true);
+    if (!path || !url) return reportMediaError();
+    setMediaError("");
+    let destination;
+    try {
+      // Reserve the user-initiated destination before the asynchronous HEAD.
+      // A later denied GET stays outside the current chat and is never retried
+      // against the old public link. The server authorizes that GET again.
+      destination = window.open("about:blank", "_blank");
+      if (destination) destination.opener = null;
+    } catch {
+      destination = null;
+    }
+    if (!destination) {
+      setMediaError("chatPage.downloadBlocked");
+      setLightboxOpen(false);
+      return;
+    }
+    const request = {
+      controller: new AbortController(),
+      closed: false,
+      close() {
+        if (!this.closed) {
+          this.closed = true;
+          destination.close();
+        }
+      }
+    };
+    downloadRequestRef.current = request;
+    setDownloadBusy(true);
+    try {
+      await api.head(path, {
+        signal: request.controller.signal,
+        timeout: 30000
+      });
+      if (
+        !mountedRef.current ||
+        request.controller.signal.aborted ||
+        downloadRequestRef.current !== request ||
+        destination.closed
+      ) {
+        request.close();
+        return;
+      }
+      destination.location.replace(url);
+    } catch (error) {
+      request.close();
+      if (mountedRef.current && !request.controller.signal.aborted) {
+        setMediaError(
+          [401, 403, 404].includes(error?.response?.status)
+            ? "attachments.access"
+            : "attachments.failed"
+        );
+        setLightboxOpen(false);
+      }
+    } finally {
+      if (downloadRequestRef.current === request) {
+        downloadRequestRef.current = null;
+        if (mountedRef.current) setDownloadBusy(false);
+      }
+    }
+  };
+
+  const checkMessageMedia = message => {
+    const mediaUrl = chatMediaUrl(getBackendURL(), chat.id, message.id);
+    if (!mediaUrl)
+      return (
+        <Typography role="alert">{i18n.t("attachments.access")}</Typography>
+      );
+
+    const preview = previews[previewKey(previewScope, message)];
+    if (previewCandidate(message) && !preview)
+      return (
+        <Typography variant="caption" role="status">
+          {i18n.t("attachments.loading")}
+        </Typography>
+      );
+    const kind = preview?.decision?.kind;
+    if (kind === "image") {
       return (
         <img
+          ref={captureMedia(message.id, "image")}
           className={classes.messageMedia}
+          crossOrigin="use-credentials"
           src={mediaUrl}
-          alt="midia da mensagem"
+          alt={i18n.t("chatPage.messageImage")}
           style={{ cursor: "pointer" }}
           onClick={() => openLightboxForMessage(message.id)}
+          onError={reportMediaError}
         />
       );
     }
-    if (message.mediaType === "audio") {
+    if (kind === "audio") {
       return (
-        <audio controls>
-          <source src={mediaUrl} type="audio/ogg"></source>
+        <audio
+          ref={captureMedia(message.id, "audio")}
+          crossOrigin="use-credentials"
+          controls
+          style={{ maxWidth: "100%" }}
+          onError={reportMediaError}
+        >
+          <source src={mediaUrl} type={preview.decision.mimeType}></source>
         </audio>
       );
     }
 
-    if (message.mediaType === "video") {
+    if (kind === "video") {
       return (
         <div className={classes.videoPreviewWrapper}>
           <video
-            ref={element => {
-              if (element) {
-                previewVideoRefs.current[message.id] = element;
-              } else {
-                delete previewVideoRefs.current[message.id];
-              }
-            }}
+            ref={captureMedia(message.id, "video")}
             className={classes.videoPreviewMedia}
+            crossOrigin="use-credentials"
             src={mediaUrl}
+            onError={reportMediaError}
             preload="metadata"
             playsInline
             onPlay={() => {
@@ -371,7 +637,11 @@ export default function ChatMessages({
           <div className={classes.videoPreviewActions}>
             <IconButton
               className={classes.videoPreviewActionButton}
-              aria-label="play preview"
+              aria-label={i18n.t(
+                previewVideoPlayingById[message.id]
+                  ? "chatPage.pauseVideo"
+                  : "chatPage.playVideo"
+              )}
               onClick={event => handleVideoPreviewPlayClick(event, message.id)}
             >
               {previewVideoPlayingById[message.id] ? (
@@ -382,7 +652,7 @@ export default function ChatMessages({
             </IconButton>
             <IconButton
               className={classes.videoPreviewActionButton}
-              aria-label="open video lightbox"
+              aria-label={i18n.t("chatPage.openMedia")}
               onClick={event => {
                 event.stopPropagation();
                 pausePreviewVideo(message.id);
@@ -402,10 +672,10 @@ export default function ChatMessages({
               startIcon={<GetApp />}
               color="primary"
               variant="outlined"
-              target="_blank"
-              href={mediaUrl}
+              disabled={downloadBusy}
+              onClick={() => downloadMedia(message.id)}
             >
-              Download
+              {i18n.t("chatPage.download")}
             </Button>
           </div>
           {/* <Divider /> */}
@@ -415,8 +685,11 @@ export default function ChatMessages({
   };
 
   const handleSendMedia = async e => {
-    setLoading(true);
     e.preventDefault();
+    if (sendingRef.current || !medias.length) return;
+    sendingRef.current = true;
+    setLoading(true);
+    setSendError(false);
 
     const formData = new FormData();
     formData.append("fromMe", true);
@@ -425,108 +698,182 @@ export default function ChatMessages({
       formData.append("body", media.name);
     });
 
+    let uploaded = false;
     try {
       await api.post(`/chats/${chat.id}/messages`, formData);
+      uploaded = true;
+      if (mountedRef.current) {
+        setMedias([]);
+      }
     } catch (err) {
-      console.log(err);
       toastError(err);
+      if (mountedRef.current) setSendError(true);
+    } finally {
+      sendingRef.current = false;
+      if (mountedRef.current) setLoading(false);
     }
-
-    setLoading(false);
-    setMedias([]);
+    // The parent handles a GET failure as history retry, never upload retry.
+    if (uploaded && mountedRef.current) await handleMediaSent?.();
   };
 
   const handleStartRecording = async () => {
+    if (sendingRef.current) return;
+    sendingRef.current = true;
     setLoading(true);
+    setSendError(false);
     try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-      await Mp3Recorder.start();
+      await recorder.start();
+      if (!mountedRef.current) {
+        recorder.stop();
+        return;
+      }
+      recordingRef.current = true;
       setRecording(true);
-      setLoading(false);
     } catch (err) {
-      toastError(err);
-      setLoading(false);
+      if (mountedRef.current) toastError(err);
+    } finally {
+      sendingRef.current = false;
+      if (mountedRef.current) setLoading(false);
     }
   };
 
   const handleUploadAudio = async () => {
+    if (sendingRef.current || !recordingRef.current) return;
+    sendingRef.current = true;
     setLoading(true);
+    let uploaded = false;
+    let audioFile;
     try {
-      const [, blob] = await Mp3Recorder.stop().getMp3();
-
-      if (blob.size < 10000) {
-        setLoading(false);
-        setRecording(false);
-        return;
-      }
+      recordingRef.current = false;
+      const [, blob] = await recorder.stop().getMp3();
+      if (!mountedRef.current || blob.size < 10000) return;
 
       const formData = new FormData();
       const filename = `audio-${new Date().getTime()}.mp3`;
+      audioFile = new File([blob], filename, {
+        type: blob.type || "audio/mpeg"
+      });
 
-      formData.append("medias", blob, filename);
+      formData.append("medias", audioFile);
       formData.append("body", filename);
       formData.append("fromMe", true);
 
       await api.post(`/chats/${chat.id}/messages`, formData);
+      uploaded = true;
     } catch (err) {
-      toastError(err);
+      if (mountedRef.current) {
+        toastError(err);
+        setSendError(true);
+        if (audioFile) setMedias([audioFile]);
+      }
+    } finally {
+      sendingRef.current = false;
+      if (mountedRef.current) {
+        setRecording(false);
+        setLoading(false);
+      }
     }
-
-    setRecording(false);
-    setLoading(false);
+    if (uploaded && mountedRef.current) await handleMediaSent?.();
   };
 
   const handleCancelAudio = async () => {
+    if (sendingRef.current || !recordingRef.current) return;
+    sendingRef.current = true;
     try {
-      await Mp3Recorder.stop().getMp3();
-      setRecording(false);
+      recordingRef.current = false;
+      await recorder.stop().getMp3();
     } catch (err) {
-      toastError(err);
+      if (mountedRef.current) toastError(err);
+    } finally {
+      sendingRef.current = false;
+      if (mountedRef.current) setRecording(false);
     }
   };
 
   return (
     <Paper className={classes.mainContainer}>
-      <div onScroll={handleScroll} className={classes.messageList}>
-        {Array.isArray(messages) &&
-          messages.map((item, key) => {
-            if (item.senderId === user.id) {
-              return (
-                <Box key={key} className={classes.boxRight}>
-                  <Typography variant="subtitle2">
-                    {item.sender.name}
-                  </Typography>
-                  {item.mediaPath && checkMessageMedia(item)}
-                  {item.message}
-                  <Typography variant="caption" display="block">
-                    {datetimeToClient(item.createdAt)}
-                  </Typography>
-                </Box>
-              );
-            } else {
-              return (
-                <Box key={key} className={classes.boxLeft}>
-                  <Typography variant="subtitle2">
-                    {item.sender.name}
-                  </Typography>
-                  {item.mediaPath && checkMessageMedia(item)}
-                  {item.message}
-                  <Typography variant="caption" display="block">
-                    {datetimeToClient(item.createdAt)}
-                  </Typography>
-                </Box>
-              );
+      <div
+        onScroll={handleScroll}
+        className={classes.messageList}
+        role="region"
+        aria-label={i18n.t("chatPage.messages")}
+        aria-busy={historyLoading}
+      >
+        {historyLoading && (
+          <div className={classes.status} role="status">
+            <CircularProgress size={18} />
+            <Typography variant="body2">
+              {i18n.t("chatPage.loadingMessages")}
+            </Typography>
+          </div>
+        )}
+        {historyError && (
+          <div className={classes.status} role="alert">
+            <Typography variant="body2">
+              {i18n.t("chatPage.messagesError")}
+            </Typography>
+            <Button size="small" onClick={handleRetryMessages}>
+              {i18n.t("chatPage.retry")}
+            </Button>
+          </div>
+        )}
+        {!historyLoading && !historyError && pageInfo.hasMore && (
+          <div className={classes.status}>
+            <Button size="small" onClick={handleLoadMore}>
+              {i18n.t("chatPage.loadMore")}
+            </Button>
+          </div>
+        )}
+        {!historyLoading && !historyError && messages.length === 0 && (
+          <div className={classes.emptyHistory}>
+            <Typography variant="subtitle2">
+              {i18n.t("chatPage.emptyMessages")}
+            </Typography>
+            <Typography variant="body2">
+              {i18n.t("chatPage.emptyMessagesHint")}
+            </Typography>
+          </div>
+        )}
+        {messages.map(item => (
+          <Box
+            key={item.id}
+            className={
+              item.senderId === user.id ? classes.boxRight : classes.boxLeft
             }
-          })}
+          >
+            <Typography variant="subtitle2">
+              {item.sender?.name || i18n.t("chatPage.unknownSender")}
+            </Typography>
+            {item.mediaPath && checkMessageMedia(item)}
+            <Typography
+              component="div"
+              variant="body2"
+              className={classes.messageBody}
+            >
+              {item.message}
+            </Typography>
+            <Typography
+              variant="caption"
+              display="block"
+              className={classes.messageTime}
+            >
+              {datetimeToClient(item.createdAt)}
+            </Typography>
+          </Box>
+        ))}
         <div ref={baseRef}></div>
       </div>
+      {mediaError && (
+        <div className={classes.status} role="alert">
+          <Typography variant="body2">{i18n.t(mediaError)}</Typography>
+        </div>
+      )}
       <div className={classes.inputArea}>
         <FormControl variant="outlined" fullWidth>
           {recording ? (
             <div className={classes.recorderWrapper}>
               <IconButton
-                aria-label="cancelRecording"
-                component="span"
+                aria-label={i18n.t("chatPage.cancelRecording")}
                 fontSize="large"
                 disabled={loading}
                 onClick={handleCancelAudio}
@@ -542,8 +889,7 @@ export default function ChatMessages({
               )}
 
               <IconButton
-                aria-label="sendRecordedAudio"
-                component="span"
+                aria-label={i18n.t("chatPage.sendRecording")}
                 onClick={handleUploadAudio}
                 disabled={loading}
               >
@@ -560,27 +906,36 @@ export default function ChatMessages({
                     className={classes.viewMediaInputWrapper}
                   >
                     <IconButton
-                      aria-label="cancel-upload"
-                      component="span"
-                      onClick={e => setMedias([])}
+                      aria-label={i18n.t("chatPage.cancelFiles")}
+                      disabled={loading}
+                      onClick={() => {
+                        setMedias([]);
+                        setSendError(false);
+                      }}
                     >
                       <CancelIcon className={classes.sendMessageIcons} />
                     </IconButton>
 
-                    {loading ? (
-                      <div>
-                        <CircularProgress className={classes.circleLoading} />
-                      </div>
-                    ) : (
-                      <span>{medias[0]?.name}</span>
-                    )}
+                    <div className={classes.selectedFiles}>
+                      {medias.map(media => (
+                        <Typography
+                          variant="body2"
+                          key={media.name + media.size}
+                        >
+                          {media.name}
+                        </Typography>
+                      ))}
+                    </div>
                     <IconButton
-                      aria-label="send-upload"
-                      component="span"
+                      aria-label={i18n.t("chatPage.sendFiles")}
                       onClick={handleSendMedia}
                       disabled={loading}
                     >
-                      <SendIcon className={classes.sendMessageIcons} />
+                      {loading ? (
+                        <CircularProgress size={20} />
+                      ) : (
+                        <SendIcon className={classes.sendMessageIcons} />
+                      )}
                     </IconButton>
                   </Paper>
                 </>
@@ -588,12 +943,24 @@ export default function ChatMessages({
                 <React.Fragment>
                   <Input
                     multiline
+                    rowsMax={5}
+                    inputRef={inputRef}
+                    disabled={loading}
+                    inputProps={{
+                      "aria-label": i18n.t("chatPage.messageInput"),
+                      "aria-describedby": "internal-chat-input-hint"
+                    }}
                     placeholder={i18n.t("messagesInput.placeholderOpen")}
                     value={contentMessage}
-                    onKeyUp={e => {
-                      if (e.key === "Enter" && contentMessage.trim() !== "") {
-                        handleSendMessage(contentMessage);
-                        setContentMessage("");
+                    onKeyDown={e => {
+                      if (
+                        e.key === "Enter" &&
+                        !e.shiftKey &&
+                        !e.nativeEvent.isComposing &&
+                        e.keyCode !== 229
+                      ) {
+                        e.preventDefault();
+                        sendText();
                       }
                     }}
                     onChange={e => setContentMessage(e.target.value)}
@@ -610,20 +977,20 @@ export default function ChatMessages({
                       <InputAdornment position="end">
                         {contentMessage ? (
                           <IconButton
-                            onClick={() => {
-                              if (contentMessage.trim() !== "") {
-                                handleSendMessage(contentMessage);
-                                setContentMessage("");
-                              }
-                            }}
+                            aria-label={i18n.t("chatPage.send")}
+                            onClick={sendText}
+                            disabled={loading || !contentMessage.trim()}
                             className={classes.buttonSend}
                           >
-                            <SendIcon />
+                            {loading ? (
+                              <CircularProgress size={20} />
+                            ) : (
+                              <SendIcon />
+                            )}
                           </IconButton>
                         ) : (
                           <IconButton
-                            aria-label="showRecorder"
-                            component="span"
+                            aria-label={i18n.t("chatPage.recordAudio")}
                             disabled={loading}
                             onClick={handleStartRecording}
                           >
@@ -638,12 +1005,31 @@ export default function ChatMessages({
             </>
           )}
         </FormControl>
+        {sendError && (
+          <div className={classes.status} role="alert">
+            <Typography variant="body2">
+              {i18n.t("chatPage.sendError")}
+            </Typography>
+          </div>
+        )}
+        {!recording && medias.length === 0 && (
+          <Typography
+            id="internal-chat-input-hint"
+            className={classes.composerHint}
+          >
+            {i18n.t(loading ? "chatPage.sending" : "chatPage.composerHint")}
+          </Typography>
+        )}
       </div>
       <MediaGalleryLightbox
         open={lightboxOpen}
         onClose={closeLightbox}
         index={lightboxIndex}
         slides={lightboxMedia.slides}
+        privateMedia
+        crossOrigin="use-credentials"
+        onDownload={slide => downloadMedia(slide.key)}
+        onMediaError={reportMediaError}
       />
     </Paper>
   );
@@ -652,25 +1038,27 @@ export default function ChatMessages({
 const FileInput = props => {
   const { handleChangeMedias, disableOption } = props;
   const classes = useStyles();
+  const inputRef = useRef();
   return (
     <>
       <input
         multiple
         type="file"
-        id="upload-button"
+        ref={inputRef}
+        aria-label={i18n.t("chatPage.attachFiles")}
         disabled={disableOption}
         className={classes.uploadInput}
         onChange={handleChangeMedias}
       />
-      <label htmlFor="upload-button">
+      <Tooltip title={i18n.t("chatPage.attachFiles")}>
         <IconButton
-          aria-label="upload"
-          component="span"
+          aria-label={i18n.t("chatPage.attachFiles")}
+          onClick={() => inputRef.current?.click()}
           disabled={disableOption}
         >
           <AttachFileIcon className={classes.sendMessageIcons} />
         </IconButton>
-      </label>
+      </Tooltip>
     </>
   );
 };

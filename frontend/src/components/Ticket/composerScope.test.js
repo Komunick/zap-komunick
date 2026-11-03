@@ -51,6 +51,9 @@ jest.mock("../../errors/toastError", () => jest.fn());
 jest.mock("../AcessoriasPanel", () => ({ ticketId }) => (
   <div data-testid="acessorias-action" data-ticket-id={ticketId} />
 ));
+jest.mock("../SciPanel", () => ({ ticketId }) => (
+  <div data-testid="sci-action" data-ticket-id={ticketId} />
+));
 
 const deferred = () => {
   let resolve;
@@ -73,6 +76,7 @@ test("hides composer while initial ticket is unresolved and mounts only the matc
   render(<Ticket />);
   expect(screen.queryByTestId("composer")).not.toBeInTheDocument();
   expect(screen.queryByTestId("acessorias-action")).not.toBeInTheDocument();
+  expect(screen.queryByTestId("sci-action")).not.toBeInTheDocument();
   expect(screen.queryByTestId("attachments-action")).not.toBeInTheDocument();
   expect(screen.getByTestId("attachment-context")).toHaveAttribute(
     "data-ready",
@@ -86,6 +90,10 @@ test("hides composer while initial ticket is unresolved and mounts only the matc
   expect(screen.queryByTestId("composer")).not.toBeInTheDocument();
   await act(async () => pending.resolve({ data: row(301, "fixture-a") }));
   expect(screen.getByTestId("attachments-action")).toBeInTheDocument();
+  expect(screen.getByTestId("sci-action")).toHaveAttribute(
+    "data-ticket-id",
+    screen.getByTestId("composer").getAttribute("data-ticket-id")
+  );
   expect(screen.getByTestId("attachment-context")).toHaveAttribute(
     "data-ready",
     "true"
@@ -101,6 +109,10 @@ test("hides the old ticket composer immediately while the next route is pending"
   const view = render(<Ticket />);
   await act(async () => jest.advanceTimersByTime(501));
   expect(screen.getByTestId("attachments-action")).toBeInTheDocument();
+  expect(screen.getByTestId("sci-action")).toHaveAttribute(
+    "data-ticket-id",
+    screen.getByTestId("composer").getAttribute("data-ticket-id")
+  );
   expect(screen.getByTestId("attachment-context")).toHaveAttribute(
     "data-ready",
     "true"
@@ -114,10 +126,15 @@ test("hides the old ticket composer immediately while the next route is pending"
   mockRoute = "fixture-b";
   view.rerender(<Ticket />);
   expect(screen.queryByTestId("composer")).not.toBeInTheDocument();
+  expect(screen.queryByTestId("sci-action")).not.toBeInTheDocument();
   await act(async () => jest.advanceTimersByTime(501));
   expect(screen.queryByTestId("composer")).not.toBeInTheDocument();
   await act(async () => pending.resolve({ data: row(302, "fixture-b") }));
   expect(screen.getByTestId("attachments-action")).toBeInTheDocument();
+  expect(screen.getByTestId("sci-action")).toHaveAttribute(
+    "data-ticket-id",
+    screen.getByTestId("composer").getAttribute("data-ticket-id")
+  );
   expect(screen.getByTestId("attachment-context")).toHaveAttribute(
     "data-ready",
     "true"
@@ -139,6 +156,10 @@ test("an old ticket response cannot replace the next loaded conversation", async
   await act(async () => jest.advanceTimersByTime(501));
   await act(async () => b.resolve({ data: row(302, "fixture-b") }));
   expect(screen.getByTestId("attachments-action")).toBeInTheDocument();
+  expect(screen.getByTestId("sci-action")).toHaveAttribute(
+    "data-ticket-id",
+    screen.getByTestId("composer").getAttribute("data-ticket-id")
+  );
   expect(screen.getByTestId("attachment-context")).toHaveAttribute(
     "data-ready",
     "true"
@@ -149,6 +170,10 @@ test("an old ticket response cannot replace the next loaded conversation", async
   );
   await act(async () => a.resolve({ data: row(301, "fixture-a") }));
   expect(screen.getByTestId("attachments-action")).toBeInTheDocument();
+  expect(screen.getByTestId("sci-action")).toHaveAttribute(
+    "data-ticket-id",
+    screen.getByTestId("composer").getAttribute("data-ticket-id")
+  );
   expect(screen.getByTestId("attachment-context")).toHaveAttribute(
     "data-ready",
     "true"

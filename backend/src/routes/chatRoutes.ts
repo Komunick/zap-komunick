@@ -1,12 +1,18 @@
 import express from "express";
-import multer from "multer";
 import isAuth from "../middleware/isAuth";
-import uploadConfig from "../config/upload";
+import authorizeChatUpload, {
+  receiveChatUpload
+} from "../middleware/authorizeChatUpload";
 import * as ChatController from "../controllers/ChatController";
-
-const upload = multer(uploadConfig);
+import authenticateChatMedia from "../middleware/authenticateChatMedia";
+import * as ChatMediaController from "../controllers/ChatMediaController";
 
 const routes = express.Router();
+
+routes
+  .route("/chats/:chatId/messages/:messageId/media")
+  .get(authenticateChatMedia, ChatMediaController.show)
+  .head(authenticateChatMedia, ChatMediaController.show);
 
 routes.get("/chats", isAuth, ChatController.index);
 
@@ -17,7 +23,8 @@ routes.get("/chats/:id/messages", isAuth, ChatController.messages);
 routes.post(
   "/chats/:id/messages",
   isAuth,
-  upload.array("medias"),
+  authorizeChatUpload,
+  receiveChatUpload,
   ChatController.saveMessage
 );
 

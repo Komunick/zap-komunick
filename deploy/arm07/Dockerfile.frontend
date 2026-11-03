@@ -1,0 +1,38 @@
+# syntax=docker/dockerfile:1.7
+ARG NODE_BUILD_IMAGE=node:24@sha256:d862bb5d082c5ae0210ac07e8c0344cb8cf7bef6d78e9b8c50c179da923108ea
+ARG NGINX_IMAGE=ghcr.io/ticketz-oss/nginx-alpine@sha256:a75a56a02021509e76235fdbdefacd42bc1f961b370777d73c43dc8677c97f27
+
+FROM --platform=$BUILDPLATFORM ${NODE_BUILD_IMAGE} AS build
+WORKDIR /usr/src/app
+COPY frontend/package.json frontend/package-lock.json ./
+RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
+COPY frontend/ ./
+ENV NODE_OPTIONS=--openssl-legacy-provider
+RUN npm run build
+
+# The same compiled application is configured into two immutable image variants.
+FROM build AS configured
+COPY deploy/arm07/frontend-config.mjs deploy/arm07/environment.cjs deploy/arm07/render-frontend.mjs deploy/arm07/nginx.conf ./deploy/
+ARG SOURCE_REVISION
+ARG ZK_ENVIRONMENT
+ARG ZK_PUBLIC_HOST
+RUN node deploy/render-frontend.mjs
+
+FROM ${NGINX_IMAGE}
+ARG SOURCE_REVISION
+ARG ZK_ENVIRONMENT
+ARG ZK_PUBLIC_HOST
+LABEL org.opencontainers.image.title="Zap Komunick frontend ARM07" \
+      org.opencontainers.image.source="https://github.com/Komunick/zap-komunick" \
+      org.opencontainers.image.revision="${SOURCE_REVISION}" \
+      com.komunick.environment="${ZK_ENVIRONMENT}" \
+      com.komunick.public-host="${ZK_PUBLIC_HOST}"
+COPY --from=configured /usr/src/app/build /var/www/public
+COPY --from=configured /usr/src/app/build/nginx.conf /etc/nginx/nginx.conf
+RUN rm /var/www/public/nginx.conf
+# The configuration is a build-time allowlist. Runtime environment variables
+# are never exported into a public JSON document.
+EXPOSE 8080
+USER 101:101
+ENTRYPOINT ["nginx"]
+CMD ["-g", "daemon off;"]
