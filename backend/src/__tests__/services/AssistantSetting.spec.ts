@@ -81,3 +81,162 @@ it("preserves other settings' existing single-row update behavior", async () => 
   expect(setting.update).toHaveBeenCalledWith({ value: "enabled" });
   expect(Setting.update).not.toHaveBeenCalled();
 });
+
+it("converges duplicate Acessórias flags without touching another office or AI", async () => {
+  const rows = [
+    row(1, 10, "acessoriasEnabled", "enabled"),
+    row(2, 10, "acessoriasEnabled", "disabled"),
+    row(3, 20, "acessoriasEnabled", "disabled"),
+    row(4, 10, "aiAssistantEnabled", "disabled")
+  ];
+  (Setting.findOrCreate as jest.Mock).mockResolvedValue([rows[0], false]);
+  (Setting.update as jest.Mock).mockImplementation(async (change, options) => {
+    rows
+      .filter(
+        setting =>
+          setting.companyId === options.where.companyId &&
+          setting.key === options.where.key
+      )
+      .forEach(setting => {
+        setting.value = change.value;
+      });
+  });
+  await UpdateSettingService({
+    key: "acessoriasEnabled",
+    companyId: 10,
+    value: "enabled"
+  });
+  expect(rows.map(setting => setting.value)).toEqual([
+    "enabled",
+    "enabled",
+    "disabled",
+    "disabled"
+  ]);
+});
+
+it("refuses unknown Acessórias flag values before persistence", async () => {
+  (Setting.findOrCreate as jest.Mock).mockClear();
+  await expect(
+    UpdateSettingService({
+      key: "acessoriasEnabled",
+      companyId: 10,
+      value: "real"
+    })
+  ).rejects.toMatchObject({
+    message: "ERR_ACESSORIAS_INVALID_REQUEST",
+    statusCode: 400
+  });
+  expect(Setting.findOrCreate).not.toHaveBeenCalled();
+});
+
+it.each(["enabled", "disabled"])(
+  "converges duplicate SCI flags to %s without changing another company or P1/P2",
+  async value => {
+    const rows = [
+      row(1, 10, "sciEnabled", "enabled"),
+      row(2, 10, "sciEnabled", "disabled"),
+      row(3, 20, "sciEnabled", "disabled"),
+      row(4, 10, "aiAssistantEnabled", "disabled"),
+      row(5, 10, "acessoriasEnabled", "disabled")
+    ];
+    (Setting.findOrCreate as jest.Mock).mockResolvedValue([rows[0], false]);
+    (Setting.update as jest.Mock).mockImplementation(
+      async (change, options) => {
+        rows
+          .filter(
+            setting =>
+              setting.companyId === options.where.companyId &&
+              setting.key === options.where.key
+          )
+          .forEach(setting => {
+            setting.value = change.value;
+          });
+      }
+    );
+    await UpdateSettingService({ key: "sciEnabled", companyId: 10, value });
+    expect(rows.map(setting => setting.value)).toEqual([
+      value,
+      value,
+      "disabled",
+      "disabled",
+      "disabled"
+    ]);
+    expect(Setting.update).toHaveBeenLastCalledWith(
+      { value },
+      { where: { companyId: 10, key: "sciEnabled" } }
+    );
+  }
+);
+
+it.each(["real", "", "true", "MOCK"])(
+  "refuses invalid SCI flag %s before persistence",
+  async value => {
+    (Setting.findOrCreate as jest.Mock).mockClear();
+    await expect(
+      UpdateSettingService({ key: "sciEnabled", companyId: 10, value })
+    ).rejects.toMatchObject({
+      message: "ERR_SCI_INVALID_REQUEST",
+      statusCode: 400
+    });
+    expect(Setting.findOrCreate).not.toHaveBeenCalled();
+  }
+);
+
+it.each(["enabled", "disabled"])(
+  "converges P4 flag duplicates to %s while preserving P1/P2/P3 and another office",
+  async value => {
+    const rows = [
+      row(1, 10, "integratedAssistantEnabled", "enabled"),
+      row(2, 10, "integratedAssistantEnabled", "disabled"),
+      row(3, 20, "integratedAssistantEnabled", "disabled"),
+      row(4, 10, "aiAssistantEnabled", "disabled"),
+      row(5, 10, "acessoriasEnabled", "disabled"),
+      row(6, 10, "sciEnabled", "disabled")
+    ];
+    (Setting.findOrCreate as jest.Mock).mockResolvedValue([rows[0], false]);
+    (Setting.update as jest.Mock).mockImplementation(
+      async (change, options) => {
+        rows
+          .filter(
+            setting =>
+              setting.companyId === options.where.companyId &&
+              setting.key === options.where.key
+          )
+          .forEach(setting => {
+            setting.value = change.value;
+          });
+      }
+    );
+    await UpdateSettingService({
+      key: "integratedAssistantEnabled",
+      companyId: 10,
+      value
+    });
+    expect(rows.map(setting => setting.value)).toEqual([
+      value,
+      value,
+      "disabled",
+      "disabled",
+      "disabled",
+      "disabled"
+    ]);
+  }
+);
+
+it.each(["real", "", "true", "MOCK"])(
+  "refuses invalid P4 flag %s before persistence",
+  async value => {
+    (Setting.findOrCreate as jest.Mock).mockClear();
+    await expect(
+      UpdateSettingService({
+        key: "integratedAssistantEnabled",
+        companyId: 10,
+        value
+      })
+    ).rejects.toMatchObject({
+      message: "ERR_INTEGRATED_ASSISTANT_INVALID_REQUEST",
+      statusCode: 400
+    });
+    expect(Setting.findOrCreate).not.toHaveBeenCalled();
+  }
+);

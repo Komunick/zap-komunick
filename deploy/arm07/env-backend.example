@@ -1,0 +1,6 @@
+# Exclusivo do backend. Nao usar a master do notebook nem copiar para frontend.
+# prepare-env.sh gera 32 bytes aleatorios, em base64, uma unica vez.
+CREDENTIALS_MASTER_KEY=
+CREDENTIALS_PREVIOUS_MASTER_KEY=
+# DB_PASS vem do POSTGRES_PASSWORD no Compose. IA/Acessorias ficam disabled
+# no Compose; este arquivo nao habilita fornecedor, telemetria nem WhatsApp.

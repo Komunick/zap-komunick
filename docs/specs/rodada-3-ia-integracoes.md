@@ -7,7 +7,13 @@ Registro da proposta inicial. O pedido posterior para executar somente o P0 est�
 [P0 — credenciais e isolamento do contexto](p0-credenciais-isolamento.md).
 O pedido posterior de P1 com mocks e dados fictícios está delimitado em
 [P1 — resumos e sugestões com revisão humana](p1-assistente-revisao.md); isso não autoriza provedor real ou conectores.
-As etapas posteriores a esses recortes continuam propostas.
+As demais etapas e conexões reais continuam propostas.
+O P2 solicitado depois foi delimitado como [consultas Acessórias com mocks e vínculo explícito](p2-acessorias-consultas.md),
+sem acesso ao fornecedor real. O P3 solicitado em 29/10/2026 foi delimitado como
+[painel SCI com publicações fictícias](p3-sci-consultas.md), sem escolher ou conectar um módulo real;
+as conexões reais e sincronização continuam propostas.
+Em 30/10/2026 foi autorizado o [P4 de consultas integradas com mocks](p4-consultas-integradas.md),
+com seleção explícita de fontes e revisão humana; isso não autoriza sincronização, fornecedor ou IA reais.
 
 O pedido desta etapa é preparar o plano e identificar credenciais/acessos. Ele não autoriza chamadas com dados reais,
 contratação, publicação, envio de mensagens ou operações de escrita nos fornecedores. Não há prazo, orçamento ou modelo

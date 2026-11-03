@@ -4,6 +4,12 @@ Como colocar o Zap Komunick no ar em **`superchat.komunick.com`** (endereço esc
 na raiz do repositório (`docker-compose-komunick.yaml`, `docker-compose-komunick-proxy.yaml`) e em `deploy/`; os
 modelos de ambiente e do nginx já vêm com esse endereço.
 
+> **ARM07:** para os ambientes ARM64 `superchatdev` (desenvolvimento) e `superchat`
+> (produção), com o Caddy já existente no servidor, usar
+> [deploy/arm07/README.md](../deploy/arm07/README.md) e seus arquivos próprios.
+> Esse recorte mantém WhatsApp desconectado, bancos separados e imagens por hash; não
+> usar o bootstrap automático do compose genérico abaixo nessa instalação.
+
 > **Antes de publicar:** o `zap.komunick.com` roda hoje o Ticketz 1.0.132 (com backup do Ticketz PRO em
 > `Komunick/ticketz-pro`). Este guia sobe o Zap Komunick num **subdomínio novo**, ao lado do atual. Trocar o
 > `zap.komunick.com` por este fork faz perder o que é exclusivo do PRO e é decisão do responsável (docs/PRD.md, seção 5).
@@ -215,3 +221,129 @@ ser devolvida. O usuário continua responsável por revisar qualquer texto já a
 
 Conectar um provedor real exige outro recorte autorizado: modelo, conteúdo/base interna, dados permitidos, orçamento,
 política do fornecedor e avaliação com casos aprovados. Trocar o valor de uma variável não conecta esse provedor.
+
+## 11. Clientes e pendências Acessórias — P2 simulado (RF-022)
+
+Este recorte usa somente um provedor mock local. Não configura token, não consulta Acessórias real e não aprova o
+plano/licença/API do escritório. Os dados e campos apresentados são fictícios; não são confirmação de prazo fiscal,
+entrega, pagamento ou cumprimento de obrigação.
+
+Para validar no desenvolvimento, usando apenas uma empresa e contatos inteiramente fictícios:
+
+1. Definir `ACESSORIAS_MODE=mock` no backend de teste e reiniciar nesse ambiente autorizado. O compose de dev recebe
+   a variável do executor/arquivo de ambiente; o modelo de publicação mantém `ACESSORIAS_MODE=disabled`.
+2. Administrador habilita `acessoriasEnabled=enabled` em Configurações da empresa fictícia. Modo e flag são barreiras
+   independentes, desligadas por padrão. Habilitar A não habilita B; valores desconhecidos não conectam serviço real.
+3. Abrir um atendimento fictício autorizado e o painel Acessórias. O administrador escolhe no catálogo mock e confirma
+   o vínculo **local** daquele contato. Um contato pode ter mais de um cliente externo; a seleção de consulta é explícita.
+   Nenhum nome/telefone/CNPJ de mensagem cria vínculo ou libera cadastro automaticamente.
+4. Consultar cadastro/pendências, páginas, fonte/horários e avisos. O catálogo inclui casos fictícios de dados vazios,
+   desatualizados, erro funcional, acesso recusado, limite e timeout; esses casos não provam o contrato do fornecedor real.
+5. Para remover, confirmar a desvinculação local. Isso não exclui o cliente nem altera pendências no fornecedor.
+   Uma notificação sem conteúdo cadastral invalida o painel desse contato quando entregue; após desconexão, a próxima
+   consulta sempre valida novamente o vínculo e as permissões.
+
+Dados consultados ficam somente em memória do painel. Sem exportação, download, sincronização, cache compartilhado,
+integração com IA ou envio de mensagem. O rascunho e os dados do atendimento não são alterados pela consulta.
+
+Para desativar, desligar flag da empresa ou voltar `ACESSORIAS_MODE=disabled`. Isso bloqueia clients/catalog/consultas,
+inclusive para administrador; a UI fica indisponível. DELETE `/tickets/:ticketId/acessorias/links/:externalClientId`
+continua disponível à administração autorizada para revogar **um vínculo local conhecido**, sem depender do provedor.
+Não há um catálogo irrestrito ou consulta de cadastro liberado por essa exceção.
+
+A migração de esquema cria apenas o cadastro de vínculos. Ao recuar a aplicação, manter essa tabela preserva os
+mapeamentos; não executar reversão destrutiva como recuperação padrão. A chave mestra P0 e as configurações P1 são
+independentes desse modo. Conexão real, token, contrato/licença, ambiente autorizado, quotas e documentos exigem outro
+recorte; mudar uma variável não implementa o conector real.
+
+## 12. Visualizadores de arquivos da conversa — RF-023
+
+A melhoria usa o armazenamento existente e não requer chave, provedor externo, variável nova ou migração de banco.
+Publicar frontend/backend compatíveis para disponibilizar a área **Arquivos** e a nova API de anexos. O percurso é
+iniciado pela pessoa no atendimento autorizado; IA/Acessórias permanecem independentes e não recebem os arquivos.
+
+Prévias locais de PDF, JPEG, PNG, GIF, WebP, MP4 e WebM têm limite de 25 MiB, uma ativa por vez. O navegador carrega
+bytes pela API autenticada, sem token em URL; PDF usa canvas e controles de página/zoom. Vídeo depende de codecs do
+navegador. Arquivo ausente, inválido/com senha, grande ou incompatível mostra seu estado. Download/Abrir original é
+ação explícita; erro de acesso não abre automaticamente uma URL alternativa.
+
+Os links legados `/public/*` no Express, o alias nginx e os links enviados ao destinatário continuam públicos.
+Esta entrega não privatiza esses arquivos. Não bloquear apenas uma rota esperando proteção completa: também há
+entrega direta pelo nginx e compatibilidade com o envio de arquivos grandes. Migração para armazenamento privado,
+URLs temporárias e alteração de envio precisam de plano próprio.
+
+Para validar no dev, usar somente duas empresas, mensagens e arquivos novos/fictícios, sem WhatsApp pessoal ou envio.
+Conferir paginação e acesso por empresa/cliente/setor, HEAD/Range/download, PDF com duas páginas, imagens e vídeos,
+falhas e troca de contexto; remover apenas IDs e diretório rastreados das fixtures. Preservar a master P0 e os modos
+IA/Acessórias desligados. Recuar o código não exige apagar arquivos nem reverter dados.
+
+## 13. Ambientes ARM07 com Caddy existente
+
+O recorte para ARM07 está em [deploy/arm07/README.md](../deploy/arm07/README.md), conforme
+[a especificação](specs/deploy-arm07-superchat.md). Os perfis `development` (`superchatdev.komunick.com`) e
+`production` (`superchat.komunick.com`) usam imagens Linux ARM64 por hash, projetos/bancos/Redis/volumes separados,
+API e WebSocket atrás do Caddy existente e portas de aplicação somente em loopback (5481 e 5480, respectivamente).
+Não instalar o proxy genérico
+das seções anteriores nessa VM nem usar o bootstrap automático do Dockerfile genérico.
+
+A preparação mantém WhatsApp sem conexão e IA/Acessórias desligados, sem importar banco, mídias, chaves ou sessão
+do notebook. O backend permanece sem saída externa. Migração e bootstrap inicial são operações separadas do runtime;
+reiniciar não recria administrador. Os três arquivos privados são gerados uma vez por `prepare-env.sh`, fora de Git,
+em diretório próprio para cada perfil; nunca reutilizar senha/master de desenvolvimento em produção. O frontend
+é uma variante imutável por domínio e publica somente a configuração permitida. A master de cada ambiente precisa
+de cópia segura separada de seu backup do banco. Promover uma revisão não copia dados, arquivos nem sessão entre ambientes.
+
+Em 29/10/2026, o acesso confirmado à ARM07 é `170.9.14.1`, enquanto os registros A observados de
+`superchat.komunick.com` e `superchatdev.komunick.com` apontam para `144.24.36.23`. Resolver a diferença e conferir
+AAAA de cada domínio antes de habilitar seu fragmento Caddy; inicialmente usar Somente DNS. Preparar os
+candidatos não altera esses registros nem ativa os domínios. As etapas de ingresso, validação, backup e recuperação
+estão no README; a ativação pública exige uma solicitação posterior.
+
+## 14. Painel SCI simulado — RF-024
+
+O P3 está definido em [specs/p3-sci-consultas.md](specs/p3-sci-consultas.md). Usa somente catálogo/publicações fictícios;
+não precisa de chave, licença, SCI WEB, SDK, documento ou acesso de rede. Campos são contrato interno de simulação,
+sem promessa de compatibilidade com Report/Atendimento. Não marcar leitura nem importar documentos reais nesse teste.
+
+Começa desligado: em ambiente descartável de desenvolvimento, definir `SCI_MODE=mock` no backend e habilitar
+`sciEnabled` nas configurações da empresa como administrador. Modo `disabled`, desconhecido ou flag ausente/divergente
+recusa consultas. P1/P2 seguem suas flags próprias e não são habilitados pela SCI. Os perfis ARM07 mantêm SCI disabled;
+esta entrega não publica a revisão nova nos ambientes existentes e não reconecta WhatsApp.
+
+A consulta parte do atendimento autorizado e exige cliente SCI vinculado explicitamente ao contato. Administração
+confirma vínculo local; IDs iguais em Acessórias/SCI não compartilham autorização. Publicações mostram somente
+metadados paginados, origem/horários e aviso stale. Dados ficam na memória do painel, sem links ou download.
+
+Para desativar, desligar flag ou `SCI_MODE`. A interface oculta consultas e descarta dados; DELETE
+`/tickets/:ticketId/sci/links/:externalClientId` ainda permite revogar vínculo SCI conhecido à administração autorizada,
+sem catálogo/rede. Não há migração: manter ContactExternalClientLinks ao recuar preserva ambos os namespaces.
+
+Validar com duas empresas/contatos/setores e IDs fictícios repetidos entre fornecedores: autorização, seleção,
+idempotência, paginação, vazio/stale, falhas e resposta tardia. Conferir UI nos dois temas e desktop/celular;
+preservar snapshots de negócio/rascunho/credenciais e limpar somente fixtures rastreadas. Não usar /srv/superchat*
+ou banco, master e sessão existentes para QA. Não executar o npm test com seus hooks de undo sobre base compartilhada.
+
+## 15. Consultas integradas simuladas — RF-025
+
+O recorte está em [specs/p4-consultas-integradas.md](specs/p4-consultas-integradas.md). Não precisa de chave, modelo,
+licença ou rede de fornecedor. Não implementa sincronização ou documentos; não habilitar em empresas com dados reais
+para seguir o roteiro fictício. Os perfis ARM07 mantêm `INTEGRATED_ASSISTANT_MODE=disabled` e não recebem mocks.
+
+Em projeto local isolado, definir `INTEGRATED_ASSISTANT_MODE=mock` e habilitar `integratedAssistantEnabled` como
+administrador. P1 também precisa de `AI_ASSISTANT_MODE=mock` e `aiAssistantEnabled=enabled`; cada fonte selecionada
+exige seu próprio modo/flag e vínculo P2/P3. A opção integrada não ativa outras flags. Ausência/valor desconhecido e
+duplicatas divergentes recusam. Não importar banco, arquivos, credenciais ou sessões de instalações existentes.
+
+No atendimento fictício, abrir a consulta integrada, escolher clientes/páginas separadamente e solicitar resumo ou
+sugestão. Conferir origem, horários, paginação, stale e falhas parciais. Editar sugestão e anexar é outra ação humana,
+com nova verificação local dos vínculos/mensagens/permissões; o botão de envio normal permanece separado e não deve
+ser exercitado. Nenhum texto não aceito fica em storage. Alteração de contexto invalida resultados em andamento.
+
+Desativar flag ou modo integrado descarta o percurso; dados e vínculos permanecem. P1/P2/P3 continuam independentes.
+Não há migração/undo, nova chave, fila ou cache. Atualizar fonte é nova consulta; review não chama fornecedor nem
+significa que uma obrigação foi cumprida. A versão local P4 deve ter projeto/banco/cache/volumes/chave próprios e
+origem distinta da demonstração P3 para não compartilhar cookie de sessão entre portas do mesmo host.
+
+Validar serviços/API/UI com duas empresas e fixtures rastreadas, IDs repetidos entre fornecedores, modo desligado/
+desconhecido, review após alteração de vínculo/mensagem/perfil/flag, paginação, falhas e respostas antigas. Conferir
+rascunho, leitura/SLA e snapshot de negócio/credenciais, remover somente fixtures. Evidências e limites ficam no PR.

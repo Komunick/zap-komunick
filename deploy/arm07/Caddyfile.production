@@ -1,0 +1,8 @@
+# Production fragment for the existing host Caddy. Requires separate activation.
+superchat.komunick.com {
+	reverse_proxy 127.0.0.1:5480 {
+		header_up Host {host}
+		header_up X-Forwarded-For {http.request.remote.host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+}

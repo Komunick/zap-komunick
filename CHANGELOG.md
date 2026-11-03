@@ -6,6 +6,29 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Adicionado
 
+- Menu lateral abre ao passar o mouse sobre o trilho recolhido no desktop, sem precisar clicar. Botão, teclado,
+  preferência salva e funcionamento por toque no celular continuam disponíveis.
+
+- Consulta integrada simulada no atendimento, com seleção independente de clientes Acessórias/SCI, texto elegível da
+  conversa, fontes/horários e avisos de limite, desatualização e falha parcial. Resumo e sugestão exigem ação humana;
+  sugestão editável só é anexada ao rascunho após nova validação de contexto/vínculos, sem envio. Começa desligada e
+  mantém as flags das fontes independentes, sem IA/API real, sincronização ou documentos.
+
+- Painel SCI simulado com clientes explicitamente vinculados e metadados de publicações paginados, origem e
+  atualização. Começa desligado por empresa/servidor, mantém vínculos separados do Acessórias e exige confirmação
+  administrativa para alterações locais. Não usa API/token real, download de documento ou marcação de leitura.
+
+- Preparação de dois ambientes ARM64 na ARM07: superchatdev.komunick.com para desenvolvimento e
+  superchat.komunick.com para produção. Cada um tem projeto, banco, Redis, arquivos e segredos próprios,
+  frontend por hash para seu domínio e bootstrap separado. Ambos mantêm WhatsApp e fornecedores desligados;
+  ativação dos domínios e migração de dados não fazem parte dessa preparação.
+
+- Área de arquivos da conversa com filtros, paginação e busca nos itens carregados. Imagens, vídeos e PDFs abrem
+  dentro do aplicativo, com zoom/rotação, reprodução e controles de página. Prévias locais de até 25 MiB usam a nova
+  API autenticada; os links públicos legados de entrega permanecem disponíveis. Sem alteração do envio ou armazenamento.
+- Painel Acessórias simulado com cadastro fictício, pendências paginadas, origem/atualização e aviso de desatualização.
+  Clientes exigem vínculo local explícito por empresa/contato, administrado com confirmação e seleção entre múltiplos
+  vínculos. Começa desligado e não conecta fornecedor, credenciais reais, documentos ou IA.
 - Assistente simulado para resumir texto do atendimento atual e sugerir resposta com referências e revisão humana.
   A sugestão pode ser editada e anexada ao rascunho sem substituir o texto existente nem enviar automaticamente.
   Começa desligado por empresa e exige modo `mock` no backend; não usa chave nem provedor de IA real.
@@ -45,6 +68,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   "Enviar só em dia útil" (pula fim de semana e feriados nacionais, Carnaval, Sexta-feira Santa e Corpus Christi).
 
 ### Alterado
+
+- Chat interno com busca limpável, estados de carregamento/vazio/erro e repetição, seleção e não lidas acessíveis.
+  Mensagens, anexos e campo de envio respeitam a largura disponível e os temas claro e escuro.
 
 - A chave de IA não é mais preenchida na tela nem salva ao desfocar. Configurações mostra somente seu estado e exige
   ação explícita para salvar, proteger uma configuração antiga ou confirmar remoção.
@@ -107,6 +133,24 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   com fita no topo, canto dobrado, pequena inclinação fixa por atendimento e efeito ao passar o mouse.
 
 ### Corrigido
+
+- Login de usuários comuns deixa de abrir transitoriamente o dashboard e consultar suas APIs administrativas.
+  O destino respeita o perfil e a resolução da sessão; administradores mantêm o dashboard e as APIs continuam
+  recusando usuários comuns com 403.
+
+- Anexos do chat interno passam a exigir sessão e participação atual para visualização, reprodução e download.
+  Arquivos existentes têm migração explícita para armazenamento privado, com verificação de integridade e retomada;
+  links públicos antigos são bloqueados também no ingresso nginx. Arquivos dos demais módulos permanecem preservados.
+
+- Chat interno passa a conferir empresa e participação nas operações e nos eventos; somente o dono participante
+  administra grupos, e marcar leitura usa o usuário autenticado. Remoção de participante limpa também o popover.
+  Upload é autorizado antes de gravar e revalidado antes de confirmar, com limpeza segura dos arquivos da requisição.
+
+- No chat interno, Shift+Enter insere uma linha; texto e anexos permanecem disponíveis quando o envio falha.
+  Envios pendentes não são repetidos, e respostas atrasadas do histórico não entram em outra conversa.
+
+- Restauração do banco com índice de busca de etiquetas: a função de normalização
+  resolve a extensão de acentos pelo esquema explícito, preservando os resultados.
 
 - Rascunhos deixam de ser apagados ao abrir ou trocar de atendimento. Uma resposta atrasada do assistente não altera
   o editor de outra conversa; a revisão fica bloqueada durante a confirmação de uso para preservar a versão aceita.

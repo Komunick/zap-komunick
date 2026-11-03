@@ -28,6 +28,9 @@ import api from "../../services/api";
 import { getBackendURL } from "../../services/config";
 import CompanyCredentialSettings from "../CompanyCredentialSettings";
 import AssistantSettings from "../AssistantSettings";
+import AcessoriasSettings from "../AcessoriasSettings";
+import SciSettings from "../SciSettings";
+import IntegratedAssistantSettings from "../IntegratedAssistantSettings";
 
 const useStyles = makeStyles(theme => ({
   container: {
@@ -1364,6 +1367,9 @@ export default function Options(props) {
         {currentUser.profile === "admin" && (
           <Grid xs={12} item>
             <AssistantSettings settings={settings} />
+            <AcessoriasSettings settings={settings} />
+            <SciSettings settings={settings} />
+            <IntegratedAssistantSettings settings={settings} />
           </Grid>
         )}
 

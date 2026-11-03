@@ -1,58 +1,54 @@
-import AppError from "../../errors/AppError";
-import ChatMessage from "../../models/ChatMessage";
-import ChatUser from "../../models/ChatUser";
-import User from "../../models/User";
-
 import { sortBy } from "lodash";
+import AppError from "../../errors/AppError";
+import { positiveChatId } from "../../helpers/ChatAuthorization";
+import ChatMessage from "../../models/ChatMessage";
+import User from "../../models/User";
+import AuthorizeChatService, {
+  withChatTransaction
+} from "./AuthorizeChatService";
 
 interface Request {
   chatId: string;
   ownerId: number;
+  companyId: number;
   pageNumber?: string;
 }
-
-interface Response {
-  records: ChatMessage[];
-  count: number;
-  hasMore: boolean;
-}
-
-const FindMessages = async ({
+const FindMessages = ({
   chatId,
   ownerId,
+  companyId,
   pageNumber = "1"
-}: Request): Promise<Response> => {
-  const userInChat = await ChatUser.count({
-    where: { chatId, userId: ownerId }
+}: Request) =>
+  withChatTransaction(async transaction => {
+    const chat = await AuthorizeChatService(
+      chatId,
+      { userId: ownerId, companyId },
+      { transaction }
+    );
+    const page = positiveChatId(pageNumber);
+    if (!page) throw new AppError("ERR_INVALID_CHAT_PAGE", 400);
+    const limit = 20,
+      offset = limit * (page - 1);
+    const { count, rows } = await ChatMessage.findAndCountAll({
+      where: { chatId: chat.id },
+      include: [
+        {
+          model: User,
+          as: "sender",
+          attributes: ["id", "name"],
+          where: { companyId },
+          required: false
+        }
+      ],
+      limit,
+      offset,
+      order: [["createdAt", "DESC"]],
+      transaction
+    });
+    return {
+      records: sortBy(rows, ["id", "ASC"]),
+      count,
+      hasMore: count > offset + rows.length
+    };
   });
-
-  if (userInChat === 0) {
-    throw new AppError("UNAUTHORIZED", 400);
-  }
-
-  const limit = 20;
-  const offset = limit * (+pageNumber - 1);
-
-  const { count, rows: records } = await ChatMessage.findAndCountAll({
-    where: {
-      chatId
-    },
-    include: [{ model: User, as: "sender", attributes: ["id", "name"] }],
-    limit,
-    offset,
-
-    order: [["createdAt", "DESC"]]
-  });
-
-  const hasMore = count > offset + records.length;
-
-  const sorted = sortBy(records, ["id", "ASC"]);
-
-  return {
-    records: sorted,
-    count,
-    hasMore
-  };
-};
-
 export default FindMessages;

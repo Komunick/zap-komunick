@@ -10,10 +10,15 @@ import AuthorizeTicketContextService, {
 const AuthorizeMessageContextService = async (
   messageId: string,
   actor: ContextActor,
-  contextTicketId?: string | number
+  contextTicketId?: string | number,
+  sourceTicketId?: number
 ): Promise<Message> => {
   const message = await Message.findOne({
-    where: { id: messageId, companyId: actor.companyId },
+    where: {
+      id: messageId,
+      companyId: actor.companyId,
+      ...(sourceTicketId === undefined ? {} : { ticketId: sourceTicketId })
+    },
     attributes: ["id", "ticketId", "queueId"]
   });
   if (!message) throw new AppError("ERR_MESSAGE_NOT_FOUND", 404);

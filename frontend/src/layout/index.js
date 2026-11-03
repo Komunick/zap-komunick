@@ -887,6 +887,18 @@ const LoggedInLayout = ({ children, themeToggle }) => {
     });
   };
 
+  // Zap Komunick: mouse entry opens the desktop rail without changing touch or button controls.
+  const handleDrawerPointerEnter = event => {
+    if (
+      event.pointerType === "mouse" &&
+      greaterThenSm &&
+      drawerVariant === "permanent" &&
+      !drawerOpen
+    ) {
+      setDrawerOpen(true);
+    }
+  };
+
   const handleMenuItemClick = () => {
     const { innerWidth: width } = window;
     if (width <= 600) {
@@ -930,6 +942,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
             drawerOpen ? classes.drawerPaper : classes.drawerPaperClose
           }
           onClose={drawerClose}
+          PaperProps={{ onPointerEnter: handleDrawerPointerEnter }}
           classes={{
             paper: clsx(
               classes.drawerPaper,
