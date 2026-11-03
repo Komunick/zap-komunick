@@ -185,3 +185,33 @@ ou fornecedor deve bloquear somente a operação dependente; o recebimento norma
 
 Tokens locais de API, pagamentos, certificados, 2FA e sessões WhatsApp mantêm os mecanismos dos respectivos módulos.
 O P0 não é uma migração global de todos os segredos herdados. Consulte o TAD para autorização do contexto e limites.
+
+## 10. Assistente simulado — P1 (RF-021)
+
+O P1 entrega o percurso de resumo/sugestão e revisão humana com provedor mock local. Não conecta um modelo de IA,
+não lê a chave de transcrição e não precisa de crédito/faturamento. A simulação não mede a qualidade de um modelo real.
+
+Para o piloto de desenvolvimento com dados fictícios:
+
+1. Definir `AI_ASSISTANT_MODE=mock` somente no ambiente do backend de teste e aplicar a reinicialização autorizada.
+   O compose de desenvolvimento recebe a variável do executor/arquivo de ambiente; o modelo de publicação mantém
+   `AI_ASSISTANT_MODE=disabled`. Um valor diferente de `mock` não ativa um provedor externo.
+2. Entrar como administrador de uma empresa inteiramente fictícia e habilitar o assistente simulado em Configurações
+   (`aiAssistantEnabled=enabled`). A configuração vem desligada; habilitar A não muda B. Não habilitar empresas com
+   conversas reais para este roteiro de validação.
+3. Abrir um atendimento fictício autorizado, pedir resumo ou sugestão e conferir **Simulação**, referências e avisos.
+   Somente texto elegível do atendimento atual entra no contexto, até 30 mensagens/12.000 caracteres; contexto parcial
+   e ausência de informação são indicados. Notas/anexos e outros atendimentos do cliente ficam de fora.
+4. Revisar/editar a sugestão e escolher **Usar no rascunho** para anexar ao texto já escrito. A ação não envia.
+   O envio normal continua separado e não deve ser exercitado na validação com o WhatsApp pessoal desconectado.
+
+Resultados não aceitos ficam na memória do percurso; cancelar ou trocar conversa os descarta. Depois de anexado,
+o texto é um rascunho comum e segue o armazenamento local herdado do composer. Logs/auditoria não guardam o texto
+integral nem o contexto. A simulação não grava mensagens, notas ou filas de envio.
+
+Para desativar, desligar a opção da empresa ou voltar o modo do backend para `disabled`; não há migração de esquema
+nem dado de atendimento a desfazer. Uma resposta em andamento perde validade se acesso/configuração mudar antes de
+ser devolvida. O usuário continua responsável por revisar qualquer texto já aceito no próprio rascunho.
+
+Conectar um provedor real exige outro recorte autorizado: modelo, conteúdo/base interna, dados permitidos, orçamento,
+política do fornecedor e avaliação com casos aprovados. Trocar o valor de uma variável não conecta esse provedor.

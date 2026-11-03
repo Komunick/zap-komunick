@@ -14,7 +14,7 @@ import routes from "./routes";
 import { logger } from "./utils/logger";
 import { messageQueue, sendScheduledMessages } from "./queues";
 import { corsOrigin } from "./helpers/corsOrigin";
-import { isCredentialRequest } from "./helpers/CredentialTelemetry";
+import { isSensitiveRequest } from "./helpers/CredentialTelemetry";
 import credentialErrorHandler from "./middleware/credentialErrorHandler";
 
 class SystemError extends Error {
@@ -24,7 +24,7 @@ class SystemError extends Error {
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
   // Zap Komunick P0: remote telemetry must never receive credential write bodies.
-  beforeSend: event => (isCredentialRequest(event.request?.url) ? null : event)
+  beforeSend: event => (isSensitiveRequest(event.request?.url) ? null : event)
 });
 
 const app = express();

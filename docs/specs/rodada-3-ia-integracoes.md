@@ -4,7 +4,10 @@
 **Base examinada:** `6682e92b2303dcbcdc79427f47a3ddab789235aa`, PR #17 de segurança, sobre a pilha existente.
 
 Registro da proposta inicial. O pedido posterior para executar somente o P0 está delimitado em
-[P0 — credenciais e isolamento do contexto](p0-credenciais-isolamento.md); as demais etapas continuam propostas.
+[P0 — credenciais e isolamento do contexto](p0-credenciais-isolamento.md).
+O pedido posterior de P1 com mocks e dados fictícios está delimitado em
+[P1 — resumos e sugestões com revisão humana](p1-assistente-revisao.md); isso não autoriza provedor real ou conectores.
+As etapas posteriores a esses recortes continuam propostas.
 
 O pedido desta etapa é preparar o plano e identificar credenciais/acessos. Ele não autoriza chamadas com dados reais,
 contratação, publicação, envio de mensagens ou operações de escrita nos fornecedores. Não há prazo, orçamento ou modelo

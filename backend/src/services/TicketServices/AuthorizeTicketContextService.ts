@@ -53,7 +53,7 @@ const AuthorizeTicketContextService = async (
   const viewer = await loadTicketViewer(actor);
   const ticket = await Ticket.findOne({
     where: { id: ticketId, companyId: actor.companyId },
-    attributes: ["id", "companyId", "contactId", "queueId"]
+    attributes: ["id", "companyId", "contactId", "queueId", "isGroup"]
   });
   if (!ticket) throw new AppError("ERR_NO_TICKET_FOUND", 404);
   const contact = await Contact.findOne({

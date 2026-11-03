@@ -45,3 +45,7 @@ VERIFY_TOKEN=
 CREDENTIALS_MASTER_KEY=
 # Only during a controlled master-key rotation; remove after re-encryption.
 CREDENTIALS_PREVIOUS_MASTER_KEY=
+
+# P1 remains off by default. "mock" enables the local simulation only and also
+# requires the company's administrator to enable it in Settings.
+AI_ASSISTANT_MODE=disabled

@@ -6,6 +6,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Adicionado
 
+- Assistente simulado para resumir texto do atendimento atual e sugerir resposta com referências e revisão humana.
+  A sugestão pode ser editada e anexada ao rascunho sem substituir o texto existente nem enviar automaticamente.
+  Começa desligado por empresa e exige modo `mock` no backend; não usa chave nem provedor de IA real.
 - Armazenamento cifrado por empresa para credenciais de IA e dos futuros conectores Acessórias/SCI, com estado público,
   substituição, remoção e migração administrativa. Exige chave mestra configurada exclusivamente no backend.
 - Segurança da conta com verificação em duas etapas por autenticador, QR/chave de configuração, códigos de recuperação
@@ -105,6 +108,10 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- Rascunhos deixam de ser apagados ao abrir ou trocar de atendimento. Uma resposta atrasada do assistente não altera
+  o editor de outra conversa; a revisão fica bloqueada durante a confirmação de uso para preservar a versão aceita.
+- Editor e assistente aguardam o atendimento válido ao carregar/trocar de conversa, impedindo rascunho sem
+  proprietário e pedidos com ID ausente; respostas antigas de carregamento são ignoradas.
 - Credenciais de IA removidas das respostas de autenticação/configuração; segredos conhecidos deixam de acompanhar
   o payload geral da empresa. Configurações herdadas exigem migração explícita para proteção em repouso.
 - Notas, leitura de atendimento e histórico validam empresa, cliente e setor, incluindo atendentes sem setor, IDs/UUIDs
