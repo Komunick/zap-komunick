@@ -1,0 +1,86 @@
+# Zap Komunick: production stack for a komunick.com subdomain.
+# Guide: docs/DEPLOY.md
+#
+# The app answers on 127.0.0.1:${ZK_HTTP_PORT:-5480}. Either put the server's
+# own nginx/Caddy in front of it (deploy/nginx-host.conf.example) or add the
+# bundled proxy with automatic HTTPS:
+#   docker compose -f docker-compose-komunick.yaml -f docker-compose-komunick-proxy.yaml up -d
+#
+# Differences from the upstream compose files: the database has a password,
+# the backend does not get the Docker socket (no self-update that would swap
+# this fork for the upstream images) and nothing listens on a public port
+# except through the proxy.
+
+name: zap-komunick
+
+networks:
+  zk:
+
+volumes:
+  redis_data:
+  postgres_data:
+  backend_public:
+  backend_private:
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ./Dockerfile
+    image: zap-komunick-backend:${ZK_VERSION:-local}
+    volumes:
+      - backend_public:/usr/src/app/public
+      - backend_private:/usr/src/app/private
+    env_file:
+      - .env-backend-komunick
+    environment:
+      - DB_PASS=${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - zk
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ./Dockerfile
+    image: zap-komunick-frontend:${ZK_VERSION:-local}
+    env_file:
+      - .env-frontend-komunick
+    volumes:
+      - backend_public:/var/www/backend-public/
+    ports:
+      - "127.0.0.1:${ZK_HTTP_PORT:-5480}:80"
+    restart: always
+    depends_on:
+      - backend
+    networks:
+      - zk
+
+  postgres:
+    image: postgres:16-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-ticketz}
+      - POSTGRES_DB=${POSTGRES_DB:-ticketz}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+      - TZ=${TZ:-America/Sao_Paulo}
+    expose:
+      - 5432
+    restart: always
+    networks:
+      - zk
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    expose:
+      - 6379
+    restart: always
+    volumes:
+      - redis_data:/data
+    networks:
+      - zk

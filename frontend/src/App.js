@@ -25,6 +25,21 @@ const defaultLogoLight = "/vector/logo.svg";
 const defaultLogoDark = "/vector/logo-dark.svg";
 const defaultLogoFavicon = "/vector/favicon.svg";
 
+const systemColorScheme = () =>
+  window.matchMedia &&
+  window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+
+const readThemeMode = () => {
+  try {
+    const saved = window.localStorage.getItem("themeMode");
+    return ["light", "dark"].includes(saved) ? saved : "system";
+  } catch (e) {
+    return "system";
+  }
+};
+
 function useViewportHeight() {
   useEffect(() => {
     const setVh = () => {
@@ -53,12 +68,12 @@ function useViewportHeight() {
 const App = () => {
   const [locale, setLocale] = useState();
 
-  const prefersDarkMode = !!window.matchMedia("(prefers-color-scheme: dark)")
-    .matches;
-  const preferredTheme = window.localStorage.getItem("preferredTheme");
-  const [mode, setMode] = useState(
-    preferredTheme ? preferredTheme : prefersDarkMode ? "dark" : "light"
-  );
+  // Zap Komunick: the theme follows the operating system (Windows light or
+  // dark) until the user picks one with the switch; "Tema do sistema" in the
+  // user menu goes back to following it.
+  const [themeMode, setThemeMode] = useState(readThemeMode);
+  const [systemMode, setSystemMode] = useState(systemColorScheme);
+  const mode = themeMode === "system" ? systemMode : themeMode;
   const [primaryColorLight, setPrimaryColorLight] = useState("#888");
   const [primaryColorDark, setPrimaryColorDark] = useState("#888");
   const [appLogoLight, setAppLogoLight] = useState("");
@@ -70,7 +85,13 @@ const App = () => {
   const colorMode = useMemo(
     () => ({
       toggleColorMode: () => {
-        setMode(prevMode => (prevMode === "light" ? "dark" : "light"));
+        setThemeMode(prev => {
+          const current = prev === "system" ? systemColorScheme() : prev;
+          return current === "light" ? "dark" : "light";
+        });
+      },
+      followSystem: () => {
+        setThemeMode("system");
       },
       setPrimaryColorLight: color => {
         setPrimaryColorLight(color);
@@ -216,17 +237,35 @@ const App = () => {
       return;
     }
 
-    const browserLocale =
-      i18nlocale.substring(0, 2) + i18nlocale.substring(3, 5);
-
-    if (browserLocale === "ptBR") {
+    // "pt" (the default) and "pt-BR" use the Brazilian Material-UI texts
+    if (i18nlocale === "pt" || i18nlocale.replace("_", "-") === "pt-BR") {
       setLocale(ptBR);
     }
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem("preferredTheme", mode);
-  }, [mode]);
+    try {
+      window.localStorage.setItem("themeMode", themeMode);
+      window.localStorage.removeItem("preferredTheme");
+    } catch (e) {
+      // storage blocked: the choice lasts until the page is reloaded
+    }
+  }, [themeMode]);
+
+  useEffect(() => {
+    if (!window.matchMedia) return undefined;
+    const query = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = event => setSystemMode(event.matches ? "dark" : "light");
+    if (query.addEventListener) query.addEventListener("change", onChange);
+    else query.addListener(onChange);
+    return () => {
+      if (query.removeEventListener) {
+        query.removeEventListener("change", onChange);
+      } else {
+        query.removeListener(onChange);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     getPublicSetting("primaryColorLight")
@@ -289,7 +328,7 @@ const App = () => {
       <Favicon
         url={appLogoFavicon ? theme.appLogoFavicon : defaultLogoFavicon}
       />
-      <ColorModeContext.Provider value={{ colorMode }}>
+      <ColorModeContext.Provider value={{ colorMode, themeMode }}>
         <PhoneCallProvider>
           <ThemeProvider theme={theme}>
             <QueryClientProvider client={queryClient}>

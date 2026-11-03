@@ -534,8 +534,7 @@ const Connections = () => {
                           </IconButton>
                         )}
 
-                        {false &&
-                          whatsApp.channel === "whatsapp" &&
+                        {whatsApp.channel === "whatsapp" &&
                           wavoipAvailable() && (
                             <IconButton
                               size="small"

@@ -43,7 +43,7 @@ const ListService = async ({
     ],
     limit,
     offset,
-    order: [["createdAt", "DESC"]]
+    order: [["updatedAt", "DESC"]]
   });
 
   const hasMore = count > offset + records.length;

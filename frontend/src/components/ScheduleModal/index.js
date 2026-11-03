@@ -302,7 +302,9 @@ const ScheduleModal = ({
         scroll="paper"
       >
         <DialogTitle id="form-dialog-title">
-          {schedule.status === "ERRO"
+          {!scheduleId
+            ? i18n.t("scheduleModal.title.add")
+            : schedule.status === "ERRO"
             ? "Erro de Envio"
             : `Mensagem ${capitalize(schedule.status)}`}
         </DialogTitle>

@@ -7,6 +7,7 @@ import ShowFromUuidService from "../services/ChatService/ShowFromUuidService";
 import DeleteService from "../services/ChatService/DeleteService";
 import FindMessages from "../services/ChatService/FindMessages";
 import UpdateService from "../services/ChatService/UpdateService";
+import FindOrCreateDirectService from "../services/ChatService/FindOrCreateDirectService";
 
 import Chat from "../models/Chat";
 import CreateMessageService from "../services/ChatService/CreateMessageService";
@@ -55,6 +56,30 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
       record
     });
   });
+
+  return res.status(200).json(record);
+};
+
+export const direct = async (req: Request, res: Response): Promise<Response> => {
+  const { companyId } = req.user;
+  const ownerId = +req.user.id;
+  const { userId } = req.body;
+
+  const { record, created } = await FindOrCreateDirectService({
+    ownerId,
+    companyId,
+    userId: +userId
+  });
+
+  if (created) {
+    const io = getIO();
+    record.users.forEach(chatUser => {
+      io.emit(`company-${companyId}-chat-user-${chatUser.userId}`, {
+        action: "create",
+        record
+      });
+    });
+  }
 
   return res.status(200).json(record);
 };

@@ -9,6 +9,7 @@ import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
 import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
+import Typography from "@material-ui/core/Typography";
 import Paper from "@material-ui/core/Paper";
 import Button from "@material-ui/core/Button";
 import Avatar from "@material-ui/core/Avatar";
@@ -27,6 +28,11 @@ import api from "../../services/api";
 import TableRowSkeleton from "../../components/TableRowSkeleton";
 import ContactModal from "../../components/ContactModal";
 import ConfirmationModal from "../../components/ConfirmationModal/";
+import {
+  WalletBulkBar,
+  WalletTransferDialog
+} from "../../components/WalletBulk";
+import Checkbox from "@material-ui/core/Checkbox";
 
 import { i18n } from "../../translate/i18n";
 import MainHeader from "../../components/MainHeader";
@@ -37,13 +43,13 @@ import toastError from "../../errors/toastError";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { Can } from "../../components/Can";
 import { SocketContext } from "../../context/Socket/SocketContext";
-import { generateColor } from "../../helpers/colorGenerator";
 import { getInitials } from "../../helpers/getInitials";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCloudArrowUp } from "@fortawesome/free-solid-svg-icons";
 import { faDownload } from "@fortawesome/free-solid-svg-icons";
 import {
+  Chip,
   FormControl,
   Grid,
   InputLabel,
@@ -123,7 +129,19 @@ const useStyles = makeStyles(theme => ({
     overflow: "hidden",
     textOverflow: "ellipsis"
   },
-  contactName: {}
+  contactName: {},
+  // Zap Komunick (Direção B): neutral initials and a soft green wallet chip
+  avatar: {
+    backgroundColor: theme.komunick.tagBackground,
+    color: theme.palette.text.primary,
+    fontWeight: 700,
+    fontSize: 14
+  },
+  walletChip: {
+    backgroundColor: theme.komunick.bubbleMine,
+    border: `1px solid ${theme.komunick.bubbleMineBorder}`,
+    color: theme.palette.primary.main
+  }
 }));
 
 const Contacts = () => {
@@ -145,6 +163,26 @@ const Contacts = () => {
   const [connections, setConnections] = useState([]);
   const [importConnectionId, setImportConnectionId] = useState("");
   const [hasMore, setHasMore] = useState(false);
+  // Zap Komunick: wallet in bulk (RF-014), administrators only
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+  // after a bulk change the list is read again: the realtime updates are
+  // ignored while a search is typed
+  const reloadContacts = () => {
+    setSelectedIds([]);
+    dispatch({ type: "RESET" });
+    setPageNumber(1);
+    setReloadKey(k => k + 1);
+  };
+  const isAdmin = user?.profile === "admin";
+  const selectable = contacts.filter(c => !c.isGroup).map(c => c.id);
+  const allSelected =
+    selectable.length > 0 && selectable.every(id => selectedIds.includes(id));
+  const toggleContact = id =>
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
 
   const socketManager = useContext(SocketContext);
 
@@ -162,6 +200,7 @@ const Contacts = () => {
   useEffect(() => {
     dispatch({ type: "RESET" });
     setPageNumber(1);
+    setSelectedIds([]);
   }, [searchParam, onlyMyWallet]);
 
   useEffect(() => {
@@ -186,7 +225,7 @@ const Contacts = () => {
       fetchContacts();
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [searchParam, pageNumber, onlyMyWallet]);
+  }, [searchParam, pageNumber, onlyMyWallet, reloadKey]);
 
   useEffect(() => {
     const companyId = localStorage.getItem("companyId");
@@ -360,6 +399,11 @@ const Contacts = () => {
           </Grid>
         </Grid>
       </ConfirmationModal>
+      <WalletTransferDialog
+        open={transferOpen}
+        onClose={() => setTransferOpen(false)}
+        onDone={reloadContacts}
+      />
       <MainHeader>
         <Title>{i18n.t("contacts.title")}</Title>
         <MainHeaderButtonsWrapper>
@@ -388,30 +432,24 @@ const Contacts = () => {
           />
           {user?.profile === "admin" && (
             <>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => importCsv()}
-              >
+              <Button variant="outlined" onClick={() => importCsv()}>
                 &nbsp;
                 <FontAwesomeIcon icon={faCloudArrowUp} />
                 &nbsp;
               </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => exportCsv()}
-              >
+              <Button variant="outlined" onClick={() => exportCsv()}>
                 &nbsp;
                 <FontAwesomeIcon icon={faDownload} />
                 &nbsp;
               </Button>
               <Button
-                variant="contained"
-                color="primary"
+                variant="outlined"
                 onClick={() => setImportConfirmOpen(true)}
               >
                 {i18n.t("contacts.buttons.import")}
+              </Button>
+              <Button variant="outlined" onClick={() => setTransferOpen(true)}>
+                {i18n.t("walletBulk.transferButton")}
               </Button>
             </>
           )}
@@ -424,6 +462,13 @@ const Contacts = () => {
           </Button>
         </MainHeaderButtonsWrapper>
       </MainHeader>
+      {isAdmin && selectedIds.length > 0 && (
+        <WalletBulkBar
+          selectedIds={selectedIds}
+          onDone={reloadContacts}
+          onCancel={() => setSelectedIds([])}
+        />
+      )}
       <Paper
         className={classes.mainPaper}
         variant="outlined"
@@ -432,6 +477,21 @@ const Contacts = () => {
         <Table size="small">
           <TableHead>
             <TableRow>
+              {isAdmin && (
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    color="primary"
+                    checked={allSelected}
+                    indeterminate={selectedIds.length > 0 && !allSelected}
+                    onChange={() =>
+                      setSelectedIds(allSelected ? [] : selectable)
+                    }
+                    inputProps={{
+                      "aria-label": i18n.t("walletBulk.selectAll")
+                    }}
+                  />
+                </TableCell>
+              )}
               <TableCell padding="checkbox" />
               <TableCell className={classes.contactName}>
                 {i18n.t("contacts.table.name")}
@@ -451,15 +511,29 @@ const Contacts = () => {
           <TableBody>
             <>
               {contacts.map(contact => (
-                <TableRow key={contact.id}>
+                <TableRow
+                  key={contact.id}
+                  selected={selectedIds.includes(contact.id)}
+                >
+                  {isAdmin && (
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        color="primary"
+                        disabled={contact.isGroup}
+                        checked={selectedIds.includes(contact.id)}
+                        onChange={() => toggleContact(contact.id)}
+                        inputProps={{
+                          "aria-label": i18n.t("walletBulk.selectOne", {
+                            name: contact.name
+                          })
+                        }}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell style={{ paddingRight: 0 }}>
                     {
                       <Avatar
-                        style={{
-                          backgroundColor: generateColor(contact?.number),
-                          fontWeight: "bold",
-                          color: "white"
-                        }}
+                        className={classes.avatar}
                         src={contact.profilePicUrl}
                       >
                         {getInitials(contact?.name)}
@@ -487,7 +561,13 @@ const Contacts = () => {
                   <TableCell align="center">{contact.number}</TableCell>
                   <TableCell align="center">{contact.email}</TableCell>
                   <TableCell align="center">
-                    {contact.walletUser?.name || ""}
+                    {contact.walletUser?.name && (
+                      <Chip
+                        size="small"
+                        label={contact.walletUser.name}
+                        className={classes.walletChip}
+                      />
+                    )}
                   </TableCell>
                   <TableCell align="center">
                     {!contact.isGroup && (
@@ -529,6 +609,17 @@ const Contacts = () => {
                 </TableRow>
               ))}
               {loading && <TableRowSkeleton avatar columns={4} />}
+              {!loading && contacts.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={isAdmin ? 7 : 6} align="center">
+                    <Typography variant="body2" color="textSecondary">
+                      {onlyMyWallet
+                        ? i18n.t("wallet.emptyMine")
+                        : i18n.t("wallet.empty")}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              )}
             </>
           </TableBody>
         </Table>

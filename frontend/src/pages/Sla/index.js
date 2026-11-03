@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useHistory, Link as RouterLink } from "react-router-dom";
 
-import { makeStyles } from "@material-ui/core/styles";
+import { alpha, makeStyles } from "@material-ui/core/styles";
 import Grid from "@material-ui/core/Grid";
 import Paper from "@material-ui/core/Paper";
 import Typography from "@material-ui/core/Typography";
@@ -379,10 +379,18 @@ const Sla = () => {
                             label={i18n.t(`sla.situation.${ticket.situation}`, {
                               hours: config.oldTicketHours
                             })}
+                            // Direção B: soft tinted pill instead of a solid one
                             style={{
-                              backgroundColor:
+                              backgroundColor: alpha(
                                 situationColors[ticket.situation],
-                              color: "white"
+                                0.12
+                              ),
+                              border: `1px solid ${alpha(
+                                situationColors[ticket.situation],
+                                0.25
+                              )}`,
+                              color: situationColors[ticket.situation],
+                              fontWeight: 700
                             }}
                           />
                         </TableCell>

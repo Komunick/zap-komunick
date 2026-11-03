@@ -1,3 +1,4 @@
+import AppError from "../../errors/AppError";
 import Chat from "../../models/Chat";
 import ChatUser from "../../models/ChatUser";
 import User from "../../models/User";
@@ -14,6 +15,11 @@ export default async function UpdateService(data: ChatData) {
     include: [{ model: ChatUser, as: "users" }]
   });
   const { ownerId } = record;
+
+  // the members of a one-to-one conversation are fixed
+  if (record.isDirect) {
+    throw new AppError("ERR_CHAT_DIRECT_READONLY", 403);
+  }
 
   await record.update({ title: data.title });
 
