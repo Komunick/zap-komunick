@@ -3,8 +3,8 @@
 # Attention: every variable here is published in /config.json, which anyone
 # can open. Never put a secret in this file.
 
-# Subdomain of the installation (the same in the backend file)
-FRONTEND_HOST=atendimento.komunick.com
+# Address of the installation (the same in the backend file)
+FRONTEND_HOST=superchat.komunick.com
 
 BACKEND_HOST=${FRONTEND_HOST}
 BACKEND_PATH=/backend
