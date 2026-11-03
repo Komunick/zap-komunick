@@ -210,18 +210,23 @@ const useStyles = makeStyles(theme => ({
 
   appLogoLightPreviewImg: {
     width: "100%",
-    maxHeight: 72,
-    content: `url("${theme.calculatedLogoLight()}")`
+    maxWidth: 280,
+    height: "auto",
+    maxHeight: 160,
+    objectFit: "contain"
   },
   appLogoDarkPreviewImg: {
     width: "100%",
-    maxHeight: 72,
-    content: `url("${theme.calculatedLogoDark()}")`
+    maxWidth: 280,
+    height: "auto",
+    maxHeight: 160,
+    objectFit: "contain"
   },
   appLogoFaviconPreviewImg: {
-    width: "100%",
-    maxHeight: 72,
-    content: `url("${theme.appLogoFavicon ? theme.appLogoFavicon : "/vector/favicon.svg"}")`
+    width: 72,
+    maxWidth: "100%",
+    height: 72,
+    objectFit: "contain"
   }
 }));
 
@@ -696,6 +701,7 @@ export default function Whitelabel(props) {
                 <div className={classes.appLogoLightPreviewDiv}>
                   <img
                     className={classes.appLogoLightPreviewImg}
+                    src={theme.calculatedLogoLight()}
                     alt="light-logo-preview"
                   />
                 </div>
@@ -704,6 +710,7 @@ export default function Whitelabel(props) {
                 <div className={classes.appLogoDarkPreviewDiv}>
                   <img
                     className={classes.appLogoDarkPreviewImg}
+                    src={theme.calculatedLogoDark()}
                     alt="dark-logo-preview"
                   />
                 </div>
@@ -712,6 +719,7 @@ export default function Whitelabel(props) {
                 <div className={classes.appLogoFaviconPreviewDiv}>
                   <img
                     className={classes.appLogoFaviconPreviewImg}
+                    src={theme.appLogoFavicon || PRODUCT_ICON}
                     alt="favicon-preview"
                   />
                 </div>

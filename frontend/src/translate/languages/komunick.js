@@ -3634,6 +3634,12 @@ es.integratedAssistant = {
   }
 };
 
+pt.whitelabel = { logoHint: "Preserve a proporção original da marca." };
+en.whitelabel = { logoHint: "Keep the original proportions of the logo." };
+es.whitelabel = {
+  logoHint: "Conserva las proporciones originales de la marca."
+};
+
 export const komunickMessages = {
   pt: { translations: pt },
   pt_PT: { translations: pt },
