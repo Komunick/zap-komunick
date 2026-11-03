@@ -33,3 +33,16 @@ export function mergeChat(previous, incoming) {
     }))
   };
 }
+
+// The POST response, socket event and history can describe the same message.
+// Keep one record and chronological reading order when those paths overlap.
+export function mergeChatMessages(previous, incoming) {
+  const records = new Map();
+  [...previous, ...incoming].forEach(message => {
+    const key = `${message.chatId}:${message.id}`;
+    records.set(key, { ...records.get(key), ...message });
+  });
+  return Array.from(records.values()).sort(
+    (a, b) => new Date(a.createdAt) - new Date(b.createdAt) || a.id - b.id
+  );
+}

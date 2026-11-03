@@ -193,6 +193,77 @@ acesso no formulário do usuário; "Repetir", contatos, etiqueta, anexo e "Envia
 "SLA e carteira de clientes" e "Exigir motivo ao finalizar" em Configurações; aba "Pausados" e botões Transferir,
 Pausar, Retomar e Finalizar no atendimento.
 
+**Menu lateral (RF-009):** `layout/index.js` usa `Drawer.PaperProps.onPointerEnter` para abrir o trilho somente com
+ponteiro mouse, breakpoint desktop e variante permanente. A entrada define aberto, sem toggle/timer ou fechamento
+ao sair; mantém a transição visual, os controles e a persistência existentes. Foco desktop não monta Drawer e a
+gaveta temporária móvel continua controlada por toque/botão.
+
+**Login e dashboard por perfil (RF-009):** `helpers/sessionHome` compartilha o destino entre `useAuth` e `routes/Route`:
+`/` para administrador com interface administrativa disponível, `/tickets` para os demais. `Route` aplica os guards
+dentro do `render` de `RouterRoute`, após o match; somente `/` recebe `adminOnly` em `routes/index`. O carregamento
+da sessão/perfil não monta antecipadamente a página protegida; a navegação direta também não monta o
+dashboard para quem não deve vê-lo. Isso evita consultas administrativas durante o login comum sem alterar a
+autorização backend: `/dashboard/tickets`, `/dashboard/users` e `/dashboard/status` mantêm `isAuth`/`isAdmin`/
+`isCompliant`. `hideAdminUI` mantém o destino inicial `/tickets`, sem revogar o acesso direto de um perfil `admin`.
+A [definição do recorte](specs/login-dashboard-perfil.md) preserva os demais destinos privados e 2FA.
+Regressões cobrem a montagem e o redirecionamento, complementadas por login real com usuários fictícios,
+restauração da sessão, acesso direto e respostas autorizadas/negadas das três APIs, em ambos os temas e celular.
+
+**Chat interno (RF-010):** `pages/Chat` mantém a API e os eventos existentes, separando carga da lista, histórico e
+envio. A identidade da conversa e a geração da busca delimitam as respostas do histórico; mensagens de HTTP/socket
+são mescladas por ID. Ao repetir a carga da lista, alterações locais/socket posteriores ao início da busca prevalecem
+sobre o snapshot recebido, inclusive exclusões. Falhas de leitura têm repetição por GET, sem repetir envios confirmados.
+O composer aguarda confirmação antes de limpar texto/anexos, bloqueia submissão simultânea e distingue Enter,
+Shift+Enter e composição de texto. Cada conversa mantém seu próprio gravador e encerra a captura ao desmontar;
+áudio convertido cujo envio falhou permanece como anexo para repetição manual. Layout e bolhas usam os tokens
+existentes e limites relativos à largura disponível. Textos do fork ficam em `translate/languages/komunick.js`;
+não há dependência ou migration nova.
+
+A verificação da interface cobre falha e repetição, respostas fora de ordem, deduplicação, teclado, seleção/busca e
+envio/leitura entre atores fictícios, além de ambos os temas e celular. A [correção de autorização](specs/chat-interno-autorizacao.md)
+aplica `helpers/ChatAuthorization` e `ChatService/AuthorizeChatService` às operações expostas. O ator é recarregado
+na empresa autenticada; o snapshot usa participantes atuais da mesma empresa e somente `id/name` de usuários.
+Mutações são transacionais, com bloqueio do chat e validação de participantes antes das escritas. O proprietário
+é bloqueado por ID antes do chat, com releitura posterior; isso evita um ciclo com a exclusão de usuário que remove
+seus chats por cascata. Esse bloqueio não autoriza nem expõe dados de um proprietário que mudou de empresa.
+Leitura ignora o `userId` do corpo. O par de uma conversa direta é serializado antes dos bloqueios de usuário,
+evitando criação duplicada sem introduzir um ciclo de locks entre abertura e leitura.
+
+`SocketServices/ChatSocketService` usa salas de usuário apenas como candidatas e revalida o contexto atual antes de
+emitir; envio falha fechado se não conseguir autorizar os destinatários. Um usuário removido recebe somente o ID da
+conversa a remover; página/popover não reintroduzem esse preview por resposta antiga. O início do socket confere a
+empresa do token contra o cadastro antes de criar sessão ou entrar nas salas.
+No cliente, `SocketContext` lê a identidade pelo claim `id` emitido pelo servidor e encerra sockets anteriores em
+troca de identidade/logout, inclusive limpando listeners; um encerramento atrasado não fecha a conexão do novo ator.
+
+`authorizeChatUpload` precede o Multer; a persistência revalida a participação sob lock. `config/chatUpload` mantém
+storage específico do chat com nomes aleatórios para não sobrescrever arquivos e permitir limpeza somente dos
+arquivos da requisição revogada ou não confirmada. A emissão ocorre após commit. Upload múltiplo é confirmado como
+um lote, mas mantém o evento legado de apenas uma mensagem; o remetente pode atualizar o histórico após o upload.
+O [recorte de anexos privados](specs/chat-anexos-privados.md) acrescenta `config/chatMedia`, fora da raiz pública,
+e a rota `GET/HEAD /chats/:chatId/messages/:messageId/media`. Ela revalida empresa e participação antes de servir
+conteúdo, metadados, Range ou condicionais. Somente essa rota aceita também a sessão HttpOnly `jrt`, verificando
+assinatura, versão e empresa atuais, horas/IP; credenciais simultâneas devem concordar. Não emite tokens nem aceita
+segredo na URL. Cache é privado/no-store, a disposição e o MIME são controlados pelo servidor. O frontend usa IDs,
+sessão nativa e limpeza de players/galeria por identidade, sem fallback público nem mudança no PDF download existente.
+Após autorizar, a classificação lê no máximo 512 bytes de assinatura; isso preserva formatos conhecidos sem extensão
+e mantém conteúdo ativo/desconhecido como download. O corpo continua em streaming, sem carregar o arquivo inteiro.
+
+`ChatMediaMigrationService` inventaria basenames RAW e órfãos do namespace do chat, detecta referências estruturais de
+mídia compartilhadas e copia sem sobrescrever, verificando integridade antes de remover origens públicas. Mantém as
+associações e o schema. O CLI `node dist/scripts/migrateChatMedia.js` é dry-run por padrão; `--execute` exige manutenção
+sem escritores, e `--check` confirma prontidão. Falha parcial exige exame e retomada, não restauração automática.
+O servidor verifica prontidão antes de escutar HTTP. `PublicFileService` bloqueia nomes do chat antes de abrir arquivos,
+confina o acesso à raiz pública e recusa symlinks; o nginx usa proxy para essa decisão e não monta mais o volume público.
+O descritor de arquivos do painel RF-023 também consulta essa proteção antes de abrir o caminho e seu destino real,
+para não reabrir um anexo privado por uma referência de atendimento ou por um alias interno ao filesystem.
+
+A verificação de autorização cobre empresa/participante/dono, ausência de efeitos negados em banco/arquivos/eventos,
+associação legada indevida, remoção/mudança de empresa, concorrência real e rechecagem durante stream, usando somente
+novas identidades e arquivos fictícios rastreados. Privacidade acrescenta migração por hash/retomada/conflito e negativas
+de entrega por todos os ingressos, além de preview/reprodução/download legítimos. Não revoga cópias já baixadas ou
+arquivos dos atendimentos que continuam públicos pelo contrato do RF-023.
+
 **Etiquetas por setor (RF-019):** `TagModal` usa `QueueSelect` com seleção múltipla e texto explicando que a seleção
 vazia vale para todos os setores; `pages/Tags` mostra a coluna "Setores". `components/TagPicker` reúne
 `useSectorTags`, `TagChecklist` e `TagPickerPopover`: a linha do atendimento abre o popover e salva por
@@ -479,9 +550,10 @@ Contrato/licença, acesso ao fornecedor real, sincronização, documentos e uso 
   scripts, XFA, formulários ou links/annotations; `isEvalSupported: false` é aplicado na carga conforme a
   [orientação oficial de segurança](https://github.com/mozilla/pdf.js/security/advisories/GHSA-wgrm-67xf-hhpq).
   Imagem permite zoom/rotação; vídeo usa controles nativos sem autoplay. Compatibilidade de codec é do navegador.
-- **Compatibilidade/limite:** `/public/*` no Express e o alias nginx continuam públicos; arquivos grandes também são
-  entregues ao destinatário por links legados. Não confundir nova API autorizada com privatização global desses bytes.
-  Mudar somente Express não elimina o caminho nginx. Migração de armazenamento e entrega é decisão separada.
+- **Compatibilidade/limite:** arquivos dos atendimentos em `/public/*` continuam públicos, inclusive os links grandes
+  entregues ao destinatário. A API autorizada do painel não privatiza esses bytes. A entrega pública passa pelo backend;
+  o alias nginx foi removido para proteger os anexos do chat interno, que seguem armazenamento privado e migração do
+  RF-010. Não confundir os dois contratos nem apagar arquivos desconhecidos dos demais módulos.
 
 **Verificação prevista:** regras/classificação/cursor/Range e serviços com duas empresas, IDs compostos repetidos,
 histórico e troca de acesso; filesystem local com arquivo ausente, assinatura divergente, limite e escape/symlink;
