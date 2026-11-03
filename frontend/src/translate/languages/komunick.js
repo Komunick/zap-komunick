@@ -303,6 +303,29 @@ const pt = {
       closedToday: "finalizados hoje"
     }
   },
+  walletBulk: {
+    transferButton: "Transferir carteira",
+    selectAll: "Marcar todos os contatos da lista",
+    selectOne: "Marcar {{name}}",
+    selected: "{{count}} contato(s) marcado(s)",
+    owner: "Responsável",
+    assign: "Definir responsável",
+    remove: "Tirar da carteira",
+    cancel: "Cancelar",
+    done: "Carteira atualizada em {{count}} contato(s).",
+    nothing: "Nenhum contato foi alterado.",
+    groups: "{{count}} grupo(s) ignorado(s): grupos não têm carteira.",
+    transferTitle: "Transferir carteira",
+    transferHint:
+      "Todos os contatos de um responsável passam para outro, por exemplo quando alguém sai da equipe.",
+    from: "De",
+    to: "Para",
+    fromCount: "{{count}} contato(s) nessa carteira",
+    noOwner: "Contatos sem responsável",
+    nobody: "Ninguém (tirar da carteira)",
+    same: "Escolha um responsável diferente",
+    transfer: "Transferir"
+  },
   about: {
     licensesourcecode: "Código-fonte desta versão",
     basedOnTicketz: "Baseado no Ticketz (código original)"
@@ -757,6 +780,29 @@ const en = {
       pausedCount: "paused",
       closedToday: "closed today"
     }
+  },
+  walletBulk: {
+    transferButton: "Move wallet",
+    selectAll: "Select every contact of the list",
+    selectOne: "Select {{name}}",
+    selected: "{{count}} contact(s) selected",
+    owner: "Owner",
+    assign: "Set owner",
+    remove: "Remove from wallet",
+    cancel: "Cancel",
+    done: "Wallet updated on {{count}} contact(s).",
+    nothing: "No contact was changed.",
+    groups: "{{count}} group(s) skipped: groups have no wallet.",
+    transferTitle: "Move wallet",
+    transferHint:
+      "Every contact of one owner goes to another, for example when someone leaves the team.",
+    from: "From",
+    to: "To",
+    fromCount: "{{count}} contact(s) in this wallet",
+    noOwner: "Contacts without owner",
+    nobody: "Nobody (remove from wallet)",
+    same: "Pick a different owner",
+    transfer: "Move"
   },
   about: {
     licensesourcecode: "Source code of this version",
@@ -1213,6 +1259,29 @@ const es = {
       pausedCount: "pausadas",
       closedToday: "finalizadas hoy"
     }
+  },
+  walletBulk: {
+    transferButton: "Transferir cartera",
+    selectAll: "Marcar todos los contactos de la lista",
+    selectOne: "Marcar {{name}}",
+    selected: "{{count}} contacto(s) marcado(s)",
+    owner: "Responsable",
+    assign: "Definir responsable",
+    remove: "Quitar de la cartera",
+    cancel: "Cancelar",
+    done: "Cartera actualizada en {{count}} contacto(s).",
+    nothing: "Ningún contacto fue cambiado.",
+    groups: "{{count}} grupo(s) ignorado(s): los grupos no tienen cartera.",
+    transferTitle: "Transferir cartera",
+    transferHint:
+      "Todos los contactos de un responsable pasan a otro, por ejemplo cuando alguien deja el equipo.",
+    from: "De",
+    to: "Para",
+    fromCount: "{{count}} contacto(s) en esta cartera",
+    noOwner: "Contactos sin responsable",
+    nobody: "Nadie (quitar de la cartera)",
+    same: "Elija un responsable diferente",
+    transfer: "Transferir"
   },
   about: {
     licensesourcecode: "Código fuente de esta versión",

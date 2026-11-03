@@ -28,6 +28,11 @@ import api from "../../services/api";
 import TableRowSkeleton from "../../components/TableRowSkeleton";
 import ContactModal from "../../components/ContactModal";
 import ConfirmationModal from "../../components/ConfirmationModal/";
+import {
+  WalletBulkBar,
+  WalletTransferDialog
+} from "../../components/WalletBulk";
+import Checkbox from "@material-ui/core/Checkbox";
 
 import { i18n } from "../../translate/i18n";
 import MainHeader from "../../components/MainHeader";
@@ -158,6 +163,26 @@ const Contacts = () => {
   const [connections, setConnections] = useState([]);
   const [importConnectionId, setImportConnectionId] = useState("");
   const [hasMore, setHasMore] = useState(false);
+  // Zap Komunick: wallet in bulk (RF-014), administrators only
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+  // after a bulk change the list is read again: the realtime updates are
+  // ignored while a search is typed
+  const reloadContacts = () => {
+    setSelectedIds([]);
+    dispatch({ type: "RESET" });
+    setPageNumber(1);
+    setReloadKey(k => k + 1);
+  };
+  const isAdmin = user?.profile === "admin";
+  const selectable = contacts.filter(c => !c.isGroup).map(c => c.id);
+  const allSelected =
+    selectable.length > 0 && selectable.every(id => selectedIds.includes(id));
+  const toggleContact = id =>
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
 
   const socketManager = useContext(SocketContext);
 
@@ -175,6 +200,7 @@ const Contacts = () => {
   useEffect(() => {
     dispatch({ type: "RESET" });
     setPageNumber(1);
+    setSelectedIds([]);
   }, [searchParam, onlyMyWallet]);
 
   useEffect(() => {
@@ -199,7 +225,7 @@ const Contacts = () => {
       fetchContacts();
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [searchParam, pageNumber, onlyMyWallet]);
+  }, [searchParam, pageNumber, onlyMyWallet, reloadKey]);
 
   useEffect(() => {
     const companyId = localStorage.getItem("companyId");
@@ -373,6 +399,11 @@ const Contacts = () => {
           </Grid>
         </Grid>
       </ConfirmationModal>
+      <WalletTransferDialog
+        open={transferOpen}
+        onClose={() => setTransferOpen(false)}
+        onDone={reloadContacts}
+      />
       <MainHeader>
         <Title>{i18n.t("contacts.title")}</Title>
         <MainHeaderButtonsWrapper>
@@ -401,14 +432,12 @@ const Contacts = () => {
           />
           {user?.profile === "admin" && (
             <>
-              <Button variant="outlined" onClick={() => importCsv()}
-              >
+              <Button variant="outlined" onClick={() => importCsv()}>
                 &nbsp;
                 <FontAwesomeIcon icon={faCloudArrowUp} />
                 &nbsp;
               </Button>
-              <Button variant="outlined" onClick={() => exportCsv()}
-              >
+              <Button variant="outlined" onClick={() => exportCsv()}>
                 &nbsp;
                 <FontAwesomeIcon icon={faDownload} />
                 &nbsp;
@@ -418,6 +447,9 @@ const Contacts = () => {
                 onClick={() => setImportConfirmOpen(true)}
               >
                 {i18n.t("contacts.buttons.import")}
+              </Button>
+              <Button variant="outlined" onClick={() => setTransferOpen(true)}>
+                {i18n.t("walletBulk.transferButton")}
               </Button>
             </>
           )}
@@ -430,6 +462,13 @@ const Contacts = () => {
           </Button>
         </MainHeaderButtonsWrapper>
       </MainHeader>
+      {isAdmin && selectedIds.length > 0 && (
+        <WalletBulkBar
+          selectedIds={selectedIds}
+          onDone={reloadContacts}
+          onCancel={() => setSelectedIds([])}
+        />
+      )}
       <Paper
         className={classes.mainPaper}
         variant="outlined"
@@ -438,6 +477,21 @@ const Contacts = () => {
         <Table size="small">
           <TableHead>
             <TableRow>
+              {isAdmin && (
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    color="primary"
+                    checked={allSelected}
+                    indeterminate={selectedIds.length > 0 && !allSelected}
+                    onChange={() =>
+                      setSelectedIds(allSelected ? [] : selectable)
+                    }
+                    inputProps={{
+                      "aria-label": i18n.t("walletBulk.selectAll")
+                    }}
+                  />
+                </TableCell>
+              )}
               <TableCell padding="checkbox" />
               <TableCell className={classes.contactName}>
                 {i18n.t("contacts.table.name")}
@@ -457,7 +511,25 @@ const Contacts = () => {
           <TableBody>
             <>
               {contacts.map(contact => (
-                <TableRow key={contact.id}>
+                <TableRow
+                  key={contact.id}
+                  selected={selectedIds.includes(contact.id)}
+                >
+                  {isAdmin && (
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        color="primary"
+                        disabled={contact.isGroup}
+                        checked={selectedIds.includes(contact.id)}
+                        onChange={() => toggleContact(contact.id)}
+                        inputProps={{
+                          "aria-label": i18n.t("walletBulk.selectOne", {
+                            name: contact.name
+                          })
+                        }}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell style={{ paddingRight: 0 }}>
                     {
                       <Avatar
@@ -539,7 +611,7 @@ const Contacts = () => {
               {loading && <TableRowSkeleton avatar columns={4} />}
               {!loading && contacts.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} align="center">
+                  <TableCell colSpan={isAdmin ? 7 : 6} align="center">
                     <Typography variant="body2" color="textSecondary">
                       {onlyMyWallet
                         ? i18n.t("wallet.emptyMine")
