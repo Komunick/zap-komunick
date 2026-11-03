@@ -15,6 +15,9 @@ import { createKomunickTheme } from "../../theme/komunick";
 import api from "../../services/api";
 
 jest.mock("../../services/api", () => ({ get: jest.fn(), post: jest.fn() }));
+jest.mock("../../services/config", () => ({
+  getBackendURL: () => "https://backend.example.invalid/backend"
+}));
 jest.mock("../../translate/i18n", () => ({ i18n: { t: key => key } }));
 jest.mock("../../errors/toastError", () => jest.fn());
 jest.mock("../../context/Auth/AuthContext", () => ({
@@ -117,6 +120,62 @@ const upload = async () => {
   );
   fireEvent.click(screen.getByRole("button", { name: "chatPage.sendFiles" }));
 };
+
+test.each([
+  { id: 9, companyId: 1 },
+  { id: 7, companyId: 2 }
+])(
+  "an actor or company change discards late attachment data from the previous session: %o",
+  async nextActor => {
+    const pending = deferred();
+    let previousActor = true;
+    api.get.mockImplementation(url => {
+      if (url === "/users/list") return Promise.resolve({ data: [] });
+      if (url === "/chats")
+        return Promise.resolve(response(previousActor ? [chat(101)] : []));
+      return pending.promise;
+    });
+    const tree = actor => (
+      <MemoryRouter initialEntries={["/chats"]}>
+        <ThemeProvider theme={createKomunickTheme({ mode: "light" })}>
+          <AuthContext.Provider
+            value={{ user: { ...actor, name: "Pessoa fictícia" } }}
+          >
+            <Route path="/chats/:id?">
+              <Chat />
+            </Route>
+          </AuthContext.Provider>
+        </ThemeProvider>
+      </MemoryRouter>
+    );
+    const view = render(tree({ id: 7, companyId: 1 }));
+    await choose(101);
+    previousActor = false;
+    view.rerender(tree(nextActor));
+    await act(async () =>
+      pending.resolve(
+        response([
+          {
+            ...message(11, 101, "Anexo privado da identidade anterior"),
+            mediaType: "image",
+            mediaPath:
+              "https://backend.example.invalid/public/old-private-image.png",
+            mediaName: "old-private-image.png"
+          }
+        ])
+      )
+    );
+    expect(
+      screen.queryByText("Anexo privado da identidade anterior")
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByAltText("chatPage.messageImage")
+    ).not.toBeInTheDocument();
+    expect(api.get.mock.calls.filter(([url]) => url === "/chats")).toHaveLength(
+      2
+    );
+  }
+);
 
 beforeEach(() => {
   jest.clearAllMocks();

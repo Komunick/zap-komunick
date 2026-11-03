@@ -134,6 +134,18 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- Login de usuários comuns deixa de abrir transitoriamente o dashboard e consultar suas APIs administrativas.
+  O destino respeita o perfil e a resolução da sessão; administradores mantêm o dashboard e as APIs continuam
+  recusando usuários comuns com 403.
+
+- Anexos do chat interno passam a exigir sessão e participação atual para visualização, reprodução e download.
+  Arquivos existentes têm migração explícita para armazenamento privado, com verificação de integridade e retomada;
+  links públicos antigos são bloqueados também no ingresso nginx. Arquivos dos demais módulos permanecem preservados.
+
+- Chat interno passa a conferir empresa e participação nas operações e nos eventos; somente o dono participante
+  administra grupos, e marcar leitura usa o usuário autenticado. Remoção de participante limpa também o popover.
+  Upload é autorizado antes de gravar e revalidado antes de confirmar, com limpeza segura dos arquivos da requisição.
+
 - No chat interno, Shift+Enter insere uma linha; texto e anexos permanecem disponíveis quando o envio falha.
   Envios pendentes não são repetidos, e respostas atrasadas do histórico não entram em outra conversa.
 

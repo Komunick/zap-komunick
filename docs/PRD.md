@@ -312,6 +312,9 @@ referências do Dribbble (painéis de atendimento e CRMs de 2025 e 2026).
 - "Tarefas" fica oculto no menu lateral, nas abas de navegação e na paleta Ctrl K. A página continua acessível pelo
   endereço `/todolist`.
 - Login em duas colunas (formulário e painel da marca); no celular, só o formulário.
+- Após autenticar, usuário comum entra em `/tickets`; administrador com interface administrativa disponível entra
+  em `/`. A restauração da sessão e o redirecionamento não montam o dashboard para perfis sem acesso à sua interface.
+  As APIs administrativas mantêm seus bloqueios. Ver [correção do login por perfil](specs/login-dashboard-perfil.md).
 - Português é o idioma padrão (o idioma do navegador não é mais adivinhado; a escolha do usuário no menu continua
   valendo). O tema segue o claro ou escuro do sistema operacional, inclusive quando ele muda com a tela aberta; o
   interruptor "Modo escuro" fixa uma escolha e "Tema do sistema (Windows)", no menu do usuário, volta a seguir o sistema.
@@ -346,8 +349,17 @@ então vê o logo da Komunick, o botão verde e o painel da marca, no tema claro
 - Envio pendente impede duplicação; uma falha conserva texto ou anexo para nova tentativa. Resultados atrasados do
   histórico não entram em outra conversa, e a mesma mensagem recebida por HTTP/socket não aparece duas vezes.
 
-**Limite da melhoria de interface:** o backend legado do chat tem verificações de autorização incompletas. O recorte
-de usabilidade não altera essas permissões nem comprova isolamento; a correção exige definição separada antes de uso real.
+**Autorização:** o recorte aprovado de [autorização do chat](specs/chat-interno-autorizacao.md) restringe consulta,
+histórico, envio e leitura à empresa e aos participantes atuais; somente o dono participante administra o grupo.
+Participantes estrangeiros são recusados antes de qualquer alteração. Leitura usa o ator autenticado, e eventos vão
+somente aos destinatários autorizados; quem sai do grupo recebe apenas a remoção da conversa, inclusive no popover.
+Uploads são autorizados antes de receber arquivos e revalidados antes de persistir, com limpeza exclusiva da requisição
+revogada. A melhoria anterior de interface não mudou essas permissões; este é o recorte separado de segurança.
+**Anexos privados:** o [recorte de privacidade dos anexos internos](specs/chat-anexos-privados.md) move anexos novos e
+legados identificados para armazenamento privado e entrega autenticada por mensagem. Empresa e participação atuais
+são verificadas em cada acesso, inclusive reprodução parcial e download. Links públicos antigos do chat deixam de
+entregar conteúdo; arquivos dos demais módulos mantêm seus contratos. A migração verifica integridade e conflitos
+antes de remover cópias públicas, com retomada segura e sem perda das associações.
 
 **Cenário de sucesso:**
 
@@ -706,6 +718,9 @@ no cliente errado. Falha ou dado desatualizado fica explícito, sem confirmaçã
 - Arquivos externos/grandes podem manter a ação **Abrir original** pelo mecanismo existente. Os caminhos públicos
   legados do Express/nginx e da entrega ao destinatário continuam públicos; esta entrega não promete privatizá-los
   nem altera uploads, armazenamento, envio ou retenção dos arquivos.
+
+Essa compatibilidade pública refere-se aos arquivos dos atendimentos. Os anexos do chat interno seguem a regra
+privada do RF-010 e sua especificação, sem alterar a entrega de arquivos dos demais módulos neste recorte.
 
 **Aceite:** dado um atendimento autorizado com PDF de duas páginas, imagens e vídeo, a pessoa abre pela mensagem ou
 pela área de arquivos, muda página/ampliação, reproduz/pausa e baixa por ação explícita, em desktop/celular e ambos os

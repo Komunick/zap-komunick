@@ -319,7 +319,9 @@ const pt = {
     playVideo: "Reproduzir vídeo",
     pauseVideo: "Pausar vídeo",
     openMedia: "Ampliar mídia",
-    download: "Baixar arquivo"
+    download: "Baixar arquivo",
+    downloadBlocked:
+      "Permita abrir a janela de download no navegador e tente novamente."
   },
   dashboardPage: {
     hello: "Olá, {{name}}!",
@@ -613,6 +615,17 @@ const pt = {
     businessDaysTooltip: "Só em dia útil"
   },
   backendErrors: {
+    ERR_CHAT_MEDIA_STORAGE_UNSAFE:
+      "Os anexos estão temporariamente indisponíveis. Tente novamente.",
+    ERR_CHAT_MEDIA_UNAVAILABLE:
+      "Anexo temporariamente indisponível. Tente novamente.",
+    ERR_NO_CHAT_FOUND: "Conversa não encontrada ou indisponível.",
+    ERR_CHAT_DIRECT_READONLY:
+      "Conversas diretas não podem ser editadas ou excluídas.",
+    ERR_INVALID_CHAT_USER: "Selecione participantes válidos da sua empresa.",
+    ERR_INVALID_CHAT_TITLE: "Informe um nome válido para o grupo.",
+    ERR_INVALID_CHAT_PAGE: "Página do chat inválida.",
+    ERR_INVALID_CHAT_MESSAGE: "Mensagem inválida.",
     ERR_BULK_NO_TAGS: "Escolha ao menos uma etiqueta (no máximo 20).",
     ERR_INVALID_TAG_FILTER: "Filtro de etiquetas inválido.",
     ERR_TICKET_PAUSE_NOT_OPEN: "Só dá para pausar um atendimento em andamento.",
@@ -954,7 +967,9 @@ const en = {
     playVideo: "Play video",
     pauseVideo: "Pause video",
     openMedia: "Expand media",
-    download: "Download file"
+    download: "Download file",
+    downloadBlocked:
+      "Allow the browser to open the download window and try again."
   },
   dashboardPage: {
     hello: "Hi, {{name}}!",
@@ -1249,6 +1264,17 @@ const en = {
     businessDaysTooltip: "Business days only"
   },
   backendErrors: {
+    ERR_CHAT_MEDIA_STORAGE_UNSAFE:
+      "Attachments are temporarily unavailable. Please try again.",
+    ERR_CHAT_MEDIA_UNAVAILABLE:
+      "Attachment temporarily unavailable. Please try again.",
+    ERR_NO_CHAT_FOUND: "Conversation not found or unavailable.",
+    ERR_CHAT_DIRECT_READONLY:
+      "Direct conversations cannot be edited or deleted.",
+    ERR_INVALID_CHAT_USER: "Select valid participants from your company.",
+    ERR_INVALID_CHAT_TITLE: "Enter a valid group name.",
+    ERR_INVALID_CHAT_PAGE: "Invalid chat page.",
+    ERR_INVALID_CHAT_MESSAGE: "Invalid message.",
     ERR_BULK_NO_TAGS: "Pick at least one tag (20 at most).",
     ERR_INVALID_TAG_FILTER: "Invalid tag filter.",
     ERR_TICKET_PAUSE_NOT_OPEN: "Only an ongoing ticket can be paused.",
@@ -1593,7 +1619,9 @@ const es = {
     playVideo: "Reproducir vídeo",
     pauseVideo: "Pausar vídeo",
     openMedia: "Ampliar multimedia",
-    download: "Descargar archivo"
+    download: "Descargar archivo",
+    downloadBlocked:
+      "Permite abrir la ventana de descarga en el navegador e inténtalo de nuevo."
   },
   dashboardPage: {
     hello: "¡Hola, {{name}}!",
@@ -1887,6 +1915,17 @@ const es = {
     businessDaysTooltip: "Solo en día hábil"
   },
   backendErrors: {
+    ERR_CHAT_MEDIA_STORAGE_UNSAFE:
+      "Los adjuntos no están disponibles temporalmente. Inténtalo de nuevo.",
+    ERR_CHAT_MEDIA_UNAVAILABLE:
+      "Adjunto temporalmente no disponible. Inténtalo de nuevo.",
+    ERR_NO_CHAT_FOUND: "Conversación no encontrada o no disponible.",
+    ERR_CHAT_DIRECT_READONLY:
+      "Las conversaciones directas no se pueden editar ni eliminar.",
+    ERR_INVALID_CHAT_USER: "Seleccione participantes válidos de su empresa.",
+    ERR_INVALID_CHAT_TITLE: "Introduzca un nombre de grupo válido.",
+    ERR_INVALID_CHAT_PAGE: "Página del chat no válida.",
+    ERR_INVALID_CHAT_MESSAGE: "Mensaje no válido.",
     ERR_BULK_NO_TAGS: "Elija al menos una etiqueta (máximo 20).",
     ERR_INVALID_TAG_FILTER: "Filtro de etiquetas no válido.",
     ERR_TICKET_PAUSE_NOT_OPEN: "Solo se puede pausar una atención en curso.",

@@ -49,8 +49,6 @@ services:
     image: zap-komunick-frontend:${ZK_VERSION:-local}
     env_file:
       - .env-frontend-komunick
-    volumes:
-      - backend_public:/var/www/backend-public/
     ports:
       - "127.0.0.1:${ZK_HTTP_PORT:-5480}:80"
     restart: always
