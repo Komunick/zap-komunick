@@ -1,6 +1,6 @@
-# TAD — Zap Komunick
+# TAD — SuperChat
 
-**Komunick Inteligência e Tecnologia** · **Atualizado em:** 30/10/2026
+**Komunick Inteligência e Tecnologia** · **Atualizado em:** 03/11/2026
 **Fonte oficial:** `docs/TAD.md` no repositório · **Comportamento:** `docs/PRD.md`
 
 Levantamento parcial: este documento cobre o que o fork acrescenta ao Ticketz. O restante do sistema segue o desenho do
@@ -47,6 +47,11 @@ do upstream para facilitar a mesclagem de novas versões.
 - Kanban: as colunas são etiquetas com `kanban = 1`. `PUT /kanban/tickets/:id` calcula com `planKanbanMove` as
   etiquetas de Kanban a remover e a acrescentar, grava em `TicketTags` e emite a atualização do ticket pelo socket. O
   quadro escuta `company-<id>-ticket` e `-appMessage` e recarrega com atraso de 1 s.
+  `KanbanVisibility` compartilha a elegibilidade por empresa/estado/fila/propriedade entre listagem e movimento;
+  o ator atual precisa manter o vínculo à empresa do Bearer. Movimento trava ator, filas, associações e atendimento
+  em transação, sem locking joins; remove/adiciona etiquetas e hidrata o retorno na mesma transação. O evento ocorre
+  após commit. Colunas/destino usam `TagScope` (RF-019); a remoção explícita do legado permanece possível. Associações
+  do DTO também são limitadas à empresa. Ver [correções de integração](specs/correcoes-integracao-pr29.md).
 - Horário de acesso: `AuthUserService` (login) e `RefreshTokenService` (renovação) recusam com
   `ERR_OUT_OF_ACCESS_HOURS` quando `canAccessNow` é falso; sessões de impersonação não são checadas.
 - Recorrência: `queues.ts` (`handleSendScheduledMessage`) chama `CreateNextOccurrenceService` no `finally`, após o envio
@@ -83,7 +88,15 @@ balões) e as mudanças nos componentes do Material-UI (raios, botões, abas, ca
 tema com `createKomunickTheme`, que mescla esses valores sobre o tema do upstream sem mudar as chaves que os
 componentes do Ticketz usam. Cores que o upstream escreve direto nos componentes foram trocadas pelos tokens só onde
 apareciam (chat em `MessagesList`, barra do topo em `layout/index.js`, itens da lista e abas). Logo e ícones padrão
-estão em `public/vector/` e nos PNGs de `public/`; o Whitelabel da empresa continua por cima deles. A Direção B do
+estão em `public/vector/` e nos PNGs de `public/`; o Whitelabel da empresa continua por cima deles.
+A marca padrão é SuperChat: `BrandLogo` escolhe o lockup `superChat` com endosso oficial Komunick ou o símbolo compacto.
+A sidebar preta usa a variante clara do logo nos dois temas; imagens personalizadas continuam respeitadas.
+Os SVGs contêm contornos, sem fonte ou rede externa para renderizar a marca. A geometria original da Komunick é
+preservada separadamente em `vector/komunick.svg` e no endosso. `productBrand` normaliza somente nomes de produto
+legados na apresentação; a leitura pública não reescreve configurações, mensagens ou históricos. Títulos iniciais,
+PWA e nomes de downloads usam SuperChat, incluindo falhas de leitura da configuração. O issuer padrão de novos
+cadastros 2FA muda só o rótulo; inscrições existentes e segredos permanecem válidos. Veja
+[identidade SuperChat](specs/superchat-identidade.md). A Direção B do
 Stitch entra como tokens: `sidebar*` (menu preto, igual nos dois temas), `accent`, `selectedRow`, `tagBackground` e
 `bubbleMineBorder`, usados em `layout/index.js`, `layout/MainListItems.js` e `TicketListItemCustom`.
 
@@ -318,8 +331,11 @@ montadas no próprio servidor a partir do código (`docker-compose-komunick.yaml
 (`POSTGRES_PASSWORD`/`DB_PASS`), backend sem o socket do Docker (a autoatualização pela tela trocaria o fork pelas
 imagens do Ticketz), `SOCKET_ADMIN=false`, senha do primeiro administrador por `ADMIN_PASSWORD` e segredos do JWT por
 `crypto.randomBytes`, sem registro em log. Backup diário por `deploy/backup.sh` (banco e arquivos, 14 cópias).
-Observação: `docker compose logs` no servidor; não há monitoramento externo. O workflow do upstream
-(`.github/workflows/build-docker.yml`) publica em `ghcr.io/ticketz-oss` e não é usado.
+Observação: `docker compose logs` no servidor; não há monitoramento externo. O workflow do fork
+(`.github/workflows/build-docker.yml`) valida tipos, testes e build sem iniciar a aplicação. Publicação de imagens
+exige `workflow_dispatch` com `publish_images=true`, desligado por padrão, no próprio repositório e em `dev`/`main`,
+após os dois jobs de validação. Os destinos são `ghcr.io/komunick/zap-komunick-backend` e `...-frontend`, com tags
+do SHA de origem; uma futura implantação deve selecionar o digest resultante. O workflow não faz deploy.
 
 **Histórico do cliente e nota de transferência (RF-017):** `ListMessagesService` busca as mensagens de todos os
 `Tickets` do mesmo `contactId` na empresa (cursor `nextId` e respostas no mesmo conjunto); com `messageVisibility` =
@@ -389,7 +405,7 @@ recuar a aplicação.
 - `TRUST_PROXY` vem desligado por padrão. Antes de ativar IPs permitidos atrás de um proxy, configurar explicitamente
   os proxies conhecidos (por exemplo `loopback` quando o proxy está no mesmo host, ou os CIDRs da rede do proxy),
   garantindo que acesso direto e cabeçalhos `X-Forwarded-For` não possam forjar o IP. A tela mostra o IP usado pelo
-  servidor para essa conferência. `TWO_FACTOR_ISSUER` personaliza o nome do autenticador (padrão `Zap Komunick`).
+  servidor para essa conferência. `TWO_FACTOR_ISSUER` personaliza o nome do autenticador (padrão `SuperChat`).
 - `RecordAuditService` registra as famílias `auth.`, `security.`, `user.` e `setting.` com empresa, usuário, entidade,
   data, IP e user-agent limitado a 512 caracteres. Falha de gravação é registrada no log sem interromper a ação.
   `GET /audit-logs` é administrativo e filtra a empresa autenticada, período (`from`, `to`), usuário e ação/família;
@@ -421,6 +437,10 @@ anterior sem 2FA/allowlist deixa de aplicar essas proteções e requer decisão 
   não habilita integração. As rotas `/credentials` são administrativas e usam a empresa da sessão. GET devolve somente
   estado; PUT substitui o valor; DELETE remove; POST `/credentials/migrate` move o legado e recifra na rotação. A chave
   mestra não tem rota de consulta nem é recebida no body dessas operações.
+- `withCredentialAdmin` revalida o ator e o perfil atuais na empresa da sessão antes de qualquer operação do cofre.
+  Bloqueia Company antes de User e mantém os locks até o commit; escrita e status usam a mesma transação, sem
+  transações aninhadas. Ator removido, transferido ou rebaixado é recusado mesmo com Bearer antigo válido. Chamadas
+  internas de resolução/transcrição mantêm o contrato backend-only; não há redesenho de JWT global.
 - A migração de esquema cria a tabela sem ler/mover valores herdados. A migração de dados é explícita e transacional,
   restrita à empresa autenticada. Sem chave mestra válida, recusar gravação/migração; não descartar dados por falha de
   decifragem ou conflito. Após migração bem-sucedida, a cópia legível em `Settings` é removida. A transcrição pode usar

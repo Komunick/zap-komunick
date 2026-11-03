@@ -19,6 +19,7 @@ import {
 } from "./theme/komunick";
 
 import Routes from "./routes";
+import { PRODUCT_NAME, resolveProductName } from "./helpers/productBrand";
 
 const queryClient = new QueryClient();
 const defaultLogoLight = "/vector/logo.svg";
@@ -26,8 +27,7 @@ const defaultLogoDark = "/vector/logo-dark.svg";
 const defaultLogoFavicon = "/vector/favicon.svg";
 
 const systemColorScheme = () =>
-  window.matchMedia &&
-  window.matchMedia("(prefers-color-scheme: dark)").matches
+  window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
     ? "dark"
     : "light";
 
@@ -76,10 +76,10 @@ const App = () => {
   const mode = themeMode === "system" ? systemMode : themeMode;
   const [primaryColorLight, setPrimaryColorLight] = useState("#888");
   const [primaryColorDark, setPrimaryColorDark] = useState("#888");
-  const [appLogoLight, setAppLogoLight] = useState("");
-  const [appLogoDark, setAppLogoDark] = useState("");
+  const [appLogoLight, setAppLogoLight] = useState(defaultLogoLight);
+  const [appLogoDark, setAppLogoDark] = useState(defaultLogoDark);
   const [appLogoFavicon, setAppLogoFavicon] = useState("");
-  const [appName, setAppName] = useState("");
+  const [appName, setAppName] = useState(PRODUCT_NAME);
   const { getPublicSetting } = useSettings();
 
   const colorMode = useMemo(
@@ -109,7 +109,7 @@ const App = () => {
         setAppLogoFavicon(file);
       },
       setAppName: name => {
-        setAppName(name);
+        setAppName(resolveProductName(name));
       }
     }),
     []
@@ -232,6 +232,10 @@ const App = () => {
   );
 
   useEffect(() => {
+    document.title = appName;
+  }, [appName]);
+
+  useEffect(() => {
     const i18nlocale = localStorage.getItem("language");
     if (!i18nlocale) {
       return;
@@ -312,11 +316,11 @@ const App = () => {
       });
     getPublicSetting("appName")
       .then(name => {
-        setAppName(name || "Zap Komunick");
+        setAppName(resolveProductName(name));
       })
       .catch(error => {
         console.log("Error reading setting", error);
-        setAppName("whitelabel chat");
+        setAppName(PRODUCT_NAME);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

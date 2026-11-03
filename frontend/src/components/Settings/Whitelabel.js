@@ -59,6 +59,7 @@ import api from "../../services/api";
 import { getBackendURL } from "../../services/config";
 import { i18nToast } from "../../helpers/i18nToast";
 import { i18n } from "../../translate/i18n.js";
+import { resolveProductName } from "../../helpers/productBrand";
 
 const defaultLogoLight = "/vector/logo.svg";
 const defaultLogoDark = "/vector/logo-dark.svg";
@@ -280,7 +281,7 @@ export default function Whitelabel(props) {
       setting => setting.key === LOGIN_BACKGROUND_CONTENT_KEY
     )?.value;
 
-    setAppName(loadedAppName || "");
+    setAppName(resolveProductName(loadedAppName));
     setLoginLinks(parseLinksSetting(loadedLoginLinks));
     setSettingsLoaded({
       primaryColorLight,
@@ -288,7 +289,7 @@ export default function Whitelabel(props) {
       appLogoLight,
       appLogoDark,
       appLogoFavicon,
-      appName: loadedAppName,
+      appName: resolveProductName(loadedAppName),
       loginPageLinks: loadedLoginLinks,
       loginSidePanelImage,
       loginBackgroundContent
@@ -539,7 +540,7 @@ export default function Whitelabel(props) {
                     }}
                     onBlur={async () => {
                       await handleSaveSetting("appName", appName);
-                      colorMode.setAppName(appName || "ticketz");
+                      colorMode.setAppName(resolveProductName(appName));
                     }}
                   />
                 </FormControl>

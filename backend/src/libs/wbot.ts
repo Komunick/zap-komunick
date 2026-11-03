@@ -30,6 +30,7 @@ import Contact from "../models/Contact";
 import Ticket from "../models/Ticket";
 import { GitInfo } from "../gitinfo";
 import GetPublicSettingService from "../services/SettingServices/GetPublicSettingService";
+import { resolveProductName } from "../helpers/ProductBrand";
 import waVersion from "../waversion.json";
 import { decideReconnect } from "../helpers/ReconnectPolicy";
 import Message from "../models/Message";
@@ -344,8 +345,9 @@ export const initWASocket = async (
           }
         };
 
-        const appName =
-          (await GetPublicSettingService({ key: "appName" })) || "Ticketz";
+        const appName = resolveProductName(
+          await GetPublicSettingService({ key: "appName" })
+        );
         const hostName = process.env.BACKEND_URL?.split("/")[2];
         const appVersion = GitInfo.tagName || GitInfo.commitHash;
         const clientName = `${appName} ${appVersion}${

@@ -1,6 +1,6 @@
-# AGENTS.md — Zap Komunick
+# AGENTS.md — SuperChat
 
-Zap Komunick é o atendimento por WhatsApp da Komunick: um fork do Ticketz (AGPL-3.0) com recursos inspirados no
+SuperChat é o atendimento por WhatsApp da Komunick: um fork do Ticketz (AGPL-3.0) com recursos inspirados no
 ZapContábil (painel de SLA, carteira de clientes, Kanban, horário de acesso por usuário, agendamento recorrente,
 pausar atendimento, motivo de finalização e agendamento para vários contatos com anexo e dia útil) e com o visual da
 Komunick.
@@ -9,7 +9,9 @@ Komunick; a segunda, a partir de "Ticketz (upstream)", é a orientação técnic
 
 ## Comandos do projeto
 
-Execute na raiz do repositório. Neste notebook não há Node instalado no PATH: tudo roda em contêiner.
+Execute na raiz do repositório. O ambiente padrão usa contêineres. Também há validação Node isolada e CI, que não
+exigem iniciar a aplicação. Não ligar um Docker desligado para testar sem garantir que instâncias antigas com
+sessão WhatsApp salva permanecerão paradas; use uma cópia sanitizada com dados fictícios ou os jobs de CI.
 
 - Preparar o ambiente: `docker compose -f docker-compose-dev-app.yaml up -d` (Postgres, Redis, backend e frontend
   com o código montado; frontend em http://localhost:5420, backend em http://localhost:5421, login
@@ -59,6 +61,10 @@ confirmadas de inspiração e observações do sistema atual; estas não viram r
   código novo fica em arquivos próprios (`helpers/*Rules.ts`, `services/SlaServices`, `services/KanbanServices`,
   `pages/Sla`, `pages/Kanban`, `pages/CloseReasons`, `components/ScheduleExtras`, `translate/languages/komunick.js`)
   e as mudanças em arquivos do upstream são pequenas; os trechos maiores levam um comentário "Zap Komunick".
+- **Marca do produto:** SuperChat; logo tipográfica `superChat`, com endosso `Powered by Komunick` e geometria
+  oficial preservada. Reutilize `components/BrandLogo`; a sidebar preta precisa da variante clara nos dois temas.
+  Preserve uploads Whitelabel, URLs AGPL, identificadores técnicos e históricos. Não renomeie banco/Compose/repositório
+  como parte de uma troca visual. Ver `docs/specs/superchat-identidade.md` e `public/vector/README.md`.
 - **Cores e visual** vêm dos tokens de `frontend/src/theme/komunick.js` (`theme.komunick.*`); não escreva cor fixa por
   tema (`theme.mode === "light" ? ... : ...`) em código novo.
 - **Textos novos da interface** vão em `frontend/src/translate/languages/komunick.js` (pt, pt_PT, en, es), mesclado
@@ -158,9 +164,19 @@ Compact guidance for OpenCode sessions working in this repo.
 ## CI / Docker images
 
 - Workflow: `.github/workflows/build-docker.yml`.
-- Builds multi-arch (`linux/amd64`, `linux/arm64`) images on push to `main`, `fix/**`, `dev`, `test-**`, and tags `v*.*.*`.
-- Publishes to `ghcr.io/ticketz-oss/ticketz-backend` and `ghcr.io/ticketz-oss/ticketz-frontend`.
-- CI generates `backend/src/gitinfo.ts` and `frontend/public/gitinfo.json` from git metadata at build time.
+- Pull requests and matching pushes run Node tests/types/build only; they do not publish images or start the app.
+- Backend uses locked dependencies with lifecycle scripts disabled, translation-key generation, TypeScript and
+  direct Jest. Never replace direct Jest with `npm test`: its pretest/posttest migrate, seed and undo a database.
+- Frontend validation pins npm 10.9.4, matching the isolated native validation, and omits optional Node add-ons
+  (PDF canvas uses the browser API). Keep the locked peer dependencies available and verify a clean install in CI.
+  Jest stays in CI mode. Only the CRA build keeps the existing non-fatal warning policy. Syntax/compilation failures
+  still fail the job.
+- Publication is a separate job after both checks: only explicit `workflow_dispatch` with `publish_images=true`,
+  default false, repository `Komunick/zap-komunick` and ref `dev`/`main`. Do not dispatch it during ordinary reviews.
+- Names derive from the repository in lowercase: `ghcr.io/komunick/zap-komunick-backend` and `...-frontend`.
+  Multi-arch images use source-SHA tags; deployment must select the resulting digest. Base images from upstream are
+  unchanged. The publication job generates Git metadata but never deploys, runs containers or starts WhatsApp.
+- `.github/scripts/image-policy.test.cjs` verifies event/ref/namespace and permissions using Node's test runner.
 
 ## Cross-stack conventions
 

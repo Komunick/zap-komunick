@@ -7,12 +7,15 @@ import Tag from "../../models/Tag";
 import Whatsapp from "../../models/Whatsapp";
 import UserSocketSession from "../../models/UserSocketSession";
 import Company from "../../models/Company";
+import { Transaction } from "sequelize";
 
 const ShowTicketService = async (
   id: string | number,
-  companyId?: number
+  companyId?: number,
+  transaction?: Transaction
 ): Promise<Ticket> => {
   const ticket = await Ticket.findOne({
+    ...(transaction ? { transaction } : {}),
     where: {
       id,
       ...(companyId === undefined ? {} : { companyId })
