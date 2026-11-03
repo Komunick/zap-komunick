@@ -6,6 +6,13 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Adicionado
 
+- Armazenamento cifrado por empresa para credenciais de IA e dos futuros conectores Acessórias/SCI, com estado público,
+  substituição, remoção e migração administrativa. Exige chave mestra configurada exclusivamente no backend.
+- Segurança da conta com verificação em duas etapas por autenticador, QR/chave de configuração, códigos de recuperação
+  de uso único e gerenciamento pelo usuário. Login pede o segundo fator antes de abrir a sessão quando 2FA está ativo.
+- IPs permitidos por empresa, com IPv4/IPv6 e redes CIDR, validação da lista e proteção contra bloquear o próprio acesso.
+- Auditoria administrativa com filtros de período, usuário e ação, paginação e detalhes de eventos de acesso, segurança,
+  usuários e configurações. Usuários mostra o estado de 2FA e permite reset administrativo de outra conta.
 - Etiquetas por setor: escolha de um ou mais setores no cadastro, coluna "Setores" e etiquetas gerais quando nenhum
   setor é escolhido. Na conversa e no botão "Etiquetar" da linha, o seletor oferece etiquetas do setor e gerais.
 - Ação "Etiquetar" em lote nos atendimentos, adicionando as etiquetas compatíveis com cada setor sem apagar as
@@ -36,6 +43,8 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Alterado
 
+- A chave de IA não é mais preenchida na tela nem salva ao desfocar. Configurações mostra somente seu estado e exige
+  ação explícita para salvar, proteger uma configuração antiga ou confirmar remoção.
 - O filtro "Carteira" em Contatos reúne "Todos", "Minha carteira" e, para administradores, "Sem responsável".
 - "Tarefas" fica oculto no menu lateral, nas abas e na paleta Ctrl K; a página continua acessível em `/todolist`.
 - A tela "Sobre" aponta o código-fonte para github.com/Komunick/zap-komunick (AGPL) e credita o Ticketz.
@@ -96,6 +105,16 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- Credenciais de IA removidas das respostas de autenticação/configuração; segredos conhecidos deixam de acompanhar
+  o payload geral da empresa. Configurações herdadas exigem migração explícita para proteção em repouso.
+- Notas, leitura de atendimento e histórico validam empresa, cliente e setor, incluindo atendentes sem setor, IDs/UUIDs
+  externos e referências a mensagens; editar uma nota não permite trocar seu vínculo/autor pela requisição.
+- Eventos em tempo real deixam de entregar contexto por atribuição ou assinatura antiga sem setor permitido; acesso
+  é revisto após transferências e mudanças de permissões. Erros de credenciais/JSON e consultas lentas não registram
+  valores secretos ou SQL bruto.
+
+- Credenciais e segredos não são incluídos no trace de requisições nem nos detalhes da auditoria. Desafios de 2FA,
+  códigos do autenticador e de recuperação recusam reutilização e respeitam limite de tentativas.
 - A paginação de Contatos conta cada contato uma vez, mesmo quando ele tem várias etiquetas.
 - A sincronização de etiquetas confere a empresa do atendimento, do contato e das etiquetas antes de associá-los,
   e o servidor impede novas associações incompatíveis com o setor da conversa.
@@ -125,6 +144,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Operação
 
+- As migrações `20261027120000` e `20261027120100` acrescentam auditoria e campos de 2FA; contas existentes começam com
+  2FA desligado. `TRUST_PROXY` precisa indicar explicitamente os proxies conhecidos antes de usar a restrição de IP
+  atrás de proxy. Ativar/desativar 2FA preserva a sessão atual e invalida renovações antigas de outras sessões.
 - A migração `20261027130000` acrescenta `Tags.queueIds` sem alterar etiquetas ou associações existentes; etiquetas
   antigas continuam disponíveis em todos os setores até que seu cadastro seja alterado.
 - Clientes da agenda do WhatsApp entram em Contatos automaticamente (sem trocar nomes já cadastrados; configuração

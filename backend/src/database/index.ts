@@ -42,6 +42,8 @@ import OutOfTicketMessage from "../models/OutOfTicketMessages";
 import Translation from "../models/Translation";
 import Wavoip from "../models/Wavoip";
 import CloseReason from "../models/CloseReason";
+import AuditLog from "../models/AuditLog";
+import CompanyCredential from "../models/CompanyCredential";
 
 const dbConfig = require("../config/database");
 
@@ -96,7 +98,9 @@ const models = [
   Subscriptions,
   Translation,
   Wavoip,
-  CloseReason
+  CloseReason,
+  AuditLog,
+  CompanyCredential
 ];
 
 sequelize.addModels(models);

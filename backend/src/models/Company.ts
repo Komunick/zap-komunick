@@ -26,6 +26,7 @@ import User from "./User";
 import UserRating from "./UserRating";
 import Whatsapp from "./Whatsapp";
 import { OpenHoursData } from "../helpers/checkOpenHours";
+import { publicCompanyData } from "../helpers/CredentialRules";
 
 @Table
 class Company extends Model<Company> {
@@ -144,6 +145,10 @@ class Company extends Model<Company> {
     hooks: true
   })
   ticketTrankins: TicketTraking[];
+
+  toJSON(): object {
+    return publicCompanyData(super.toJSON());
+  }
 }
 
 export default Company;

@@ -5,12 +5,14 @@ import Ticket from "../../models/Ticket";
 import ShowTicketService from "../TicketServices/ShowTicketService";
 import Queue from "../../models/Queue";
 import { GetCompanySetting } from "../../helpers/CheckSettings";
+import AuthorizeTicketContextService from "../TicketServices/AuthorizeTicketContextService";
+import Contact from "../../models/Contact";
 
 interface Request {
   ticketId: string;
   companyId: number;
   nextId?: string;
-  queues?: number[];
+  userId: string | number;
   minUpdatedAt?: string;
 }
 
@@ -26,9 +28,14 @@ const ListMessagesService = async ({
   nextId,
   ticketId,
   companyId,
-  queues = [],
+  userId,
   minUpdatedAt
 }: Request): Promise<Response> => {
+  const { viewer } = await AuthorizeTicketContextService(ticketId, {
+    userId,
+    companyId
+  });
+  const queues = viewer.queueIds;
   const ticket = await ShowTicketService(ticketId, companyId);
 
   if (!ticket) {
@@ -62,7 +69,7 @@ const ListMessagesService = async ({
   ];
 
   if (
-    queues.length > 0 &&
+    !viewer.isAdmin &&
     (await GetCompanySetting(companyId, "messageVisibility", "message")) ===
       "message"
   ) {
@@ -86,6 +93,9 @@ const ListMessagesService = async ({
   const options: FindOptions = {
     where: { [Op.and]: conditions }
   };
+  // The same client/office/sector fence applies to cursors and associations.
+  // Keep this copy free of pagination predicates for quoted messages/replies.
+  const contextConditions = [...conditions];
 
   if (minUpdatedAt) {
     const parsedMinUpdatedAt = new Date(minUpdatedAt);
@@ -98,9 +108,7 @@ const ListMessagesService = async ({
   } else if (nextId) {
     const cursorMessage = await Message.findOne({
       where: {
-        id: nextId,
-        ticketId: { [Op.in]: ticketIds },
-        companyId
+        [Op.and]: [...contextConditions, { id: nextId }]
       },
       attributes: ["id", "createdAt"]
     });
@@ -116,23 +124,33 @@ const ListMessagesService = async ({
     ...options,
     limit: limit + 1,
     include: [
-      "contact",
+      { model: Contact, as: "contact", where: { companyId }, required: false },
       {
         model: Message,
         as: "quotedMsg",
-        include: ["contact"],
-        where: {
-          companyId: ticket.companyId
-        },
+        include: [
+          {
+            model: Contact,
+            as: "contact",
+            where: { companyId },
+            required: false
+          }
+        ],
+        where: { [Op.and]: contextConditions },
         required: false
       },
       {
         model: Message,
         as: "replies",
-        where: {
-          ticketId: { [Op.in]: ticketIds }
-        },
-        include: ["contact"],
+        where: { [Op.and]: contextConditions },
+        include: [
+          {
+            model: Contact,
+            as: "contact",
+            where: { companyId },
+            required: false
+          }
+        ],
         required: false
       },
       {

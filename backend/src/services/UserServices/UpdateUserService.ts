@@ -5,6 +5,8 @@ import ShowUserService from "./ShowUserService";
 import Company from "../../models/Company";
 import User from "../../models/User";
 import { AccessHours, normalizeAccessHours } from "../../helpers/AccessHours";
+import { getIO } from "../../libs/socket";
+import { refreshUserContextSockets } from "../SocketServices/TicketContextSocketService";
 
 interface UserData {
   email?: string;
@@ -89,6 +91,7 @@ const UpdateUserService = async ({
   }
 
   await user.reload();
+  await refreshUserContextSockets(getIO(), user.id);
 
   const company = await Company.findByPk(user.companyId);
 
@@ -99,7 +102,8 @@ const UpdateUserService = async ({
     profile: user.profile,
     companyId: user.companyId,
     company,
-    queues: user.queues
+    queues: user.queues,
+    twoFactorEnabled: user.twoFactorEnabled
   };
 
   return serializedUser;

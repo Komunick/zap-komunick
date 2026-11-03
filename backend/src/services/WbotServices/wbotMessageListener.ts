@@ -64,6 +64,7 @@ import { getPublicPath } from "../../helpers/GetPublicPath";
 import { Session } from "../../libs/wbot";
 import { checkCompanyCompliant } from "../../helpers/CheckCompanyCompliant";
 import { transcriber } from "../../helpers/transcriber";
+import { resolveCredential } from "../CredentialServices/CredentialService";
 import { parseToMilliseconds } from "../../helpers/parseToMilliseconds";
 import { randomValue } from "../../helpers/randomValue";
 import { getJidOf } from "./getJidOf";
@@ -74,6 +75,7 @@ import saveMediaToFile from "../../helpers/saveMediaFile";
 import { _t } from "../TranslationServices/i18nService";
 import WhatsappLidMap from "../../models/WhatsappLidMap";
 import normalizePhone from "../../helpers/NormalizePhone";
+import { emitTicketContext } from "../SocketServices/TicketContextSocketService";
 
 export interface ImessageUpsert {
   messages: proto.IWebMessageInfo[];
@@ -249,7 +251,9 @@ export const getBodyMessage = async (msg: proto.IMessage): Promise<string> => {
     }
 
     // eslint-disable-next-line no-restricted-syntax
-    for (const mention of (msg[type] as any)?.contextInfo?.mentionedJid ?? []) {
+    for (const mention of (
+      msg[type] as { contextInfo?: { mentionedJid?: string[] } }
+    )?.contextInfo?.mentionedJid ?? []) {
       body = await processMention(body, mention);
     }
 
@@ -515,7 +519,7 @@ const downloadMedia = async (
       }
 
       stream = await downloadContentFromMessage(tmpMessage, messageType);
-    } catch (error) {
+    } catch {
       contDownload += 1;
 
       await new Promise(resolve => {
@@ -729,15 +733,14 @@ export const verifyMediaMessage = async (
       "disabled"
     )) === "enabled"
   ) {
-    const apiKey = await GetCompanySetting(ticket.companyId, "openAiKey", null);
-    const provider = await GetCompanySetting(
-      ticket.companyId,
-      "aiProvider",
-      "openai"
-    );
-
-    if (apiKey) {
-      try {
+    try {
+      const apiKey = await resolveCredential(ticket.companyId, "openAiKey");
+      const provider = await GetCompanySetting(
+        ticket.companyId,
+        "aiProvider",
+        "openai"
+      );
+      if (apiKey) {
         const audioTranscription = await transcriber(
           mediaUrl.startsWith("http")
             ? mediaUrl
@@ -748,12 +751,13 @@ export const verifyMediaMessage = async (
         if (audioTranscription) {
           body = audioTranscription;
         }
-      } catch (error) {
-        logger.error(
-          { message: error?.message },
-          "Error transcribing audio message"
-        );
       }
+    } catch {
+      // A missing master key must not prevent storing the received audio.
+      logger.error(
+        { companyId: ticket.companyId },
+        "Audio transcription unavailable"
+      );
     }
   }
 
@@ -795,22 +799,33 @@ export const verifyMediaMessage = async (
       ]
     });
 
-    io.to(`company-${ticket.companyId}-closed`)
-      .to(`queue-${ticket.queueId}-closed`)
-      .emit(`company-${ticket.companyId}-ticket`, {
+    await emitTicketContext(
+      io,
+      ticket.id,
+      `company-${ticket.companyId}-ticket`,
+      {
         action: "delete",
         ticket,
         ticketId: ticket.id
-      });
+      },
+      [`company-${ticket.companyId}-closed`, `queue-${ticket.queueId}-closed`]
+    );
 
-    io.to(`company-${ticket.companyId}-${ticket.status}`)
-      .to(`queue-${ticket.queueId}-${ticket.status}`)
-      .to(ticket.id.toString())
-      .emit(`company-${ticket.companyId}-ticket`, {
+    await emitTicketContext(
+      io,
+      ticket.id,
+      `company-${ticket.companyId}-ticket`,
+      {
         action: "update",
         ticket,
         ticketId: ticket.id
-      });
+      },
+      [
+        `company-${ticket.companyId}-${ticket.status}`,
+        `queue-${ticket.queueId}-${ticket.status}`,
+        ticket.id.toString()
+      ]
+    );
   }
 
   return newMessage;
@@ -863,22 +878,33 @@ export const verifyMessage = async (
       ]
     });
 
-    io.to(`company-${ticket.companyId}-closed`)
-      .to(`queue-${ticket.queueId}-closed`)
-      .emit(`company-${ticket.companyId}-ticket`, {
+    await emitTicketContext(
+      io,
+      ticket.id,
+      `company-${ticket.companyId}-ticket`,
+      {
         action: "delete",
         ticket,
         ticketId: ticket.id
-      });
+      },
+      [`company-${ticket.companyId}-closed`, `queue-${ticket.queueId}-closed`]
+    );
 
-    io.to(`company-${ticket.companyId}-${ticket.status}`)
-      .to(`queue-${ticket.queueId}-${ticket.status}`)
-      .to(ticket.id.toString())
-      .emit(`company-${ticket.companyId}-ticket`, {
+    await emitTicketContext(
+      io,
+      ticket.id,
+      `company-${ticket.companyId}-ticket`,
+      {
         action: "update",
         ticket,
         ticketId: ticket.id
-      });
+      },
+      [
+        `company-${ticket.companyId}-${ticket.status}`,
+        `queue-${ticket.queueId}-${ticket.status}`,
+        ticket.id.toString()
+      ]
+    );
   }
 
   return newMessage;
@@ -932,13 +958,17 @@ export const verifyEditedMessage = async (
 
   const io = getIO();
 
-  io.to(ticket.status)
-    .to(ticket.id.toString())
-    .emit(`company-${ticket.companyId}-ticket`, {
+  await emitTicketContext(
+    io,
+    ticket.id,
+    `company-${ticket.companyId}-ticket`,
+    {
       action: "update",
       ticket,
       ticketId: ticket.id
-    });
+    },
+    [`company-${ticket.companyId}-${ticket.status}`, ticket.id.toString()]
+  );
 };
 
 const markEditedMessageWithError = async (ticket: Ticket, msgId: string) => {
@@ -984,13 +1014,17 @@ const markEditedMessageWithError = async (ticket: Ticket, msgId: string) => {
 
   const io = getIO();
 
-  io.to(ticket.status)
-    .to(ticket.id.toString())
-    .emit(`company-${ticket.companyId}-ticket`, {
+  await emitTicketContext(
+    io,
+    ticket.id,
+    `company-${ticket.companyId}-ticket`,
+    {
       action: "update",
       ticket,
       ticketId: ticket.id
-    });
+    },
+    [`company-${ticket.companyId}-${ticket.status}`, ticket.id.toString()]
+  );
 };
 
 export const verifyDeleteMessage = async (
@@ -1020,15 +1054,22 @@ export const verifyDeleteMessage = async (
   });
 
   const io = getIO();
-  io.to(message.ticketId.toString())
-    .to(message.ticket.status)
-    .to("notification")
-    .emit(`company-${ticket.companyId}-appMessage`, {
+  await emitTicketContext(
+    io,
+    message.ticketId,
+    `company-${ticket.companyId}-appMessage`,
+    {
       action: "create",
       message,
       ticket: message.ticket,
       contact: message.ticket.contact
-    });
+    },
+    [
+      message.ticketId.toString(),
+      `company-${ticket.companyId}-${message.ticket.status}`,
+      `company-${ticket.companyId}-notification`
+    ]
+  );
 };
 
 const quickMessage = async (
@@ -2130,12 +2171,15 @@ const handleMsgAck = async (
     }
 
     await messageToUpdate.update({ ack: error ? -1 : update.status, error });
-    io.to(messageToUpdate.ticketId.toString()).emit(
+    await emitTicketContext(
+      io,
+      messageToUpdate.ticketId,
       `company-${messageToUpdate.companyId}-appMessage`,
       {
         action: "update",
         message: messageToUpdate
-      }
+      },
+      [messageToUpdate.ticketId.toString()]
     );
   } catch (err) {
     Sentry.captureException(err);
@@ -2294,18 +2338,21 @@ const wbotMessageListener = async (
       });
     });
 
-    wbot.ev.on("message-receipt.update", async (messageReceipt: any) => {
-      logger.trace(
-        { messageReceipt },
-        "wbotMessageListener: message-receipt.update"
-      );
-      if (messageReceipt.length === 0) return;
-      messageReceipt.forEach(async (receipt: any) => {
-        await ackMutex.runExclusive(async () => {
-          handleMsgAck(receipt.key.id, wbot.id, { status: 2 });
+    wbot.ev.on(
+      "message-receipt.update",
+      async (messageReceipt: { key: WAMessageKey }[]) => {
+        logger.trace(
+          { messageReceipt },
+          "wbotMessageListener: message-receipt.update"
+        );
+        if (messageReceipt.length === 0) return;
+        messageReceipt.forEach(async receipt => {
+          await ackMutex.runExclusive(async () => {
+            handleMsgAck(receipt.key.id, wbot.id, { status: 2 });
+          });
         });
-      });
-    });
+      }
+    );
 
     wbot.ev.on("messages.update", (messageUpdate: WAMessageUpdate[]) => {
       logger.trace({ messageUpdate }, "wbotMessageListener: messages.update");

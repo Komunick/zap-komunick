@@ -10,7 +10,7 @@ import { SlowEventCounter } from "./slowEventCounter";
 interface PoolClient {
   processID?: number;
   __acquireRequestedAt?: number;
-  __lastQuery?: string;
+  __lastQuerySummary?: string;
   __lastQueryStartedAt?: number;
   __lastQueryFinishedAt?: number;
   __queryCount?: number;
@@ -67,17 +67,15 @@ const heldWarningThresholdMs = Math.max(
 );
 
 /**
- * Extract a concise SQL signature for logging: table name + operation.
+ * Zap Komunick P0: retain only a known operation, never SQL text or literals.
+ * Parsing table names from arbitrary SQL can mistake a secret literal for one.
  */
 const summarizeQuery = (sql: string | undefined): string => {
   if (!sql) return "unknown";
   const trimmed = sql.trim().toUpperCase();
   const op =
     trimmed.match(/^(SELECT|INSERT|UPDATE|DELETE|WITH)/)?.[0] || "OTHER";
-  const table =
-    trimmed.match(/(?:FROM|INTO|UPDATE|JOIN)\s+"?([A-Z_][A-Z0-9_]*)/)?.[1] ||
-    "unknown";
-  return `${op} ${table}`;
+  return op;
 };
 
 /**
@@ -138,7 +136,7 @@ export const initPoolMonitor = (sequelize: Sequelize): void => {
   const ORIGINAL_ACQUIRE_KEY = "__poolMonitor_originalAcquire";
   const ORIGINAL_RELEASE_KEY = "__poolMonitor_originalRelease";
 
-  // Wrap the underlying pg.Client.query to capture the SQL and execution
+  // Wrap the underlying pg.Client.query to capture the operation and execution
   // duration for every query run on this connection. This lets us distinguish
   // between slow Postgres queries and application-level delays that hold a
   // connection after the query finished.
@@ -163,10 +161,11 @@ export const initPoolMonitor = (sequelize: Sequelize): void => {
     ) {
       const startedAt = Date.now();
       client.__lastQueryStartedAt = startedAt;
-      client.__lastQuery =
+      client.__lastQuerySummary = summarizeQuery(
         typeof queryArgs[0] === "string"
           ? queryArgs[0]
-          : (queryArgs[0] as { text?: string })?.text;
+          : (queryArgs[0] as { text?: string })?.text
+      );
       client.__queryCount = (client.__queryCount || 0) + 1;
 
       const finalize = () => {
@@ -265,8 +264,7 @@ export const initPoolMonitor = (sequelize: Sequelize): void => {
             idleAfterQueryMs,
             pid: client?.processID,
             queryCount: client?.__queryCount,
-            lastQuery: client?.__lastQuery,
-            querySummary: summarizeQuery(client?.__lastQuery),
+            querySummary: client?.__lastQuerySummary,
             pool: {
               size: pool.size,
               available: pool.available,
