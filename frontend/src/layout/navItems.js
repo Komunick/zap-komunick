@@ -11,7 +11,12 @@ export const buildNavItems = isAdmin => {
     { id: "kanban", to: "/kanban", label: t("kanban") },
     { id: "contacts", to: "/contacts", label: t("contacts") },
     { id: "schedules", to: "/schedules", label: t("schedules") },
-    ...(isAdmin ? [{ id: "sla", to: "/sla", label: t("sla") }] : []),
+    ...(isAdmin
+      ? [
+          { id: "sla", to: "/sla", label: t("sla") },
+          { id: "onlineUsers", to: "/users-online", label: t("onlineUsers") }
+        ]
+      : []),
     { id: "quickMessages", to: "/quick-messages", label: t("quickMessages") },
     { id: "tags", to: "/tags", label: t("tags") },
     { id: "chats", to: "/chats", label: t("chats") }
@@ -24,7 +29,11 @@ export const buildNavItems = isAdmin => {
           { id: "connections", to: "/connections", label: t("connections") },
           { id: "queues", to: "/queues", label: t("queues") },
           { id: "users", to: "/users", label: t("users") },
-          { id: "announcements", to: "/announcements", label: t("annoucements") },
+          {
+            id: "announcements",
+            to: "/announcements",
+            label: t("annoucements")
+          },
           {
             id: "closeReasons",
             to: "/close-reasons",

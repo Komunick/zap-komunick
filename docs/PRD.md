@@ -28,7 +28,8 @@ os atendimentos em etapas e controla quando cada atendente pode entrar; lembrete
 **Escopo descrito:** código-fonte acessível (RF-001), painel de SLA (RF-002), carteira de clientes (RF-003), Kanban por
 etiquetas (RF-004), horário de acesso por usuário (RF-005), agendamento recorrente (RF-006), pausar atendimento e motivo
 de finalização (RF-007), agendamento para vários contatos com anexo e dia útil (RF-008) e a identidade visual da
-Komunick (RF-009) e o chat interno com conversas e contatos (RF-010), sobre o Ticketz como ele é hoje (filas, chatbot, etiquetas, agendamentos, perfis admin e usuário).
+Komunick (RF-009) o chat interno com conversas e contatos (RF-010) , as
+ações em lote nos atendimentos (RF-011), os filtros completos da lista (RF-012), os usuários online (RF-013) e a carteira em lote (RF-014), sobre o Ticketz como ele é hoje (filas, chatbot, etiquetas, agendamentos, perfis admin e usuário).
 A segunda entrega saiu da comparação com o ZapContábil feita em 21/10/2026 numa conta de cliente, só olhando, sem mudar
 nada nela.
 
@@ -321,6 +322,88 @@ então vê o logo da Komunick, o botão verde e o painel da marca, no tema claro
 Dado um atendente que nunca conversou com a colega Ana,
 quando ele abre o Chat interno e clica em "Ana" na parte de contatos,
 então a conversa a dois abre vazia, e depois da primeira mensagem ela aparece no topo das conversas dos dois.
+
+### RF-011 — Ações em lote nos atendimentos
+
+**Objetivo:** tratar vários atendimentos de uma vez (por exemplo, a fila acumulada depois de um feriado), com as mesmas
+regras de quando se trata um por um.
+
+- Botão "Selecionar" nas visões em atendimento, aguardando, pausados, grupos e busca (não em resolvidos). Na seleção,
+  cada linha ganha uma caixa de marcar e o clique marca em vez de abrir a conversa; "Marcar todos" pega o que a lista
+  mostra.
+- Ações: **Aceitar** (só os aguardando da seleção, para quem aceita), **Transferir** (fila obrigatória; com atendente vai
+  direto para ele, sem atendente volta à fila aguardando, como na transferência de um atendimento) e **Finalizar**
+  (motivo e observação valem para todos; o motivo é exigido quando há motivos cadastrados; o cliente não recebe a
+  pesquisa de avaliação).
+- Até 100 atendimentos por vez. Cada um passa pelas mesmas permissões e regras do atendimento individual; o que não
+  puder ser alterado (situação mudou, sem permissão, falta de motivo) é contado à parte e os demais seguem.
+- Trocar de visão ou concluir a ação sai da seleção.
+
+**Cenário de sucesso:**
+
+Dado 12 atendimentos aguardando na fila Fiscal depois de um feriado,
+quando o atendente seleciona todos e escolhe "Aceitar",
+então os 12 passam para "Em atendimento" com ele, e o aviso mostra "12 atendimento(s) atualizado(s)".
+
+### RF-012 — Filtros completos na lista de atendimentos
+
+**Objetivo:** achar rápido os atendimentos de um recorte (uma conexão, um atendente, um cliente da carteira, os que
+estouraram o prazo) sem sair da visão em que se está.
+
+- Botão "Filtros" na lista (em todas as visões, inclusive na busca), com o número de filtros ativos. O painel tem:
+  conexão, atendente (só administradores), etiquetas (o atendimento ou o contato precisa ter todas), período de
+  abertura (de/até), carteira (todas, minha carteira, sem responsável), só com mensagens não lidas e só com SLA
+  estourado (pelo prazo da empresa; desligado quando o prazo está desligado).
+- Os filtros somam com a visão, os chips de fila e a busca; nunca mostram o que o usuário não poderia ver.
+- "Aplicar" vale para todas as visões; "Limpar" tira tudo. A escolha fica guardada no navegador.
+- Atendimentos que chegam em tempo real passam pelos mesmos filtros; o que deixa de atender a eles sai da lista.
+
+**Cenário de sucesso:**
+
+Dado uma atendente com a carteira de clientes dela,
+quando ela filtra "Minha carteira" e "Só com mensagens não lidas",
+então a lista mostra só os clientes dela que mandaram mensagem e ainda não foram lidos, e continua assim ao recarregar.
+
+### RF-013 — Usuários online
+
+**Objetivo:** o gestor ver, num lugar só, quem da equipe está conectado e quanto cada um tem em mãos, para redistribuir
+atendimentos antes que a fila acumule.
+
+- Página "Usuários online" (menu Gerência, só administradores). No topo: online, em atendimento, online sem
+  atendimento, offline e, quando houver, fora do horário.
+- Um cartão por pessoa: situação (online, offline ou "fora do horário de acesso" quando a sessão continua aberta
+  depois do horário permitido), há quanto tempo está online ou quando foi vista por último ("nunca entrou" para quem
+  não entrou), atendimentos em andamento, pausados e finalizados hoje, e as filas dela.
+- Ordem: fora do horário primeiro, depois os online mais ocupados, depois os offline por quem saiu por último. Opção
+  de esconder os offline.
+- Atualiza sozinha quando alguém entra ou sai e quando atendimentos mudam, e a cada minuto para os tempos.
+- "Online" é ter o sistema aberto em algum navegador (sessão do socket); não mede se a pessoa está na frente da tela.
+
+**Cenário de sucesso:**
+
+Dado três atendentes com o sistema aberto e um deles com oito atendimentos,
+quando o gestor abre "Usuários online",
+então vê os três online, o mais ocupado no topo com "8 em atendimento", e quem está online sem atendimento no resumo.
+
+### RF-014 — Carteira em lote
+
+**Objetivo:** montar e reorganizar carteiras sem abrir contato por contato: distribuir os clientes entre a equipe e
+passar a carteira inteira de quem sai para quem fica.
+
+- Em Contatos (só administradores), uma caixa de marcar por contato e uma no cabeçalho para marcar a lista visível.
+  Com contatos marcados aparece a barra: escolher o responsável e "Definir responsável", ou "Tirar da carteira".
+- Botão "Transferir carteira": de um responsável (ou dos contatos sem responsável) para outro (ou para ninguém),
+  mostrando antes quantos contatos a carteira tem. Origem e destino iguais não são aceitos.
+- Grupos nunca entram em carteira: são ignorados e o aviso diz quantos foram. Até 500 contatos marcados por vez; a
+  transferência leva a carteira inteira.
+- O responsável precisa ser da mesma empresa. A lista recarrega depois da ação e os outros usuários recebem a mudança
+  em tempo real.
+
+**Cenário de sucesso:**
+
+Dado uma atendente que sai da empresa com 120 clientes na carteira,
+quando o gestor escolhe "Transferir carteira" dela para outro atendente,
+então os 120 passam para o novo responsável, e as próximas conversas desses clientes já entram na fila dele.
 
 ## 4. Restrições e cuidados
 

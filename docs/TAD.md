@@ -105,6 +105,28 @@ Stitch entra como tokens: `sidebar*` (menu preto, igual nos dois temas), `accent
   `POST /chats/direct` `{ userId }` acha ou cria a conversa entre o usuário logado e outro da mesma empresa
   (`FindOrCreateDirectService`; 400 para si mesmo ou sem `userId`, 404 para usuário de outra empresa); editar ou excluir
   uma conversa a dois responde 403 (`ERR_CHAT_DIRECT_READONLY`). A lista de conversas passa a vir por `updatedAt`.
+- `POST /tickets/bulk` `{ action: accept|transfer|close, ticketIds, queueId?, userId?, closeReasonId?, closeReasonNote? }`
+  (RF-011): `helpers/BulkTicketActions` valida e monta a alteração (até 100 ids, sem repetidos; aceitar só de
+  `pending`, transferir e finalizar de `open`/`pending`/`paused`); o controlador confere a empresa e a situação de cada
+  um e chama `UpdateTicketService` em sequência, sob o mesmo mutex do `PUT /tickets/:id`. Resposta `{ done, failed }`
+  com o erro de cada id que não passou; uma falha não interrompe os demais. Sem tabela nova.
+- `GET /tickets` ganha os filtros do painel (RF-012): `whatsappIds`, `userIds`, `filterTags` (listas JSON, até 50),
+  `createdFrom`/`createdTo` (`AAAA-MM-DD`, dia inteiro no fuso do backend), `unread`, `slaBreached`, `wallet`
+  (`mine`|`none`). `helpers/TicketFilters` valida (400 com `ERR_FILTER_*`) e monta as condições somadas com `AND` às da
+  lista; `userIds` só vale para administrador; as etiquetas entram no mesmo cálculo das etiquetas da busca; SLA
+  estourado = aberto ou aguardando, sem chatbot e `unansweredSince` mais antigo que o prazo. No frontend,
+  `components/TicketsFilters` repete a regra para os eventos do socket. Sem tabela nova.
+- `GET /users/online` (administrador; RF-013): `OnlineUsersService` lê as sessões que o socket já grava em
+  `UserSocketSessions` (online = alguma ativa; desde = a mais antiga ativa; visto por último = maior `updatedAt`),
+  conta atendimentos `open` e `paused` de cada usuário e os finalizados hoje em `TicketTraking.finishedAt`, com as
+  filas; `helpers/OnlineUsers` classifica (fora do horário pelo `canAccessNow`), ordena e resume. A página escuta
+  `userOnlineChange` e `counter` (com espera de 2 s) e atualiza a cada minuto. Sem tabela nova.
+- `PUT /contacts/wallet/bulk` (administrador; RF-014), declarada antes de `/contacts/:contactId/wallet`:
+  `{ mode: "contacts", contactIds, walletUserId }` (até 500) ou `{ mode: "transfer", fromUserId, walletUserId }`, com
+  `null` para "sem responsável". `helpers/WalletBulk` valida; `SetWalletBulkService` confere os responsáveis na
+  empresa, ignora grupos e faz um `UPDATE` só nos contatos da empresa; cada contato alterado sai no evento
+  `company-<id>-contact`. `GET /contacts?walletUserId=none` lista os contatos sem responsável (sem grupos). Resposta
+  `{ updated, skippedGroups }`. Sem tabela nova.
 
 **Integridade:**
 - `unansweredSince` só muda com mensagem nova: `CreateMessageService` confere se a mensagem já existia antes do

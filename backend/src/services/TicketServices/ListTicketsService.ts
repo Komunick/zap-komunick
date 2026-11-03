@@ -22,6 +22,10 @@ import TicketTag from "../../models/TicketTag";
 import Whatsapp from "../../models/Whatsapp";
 import { GetCompanySetting } from "../../helpers/CheckSettings";
 import ContactTag from "../../models/ContactTag";
+import {
+  buildTicketFilterWhere,
+  TicketFilters
+} from "../../helpers/TicketFilters";
 
 interface Request {
   isSearch?: boolean;
@@ -42,6 +46,7 @@ interface Request {
   tags: number[];
   users: number[];
   companyId: number;
+  filters?: TicketFilters;
 }
 
 interface Response {
@@ -67,7 +72,8 @@ const ListTicketsService = async ({
   withUnreadMessages,
   notClosed,
   all,
-  companyId
+  companyId,
+  filters
 }: Request): Promise<Response> => {
   let ticketId: number;
 
@@ -232,6 +238,11 @@ const ListTicketsService = async ({
     };
   }
 
+  // Zap Komunick: the panel's tags add to the tags of the search (RF-012)
+  if (filters?.tagIds?.length) {
+    tags = Array.from(new Set([...(tags || []), ...filters.tagIds]));
+  }
+
   if (Array.isArray(tags) && tags.length > 0) {
     const ticketsTagFilter: number[][] = [];
     const contactsTagFilter: number[][] = [];
@@ -302,6 +313,17 @@ const ListTicketsService = async ({
         [Op.in]: ticketsIntersection
       }
     };
+  }
+
+  if (filters) {
+    andedOrs.push(
+      ...buildTicketFilterWhere(filters, {
+        userId: Number(userId),
+        isAdmin: user.profile === "admin",
+        slaMinutes:
+          Number(await GetCompanySetting(companyId, "slaMinutes", "0")) || 0
+      })
+    );
   }
 
   const limit = all ? undefined : 40;
