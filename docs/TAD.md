@@ -201,6 +201,22 @@ imagens do Ticketz), `SOCKET_ADMIN=false`, senha do primeiro administrador por `
 Observação: `docker compose logs` no servidor; não há monitoramento externo. O workflow do upstream
 (`.github/workflows/build-docker.yml`) publica em `ghcr.io/ticketz-oss` e não é usado.
 
+**Histórico do cliente e nota de transferência (RF-017):** `ListMessagesService` busca as mensagens de todos os
+`Tickets` do mesmo `contactId` na empresa (cursor `nextId` e respostas no mesmo conjunto); com `messageVisibility` =
+`message`, o filtro de fila vale só para mensagens de outros atendimentos. `PUT /tickets/:id` aceita `transferNote` e
+`transferMessageIds`: se a fila ou o atendente mudou, `CreateTransferNoteService` grava uma `Message` com
+`mediaType` = `transferNote` (id `ZKNOTE…`, `fromMe`, `read`), texto e cópia das mensagens citadas em `dataJson`
+(só do mesmo cliente, `helpers/TransferNote` limita tamanho e quantidade), e emite o `appMessage` normal. Ela não passa
+pelo `CreateMessageService` (não mexe em `unansweredSince`) nem pelo envio do WhatsApp, e não altera
+`Ticket.lastMessage`. O frontend desenha `transferNote` como cartão interno, sem menu de ações.
+
+**Agenda do WhatsApp em Contatos (RF-018):** no evento `contacts.upsert` (`wbotMonitor`), depois de gravar a tabela
+`Baileys`, `SyncAgendaContactsService` usa `helpers/AgendaContacts` (só `<número>@s.whatsapp.net`, ou o `phoneNumber`
+de um contato `@lid`; um registro por número, nome salvo > nome verificado > nome do perfil > número) e faz um
+`bulkCreate` só dos números ausentes, com `ignoreDuplicates` sobre o índice único `(number, companyId)`. Configuração
+`syncPhoneContacts` (padrão `enabled`). No frontend, a paleta e o componente `ClientMatches` buscam `GET /contacts` e
+abrem a conversa pelo fluxo existente `window.mentionClick`.
+
 **Reconexão do WhatsApp:** cada queda do socket passa por `helpers/ReconnectPolicy` (código do `lastDisconnect`):
 401, 403, 411 e 500 apagam a sessão e pedem QR novo; 440 (sessão aberta por outro cliente com as mesmas credenciais,
 como outro servidor ou um backend duplicado) para a conexão sem apagar as credenciais e avisa os administradores, em

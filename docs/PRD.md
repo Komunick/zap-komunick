@@ -29,8 +29,8 @@ os atendimentos em etapas e controla quando cada atendente pode entrar; lembrete
 etiquetas (RF-004), horário de acesso por usuário (RF-005), agendamento recorrente (RF-006), pausar atendimento e motivo
 de finalização (RF-007), agendamento para vários contatos com anexo e dia útil (RF-008) e a identidade visual da
 Komunick (RF-009) o chat interno com conversas e contatos (RF-010) , as
-ações em lote nos atendimentos (RF-011), os filtros completos da lista (RF-012), os usuários online (RF-013), a carteira em lote (RF-014) e o painel de métricas
-(RF-015), sobre o Ticketz como ele é hoje (filas, chatbot, etiquetas, agendamentos, perfis admin e usuário).
+ações em lote nos atendimentos (RF-011), os filtros completos da lista (RF-012), os usuários online (RF-013), a carteira em lote (RF-014), o painel de métricas
+(RF-015) o histórico completo com contexto na transferência (RF-017) e os clientes da agenda (RF-018), sobre o Ticketz como ele é hoje (filas, chatbot, etiquetas, agendamentos, perfis admin e usuário).
 A segunda entrega saiu da comparação com o ZapContábil feita em 21/10/2026 numa conta de cliente, só olhando, sem mudar
 nada nela.
 
@@ -427,6 +427,52 @@ Dado um mês com 400 atendimentos na fila Fiscal,
 quando o gestor abre "Métricas" com 30 dias e a fila Fiscal,
 então vê quantos foram finalizados, quanto tempo os clientes esperaram em média, quantos foram respondidos no prazo e
 quem finalizou mais, e baixa a planilha para a reunião.
+
+### RF-017 — Histórico completo do cliente e contexto na transferência
+
+**Problema relatado (27/10/2026):** mensagens antigas de conversas resolvidas não aparecem em alguns contatos, e ao
+transferir um cliente o setor que recebe não sabe do que se trata. Causa do primeiro: quando um cliente com conversa
+resolvida volta a escrever, o sistema abre um atendimento novo (a reabertura automática vem desligada) e a conversa só
+mostrava as mensagens do atendimento aberto.
+
+- A conversa mostra o histórico de todos os atendimentos do cliente, do mais antigo ao atual, com uma divisória
+  "Atendimento anterior #N" e "Atendimento atual #N".
+- A privacidade por fila (configuração de visibilidade de mensagens) continua valendo para os atendimentos anteriores;
+  dentro do atendimento atual, tudo aparece, para quem recebe uma transferência ter o contexto.
+- Na janela de transferência, um campo "Contexto para o setor" e a lista das últimas mensagens do atendimento para
+  destacar. A nota aparece na conversa num cartão próprio ("Nota de transferência", de onde para onde, quem
+  escreveu), visível só para a equipe: o cliente não recebe nada, não conta como resposta no SLA e não vira a última
+  mensagem do atendimento.
+- A nota só cita mensagens do próprio cliente; até 30 mensagens e 2.000 caracteres.
+
+**Cenário de sucesso:**
+
+Dado um cliente que pediu a folha de setembro no DP semana passada (atendimento resolvido),
+quando ele volta a escrever pedindo a guia do DAS e o atendente do DP transfere para o Fiscal com a nota "quer a guia
+do DAS de outubro; CNPJ conferido",
+então o Fiscal vê a nota destacada na conversa e as mensagens de hoje, e o cliente não recebe nenhum aviso.
+
+### RF-018 — Clientes aparecem antes de escrever
+
+**Problema relatado (27/10/2026):** "clientes não aparecem enquanto não manter contato" — em Contatos, para iniciar
+conversa e na lista de atendimentos. Causa: os contatos da agenda do WhatsApp ficavam só numa tabela interna do Baileys;
+um cliente só entrava em Contatos quando mandava mensagem ou pela importação manual.
+
+- A agenda do WhatsApp conectado entra em Contatos sozinha, sempre que o WhatsApp sincroniza os contatos (ao conectar
+  e quando a agenda muda). Só entram números que ainda não existem; o nome cadastrado pela equipe nunca é trocado.
+  Grupos, listas de transmissão, canais e IDs sem número ficam de fora. Configuração "Agenda do WhatsApp em Contatos"
+  (Configurações › SLA e carteira de clientes), ligada por padrão.
+- A paleta (Ctrl K) ganha o grupo "Clientes": escolher um cliente abre a janela de nova conversa já com ele, inclusive
+  quem nunca escreveu ou só tem atendimentos resolvidos.
+- A busca de Atendimentos mostra, acima dos resultados, os clientes encontrados pelo nome ou número com o botão
+  "Conversar". Conversas resolvidas continuam aparecendo na busca e reabrem pelo botão da conversa, agora com o histórico
+  completo (RF-017).
+
+**Cenário de sucesso:**
+
+Dado um escritório que conecta o WhatsApp com 300 clientes na agenda,
+quando a atendente procura "Padaria" na paleta,
+então encontra a Padaria Avenida mesmo que ela nunca tenha escrito e abre a conversa com um clique.
 
 ## 4. Restrições e cuidados
 

@@ -377,6 +377,33 @@ const pt = {
       count: "Quantidade"
     }
   },
+  transferContext: {
+    noteLabel: "Contexto para o setor (opcional)",
+    notePlaceholder:
+      "Ex.: cliente quer a 2ª via do boleto de outubro; já conferi o CNPJ.",
+    noteHint:
+      "Nota interna: o setor que recebe vê na conversa. O cliente não recebe.",
+    pickTitle: "Destacar mensagens na nota",
+    us: "Nós",
+    client: "Cliente"
+  },
+  history: {
+    previousTicket: "Atendimento anterior #{{id}}",
+    currentTicket: "Atendimento atual #{{id}}",
+    transferNote: "Nota de transferência",
+    transferFromTo: "{{from}} → {{to}}",
+    internalOnly: "visível só para a equipe"
+  },
+  clients: {
+    title: "Clientes",
+    talk: "Conversar",
+    talkTo: "{{number}} · abrir conversa",
+    syncSetting: "Agenda do WhatsApp em Contatos",
+    syncEnabled: "Importar automaticamente",
+    syncDisabled: "Não importar",
+    syncHelper:
+      "Os contatos da agenda do WhatsApp conectado entram em Contatos, sem trocar nomes já cadastrados."
+  },
   about: {
     licensesourcecode: "Código-fonte desta versão",
     basedOnTicketz: "Baseado no Ticketz (código original)"
@@ -905,6 +932,33 @@ const en = {
       rating: "Rating",
       count: "Count"
     }
+  },
+  transferContext: {
+    noteLabel: "Context for the sector (optional)",
+    notePlaceholder:
+      "E.g.: client wants a copy of the October invoice; tax id already checked.",
+    noteHint:
+      "Internal note: the receiving sector sees it in the conversation. The client does not get it.",
+    pickTitle: "Highlight messages in the note",
+    us: "Us",
+    client: "Client"
+  },
+  history: {
+    previousTicket: "Previous ticket #{{id}}",
+    currentTicket: "Current ticket #{{id}}",
+    transferNote: "Transfer note",
+    transferFromTo: "{{from}} → {{to}}",
+    internalOnly: "visible to the team only"
+  },
+  clients: {
+    title: "Clients",
+    talk: "Talk",
+    talkTo: "{{number}} · open conversation",
+    syncSetting: "WhatsApp address book in Contacts",
+    syncEnabled: "Import automatically",
+    syncDisabled: "Do not import",
+    syncHelper:
+      "Contacts of the connected WhatsApp address book are added to Contacts, without renaming existing ones."
   },
   about: {
     licensesourcecode: "Source code of this version",
@@ -1435,6 +1489,33 @@ const es = {
       rating: "Nota",
       count: "Cantidad"
     }
+  },
+  transferContext: {
+    noteLabel: "Contexto para el sector (opcional)",
+    notePlaceholder:
+      "Ej.: el cliente quiere la 2ª vía de la factura de octubre; ya verifiqué el CNPJ.",
+    noteHint:
+      "Nota interna: el sector que recibe la ve en la conversación. El cliente no la recibe.",
+    pickTitle: "Destacar mensajes en la nota",
+    us: "Nosotros",
+    client: "Cliente"
+  },
+  history: {
+    previousTicket: "Atención anterior #{{id}}",
+    currentTicket: "Atención actual #{{id}}",
+    transferNote: "Nota de transferencia",
+    transferFromTo: "{{from}} → {{to}}",
+    internalOnly: "visible solo para el equipo"
+  },
+  clients: {
+    title: "Clientes",
+    talk: "Conversar",
+    talkTo: "{{number}} · abrir conversación",
+    syncSetting: "Agenda de WhatsApp en Contactos",
+    syncEnabled: "Importar automáticamente",
+    syncDisabled: "No importar",
+    syncHelper:
+      "Los contactos de la agenda del WhatsApp conectado entran en Contactos, sin cambiar nombres ya registrados."
   },
   about: {
     licensesourcecode: "Código fuente de esta versión",

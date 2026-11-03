@@ -15,6 +15,8 @@ import {
   parseBulkRequest
 } from "../helpers/BulkTicketActions";
 import { parseTicketFilters } from "../helpers/TicketFilters";
+import { parseTransferNote } from "../helpers/TransferNote";
+import CreateTransferNoteService from "../services/MessageServices/CreateTransferNoteService";
 import ListTicketsServiceKanban from "../services/TicketServices/ListTicketsServiceKanban";
 
 type IndexQuery = {
@@ -223,6 +225,11 @@ export const update = async (
 ): Promise<Response> => {
   const { ticketId } = req.params;
 
+  // Zap Komunick: where the ticket was before, for the transfer note (RF-017)
+  const before = await Ticket.findByPk(ticketId, {
+    attributes: ["id", "queueId", "userId", "companyId"]
+  });
+
   const { ticket } = await updateMutex.runExclusive(async () => {
     const result = await UpdateTicketService({
       ticketData: req.body,
@@ -231,6 +238,23 @@ export const update = async (
     });
     return result;
   });
+
+  const parsedNote = parseTransferNote({
+    note: req.body?.transferNote,
+    messageIds: req.body?.transferMessageIds
+  });
+  const moved =
+    before &&
+    (before.queueId !== ticket.queueId || before.userId !== ticket.userId);
+  if (parsedNote && moved && before.companyId === req.user.companyId) {
+    await CreateTransferNoteService({
+      ticket,
+      parsed: parsedNote,
+      userId: Number(req.user.id),
+      fromQueueId: before.queueId,
+      fromUserId: before.userId
+    });
+  }
 
   return res.status(200).json(ticket);
 };

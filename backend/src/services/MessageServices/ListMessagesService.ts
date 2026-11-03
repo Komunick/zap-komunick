@@ -1,4 +1,4 @@
-import { FindOptions, Op } from "sequelize";
+import { FindOptions, Op, WhereOptions } from "sequelize";
 import AppError from "../../errors/AppError";
 import Message from "../../models/Message";
 import Ticket from "../../models/Ticket";
@@ -37,10 +37,21 @@ const ListMessagesService = async ({
 
   const limit = 100;
 
-  const options: FindOptions = {
-    where: {
-      ticketId,
-      companyId,
+  // Zap Komunick: the whole history of the client, not only this ticket
+  // (docs/PRD.md, RF-017). A client who writes again after a resolved
+  // conversation gets a new ticket; its old messages stay visible here.
+  const contactTickets = await Ticket.findAll({
+    where: { contactId: ticket.contactId, companyId },
+    attributes: ["id"]
+  });
+  const ticketIds = Array.from(
+    new Set([ticket.id, ...contactTickets.map(t => t.id)])
+  );
+
+  const conditions: WhereOptions[] = [
+    { ticketId: { [Op.in]: ticketIds } },
+    { companyId },
+    {
       mediaType: {
         [Op.or]: {
           [Op.ne]: "reactionMessage",
@@ -48,20 +59,33 @@ const ListMessagesService = async ({
         }
       }
     }
-  };
+  ];
 
   if (
     queues.length > 0 &&
     (await GetCompanySetting(companyId, "messageVisibility", "message")) ===
       "message"
   ) {
-    options.where["queueId"] = {
-      [Op.or]: {
-        [Op.in]: queues,
-        [Op.eq]: null
-      }
-    };
+    // the queue privacy holds for the client's other tickets; inside this
+    // ticket everything shows, so a transfer keeps its context
+    conditions.push({
+      [Op.or]: [
+        { ticketId: ticket.id },
+        {
+          queueId: {
+            [Op.or]: {
+              [Op.in]: queues,
+              [Op.eq]: null
+            }
+          }
+        }
+      ]
+    });
   }
+
+  const options: FindOptions = {
+    where: { [Op.and]: conditions }
+  };
 
   if (minUpdatedAt) {
     const parsedMinUpdatedAt = new Date(minUpdatedAt);
@@ -70,14 +94,12 @@ const ListMessagesService = async ({
       throw new AppError("ERR_INVALID_MIN_UPDATED_AT", 400);
     }
 
-    options.where["updatedAt"] = {
-      [Op.gte]: parsedMinUpdatedAt
-    };
+    conditions.push({ updatedAt: { [Op.gte]: parsedMinUpdatedAt } });
   } else if (nextId) {
     const cursorMessage = await Message.findOne({
       where: {
         id: nextId,
-        ticketId,
+        ticketId: { [Op.in]: ticketIds },
         companyId
       },
       attributes: ["id", "createdAt"]
@@ -87,9 +109,7 @@ const ListMessagesService = async ({
       throw new AppError("ERR_MESSAGE_NOT_FOUND", 404);
     }
 
-    options.where["createdAt"] = {
-      [Op.lt]: cursorMessage.createdAt
-    };
+    conditions.push({ createdAt: { [Op.lt]: cursorMessage.createdAt } });
   }
 
   const messages = await Message.findAll({
@@ -110,7 +130,7 @@ const ListMessagesService = async ({
         model: Message,
         as: "replies",
         where: {
-          ticketId: ticket.id
+          ticketId: { [Op.in]: ticketIds }
         },
         include: ["contact"],
         required: false
