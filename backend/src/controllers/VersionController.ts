@@ -1,15 +1,18 @@
 import { Request, Response } from "express";
 import GetPublicSettingService from "../services/SettingServices/GetPublicSettingService";
 import { GitInfo } from "../gitinfo";
+import { resolveProductName } from "../helpers/ProductBrand";
 
 export const version = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const appName = await GetPublicSettingService({ key: "appName" });
+  const appName = resolveProductName(
+    await GetPublicSettingService({ key: "appName" })
+  );
 
   const data = {
-    name: appName || "Ticketz - Chat Based Ticket System",
+    name: appName,
     ...GitInfo
   };
 

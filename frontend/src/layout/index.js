@@ -37,6 +37,7 @@ import { PhoneCall } from "../components/PhoneCall";
 import NotificationsVolume from "../components/NotificationsVolume";
 import UserModal from "../components/UserModal";
 import AboutModal from "../components/AboutModal";
+import BrandLogo from "../components/BrandLogo";
 import { AuthContext } from "../context/Auth/AuthContext";
 import BackdropLoading from "../components/BackdropLoading";
 import DarkMode from "../components/DarkMode";
@@ -199,7 +200,7 @@ const useStyles = makeStyles(theme => ({
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    minHeight: 68,
+    minHeight: 84,
     padding: "0 10px 0 14px",
     borderBottom: `1px solid ${theme.komunick.sidebarBorder}`,
     marginBottom: 6
@@ -218,8 +219,8 @@ const useStyles = makeStyles(theme => ({
     cursor: "pointer",
     "& img": {
       margin: 0,
-      height: 40,
-      maxWidth: 156
+      height: "auto",
+      maxWidth: 190
     }
   },
   sidebarLogoClosed: {
@@ -449,17 +450,16 @@ const useStyles = makeStyles(theme => ({
     // color: theme.barraSuperior.secondary.main,
   },
   logo: {
-    maxWidth: "192px",
-    height: "68px",
-    logo: theme.logo,
+    width: "100%",
+    maxWidth: "190px",
+    height: "auto",
     margin: "auto",
-    content: `url("${theme.calculatedLogo()}")`
+    objectFit: "contain"
   },
   logoIcon: {
     width: "48px",
     height: "48px",
-    logo: theme.logo,
-    content: `url("${theme.calculatedLogoFavicon()}")`
+    objectFit: "contain"
   },
   version: {
     margin: "auto",
@@ -538,10 +538,12 @@ const useStyles = makeStyles(theme => ({
     marginLeft: 0
   },
   barLogo: {
-    height: 26,
+    width: 180,
+    height: 56,
+    objectFit: "contain",
+    flexShrink: 0,
     marginRight: 14,
-    cursor: "pointer",
-    content: `url("${theme.calculatedLogo()}")`
+    cursor: "pointer"
   },
   searchSlot: {
     flex: 1,
@@ -973,9 +975,14 @@ const LoggedInLayout = ({ children, themeToggle }) => {
                 )}
                 onClick={handleDrawerToggle}
               >
-                <img
+                <BrandLogo
                   className={drawerOpen ? classes.logo : classes.logoIcon}
-                  alt="logo"
+                  compact={!drawerOpen}
+                  surface={
+                    layoutMode === "painel" && theme.mode === "light"
+                      ? "page"
+                      : "sidebar"
+                  }
                 />
               </div>
             )}
@@ -1054,9 +1061,8 @@ const LoggedInLayout = ({ children, themeToggle }) => {
           className={clsx(classes.toolbar, classes.toolbarFlat)}
         >
           {(focoDesktop || painelDesktop) && (
-            <img
+            <BrandLogo
               className={classes.barLogo}
-              alt="logo"
               onClick={() => history.push("/tickets")}
             />
           )}
@@ -1256,8 +1262,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
                 ))}
               </NestedMenuItem>
               <MenuItem onClick={handleOpenAboutModal}>
-                {i18n.t("about.aboutthe")}{" "}
-                {currentUser?.super ? "ticketz" : theme.appName}
+                {i18n.t("about.aboutthe")} {theme.appName}
               </MenuItem>
               <MenuItem onClick={handleClickLogout}>
                 {i18n.t("mainDrawer.appBar.user.logout")}

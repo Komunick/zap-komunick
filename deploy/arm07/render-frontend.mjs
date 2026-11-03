@@ -15,4 +15,4 @@ if (!template.includes("__ARM07_HOST__") || !template.includes("__ARM07_EDGE_GAT
 }
 fs.writeFileSync("build/config.json", JSON.stringify(config) + "\n");
 fs.writeFileSync("build/nginx.conf", template.replaceAll("__ARM07_HOST__", profile.host).replaceAll("__ARM07_EDGE_GATEWAY__", profile.edge + ".1"));
-fs.writeFileSync("build/deployment.json", JSON.stringify({ application: "Zap Komunick", revision, environment: profile.name, host: profile.host, platform: "linux/arm64", source: "https://github.com/Komunick/zap-komunick/tree/" + revision }) + "\n");
+fs.writeFileSync("build/deployment.json", JSON.stringify({ application: "SuperChat", revision, environment: profile.name, host: profile.host, platform: "linux/arm64", source: "https://github.com/Komunick/zap-komunick/tree/" + revision }) + "\n");

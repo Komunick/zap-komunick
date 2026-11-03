@@ -134,6 +134,11 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- Marca padrão passa a SuperChat, com logo `superChat`, endosso `Powered by Komunick` e símbolo próprio nos ícones.
+  Nomes antigos de produto são apresentados com a nova marca, preservando personalizações de empresas, créditos
+  upstream e dados existentes. A identidade se adapta aos dois temas, menu recolhido e celular. Novos cadastros 2FA
+  usam o rótulo SuperChat; autenticadores já cadastrados conservam o nome salvo até eventual recadastro voluntário.
+
 - Movimentação direta do Kanban aplica a visibilidade atual de empresa, fila e atendimento, inclusive ao remover a
   coluna; uma negativa não altera etiquetas, retorna dados do atendimento ou emite eventos.
 - Administração de credenciais revalida o vínculo e o perfil atuais: Bearer de uma empresa anterior não permite

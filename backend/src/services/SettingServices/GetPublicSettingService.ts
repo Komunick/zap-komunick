@@ -1,4 +1,5 @@
 import Setting from "../../models/Setting";
+import { resolveProductName } from "../../helpers/ProductBrand";
 
 interface Request {
   key: string;
@@ -33,7 +34,9 @@ const GetPublicSettingService = async ({
     }
   });
 
-  return setting?.value || null;
+  return key === "appName"
+    ? resolveProductName(setting?.value)
+    : setting?.value || null;
 };
 
 export default GetPublicSettingService;

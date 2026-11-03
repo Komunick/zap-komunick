@@ -42,6 +42,7 @@ import ColorModeContext from "../../layout/themeContext";
 import { loadJSON } from "../../helpers/loadJSON";
 import { BRAND_BLACK, BRAND_GREEN } from "../../theme/komunick";
 import TwoFactorForm from "./TwoFactorForm";
+import BrandLogo from "../../components/BrandLogo";
 
 // Zap Komunick: two column sign in (form + brand panel), following the
 // authentication layout of the Komunick Patterns. Whitelabel side image and
@@ -106,10 +107,10 @@ const useStyles = makeStyles(theme => ({
     gap: theme.spacing(1)
   },
   logoImg: {
-    height: 40,
-    maxWidth: 200,
-    objectFit: "contain",
-    content: `url("${theme.calculatedLogo()}")`
+    width: 260,
+    maxWidth: "calc(100% - 92px)",
+    height: "auto",
+    objectFit: "contain"
   },
   topActions: {
     display: "flex",
@@ -521,7 +522,7 @@ const Login = () => {
       <CssBaseline />
       <div className={classes.formSide}>
         <div className={classes.formTop}>
-          <img className={classes.logoImg} alt={theme.appName || "logo"} />
+          <BrandLogo className={classes.logoImg} />
           <div className={classes.topActions}>
             <Tooltip title={i18n.t("mainDrawer.appBar.i18n.language")}>
               <IconButton

@@ -22,7 +22,7 @@ FROM ${NGINX_IMAGE}
 ARG SOURCE_REVISION
 ARG ZK_ENVIRONMENT
 ARG ZK_PUBLIC_HOST
-LABEL org.opencontainers.image.title="Zap Komunick frontend ARM07" \
+LABEL org.opencontainers.image.title="SuperChat frontend ARM07" \
       org.opencontainers.image.source="https://github.com/Komunick/zap-komunick" \
       org.opencontainers.image.revision="${SOURCE_REVISION}" \
       com.komunick.environment="${ZK_ENVIRONMENT}" \

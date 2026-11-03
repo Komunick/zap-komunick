@@ -6,6 +6,7 @@ import AppError from "../../errors/AppError";
 import authConfig from "../../config/auth";
 import { cacheLayer } from "../../libs/cache";
 import User from "../../models/User";
+import { resolveProductName } from "../../helpers/ProductBrand";
 import {
   generateRecoveryCodes,
   generateTotpSecret,
@@ -16,7 +17,7 @@ import {
 
 // Zap Komunick: two-factor sign-in (docs/PRD.md, RF-016).
 
-const ISSUER = process.env.TWO_FACTOR_ISSUER || "Zap Komunick";
+const ISSUER = resolveProductName(process.env.TWO_FACTOR_ISSUER);
 const MAX_FAILURES = 5;
 const LOCK_SECONDS = 10 * 60;
 

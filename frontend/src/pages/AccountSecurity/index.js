@@ -179,7 +179,7 @@ const AccountSecurity = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "zap-komunick-recovery-codes.txt";
+    link.download = "superchat-recovery-codes.txt";
     link.click();
     URL.revokeObjectURL(url);
   };

@@ -34,6 +34,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 import config from "../../services/config";
 import useSettings from "../../hooks/useSettings";
 import { safeValueFormat } from "../../helpers/safeValueFormat";
+import BrandLogo from "../../components/BrandLogo";
 import { PhoneNumberInput } from "../../components/PhoneNumberInput";
 
 const useStyles = makeStyles(theme => ({
@@ -57,8 +58,9 @@ const useStyles = makeStyles(theme => ({
 
   logoImg: {
     width: "100%",
-    margin: "0 auto",
-    content: `url("${theme.calculatedLogo()}")`
+    maxWidth: 280,
+    height: "auto",
+    margin: "0 auto"
   }
 }));
 
@@ -143,7 +145,7 @@ const SignUp = () => {
       <CssBaseline />
       <div className={classes.paper}>
         <div>
-          <img className={classes.logoImg} />
+          <BrandLogo className={classes.logoImg} />
         </div>
         <Formik
           initialValues={user}
