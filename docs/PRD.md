@@ -591,6 +591,11 @@ organizar as etiquetas por setor. Etiquetas automáticas ficam fora desta entreg
   "Carteira": "Todos", "Minha carteira" e, para administradores, "Sem responsável". Sem etiqueta escolhida, não há
   restrição por etiqueta.
 - Etiquetas, setores, contatos e atendimentos usados nas operações devem pertencer à mesma empresa.
+- A consulta de setores (`GET /queue`) mantém todos os setores da própria empresa para usuários e administradores,
+  incluindo a seleção explícita dessa empresa. Consultar outra empresa exige superusuário confirmado no banco,
+  preservando a seleção de setores em Empresas → Usuários. A consulta recusa sessões com usuário removido ou
+  empresa, perfil ou privilégio divergentes do estado atual; a sessão precisa ser renovada. Ver
+  [isolamento da consulta de setores](specs/isolamento-setores-empresas.md).
 
 **Cenários de aceite:**
 
