@@ -1,4 +1,5 @@
 import QueueOption from "../../models/QueueOption";
+import { authorizedOptionData } from "./AuthorizeQueueOptionService";
 
 interface QueueOptionData {
   queueId: number;
@@ -9,9 +10,14 @@ interface QueueOptionData {
 }
 
 const CreateService = async (
-  queueOptionData: QueueOptionData
+  queueOptionData: QueueOptionData,
+  companyId: number
 ): Promise<QueueOption> => {
-  const queueOption = await QueueOption.create(queueOptionData);
+  const data = await authorizedOptionData(
+    queueOptionData as unknown as Record<string, unknown>,
+    companyId
+  );
+  const queueOption = await QueueOption.create(data);
   return queueOption;
 };
 

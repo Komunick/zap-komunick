@@ -174,6 +174,16 @@ Stitch entra como tokens: `sidebar*` (menu preto, igual nos dois temas), `accent
   `ListQueuesService`, que mantém seu filtro empresarial e ordenação por nome. Body e cabeçalhos não selecionam
   empresa. Sem migração ou alteração dos vínculos de setores dos usuários.
   Ver [especificação](specs/isolamento-setores-empresas.md).
+
+- Mídia e opções de setores usam autorização administrativa local com ator recarregado por id/empresa e conferência
+  de perfil/privilégio. A autorização precede o parser multipart. A cadeia de pais determina o setor das opções,
+  incluindo filhos legados sem `queueId`; ciclos e cadeias externas são recusados. Cadastro e edição validam o
+  encaminhamento efetivo; opções próprias com vínculo legado inválido continuam legíveis e podem ser reparadas com `null`.
+  Listas ficam limitadas à empresa e mutações usam campos permitidos, sem mass assignment de identidade ou mídia.
+  A exclusão de setores/opções verifica os descendentes antes das cascatas de `queueId` e `parentId`.
+  Exclusões de arquivos validam caminho empresarial e realpath, com limpeza dos temporários de upload. Não há
+  migração, exceção cross-company de superusuário ou mudança de entrega pública da mídia. Ver
+  [especificação](specs/autorizacao-midia-opcoes-setores.md).
 - `Tags.queueIds` (JSONB, nulo; migração `20261027130000-add-queue-ids-to-tags`): ids dos setores em que a etiqueta é
   oferecida; `null` ou lista vazia significa todos os setores. `TagController` valida os ids contra `Queues.companyId`
   antes de criar ou editar. `GET /tags` e `GET /tags/list` usam `TagScope.isTagVisible`: gerais e setores do usuário,

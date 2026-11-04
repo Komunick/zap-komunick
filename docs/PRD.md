@@ -607,6 +607,11 @@ organizar as etiquetas por setor. Etiquetas automáticas ficam fora desta entreg
   empresa, perfil ou privilégio divergentes do estado atual; a sessão precisa ser renovada. Ver
   [isolamento da consulta de setores](specs/isolamento-setores-empresas.md).
 
+- A administração de opções e mídia dos setores exige administrador atual da empresa autenticada, inclusive para
+  superusuários. Pais, setor raiz e encaminhamentos mantêm vínculos da mesma empresa; listas incluem somente suas
+  opções válidas. Uploads são autorizados antes da gravação e caminhos de mídia não são definidos pelo body.
+  Ver [autorização de mídia e opções](specs/autorizacao-midia-opcoes-setores.md).
+
 **Cenários de aceite:**
 
 Dadas as etiquetas "Fiscal" no setor Fiscal, "DP" no setor DP e "Geral" sem setor,
