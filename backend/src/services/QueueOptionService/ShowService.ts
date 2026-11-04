@@ -1,9 +1,12 @@
 import AppError from "../../errors/AppError";
 import QueueOption from "../../models/QueueOption";
+import { authorizeQueueOption } from "./AuthorizeQueueOptionService";
 
 const ShowService = async (
-  queueOptionId: number | string
+  queueOptionId: number | string,
+  companyId: number
 ): Promise<QueueOption> => {
+  await authorizeQueueOption(queueOptionId, companyId);
   const queue = await QueueOption.findOne({
     where: {
       id: queueOptionId

@@ -6,6 +6,10 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Segurança
 
+- Opções e mídia de setores conferem o administrador e a empresa atuais, incluindo pais e encaminhamentos. Uploads
+  são autorizados antes da gravação; campos de identidade/mídia enviados no body não substituem os dados protegidos.
+  Listas e exclusões respeitam a empresa autenticada.
+
 - Busca de contatos (tela Contatos e `GET /contacts`, inclusive com token de API): o texto buscado agora chega ao
   banco só como valor. Antes, uma aspa simples no texto alterava a consulta SQL, falha que veio do Ticketz. A busca
   continua sem diferenciar acentos e maiúsculas, e nomes com apóstrofo (como "D'Ávila"), que davam erro, passam a ser

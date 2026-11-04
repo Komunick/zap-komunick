@@ -1,5 +1,6 @@
 import QueueOption from "../../models/QueueOption";
 import ShowService from "./ShowService";
+import { authorizedOptionData } from "./AuthorizeQueueOptionService";
 
 interface QueueData {
   queueId?: number;
@@ -11,11 +12,17 @@ interface QueueData {
 
 const UpdateService = async (
   queueOptionId: number | string,
-  queueOptionData: QueueData
+  queueOptionData: QueueData,
+  companyId: number
 ): Promise<QueueOption> => {
-  const queueOption = await ShowService(queueOptionId);
+  const queueOption = await ShowService(queueOptionId, companyId);
 
-  await queueOption.update(queueOptionData);
+  const data = await authorizedOptionData(
+    queueOptionData as unknown as Record<string, unknown>,
+    companyId,
+    queueOption
+  );
+  await queueOption.update(data);
 
   return queueOption;
 };

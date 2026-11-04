@@ -587,6 +587,10 @@ organizar as etiquetas por setor. Etiquetas automáticas ficam fora desta entreg
   "Carteira": "Todos", "Minha carteira" e, para administradores, "Sem responsável". Sem etiqueta escolhida, não há
   restrição por etiqueta.
 - Etiquetas, setores, contatos e atendimentos usados nas operações devem pertencer à mesma empresa.
+- A administração de opções e mídia dos setores exige administrador atual da empresa autenticada, inclusive para
+  superusuários. Pais, setor raiz e encaminhamentos mantêm vínculos da mesma empresa; listas incluem somente suas
+  opções válidas. Uploads são autorizados antes da gravação e caminhos de mídia não são definidos pelo body.
+  Ver [autorização de mídia e opções](specs/autorizacao-midia-opcoes-setores.md).
 
 **Cenários de aceite:**
 

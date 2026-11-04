@@ -6,133 +6,78 @@ import UpdateService from "../services/QueueOptionService/UpdateService";
 import ShowService from "../services/QueueOptionService/ShowService";
 import DeleteService from "../services/QueueOptionService/DeleteService";
 
-import { head } from "lodash";
-import fs from "fs";
-import path from "path";
-import AppError from "../errors/AppError";
-import QueueOption from "../models/QueueOption";
-import saveMediaToFile from "../helpers/saveMediaFile";
-
-type FilterList = {
-  queueId: string;
-  queueOptionId: string;
-  parentId: string;
-};
+import AuthorizeQueueAdministrationService from "../services/QueueService/AuthorizeQueueAdministrationService";
+import { authorizeQueueOption } from "../services/QueueOptionService/AuthorizeQueueOptionService";
+import {
+  cleanupQueueUploads,
+  deleteQueueMedia,
+  storeQueueMedia
+} from "../services/QueueService/QueueMediaService";
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
-  const { queueId, queueOptionId, parentId } = req.query as FilterList;
-
-  // Convert the strings to numbers
-  const convertedQueueId: number = parseInt(queueId, 10);
-  const convertedQueueOptionId = parseInt(queueOptionId, 10);
-  const convertedParentId = parseInt(parentId, 10);
-
-  const queueOptions = await ListService({
-    queueId: convertedQueueId,
-    queueOptionId: convertedQueueOptionId,
-    parentId: convertedParentId
-  });
-
-  return res.json(queueOptions);
+  const companyId = await AuthorizeQueueAdministrationService(req.user);
+  const { queueId, queueOptionId, parentId } = req.query;
+  return res.json(
+    await ListService({ companyId, queueId, queueOptionId, parentId })
+  );
 };
-
 export const store = async (req: Request, res: Response): Promise<Response> => {
-  const queueOptionData = req.body;
-
-  const queueOption = await CreateService(queueOptionData);
-
-  return res.status(200).json(queueOption);
+  const companyId = await AuthorizeQueueAdministrationService(req.user);
+  return res.status(200).json(await CreateService(req.body, companyId));
 };
-
 export const show = async (req: Request, res: Response): Promise<Response> => {
-  const { queueOptionId } = req.params;
-
-  const queueOption = await ShowService(queueOptionId);
-
-  return res.status(200).json(queueOption);
+  const companyId = await AuthorizeQueueAdministrationService(req.user);
+  return res
+    .status(200)
+    .json(await ShowService(req.params.queueOptionId, companyId));
 };
-
 export const update = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const { queueOptionId } = req.params;
-  const queueOptionData = req.body;
-
-  const queueOption = await UpdateService(queueOptionId, queueOptionData);
-
-  return res.status(200).json(queueOption);
+  const companyId = await AuthorizeQueueAdministrationService(req.user);
+  return res
+    .status(200)
+    .json(await UpdateService(req.params.queueOptionId, req.body, companyId));
 };
-
 export const remove = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const { queueOptionId } = req.params;
-
-  await DeleteService(queueOptionId);
-
+  const companyId = await AuthorizeQueueAdministrationService(req.user);
+  await DeleteService(req.params.queueOptionId, companyId);
   return res.status(200).json({ message: "Option Delected" });
 };
-
 export const mediaUpload = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const { queueOptionId } = req.params;
-  const files = req.files as Express.Multer.File[];
-  const file = head(files);
-
   try {
-    const queueOption = await QueueOption.findOne(
-      QueueOption.withTopParentQueue({
-        where: { id: queueOptionId }
-      })
+    const companyId = await AuthorizeQueueAdministrationService(req.user);
+    const { option } = await authorizeQueueOption(
+      req.params.queueOptionId,
+      companyId
     );
-
-    const savedFilePath = await saveMediaToFile(
-      {
-        data: fs.readFileSync(file.path),
-        mimetype: file.mimetype,
-        filename: file.originalname
-      },
-      {
-        destination: queueOption.topParentQueue.companyId
-      }
+    await storeQueueMedia(
+      option,
+      companyId,
+      req.files as Express.Multer.File[]
     );
-
-    fs.unlinkSync(file.path);
-
-    queueOption.update({
-      mediaPath: savedFilePath,
-      mediaName: file.originalname
-    });
-
     return res.send({ mensagem: "Arquivo Salvo" });
-  } catch (err) {
-    throw new AppError(err.message);
+  } catch (error) {
+    await cleanupQueueUploads(req.files as Express.Multer.File[]);
+    throw error;
   }
 };
-
 export const deleteMedia = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const { queueOptionId } = req.params;
-
-  try {
-    const queue = await QueueOption.findByPk(queueOptionId);
-    const filePath = path.resolve("public", queue.mediaPath);
-    const fileExists = fs.existsSync(filePath);
-    if (fileExists) {
-      fs.unlinkSync(filePath);
-    }
-
-    queue.mediaPath = null;
-    queue.mediaName = null;
-    await queue.save();
-    return res.send({ mensagem: "Arquivo excluído" });
-  } catch (err) {
-    throw new AppError(err.message);
-  }
+  const companyId = await AuthorizeQueueAdministrationService(req.user);
+  const { option } = await authorizeQueueOption(
+    req.params.queueOptionId,
+    companyId
+  );
+  await deleteQueueMedia(option, companyId);
+  return res.send({ mensagem: "Arquivo excluído" });
 };

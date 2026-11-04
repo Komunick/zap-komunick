@@ -2,14 +2,14 @@ import { Op } from "sequelize";
 import * as Yup from "yup";
 import AppError from "../../errors/AppError";
 import Queue from "../../models/Queue";
-import ShowQueueService from "./ShowQueueService";
+import { authorizeQueue } from "./AuthorizeQueueAdministrationService";
 
 interface QueueData {
   name?: string;
   color?: string;
   greetingMessage?: string;
   outOfHoursMessage?: string;
-  schedules?: any[];
+  schedules?: unknown[];
 }
 
 const UpdateQueueService = async (
@@ -17,6 +17,7 @@ const UpdateQueueService = async (
   queueData: QueueData,
   companyId: number
 ): Promise<Queue> => {
+  const queue = await authorizeQueue(queueId, companyId);
   const { color, name } = queueData;
 
   const queueSchema = Yup.object().shape({
@@ -62,17 +63,26 @@ const UpdateQueueService = async (
 
   try {
     await queueSchema.validate({ color, name });
-  } catch (err: any) {
-    throw new AppError(err.message);
+  } catch (err: unknown) {
+    throw new AppError(err instanceof Error ? err.message : "ERR_BAD_REQUEST");
   }
-
-  const queue = await ShowQueueService(queueId, companyId);
 
   if (queue.companyId !== companyId) {
     throw new AppError("Não é permitido alterar registros de outra empresa");
   }
 
-  await queue.update(queueData);
+  const fields = [
+    "name",
+    "color",
+    "greetingMessage",
+    "outOfHoursMessage",
+    "schedules"
+  ];
+  await queue.update(
+    Object.fromEntries(
+      Object.entries(queueData).filter(([key]) => fields.includes(key))
+    )
+  );
 
   return queue;
 };
