@@ -3,27 +3,21 @@ import { getIO } from "../libs/socket";
 import CreateQueueService from "../services/QueueService/CreateQueueService";
 import DeleteQueueService from "../services/QueueService/DeleteQueueService";
 import ListQueuesService from "../services/QueueService/ListQueuesService";
+import AuthorizeQueueListService from "../services/QueueService/AuthorizeQueueListService";
 import ShowQueueService from "../services/QueueService/ShowQueueService";
 import UpdateQueueService from "../services/QueueService/UpdateQueueService";
-import { isNil, head } from "lodash";
+import { head } from "lodash";
 import Queue from "../models/Queue";
 import fs from "fs";
 import path from "path";
 import AppError from "../errors/AppError";
 import saveMediaToFile from "../helpers/saveMediaFile";
 
-type QueueFilter = {
-  companyId: number;
-};
-
 export const index = async (req: Request, res: Response): Promise<Response> => {
-  const { companyId: userCompanyId } = req.user;
-  const { companyId: queryCompanyId } = req.query as unknown as QueueFilter;
-  let companyId = userCompanyId;
-
-  if (!isNil(queryCompanyId)) {
-    companyId = +queryCompanyId;
-  }
+  const companyId = await AuthorizeQueueListService(
+    req.user,
+    req.query.companyId
+  );
 
   const queues = await ListQueuesService({ companyId });
 

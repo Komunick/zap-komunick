@@ -1,6 +1,6 @@
 # TAD — SuperChat
 
-**Komunick Inteligência e Tecnologia** · **Atualizado em:** 03/11/2026
+**Komunick Inteligência e Tecnologia** · **Atualizado em:** 04/11/2026
 **Fonte oficial:** `docs/TAD.md` no repositório · **Comportamento:** `docs/PRD.md`
 
 Levantamento parcial: este documento cobre o que o fork acrescenta ao Ticketz. O restante do sistema segue o desenho do
@@ -92,6 +92,11 @@ estão em `public/vector/` e nos PNGs de `public/`; o Whitelabel da empresa cont
 A marca padrão é SuperChat. `BrandLogo` usa a composição vertical no login, Sobre e menu aberto; a composição
 horizontal atende aos cabeçalhos Foco/Painel e o símbolo compacto ocupa trilhos e cabeçalhos estreitos.
 A sidebar preta usa a variante para fundo escuro nos dois temas; imagens personalizadas continuam respeitadas.
+O ajuste do [topo minimalista](specs/superchat-topo-minimalista.md) usa canvas vertical de 600×196, com Powered by e
+Komunick em uma linha abaixo de SuperChat. A sidebar reduz `sidebarBrandHeader.minHeight` de 116 para 84 px, sem
+fixar altura da imagem. O header mantém canvas 1200×200 e caixa de 336×56 px; amplia o grupo SuperChat em 1,4 vez
+e reduz o endosso à direita. As medidas dos elementos estão em `public/vector/README.md`; paths, cores, símbolo,
+favicon e seleção de ativos Whitelabel por `BrandLogo` são preservados.
 SuperChat e Powered by usam contornos. O endosso completo vem do SVG oficial publicado pela Komunick, preservado
 integralmente em `vector/komunick-completa.svg`, com seu PNG embutido de 173×48. Ampliações têm o limite dessa imagem.
 Nenhum dos ativos depende de fonte ou imagem externa durante a renderização. O wordmark anterior fica preservado em
@@ -160,6 +165,15 @@ Stitch entra como tokens: `sidebar*` (menu preto, igual nos dois temas), `accent
   `Tickets` (sem grupos; fila do atendimento), contando abertos por `createdAt`, finalizados por `finishedAt`, espera e
   "no prazo" por `startedAt` (`waitTime` até `slaMinutes`), dias e horas no fuso `TZ` do backend; novos contatos em
   `Contacts` e notas em `UserRatings`. Sem tabela nova.
+- `GET /queue` (RF-019): `AuthorizeQueueListService` recarrega o ator por id e empresa, selecionando somente
+  `id/companyId/profile/super`, e recusa vínculo, perfil ou privilégio divergentes da sessão. `QueueScopeRules`
+  valida `companyId` como uma única string decimal canônica de inteiro positivo seguro. Sem parâmetro, a listagem
+  continua incluindo todos os setores da empresa; informar a própria empresa preserva o acesso. Outra empresa exige
+  superusuário atual confirmado, mantendo Empresas → Usuários → seleção de setores. Query inválida recebe 400 com
+  `ERR_BAD_REQUEST`; ator inválido ou acesso cruzado sem privilégio recebe 403 com `ERR_NO_PERMISSION`, antes de
+  `ListQueuesService`, que mantém seu filtro empresarial e ordenação por nome. Body e cabeçalhos não selecionam
+  empresa. Sem migração ou alteração dos vínculos de setores dos usuários.
+  Ver [especificação](specs/isolamento-setores-empresas.md).
 - `Tags.queueIds` (JSONB, nulo; migração `20261027130000-add-queue-ids-to-tags`): ids dos setores em que a etiqueta é
   oferecida; `null` ou lista vazia significa todos os setores. `TagController` valida os ids contra `Queues.companyId`
   antes de criar ou editar. `GET /tags` e `GET /tags/list` usam `TagScope.isTagVisible`: gerais e setores do usuário,

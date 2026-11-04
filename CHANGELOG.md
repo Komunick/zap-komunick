@@ -6,6 +6,10 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Segurança
 
+- A consulta de setores confere o usuário e seus privilégios atuais antes de listar outra empresa. Usuários e
+  administradores comuns ficam na própria empresa; a seleção empresarial do superusuário continua disponível.
+  Parâmetros inválidos e sessões com contexto alterado são recusados.
+
 - "Acessar como" exige superusuário atual e vincula a sessão assumida à sua origem. Entrada, retorno e renovação
   recusam contas, vínculos ou versões revogados e aplicam os IPs permitidos da identidade de destino. Sessões
   derivadas antigas exigem novo login; tokens de acesso já emitidos mantêm a validade de até quinze minutos.
@@ -80,6 +84,10 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   "Enviar só em dia útil" (pula fim de semana e feriados nacionais, Carnaval, Sexta-feira Santa e Corpus Christi).
 
 ### Alterado
+
+- Arte do topo com SuperChat em destaque e endosso Powered by Komunick menor. Login, Sobre e menu aberto usam a
+  assinatura em uma linha abaixo da marca; o header Foco/Painel mantém o endosso à direita. Cabeçalho da sidebar
+  mais baixo, com altura automática para logos personalizadas; cores, símbolo, favicon e marca oficial preservados.
 
 - Chat interno com busca limpável, estados de carregamento/vazio/erro e repetição, seleção e não lidas acessíveis.
   Mensagens, anexos e campo de envio respeitam a largura disponível e os temas claro e escuro.
