@@ -165,6 +165,15 @@ Stitch entra como tokens: `sidebar*` (menu preto, igual nos dois temas), `accent
   `Tickets` (sem grupos; fila do atendimento), contando abertos por `createdAt`, finalizados por `finishedAt`, espera e
   "no prazo" por `startedAt` (`waitTime` até `slaMinutes`), dias e horas no fuso `TZ` do backend; novos contatos em
   `Contacts` e notas em `UserRatings`. Sem tabela nova.
+- `GET /queue` (RF-019): `AuthorizeQueueListService` recarrega o ator por id e empresa, selecionando somente
+  `id/companyId/profile/super`, e recusa vínculo, perfil ou privilégio divergentes da sessão. `QueueScopeRules`
+  valida `companyId` como uma única string decimal canônica de inteiro positivo seguro. Sem parâmetro, a listagem
+  continua incluindo todos os setores da empresa; informar a própria empresa preserva o acesso. Outra empresa exige
+  superusuário atual confirmado, mantendo Empresas → Usuários → seleção de setores. Query inválida recebe 400 com
+  `ERR_BAD_REQUEST`; ator inválido ou acesso cruzado sem privilégio recebe 403 com `ERR_NO_PERMISSION`, antes de
+  `ListQueuesService`, que mantém seu filtro empresarial e ordenação por nome. Body e cabeçalhos não selecionam
+  empresa. Sem migração ou alteração dos vínculos de setores dos usuários.
+  Ver [especificação](specs/isolamento-setores-empresas.md).
 - `Tags.queueIds` (JSONB, nulo; migração `20261027130000-add-queue-ids-to-tags`): ids dos setores em que a etiqueta é
   oferecida; `null` ou lista vazia significa todos os setores. `TagController` valida os ids contra `Queues.companyId`
   antes de criar ou editar. `GET /tags` e `GET /tags/list` usam `TagScope.isTagVisible`: gerais e setores do usuário,
