@@ -423,8 +423,9 @@ recuar a aplicação.
   (`429`, `Retry-After: 600` como espera máxima conservadora). A recuperação
   usa atualização condicional no banco para impedir consumo concorrente duplicado.
 - Ativar, desativar e redefinir 2FA incrementa `tokenVersion`; operações condicionais impedem reativar uma configuração
-  invalidada por reset concorrente. A sessão atual recebe novo refresh cookie ao ativar/desativar; outras renovações
-  e desafios antigos ficam inválidos. O access token anterior continua sujeito ao TTL existente de quinze minutos.
+  invalidada por reset concorrente. A sessão normal atual recebe novo refresh cookie ao ativar/desativar; sessões
+  impersonadas limpam o cookie e exigem novo login. Outras renovações e desafios antigos ficam inválidos.
+  O access token anterior continua sujeito ao TTL existente de quinze minutos.
   `DELETE /users/:userId/2fa` é administrativo, confere empresa e privilégio de superusuário, e não permite reset da
   própria conta. `ListUsersService` expõe `twoFactorEnabled` e `super` para indicação e disponibilidade da ação.
 - `AuthorizeSecurityActorService` reconsulta o cadastro pela identidade e empresa da sessão antes das operações de
@@ -442,6 +443,26 @@ recuar a aplicação.
   os proxies conhecidos (por exemplo `loopback` quando o proxy está no mesmo host, ou os CIDRs da rede do proxy),
   garantindo que acesso direto e cabeçalhos `X-Forwarded-For` não possam forjar o IP. A tela mostra o IP usado pelo
   servidor para essa conferência. `TWO_FACTOR_ISSUER` personaliza o nome do autenticador (padrão `SuperChat`).
+- Impersonação: `authRoutes` mantém a autenticação e remove o alias incorreto de `isAdmin`; `SessionController`
+  usa autorização específica de entrada/retorno, sem alterar globalmente `isAuth` ou `isSuper`. A entrada vincula
+  bearer e `jrt` normais, confere ator atual, empresa, perfil, privilégio e versão do cookie antes de buscar o alvo.
+  `CreateTokens` e `DecodeRefreshToken` transportam `originalUserId/originalCompanyId/originalTokenVersion` nos pares
+  derivados. O retorno exige par impersonado do mesmo alvo e metadados de origem iguais, revalidando alvo e origem;
+  restaura o cadastro completo atual da origem, com resposta compatível com a ação Sair do frontend.
+- `RefreshTokenService` revalida alvo/empresa/versão e origem/empresa/super/versão das sessões impersonadas antes
+  de criar outro par e preserva os metadados. A checagem de IP da identidade de destino antecede a emissão e conserva
+  `ERR_IP_NOT_ALLOWED` com 403, fora da conversão de erros de sessão. Renovação normal e tratamento herdado de
+  horários das sessões impersonadas permanecem preservados. O cookie normal atual da origem comprova sessão
+  completa; desafios 2FA não permitem impersonação e não se pedem credenciais do alvo.
+- `SecurityController` verifica a marca assinada do bearer antes de ativar/desativar 2FA; após a alteração, limpa
+  `jrt` para sessões derivadas em vez de emitir cookie normal. O incremento de versão invalida a renovação anterior.
+  Sessões normais mantêm a rotação existente. Cookies já convertidos em normais na versão anterior não podem ser
+  distinguidos retroativamente; não há revogação em massa nesta correção.
+- Após o gate `isAuth`, contexto derivado inválido no retorno recebe 401 e limpa `jrt`; par normal recebe 400 com
+  `ERR_NOT_IMPERSONATING`. Derivados legados sem versão da origem exigem reautenticação. Sem migração SQL: a
+  proteção abrange entrada, retorno e refresh, mantendo o TTL de até quinze minutos dos access tokens já emitidos.
+  Os ingressos HTTP gerais, socket e mídia não ganham revogação imediata neste recorte. Ver
+  [especificação](specs/autorizacao-impersonacao.md).
 - `RecordAuditService` registra as famílias `auth.`, `security.`, `user.` e `setting.` com empresa, usuário, entidade,
   data, IP e user-agent limitado a 512 caracteres. Falha de gravação é registrada no log sem interromper a ação.
   `GET /audit-logs` é administrativo e filtra a empresa autenticada, período (`from`, `to`), usuário e ação/família;
@@ -457,6 +478,8 @@ recuar a aplicação.
 API com PostgreSQL/Redis reais para autenticação, cookies, autorização, IPs, filtros e privacidade da auditoria;
 percurso de tela com contas fictícias para ativar, recuperar, desativar, redefinir e consultar registros. Nunca incluir
 segredo, QR ou códigos de recuperação em logs ou prints de evidência. Os resultados executados ficam no PR.
+Para impersonação, incluir rotas/JWTs/cookies reais, pares misturados, atores e versões revogados, metadados legados,
+negação sem emissão indevida e o ciclo autorizado de entrada, renovação e retorno com duas empresas fictícias.
 
 **Recuperação:** manter as colunas e a tabela ao recuar a aplicação preserva os dados. Os `down` removem configuração
 2FA e trilha de auditoria e não são necessários para recuar o código; não usá-los como procedimento padrão. Uma versão

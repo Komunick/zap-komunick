@@ -4,6 +4,7 @@ import AppError from "../errors/AppError";
 import User from "../models/User";
 import { createRefreshToken } from "../helpers/CreateTokens";
 import { SendRefreshToken } from "../helpers/SendRefreshToken";
+import { isImpersonatedAccess } from "../services/AuthServices/ImpersonationService";
 import {
   auditRequest,
   requestIp
@@ -49,8 +50,10 @@ export const enable = async (
   res: Response
 ): Promise<Response> => {
   const user = await currentUser(req);
+  const impersonated = isImpersonatedAccess(req.headers.authorization);
   const recoveryCodes = await confirmSetup(user, req.body?.code);
-  SendRefreshToken(res, createRefreshToken(user));
+  if (impersonated) res.clearCookie("jrt");
+  else SendRefreshToken(res, createRefreshToken(user));
   auditRequest(req, "security.2fa_enabled", "user", user.id);
   return res.json({ recoveryCodes });
 };
@@ -70,8 +73,10 @@ export const disable = async (
   res: Response
 ): Promise<Response> => {
   const user = await currentUser(req);
+  const impersonated = isImpersonatedAccess(req.headers.authorization);
   await disableTwoFactor(user, req.body?.password, req.body?.code);
-  SendRefreshToken(res, createRefreshToken(user));
+  if (impersonated) res.clearCookie("jrt");
+  else SendRefreshToken(res, createRefreshToken(user));
   auditRequest(req, "security.2fa_disabled", "user", user.id);
   return res.json({ twoFactorEnabled: false });
 };
