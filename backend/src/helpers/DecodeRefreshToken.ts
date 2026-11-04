@@ -10,6 +10,7 @@ export type RefreshTokenPayload = {
   impersonated?: boolean;
   originalUserId?: number;
   originalCompanyId?: number;
+  originalTokenVersion?: number;
   originalSessionId?: string;
   iat: number;
   exp: number;

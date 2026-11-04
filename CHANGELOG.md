@@ -10,6 +10,11 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   administradores comuns ficam na própria empresa; a seleção empresarial do superusuário continua disponível.
   Parâmetros inválidos e sessões com contexto alterado são recusados.
 
+- "Acessar como" exige superusuário atual e vincula a sessão assumida à sua origem. Entrada, retorno e renovação
+  recusam contas, vínculos ou versões revogados e aplicam os IPs permitidos da identidade de destino. Sessões
+  derivadas antigas exigem novo login; tokens de acesso já emitidos mantêm a validade de até quinze minutos.
+  Ativar ou desativar 2FA durante a impersonação exige novo login, sem gerar uma sessão normal do alvo.
+
 - Busca de contatos (tela Contatos e `GET /contacts`, inclusive com token de API): o texto buscado agora chega ao
   banco só como valor. Antes, uma aspa simples no texto alterava a consulta SQL, falha que veio do Ticketz. A busca
   continua sem diferenciar acentos e maiúsculas, e nomes com apóstrofo (como "D'Ávila"), que davam erro, passam a ser
