@@ -93,6 +93,11 @@ renovação do token.
 
 **Ambiente e comandos:** ver `AGENTS.md`.
 
+O check `.github/workflows/backend-tests.yml` valida PRs destinados a `dev` com Node 24.22.1 e permissão de leitura.
+Instala o lockfile sem scripts de ciclo de vida, gera as chaves de tradução, verifica os tipos, executa lint da busca
+de contatos e de sua regressão e roda todas as suítes backend diretamente pelo Jest, sem os hooks de banco do
+`npm test`. Não usa segredos, Docker ou publicação de imagens.
+
 **Estratégia de testes:**
 - Regras puras com Jest em `backend/src/__tests__/helpers/` (sem banco): limites do SLA, agregação do painel,
   carteira, Kanban, horário de acesso (inclusive virada da meia-noite) e datas da série (fim de mês, bissexto, atrasos,
@@ -108,8 +113,9 @@ relógio no painel, responder, mover no Kanban, contato com carteira abrindo dir
 horário e um agendamento diário.
 
 **Publicação e observação:** não definido para o fork. O zap.komunick.com (produção) roda o Ticketz 1.0.132 por
-imagens Docker; o repositório traz o workflow de imagens do upstream (`.github/workflows/build-docker.yml`), que publica
-em `ghcr.io/ticketz-oss` e precisa ser adaptado antes de uso. Pendente de decisão (PRD, seção 5).
+imagens Docker. O job de imagens herdado (`.github/workflows/build-docker.yml`) só executa no repositório upstream
+`ticketz-oss/ticketz`; assim, um push ou merge em `dev` deste fork não publica imagens no namespace do upstream.
+A publicação própria continua pendente de decisão (PRD, seção 5).
 
 **Recuperação:** as migrações têm `down`; nenhuma apaga dados existentes. Desligar `slaMinutes` e `walletAutoAssign`
 devolve o comportamento original sem migração reversa.
