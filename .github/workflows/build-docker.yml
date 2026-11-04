@@ -16,6 +16,8 @@ env:
 
 jobs:
   build-and-push-images:
+    # Publish upstream images only from the upstream repository.
+    if: github.repository == 'ticketz-oss/ticketz'
     runs-on: ubuntu-latest
     permissions:
       contents: read

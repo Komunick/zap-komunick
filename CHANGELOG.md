@@ -34,4 +34,6 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Operação
 
+- O workflow de imagens herdado só publica a partir do repositório upstream. Pushes ou merges em `dev` deste fork
+  deixam esse job sem execução.
 - Quatro migrações novas (`20261021120000` a `20261021120300`) rodam na subida do backend; nenhuma remove dados.

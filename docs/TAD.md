@@ -113,8 +113,9 @@ relógio no painel, responder, mover no Kanban, contato com carteira abrindo dir
 horário e um agendamento diário.
 
 **Publicação e observação:** não definido para o fork. O zap.komunick.com (produção) roda o Ticketz 1.0.132 por
-imagens Docker; o repositório traz o workflow de imagens do upstream (`.github/workflows/build-docker.yml`), que publica
-em `ghcr.io/ticketz-oss` e precisa ser adaptado antes de uso. Pendente de decisão (PRD, seção 5).
+imagens Docker. O job de imagens herdado (`.github/workflows/build-docker.yml`) só executa no repositório upstream
+`ticketz-oss/ticketz`; assim, um push ou merge em `dev` deste fork não publica imagens no namespace do upstream.
+A publicação própria continua pendente de decisão (PRD, seção 5).
 
 **Recuperação:** as migrações têm `down`; nenhuma apaga dados existentes. Desligar `slaMinutes` e `walletAutoAssign`
 devolve o comportamento original sem migração reversa.
