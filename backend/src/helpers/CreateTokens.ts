@@ -2,11 +2,12 @@ import { sign } from "jsonwebtoken";
 import authConfig from "../config/auth";
 import User from "../models/User";
 
-interface ImpersonationMetadata {
+export interface ImpersonationMetadata {
   impersonated?: boolean;
   sessionId?: string;
   originalUserId?: number;
   originalCompanyId?: number;
+  originalTokenVersion?: number;
   originalSessionId?: string;
 }
 
@@ -27,6 +28,7 @@ export const createAccessToken = (
       sessionId: metadata.sessionId,
       originalUserId: metadata.originalUserId,
       originalCompanyId: metadata.originalCompanyId,
+      originalTokenVersion: metadata.originalTokenVersion,
       originalSessionId: metadata.originalSessionId
     },
     secret,
@@ -51,6 +53,7 @@ export const createRefreshToken = (
       impersonated: !!metadata.impersonated,
       originalUserId: metadata.originalUserId,
       originalCompanyId: metadata.originalCompanyId,
+      originalTokenVersion: metadata.originalTokenVersion,
       originalSessionId: metadata.originalSessionId
     },
     refreshSecret,

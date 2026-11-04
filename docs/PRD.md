@@ -1,7 +1,7 @@
 # PRD — SuperChat
 
 **Komunick Inteligência e Tecnologia**
-**Responsável:** Jailson (Komunick) · **Atualizado em:** 30/10/2026
+**Responsável:** Jailson (Komunick) · **Atualizado em:** 04/11/2026
 **Fonte oficial:** `docs/PRD.md` no repositório
 **Validado por:** Pendente
 
@@ -286,7 +286,7 @@ então o formulário pede pelo menos um contato ou uma etiqueta.
 ### RF-009 — Identidade SuperChat e Komunick
 
 **O que faz:** o sistema abre como SuperChat, com logo `superChat` e endosso `Powered by Komunick` usando a marca oficial
-da Komunick Inteligência, e um visual mais atual que o do Ticketz e o do ZapContábil, com
+da Komunick Inteligência e Tecnologia, e um visual mais atual que o do Ticketz e o do ZapContábil, com
 referências do Dribbble (painéis de atendimento e CRMs de 2025 e 2026).
 
 **Regras importantes:**
@@ -297,6 +297,10 @@ referências do Dribbble (painéis de atendimento e CRMs de 2025 e 2026).
   verde #35B62E, preto #020605 e a fonte Manrope. Botões e textos em verde
   usam o tom mais escuro #1F7F1B no tema claro, para manter o contraste. O logo e a cor que a empresa configurar em
   Whitelabel continuam valendo.
+- SuperChat tem destaque no topo; Powered by e a assinatura oficial Komunick formam um endosso menor. No login,
+  Sobre e menu aberto, o endosso ocupa uma linha discreta abaixo da marca; no header Foco/Painel, fica à direita.
+  O menu aberto usa um cabeçalho mais baixo, que continua crescendo para acomodar logos personalizadas sem cortes.
+  Conferir legibilidade e proporção nos dois temas e no celular. Ver [topo minimalista](specs/superchat-topo-minimalista.md).
 - Tema claro e escuro com as mesmas cores em todas as telas: menu, barra do topo, lista de atendimentos, chat, Kanban,
   SLA, cadastros e login.
 - Direção visual "B — Menu preto" (escolhida pelo responsável entre três no Stitch): menu lateral #020605 nos dois
@@ -371,6 +375,8 @@ legados identificados para armazenamento privado e entrega autenticada por mensa
 são verificadas em cada acesso, inclusive reprodução parcial e download. Links públicos antigos do chat deixam de
 entregar conteúdo; arquivos dos demais módulos mantêm seus contratos. A migração verifica integridade e conflitos
 antes de remover cópias públicas, com retomada segura e sem perda das associações.
+As [miniaturas da galeria privada](specs/chat-miniaturas-privadas.md) usam a mesma sessão autenticada da imagem
+principal e respeitam a limpeza ao fechar ou trocar de identidade, sem fallback para URLs públicas.
 
 **Cenário de sucesso:**
 
@@ -501,8 +507,16 @@ Segurança da conta, IPs permitidos, consulta de auditoria e indicação/reset d
   A restrição vem desligada. A tela mostra o IP reconhecido pelo servidor; lista ativa vazia, entradas inválidas e
   mudanças que bloqueiem o próprio administrador são recusadas. Superusuários mantêm acesso de recuperação.
 - A restrição de IP vale no login, na confirmação de 2FA e na renovação de sessão. Ativar, desativar ou redefinir 2FA
-  invalida desafios e renovações anteriores; ativar/desativar preserva a sessão atual com um novo cookie de renovação.
+  invalida desafios e renovações anteriores; ativar/desativar preserva a sessão normal atual com um novo cookie de
+  renovação. Em sessão impersonada, limpa o cookie e exige novo login, sem converter a sessão em normal.
   Tokens de acesso já emitidos mantêm a validade de até quinze minutos.
+- A ação "Acessar como" em Empresas exige superusuário atual, com token e cookie normais da mesma conta e contexto
+  cadastral válido. A sessão assumida fica vinculada à origem; Sair retorna à conta original após revalidar origem e
+  destino. Retorno e renovação recusam vínculos obsoletos ou privilégios revogados. A lista de IPs da identidade de
+  destino também vale na emissão dessas sessões, preservando o acesso de recuperação do superusuário.
+- Sessões impersonadas anteriores à vinculação completa exigem novo login. A correção protege a entrada, o retorno
+  e a renovação; tokens de acesso já emitidos mantêm o TTL de até quinze minutos, sem revogação imediata nos demais
+  caminhos. Ver [autorização da impersonação](specs/autorizacao-impersonacao.md).
 - Administradores consultam a auditoria da própria empresa, com período, usuário, ação e paginação. São registrados
   eventos de autenticação, alterações de 2FA, da lista de IPs, de usuários e de configurações, com data, autor, ação e IP.
   Senhas, códigos, segredos de autenticador e tokens não aparecem na auditoria nem nos logs de requisição.
@@ -587,6 +601,12 @@ organizar as etiquetas por setor. Etiquetas automáticas ficam fora desta entreg
   "Carteira": "Todos", "Minha carteira" e, para administradores, "Sem responsável". Sem etiqueta escolhida, não há
   restrição por etiqueta.
 - Etiquetas, setores, contatos e atendimentos usados nas operações devem pertencer à mesma empresa.
+- A consulta de setores (`GET /queue`) mantém todos os setores da própria empresa para usuários e administradores,
+  incluindo a seleção explícita dessa empresa. Consultar outra empresa exige superusuário confirmado no banco,
+  preservando a seleção de setores em Empresas → Usuários. A consulta recusa sessões com usuário removido ou
+  empresa, perfil ou privilégio divergentes do estado atual; a sessão precisa ser renovada. Ver
+  [isolamento da consulta de setores](specs/isolamento-setores-empresas.md).
+
 - A administração de opções e mídia dos setores exige administrador atual da empresa autenticada, inclusive para
   superusuários. Pais, setor raiz e encaminhamentos mantêm vínculos da mesma empresa; listas incluem somente suas
   opções válidas. Uploads são autorizados antes da gravação e caminhos de mídia não são definidos pelo body.

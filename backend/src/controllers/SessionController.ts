@@ -12,7 +12,10 @@ import { createAccessToken, createRefreshToken } from "../helpers/CreateTokens";
 import Company from "../models/Company";
 import Setting from "../models/Setting";
 import Translation from "../models/Translation";
-import { decodeRefreshToken } from "../helpers/DecodeRefreshToken";
+import {
+  beginImpersonation,
+  returnFromImpersonation
+} from "../services/AuthServices/ImpersonationService";
 import RecordAuditService, {
   auditRequest,
   requestIp
@@ -194,7 +197,9 @@ export const update = async (
 
   const { user, newToken, refreshToken } = await RefreshTokenService(
     res,
-    token
+    token,
+    requestIp(req),
+    String(req.headers["user-agent"] || "")
   );
 
   // Zap Komunick: the allowlist also holds for sessions already open (RF-016)
@@ -246,45 +251,18 @@ export const impersonate = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const token: string = req.cookies.jrt;
-  const { companyId } = req.params;
-
-  if (!token) {
-    throw new AppError("ERR_UNAUTHORIZED", 401);
-  }
-
-  const currentRefreshTokenData = decodeRefreshToken(token);
-
-  if (currentRefreshTokenData.impersonated) {
-    throw new AppError("ERR_ALREADY_IMPERSONATING", 400);
-  }
-
-  const user = await User.findOne({
-    where: { companyId: Number(companyId), profile: "admin" },
-    include: ["queues", { model: Company, include: [{ model: Setting }] }]
+  const { user, metadata } = await beginImpersonation({
+    authorization: req.headers.authorization,
+    refreshToken: req.cookies?.jrt,
+    companyId: req.params.companyId,
+    ip: requestIp(req)
   });
-
-  if (!user) {
-    throw new AppError("ERR_NO_USER_FOUND", 404);
-  }
-
-  const metadata = {
-    originalUserId: Number(req.user.id),
-    originalCompanyId: Number(req.user.companyId)
-  };
-
-  const newToken = createAccessToken(user, {
-    impersonated: true,
-    ...metadata
-  });
-  const refreshToken = createRefreshToken(user, {
-    impersonated: true,
-    ...metadata
-  });
+  const newToken = createAccessToken(user, metadata);
+  const refreshToken = createRefreshToken(user, metadata);
   const serializedUser = await SerializeUser(user);
 
   SendRefreshToken(res, refreshToken);
-  auditRequest(req, "auth.impersonate", "company", companyId, {
+  auditRequest(req, "auth.impersonate", "company", user.companyId, {
     asUserId: user.id
   });
 
@@ -312,24 +290,18 @@ export const backToSuper = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const token: string = req.cookies.jrt;
-
-  if (!token) {
-    throw new AppError("ERR_UNAUTHORIZED", 401);
-  }
-
-  const refreshTokenData = decodeRefreshToken(token);
-
-  if (!refreshTokenData.impersonated || !refreshTokenData.originalUserId) {
-    throw new AppError("ERR_NOT_IMPERSONATING", 400);
-  }
-
-  const originalUser = await User.findByPk(refreshTokenData.originalUserId, {
-    include: ["queues", { model: Company, include: [{ model: Setting }] }]
-  });
-
-  if (!originalUser || !originalUser.super) {
-    throw new AppError("ERR_NO_USER_FOUND", 404);
+  let originalUser: User;
+  try {
+    originalUser = await returnFromImpersonation({
+      authorization: req.headers.authorization,
+      refreshToken: req.cookies?.jrt,
+      ip: requestIp(req)
+    });
+  } catch (error) {
+    if (error instanceof AppError && error.statusCode === 401) {
+      res.clearCookie("jrt");
+    }
+    throw error;
   }
 
   const newToken = createAccessToken(originalUser);

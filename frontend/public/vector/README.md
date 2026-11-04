@@ -1,15 +1,31 @@
 # Marcas SuperChat e Komunick
 
 `logo.svg` é o lockup para superfícies claras; `logo-dark.svg`, para superfícies escuras. Ambos usam
-`viewBox="0 0 600 304"` e apresentam superChat, Powered by e a logo oficial Komunick com a assinatura
-Inteligência e Tecnologia. A composição mantém o símbolo e a tipografia SuperChat do primeiro rebranding.
-Em menus, a assinatura completa ocupa uma linha própria. Na largura de 190px, o lockup tem aproximadamente
-96,3px de altura, com o texto Powered by em tamanho nominal de 12px.
+`viewBox="0 0 600 196"` e apresentam superChat com mais destaque; Powered by e a logo oficial Komunick Inteligência
+e Tecnologia formam uma linha discreta abaixo. A composição mantém os paths, o símbolo e as cores SuperChat do
+primeiro rebranding. Na largura de 190px, o lockup tem aproximadamente 62,1px de altura, com Powered by em tamanho
+nominal de 8,9px e a assinatura oficial com 82,3px de largura.
 
 `logo-header.svg` e `logo-header-dark.svg` usam `viewBox="0 0 1200 200"`. SuperChat fica à esquerda e o endosso
-completo à direita. Na largura de 350px, a imagem tem aproximadamente 58,3px de altura e Powered by fica em 11px.
-Em uma caixa com altura máxima de 56px, a proporção é mantida com largura de 336px. Use essas variantes nas barras
-Foco/Painel do desktop e mantenha o lockup vertical no login, na tela Sobre e no menu aberto.
+completo menor à direita. O grupo SuperChat é ampliado em 40%; o endosso oficial passa de 480 para 280 unidades de
+largura. Na caixa de 336×56px, a assinatura oficial ocupa 78,4px de largura e Powered by tem tamanho nominal de
+8,4px. Use essas variantes nas barras Foco/Painel do desktop e mantenha o lockup vertical no login, na tela Sobre
+e no menu aberto. As dimensões indicam a proporção de composição; a legibilidade precisa ser conferida no tamanho real.
+
+## Medidas da composição minimalista
+
+| Elemento | Vertical clara/escura | Header claro/escuro |
+| --- | --- | --- |
+| Canvas | `600×196` | `1200×200` |
+| SuperChat e símbolo | Paths e posição preservados | Grupo original com `translate(0 -40) scale(1.4)` |
+| Powered by | `translate(84 150) scale(.014 -.014)` | `translate(946.4 50) scale(.015 -.015)` |
+| SVG oficial incorporado | `x=256 y=118 width=260 height=72.1387` | `x=890 y=70 width=280 height=77.6879` |
+
+O canvas vertical anterior era de 600×304, com Powered by em escala `.019` e assinatura oficial de 480 unidades de
+largura. A nova composição reduz a altura e o peso do endosso. No menu, `sidebarBrandHeader` usa `minHeight: 84`
+em vez de 116; a imagem continua com altura automática e o cabeçalho pode crescer para acomodar um upload Whitelabel.
+Não aplicar altura fixa ou distorção a imagens personalizadas. O símbolo compacto e o favicon não mudam neste ajuste.
+Ver [especificação do topo](../../../docs/specs/superchat-topo-minimalista.md).
 
 ## Fonte oficial da assinatura completa
 

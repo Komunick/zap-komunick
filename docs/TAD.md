@@ -1,6 +1,6 @@
 # TAD — SuperChat
 
-**Komunick Inteligência e Tecnologia** · **Atualizado em:** 03/11/2026
+**Komunick Inteligência e Tecnologia** · **Atualizado em:** 04/11/2026
 **Fonte oficial:** `docs/TAD.md` no repositório · **Comportamento:** `docs/PRD.md`
 
 Levantamento parcial: este documento cobre o que o fork acrescenta ao Ticketz. O restante do sistema segue o desenho do
@@ -92,6 +92,11 @@ estão em `public/vector/` e nos PNGs de `public/`; o Whitelabel da empresa cont
 A marca padrão é SuperChat. `BrandLogo` usa a composição vertical no login, Sobre e menu aberto; a composição
 horizontal atende aos cabeçalhos Foco/Painel e o símbolo compacto ocupa trilhos e cabeçalhos estreitos.
 A sidebar preta usa a variante para fundo escuro nos dois temas; imagens personalizadas continuam respeitadas.
+O ajuste do [topo minimalista](specs/superchat-topo-minimalista.md) usa canvas vertical de 600×196, com Powered by e
+Komunick em uma linha abaixo de SuperChat. A sidebar reduz `sidebarBrandHeader.minHeight` de 116 para 84 px, sem
+fixar altura da imagem. O header mantém canvas 1200×200 e caixa de 336×56 px; amplia o grupo SuperChat em 1,4 vez
+e reduz o endosso à direita. As medidas dos elementos estão em `public/vector/README.md`; paths, cores, símbolo,
+favicon e seleção de ativos Whitelabel por `BrandLogo` são preservados.
 SuperChat e Powered by usam contornos. O endosso completo vem do SVG oficial publicado pela Komunick, preservado
 integralmente em `vector/komunick-completa.svg`, com seu PNG embutido de 173×48. Ampliações têm o limite dessa imagem.
 Nenhum dos ativos depende de fonte ou imagem externa durante a renderização. O wordmark anterior fica preservado em
@@ -160,6 +165,16 @@ Stitch entra como tokens: `sidebar*` (menu preto, igual nos dois temas), `accent
   `Tickets` (sem grupos; fila do atendimento), contando abertos por `createdAt`, finalizados por `finishedAt`, espera e
   "no prazo" por `startedAt` (`waitTime` até `slaMinutes`), dias e horas no fuso `TZ` do backend; novos contatos em
   `Contacts` e notas em `UserRatings`. Sem tabela nova.
+- `GET /queue` (RF-019): `AuthorizeQueueListService` recarrega o ator por id e empresa, selecionando somente
+  `id/companyId/profile/super`, e recusa vínculo, perfil ou privilégio divergentes da sessão. `QueueScopeRules`
+  valida `companyId` como uma única string decimal canônica de inteiro positivo seguro. Sem parâmetro, a listagem
+  continua incluindo todos os setores da empresa; informar a própria empresa preserva o acesso. Outra empresa exige
+  superusuário atual confirmado, mantendo Empresas → Usuários → seleção de setores. Query inválida recebe 400 com
+  `ERR_BAD_REQUEST`; ator inválido ou acesso cruzado sem privilégio recebe 403 com `ERR_NO_PERMISSION`, antes de
+  `ListQueuesService`, que mantém seu filtro empresarial e ordenação por nome. Body e cabeçalhos não selecionam
+  empresa. Sem migração ou alteração dos vínculos de setores dos usuários.
+  Ver [especificação](specs/isolamento-setores-empresas.md).
+
 - Mídia e opções de setores usam autorização administrativa local com ator recarregado por id/empresa e conferência
   de perfil/privilégio. A autorização precede o parser multipart. A cadeia de pais determina o setor das opções,
   incluindo filhos legados sem `queueId`; ciclos e cadeias externas são recusados. Cadastro e edição validam o
@@ -278,6 +293,10 @@ conteúdo, metadados, Range ou condicionais. Somente essa rota aceita também a 
 assinatura, versão e empresa atuais, horas/IP; credenciais simultâneas devem concordar. Não emite tokens nem aceita
 segredo na URL. Cache é privado/no-store, a disposição e o MIME são controlados pelo servidor. O frontend usa IDs,
 sessão nativa e limpeza de players/galeria por identidade, sem fallback público nem mudança no PDF download existente.
+O [recorte das miniaturas privadas](specs/chat-miniaturas-privadas.md) usa o slot `render.thumbnail` do plugin real
+com `ImageSlide` e `imageProps.crossOrigin`, pois `Thumbnails` 3.29.1 não herda `carousel.imageProps`. As miniaturas
+ficam sob `PrivateMediaStage`, com captura de erros e liberação das referências ao desmontar. A galeria pública
+continua com o renderer padrão; o teste de regressão transforma apenas essa dependência ESM e executa o plugin real.
 Após autorizar, a classificação lê no máximo 512 bytes de assinatura; isso preserva formatos conhecidos sem extensão
 e mantém conteúdo ativo/desconhecido como download. O corpo continua em streaming, sem carregar o arquivo inteiro.
 
@@ -418,8 +437,9 @@ recuar a aplicação.
   (`429`, `Retry-After: 600` como espera máxima conservadora). A recuperação
   usa atualização condicional no banco para impedir consumo concorrente duplicado.
 - Ativar, desativar e redefinir 2FA incrementa `tokenVersion`; operações condicionais impedem reativar uma configuração
-  invalidada por reset concorrente. A sessão atual recebe novo refresh cookie ao ativar/desativar; outras renovações
-  e desafios antigos ficam inválidos. O access token anterior continua sujeito ao TTL existente de quinze minutos.
+  invalidada por reset concorrente. A sessão normal atual recebe novo refresh cookie ao ativar/desativar; sessões
+  impersonadas limpam o cookie e exigem novo login. Outras renovações e desafios antigos ficam inválidos.
+  O access token anterior continua sujeito ao TTL existente de quinze minutos.
   `DELETE /users/:userId/2fa` é administrativo, confere empresa e privilégio de superusuário, e não permite reset da
   própria conta. `ListUsersService` expõe `twoFactorEnabled` e `super` para indicação e disponibilidade da ação.
 - `AuthorizeSecurityActorService` reconsulta o cadastro pela identidade e empresa da sessão antes das operações de
@@ -437,6 +457,26 @@ recuar a aplicação.
   os proxies conhecidos (por exemplo `loopback` quando o proxy está no mesmo host, ou os CIDRs da rede do proxy),
   garantindo que acesso direto e cabeçalhos `X-Forwarded-For` não possam forjar o IP. A tela mostra o IP usado pelo
   servidor para essa conferência. `TWO_FACTOR_ISSUER` personaliza o nome do autenticador (padrão `SuperChat`).
+- Impersonação: `authRoutes` mantém a autenticação e remove o alias incorreto de `isAdmin`; `SessionController`
+  usa autorização específica de entrada/retorno, sem alterar globalmente `isAuth` ou `isSuper`. A entrada vincula
+  bearer e `jrt` normais, confere ator atual, empresa, perfil, privilégio e versão do cookie antes de buscar o alvo.
+  `CreateTokens` e `DecodeRefreshToken` transportam `originalUserId/originalCompanyId/originalTokenVersion` nos pares
+  derivados. O retorno exige par impersonado do mesmo alvo e metadados de origem iguais, revalidando alvo e origem;
+  restaura o cadastro completo atual da origem, com resposta compatível com a ação Sair do frontend.
+- `RefreshTokenService` revalida alvo/empresa/versão e origem/empresa/super/versão das sessões impersonadas antes
+  de criar outro par e preserva os metadados. A checagem de IP da identidade de destino antecede a emissão e conserva
+  `ERR_IP_NOT_ALLOWED` com 403, fora da conversão de erros de sessão. Renovação normal e tratamento herdado de
+  horários das sessões impersonadas permanecem preservados. O cookie normal atual da origem comprova sessão
+  completa; desafios 2FA não permitem impersonação e não se pedem credenciais do alvo.
+- `SecurityController` verifica a marca assinada do bearer antes de ativar/desativar 2FA; após a alteração, limpa
+  `jrt` para sessões derivadas em vez de emitir cookie normal. O incremento de versão invalida a renovação anterior.
+  Sessões normais mantêm a rotação existente. Cookies já convertidos em normais na versão anterior não podem ser
+  distinguidos retroativamente; não há revogação em massa nesta correção.
+- Após o gate `isAuth`, contexto derivado inválido no retorno recebe 401 e limpa `jrt`; par normal recebe 400 com
+  `ERR_NOT_IMPERSONATING`. Derivados legados sem versão da origem exigem reautenticação. Sem migração SQL: a
+  proteção abrange entrada, retorno e refresh, mantendo o TTL de até quinze minutos dos access tokens já emitidos.
+  Os ingressos HTTP gerais, socket e mídia não ganham revogação imediata neste recorte. Ver
+  [especificação](specs/autorizacao-impersonacao.md).
 - `RecordAuditService` registra as famílias `auth.`, `security.`, `user.` e `setting.` com empresa, usuário, entidade,
   data, IP e user-agent limitado a 512 caracteres. Falha de gravação é registrada no log sem interromper a ação.
   `GET /audit-logs` é administrativo e filtra a empresa autenticada, período (`from`, `to`), usuário e ação/família;
@@ -452,6 +492,8 @@ recuar a aplicação.
 API com PostgreSQL/Redis reais para autenticação, cookies, autorização, IPs, filtros e privacidade da auditoria;
 percurso de tela com contas fictícias para ativar, recuperar, desativar, redefinir e consultar registros. Nunca incluir
 segredo, QR ou códigos de recuperação em logs ou prints de evidência. Os resultados executados ficam no PR.
+Para impersonação, incluir rotas/JWTs/cookies reais, pares misturados, atores e versões revogados, metadados legados,
+negação sem emissão indevida e o ciclo autorizado de entrada, renovação e retorno com duas empresas fictícias.
 
 **Recuperação:** manter as colunas e a tabela ao recuar a aplicação preserva os dados. Os `down` removem configuração
 2FA e trilha de auditoria e não são necessários para recuar o código; não usá-los como procedimento padrão. Uma versão
