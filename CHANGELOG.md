@@ -6,6 +6,10 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Segurança
 
+- A consulta de setores confere o usuário e seus privilégios atuais antes de listar outra empresa. Usuários e
+  administradores comuns ficam na própria empresa; a seleção empresarial do superusuário continua disponível.
+  Parâmetros inválidos e sessões com contexto alterado são recusados.
+
 - Busca de contatos (tela Contatos e `GET /contacts`, inclusive com token de API): o texto buscado agora chega ao
   banco só como valor. Antes, uma aspa simples no texto alterava a consulta SQL, falha que veio do Ticketz. A busca
   continua sem diferenciar acentos e maiúsculas, e nomes com apóstrofo (como "D'Ávila"), que davam erro, passam a ser
