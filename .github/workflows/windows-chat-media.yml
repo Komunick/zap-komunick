@@ -1,0 +1,45 @@
+name: Windows private chat media migration
+
+on:
+  pull_request:
+  push:
+    branches: [dev, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native_windows_media:
+    name: Native Windows media checks (Node ${{ matrix.node }})
+    runs-on: windows-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ["22", "24.22.1"]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: ${{ matrix.node }}
+          package-manager-cache: false
+      - name: Install locked dependencies without lifecycle scripts
+        working-directory: backend
+        run: npm ci --ignore-scripts --legacy-peer-deps --no-audit --no-fund
+      - name: Check native directory flush, cutover and recovery without servers
+        working-directory: backend
+        env:
+          NODE_ENV: test
+          CI: "true"
+          TEMP: ${{ runner.temp }}
+          TMP: ${{ runner.temp }}
+        run: >-
+          node --require ../.github/scripts/no-network.cjs
+          node_modules/jest/bin/jest.js
+          --runInBand --coverage=false --bail=0 --runTestsByPath
+          src/__tests__/helpers/DirectorySync.spec.ts
+          src/__tests__/services/ChatMediaMigration.spec.ts

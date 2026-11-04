@@ -378,6 +378,10 @@ antes de remover cópias públicas, com retomada segura e sem perda das associa�
 As [miniaturas da galeria privada](specs/chat-miniaturas-privadas.md) usam a mesma sessão autenticada da imagem
 principal e respeitam a limpeza ao fechar ou trocar de identidade, sem fallback para URLs públicas.
 
+O [suporte à migração no Windows](specs/chat-migracao-anexos-windows.md) mantém flush de diretórios, hashes e
+retomada; uma falha de sincronização recusa o cutover antes de publicar cópias privadas. A cópia privada existente
+também é sincronizada antes de remover a origem pública. Não há fallback público nem dispensa da prontidão.
+
 **Cenário de sucesso:**
 
 Dado um atendente que nunca conversou com a colega Ana,
