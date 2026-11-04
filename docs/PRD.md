@@ -1,7 +1,7 @@
 # PRD — SuperChat
 
 **Komunick Inteligência e Tecnologia**
-**Responsável:** Jailson (Komunick) · **Atualizado em:** 30/10/2026
+**Responsável:** Jailson (Komunick) · **Atualizado em:** 04/11/2026
 **Fonte oficial:** `docs/PRD.md` no repositório
 **Validado por:** Pendente
 
@@ -371,6 +371,10 @@ legados identificados para armazenamento privado e entrega autenticada por mensa
 são verificadas em cada acesso, inclusive reprodução parcial e download. Links públicos antigos do chat deixam de
 entregar conteúdo; arquivos dos demais módulos mantêm seus contratos. A migração verifica integridade e conflitos
 antes de remover cópias públicas, com retomada segura e sem perda das associações.
+
+O [suporte à migração no Windows](specs/chat-migracao-anexos-windows.md) mantém flush de diretórios, hashes e
+retomada; uma falha de sincronização recusa o cutover antes de publicar cópias privadas. A cópia privada existente
+também é sincronizada antes de remover a origem pública. Não há fallback público nem dispensa da prontidão.
 
 **Cenário de sucesso:**
 

@@ -1,4 +1,4 @@
-import { promises as fs } from "fs";
+import { constants, promises as fs } from "fs";
 import path from "path";
 import os from "os";
 import ChatMessage from "../../models/ChatMessage";
@@ -100,6 +100,7 @@ it("inventories references and owned UUID orphans without mutating public files 
 });
 
 it("migrates all identified bytes without changing raw references or another module and resumes idempotently", async () => {
+  const open = jest.spyOn(fs, "open");
   const result = await migrateChatMedia();
   expect(result.ready).toBe(true);
   expect(await fs.readFile(destination(legacy), "utf8")).toBe(
@@ -116,7 +117,15 @@ it("migrates all identified bytes without changing raw references or another mod
   );
   expect(references).toEqual([legacy]);
   expect((await migrateChatMedia()).ready).toBe(true);
-  expect((await fs.stat(destination(legacy))).mode & 0o777).toBe(0o600);
+  expect(open).toHaveBeenCalledWith(
+    expect.stringContaining(".chat-migration-"),
+    expect.any(Number),
+    0o600
+  );
+  // Windows chmod exposes only its writable flag, not POSIX group/other ACLs.
+  if (process.platform !== "win32") {
+    expect((await fs.stat(destination(legacy))).mode & 0o777).toBe(0o600);
+  }
   expect(
     (ChatMessage.sequelize.query as jest.Mock).mock.calls.some(([sql]) =>
       sql.startsWith("LOCK TABLE")
@@ -205,14 +214,21 @@ it("detects another module sharing the configured frontend public ingress", asyn
 it.each(["public", "private"])(
   "refuses a %s symlink before moving good files",
   async area => {
-    const unrelated = path.join(root, "unrelated.txt");
+    const unrelatedDirectory = path.join(root, "unrelated-directory");
+    await fs.mkdir(unrelatedDirectory);
+    const unrelated = path.join(unrelatedDirectory, "unrelated.txt");
     await fs.writeFile(unrelated, "OWN UNRELATED BYTES");
+    // Directory junctions exercise real Windows reparse paths without requiring
+    // the privilege needed for a file symlink. POSIX keeps the file symlink.
+    const target =
+      process.platform === "win32" ? unrelatedDirectory : unrelated;
+    const type = process.platform === "win32" ? "junction" : undefined;
     if (area === "public") {
       await fs.unlink(source(legacy));
-      await fs.symlink(unrelated, source(legacy));
+      await fs.symlink(target, source(legacy), type);
     } else {
       await ensureChatMediaDirectory();
-      await fs.symlink(unrelated, destination(legacy));
+      await fs.symlink(target, destination(legacy), type);
     }
     await expect(migrateChatMedia()).rejects.toThrow(
       "ERR_CHAT_MEDIA_MIGRATION_CONFLICT"
@@ -247,6 +263,80 @@ it("preserves both complete copies after interruption and safely resumes the unl
   expect(await fs.readFile(source(control), "utf8")).toBe(
     "OTHER MODULE FICTIONAL BYTES"
   );
+});
+
+it("refuses an unsupported directory flush before publishing any private file", async () => {
+  const actualOpen = fs.open.bind(fs);
+  const link = jest.spyOn(fs, "link");
+  const failure = Object.assign(new Error("fixture preflight flush"), {
+    code: "EIO"
+  });
+  jest.spyOn(fs, "open").mockImplementation(async (...args) => {
+    if (args[0] === uploadConfig.directory) throw failure;
+    return actualOpen(...args);
+  });
+  await expect(migrateChatMedia()).rejects.toBe(failure);
+  expect(link).not.toHaveBeenCalled();
+  expect(await fs.readdir(chatMediaDirectory)).toEqual([]);
+  expect(await fs.readFile(source(legacy), "utf8")).toBe(
+    "OWN FICTIONAL LEGACY PNG BYTES"
+  );
+  expect(await fs.readFile(source(orphan), "utf8")).toBe(
+    "OWN FICTIONAL ORPHAN BYTES"
+  );
+});
+
+it("preserves both copies if publication metadata cannot be flushed, then resumes", async () => {
+  const actualOpen = fs.open.bind(fs);
+  const failure = Object.assign(new Error("fixture publication flush"), {
+    code: "EIO"
+  });
+  let chatDirectoryOpens = 0;
+  const open = jest.spyOn(fs, "open").mockImplementation(async (...args) => {
+    const handle = await actualOpen(...args);
+    if (args[0] === chatMediaDirectory && ++chatDirectoryOpens === 2) {
+      jest.spyOn(handle, "sync").mockRejectedValue(failure);
+    }
+    return handle;
+  });
+  await expect(migrateChatMedia()).rejects.toBe(failure);
+  expect(await fs.readFile(source(legacy), "utf8")).toBe(
+    "OWN FICTIONAL LEGACY PNG BYTES"
+  );
+  expect(await fs.readFile(destination(legacy), "utf8")).toBe(
+    "OWN FICTIONAL LEGACY PNG BYTES"
+  );
+  open.mockRestore();
+  expect((await migrateChatMedia()).ready).toBe(true);
+});
+
+it("flushes a resumed private copy before deleting its public source", async () => {
+  await ensureChatMediaDirectory();
+  await fs.writeFile(destination(legacy), "OWN FICTIONAL LEGACY PNG BYTES");
+  const actualOpen = fs.open.bind(fs);
+  const failure = Object.assign(new Error("fixture resumed file flush"), {
+    code: "EIO"
+  });
+  const open = jest.spyOn(fs, "open").mockImplementation(async (...args) => {
+    const handle = await actualOpen(...args);
+    if (
+      args[0] === destination(legacy) &&
+      typeof args[1] === "number" &&
+      args[1] & constants.O_WRONLY
+    ) {
+      jest.spyOn(handle, "sync").mockRejectedValue(failure);
+    }
+    return handle;
+  });
+  await expect(migrateChatMedia()).rejects.toBe(failure);
+  expect(await fs.readFile(source(legacy), "utf8")).toBe(
+    "OWN FICTIONAL LEGACY PNG BYTES"
+  );
+  expect(await fs.readFile(destination(legacy), "utf8")).toBe(
+    "OWN FICTIONAL LEGACY PNG BYTES"
+  );
+  open.mockRestore();
+  expect((await migrateChatMedia()).ready).toBe(true);
 });
 
 it("inventories previously missing bytes without inventing content or reading public fallbacks", async () => {

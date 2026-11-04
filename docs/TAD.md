@@ -1,6 +1,6 @@
 # TAD — SuperChat
 
-**Komunick Inteligência e Tecnologia** · **Atualizado em:** 03/11/2026
+**Komunick Inteligência e Tecnologia** · **Atualizado em:** 04/11/2026
 **Fonte oficial:** `docs/TAD.md` no repositório · **Comportamento:** `docs/PRD.md`
 
 Levantamento parcial: este documento cobre o que o fork acrescenta ao Ticketz. O restante do sistema segue o desenho do
@@ -276,6 +276,12 @@ e mantém conteúdo ativo/desconhecido como download. O corpo continua em stream
 mídia compartilhadas e copia sem sobrescrever, verificando integridade antes de remover origens públicas. Mantém as
 associações e o schema. O CLI `node dist/scripts/migrateChatMedia.js` é dry-run por padrão; `--execute` exige manutenção
 sem escritores, e `--check` confirma prontidão. Falha parcial exige exame e retomada, não restauração automática.
+`helpers/DirectorySync` abre diretórios com `O_WRONLY` no Windows: `FlushFileBuffers` precisa de acesso de escrita.
+POSIX mantém `O_RDONLY | O_DIRECTORY`. Antes de publicar arquivos, a migração sincroniza os diretórios público,
+privado e seus pais recém-criados; falhas de abertura, flush ou fechamento abortam. A cópia privada verificada,
+inclusive em uma retomada, recebe flush antes de remover a origem pública. A publicação continua por hardlink
+exclusivo, seguida de flush do diretório; o unlink público também continua seguido de flush. Não há dependência
+nova ou supressão de EPERM. Ver [migração no Windows](specs/chat-migracao-anexos-windows.md).
 O servidor verifica prontidão antes de escutar HTTP. `PublicFileService` bloqueia nomes do chat antes de abrir arquivos,
 confina o acesso à raiz pública e recusa symlinks; o nginx usa proxy para essa decisão e não monta mais o volume público.
 O descritor de arquivos do painel RF-023 também consulta essa proteção antes de abrir o caminho e seu destino real,
@@ -286,6 +292,11 @@ associação legada indevida, remoção/mudança de empresa, concorrência real 
 novas identidades e arquivos fictícios rastreados. Privacidade acrescenta migração por hash/retomada/conflito e negativas
 de entrega por todos os ingressos, além de preview/reprodução/download legítimos. Não revoga cópias já baixadas ou
 arquivos dos atendimentos que continuam públicos pelo contrato do RF-023.
+As regressões de migração usam arquivos próprios, falhas de flush, interrupção e retomada. Windows usa junctions
+reais para testar recusa de reparse paths sem exigir privilégio de symlink; POSIX conserva os symlinks de arquivo
+e a verificação de modo `0600`. O pedido de criação `0600` é verificado nas duas plataformas; os bits POSIX não
+comprovam ACLs do Windows. O job Windows executa os testes nativos em Node 22 e 24; o job Linux existente mantém
+a suíte completa. Testes de chamadas/retomada não constituem ensaio de corte de energia ou falha do dispositivo.
 
 **Etiquetas por setor (RF-019):** `TagModal` usa `QueueSelect` com seleção múltipla e texto explicando que a seleção
 vazia vale para todos os setores; `pages/Tags` mostra a coluna "Setores". `components/TagPicker` reúne
