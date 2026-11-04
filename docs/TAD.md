@@ -283,6 +283,10 @@ conteúdo, metadados, Range ou condicionais. Somente essa rota aceita também a 
 assinatura, versão e empresa atuais, horas/IP; credenciais simultâneas devem concordar. Não emite tokens nem aceita
 segredo na URL. Cache é privado/no-store, a disposição e o MIME são controlados pelo servidor. O frontend usa IDs,
 sessão nativa e limpeza de players/galeria por identidade, sem fallback público nem mudança no PDF download existente.
+O [recorte das miniaturas privadas](specs/chat-miniaturas-privadas.md) usa o slot `render.thumbnail` do plugin real
+com `ImageSlide` e `imageProps.crossOrigin`, pois `Thumbnails` 3.29.1 não herda `carousel.imageProps`. As miniaturas
+ficam sob `PrivateMediaStage`, com captura de erros e liberação das referências ao desmontar. A galeria pública
+continua com o renderer padrão; o teste de regressão transforma apenas essa dependência ESM e executa o plugin real.
 Após autorizar, a classificação lê no máximo 512 bytes de assinatura; isso preserva formatos conhecidos sem extensão
 e mantém conteúdo ativo/desconhecido como download. O corpo continua em streaming, sem carregar o arquivo inteiro.
 
