@@ -76,6 +76,10 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Alterado
 
+- Arte do topo com SuperChat em destaque e endosso Powered by Komunick menor. Login, Sobre e menu aberto usam a
+  assinatura em uma linha abaixo da marca; o header Foco/Painel mantém o endosso à direita. Cabeçalho da sidebar
+  mais baixo, com altura automática para logos personalizadas; cores, símbolo, favicon e marca oficial preservados.
+
 - Chat interno com busca limpável, estados de carregamento/vazio/erro e repetição, seleção e não lidas acessíveis.
   Mensagens, anexos e campo de envio respeitam a largura disponível e os temas claro e escuro.
 
