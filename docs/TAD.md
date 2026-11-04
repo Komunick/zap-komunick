@@ -92,11 +92,14 @@ estão em `public/vector/` e nos PNGs de `public/`; o Whitelabel da empresa cont
 A marca padrão é SuperChat. `BrandLogo` usa a composição vertical no login, Sobre e menu aberto; a composição
 horizontal atende aos cabeçalhos Foco/Painel e o símbolo compacto ocupa trilhos e cabeçalhos estreitos.
 A sidebar preta usa a variante para fundo escuro nos dois temas; imagens personalizadas continuam respeitadas.
-O ajuste do [topo minimalista](specs/superchat-topo-minimalista.md) usa canvas vertical de 600×196, com Powered by e
-Komunick em uma linha abaixo de SuperChat. A sidebar reduz `sidebarBrandHeader.minHeight` de 116 para 84 px, sem
-fixar altura da imagem. O header mantém canvas 1200×200 e caixa de 336×56 px; amplia o grupo SuperChat em 1,4 vez
-e reduz o endosso à direita. As medidas dos elementos estão em `public/vector/README.md`; paths, cores, símbolo,
-favicon e seleção de ativos Whitelabel por `BrandLogo` são preservados.
+A [logo Essencial](specs/superchat-logo-essencial.md), escolhida pelo usuário entre quatro propostas, substitui a
+composição do [topo minimalista anterior](specs/superchat-topo-minimalista.md). Os SVGs completos usam canvas
+200×64 e o wordmark sem símbolo: Manrope 450 em `super`, 650 no `Chat` verde e 500 no Powered by de 8 unidades.
+O endosso reúne Powered by e a assinatura oficial em uma linha abaixo do nome. O header Foco/Painel mantém a
+caixa de 336×56 px e posiciona o mesmo wordmark à esquerda, ampliado em 10%, com o endosso completo à direita.
+A sidebar usa altura mínima de 72 px e padding vertical de 4 px, sem fixar a altura da imagem ou impedir
+crescimento para uploads Whitelabel. As medidas dos elementos estão em `public/vector/README.md`;
+o símbolo compacto, favicon e seleção de ativos personalizados por `BrandLogo` permanecem preservados.
 SuperChat e Powered by usam contornos. O endosso completo vem do SVG oficial publicado pela Komunick, preservado
 integralmente em `vector/komunick-completa.svg`, com seu PNG embutido de 173×48. Ampliações têm o limite dessa imagem.
 Nenhum dos ativos depende de fonte ou imagem externa durante a renderização. O wordmark anterior fica preservado em

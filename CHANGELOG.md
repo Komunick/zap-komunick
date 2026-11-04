@@ -94,9 +94,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Alterado
 
-- Arte do topo com SuperChat em destaque e endosso Powered by Komunick menor. Login, Sobre e menu aberto usam a
-  assinatura em uma linha abaixo da marca; o header Foco/Painel mantém o endosso à direita. Cabeçalho da sidebar
-  mais baixo, com altura automática para logos personalizadas; cores, símbolo, favicon e marca oficial preservados.
+- Logo padrão SuperChat adota a opção Essencial: nome sem símbolo ao lado, tipografia mais leve e Powered by
+  Komunick menor, com a assinatura oficial preservada. O topo do menu fica mais baixo e mantém altura automática
+  para logos personalizadas. Ícone compacto e favicon continuam disponíveis.
 
 - Chat interno com busca limpável, estados de carregamento/vazio/erro e repetição, seleção e não lidas acessíveis.
   Mensagens, anexos e campo de envio respeitam a largura disponível e os temas claro e escuro.

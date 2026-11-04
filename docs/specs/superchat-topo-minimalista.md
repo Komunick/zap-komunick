@@ -1,5 +1,9 @@
 # Topo SuperChat minimalista
 
+Esta especificação registra a primeira simplificação do topo. A composição e as medidas foram substituídas pela
+[opção A, Essencial](superchat-logo-essencial.md), escolhida depois pelo usuário. O conteúdo abaixo preserva essa
+decisão anterior e não define os ativos atuais.
+
 ## Objetivo e aprovação
 
 Em 04/11/2026, o usuário autorizou simplificar a arte do topo e reduzir o endosso Powered by Komunick, com
