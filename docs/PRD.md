@@ -1,7 +1,7 @@
 # PRD — SuperChat
 
 **Komunick Inteligência e Tecnologia**
-**Responsável:** Jailson (Komunick) · **Atualizado em:** 30/10/2026
+**Responsável:** Jailson (Komunick) · **Atualizado em:** 04/11/2026
 **Fonte oficial:** `docs/PRD.md` no repositório
 **Validado por:** Pendente
 
@@ -286,7 +286,7 @@ então o formulário pede pelo menos um contato ou uma etiqueta.
 ### RF-009 — Identidade SuperChat e Komunick
 
 **O que faz:** o sistema abre como SuperChat, com logo `superChat` e endosso `Powered by Komunick` usando a marca oficial
-da Komunick Inteligência, e um visual mais atual que o do Ticketz e o do ZapContábil, com
+da Komunick Inteligência e Tecnologia, e um visual mais atual que o do Ticketz e o do ZapContábil, com
 referências do Dribbble (painéis de atendimento e CRMs de 2025 e 2026).
 
 **Regras importantes:**
@@ -297,6 +297,10 @@ referências do Dribbble (painéis de atendimento e CRMs de 2025 e 2026).
   verde #35B62E, preto #020605 e a fonte Manrope. Botões e textos em verde
   usam o tom mais escuro #1F7F1B no tema claro, para manter o contraste. O logo e a cor que a empresa configurar em
   Whitelabel continuam valendo.
+- SuperChat tem destaque no topo; Powered by e a assinatura oficial Komunick formam um endosso menor. No login,
+  Sobre e menu aberto, o endosso ocupa uma linha discreta abaixo da marca; no header Foco/Painel, fica à direita.
+  O menu aberto usa um cabeçalho mais baixo, que continua crescendo para acomodar logos personalizadas sem cortes.
+  Conferir legibilidade e proporção nos dois temas e no celular. Ver [topo minimalista](specs/superchat-topo-minimalista.md).
 - Tema claro e escuro com as mesmas cores em todas as telas: menu, barra do topo, lista de atendimentos, chat, Kanban,
   SLA, cadastros e login.
 - Direção visual "B — Menu preto" (escolhida pelo responsável entre três no Stitch): menu lateral #020605 nos dois

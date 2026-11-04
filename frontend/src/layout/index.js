@@ -212,7 +212,7 @@ const useStyles = makeStyles(theme => ({
     gap: 8
   },
   sidebarBrandHeader: {
-    minHeight: 116,
+    minHeight: 84,
     paddingTop: 8,
     paddingBottom: 8
   },
