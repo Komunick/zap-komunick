@@ -4,6 +4,11 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ## Não publicado
 
+### Corrigido
+
+- Miniaturas da galeria do chat interno usam a mesma sessão autenticada da imagem principal. Erros e fechamento
+  também liberam essas referências, preservando a galeria dos atendimentos e os downloads existentes.
+
 ### Segurança
 
 - A consulta de setores confere o usuário e seus privilégios atuais antes de listar outra empresa. Usuários e
