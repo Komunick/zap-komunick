@@ -6,12 +6,14 @@ import ListQueuesService from "../services/QueueService/ListQueuesService";
 import AuthorizeQueueListService from "../services/QueueService/AuthorizeQueueListService";
 import ShowQueueService from "../services/QueueService/ShowQueueService";
 import UpdateQueueService from "../services/QueueService/UpdateQueueService";
-import { head } from "lodash";
-import Queue from "../models/Queue";
-import fs from "fs";
-import path from "path";
-import AppError from "../errors/AppError";
-import saveMediaToFile from "../helpers/saveMediaFile";
+import AuthorizeQueueAdministrationService, {
+  authorizeQueue
+} from "../services/QueueService/AuthorizeQueueAdministrationService";
+import {
+  cleanupQueueUploads,
+  deleteQueueMedia,
+  storeQueueMedia
+} from "../services/QueueService/QueueMediaService";
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const companyId = await AuthorizeQueueListService(
@@ -96,34 +98,14 @@ export const mediaUpload = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const { queueId } = req.params;
-  const files = req.files as Express.Multer.File[];
-  const file = head(files);
-
   try {
-    const queue = await Queue.findByPk(queueId);
-
-    const savedFilePath = await saveMediaToFile(
-      {
-        data: fs.readFileSync(file.path),
-        mimetype: file.mimetype,
-        filename: file.originalname
-      },
-      {
-        destination: queue.companyId
-      }
-    );
-
-    fs.unlinkSync(file.path);
-
-    queue.update({
-      mediaPath: savedFilePath,
-      mediaName: file.originalname
-    });
-
+    const companyId = await AuthorizeQueueAdministrationService(req.user);
+    const queue = await authorizeQueue(req.params.queueId, companyId);
+    await storeQueueMedia(queue, companyId, req.files as Express.Multer.File[]);
     return res.send({ mensagem: "Arquivo Salvo" });
-  } catch (err) {
-    throw new AppError(err.message);
+  } catch (error) {
+    await cleanupQueueUploads(req.files as Express.Multer.File[]);
+    throw error;
   }
 };
 
@@ -131,21 +113,8 @@ export const deleteMedia = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const { queueId } = req.params;
-
-  try {
-    const queue = await Queue.findByPk(queueId);
-    const filePath = path.resolve("public", queue.mediaPath);
-    const fileExists = fs.existsSync(filePath);
-    if (fileExists) {
-      fs.unlinkSync(filePath);
-    }
-
-    queue.mediaPath = null;
-    queue.mediaName = null;
-    await queue.save();
-    return res.send({ mensagem: "Arquivo excluído" });
-  } catch (err) {
-    throw new AppError(err.message);
-  }
+  const companyId = await AuthorizeQueueAdministrationService(req.user);
+  const queue = await authorizeQueue(req.params.queueId, companyId);
+  await deleteQueueMedia(queue, companyId);
+  return res.send({ mensagem: "Arquivo excluído" });
 };
