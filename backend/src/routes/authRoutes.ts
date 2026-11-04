@@ -1,7 +1,6 @@
 import { Router } from "express";
 import * as SessionController from "../controllers/SessionController";
 import isAuth from "../middleware/isAuth";
-import isSuper from "../middleware/isAdmin";
 
 const authRoutes = Router();
 
@@ -9,7 +8,6 @@ authRoutes.post("/login", SessionController.store);
 authRoutes.get(
   "/impersonate/:companyId",
   isAuth,
-  isSuper,
   SessionController.impersonate
 );
 /**

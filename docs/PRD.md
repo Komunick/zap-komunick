@@ -501,8 +501,16 @@ Segurança da conta, IPs permitidos, consulta de auditoria e indicação/reset d
   A restrição vem desligada. A tela mostra o IP reconhecido pelo servidor; lista ativa vazia, entradas inválidas e
   mudanças que bloqueiem o próprio administrador são recusadas. Superusuários mantêm acesso de recuperação.
 - A restrição de IP vale no login, na confirmação de 2FA e na renovação de sessão. Ativar, desativar ou redefinir 2FA
-  invalida desafios e renovações anteriores; ativar/desativar preserva a sessão atual com um novo cookie de renovação.
+  invalida desafios e renovações anteriores; ativar/desativar preserva a sessão normal atual com um novo cookie de
+  renovação. Em sessão impersonada, limpa o cookie e exige novo login, sem converter a sessão em normal.
   Tokens de acesso já emitidos mantêm a validade de até quinze minutos.
+- A ação "Acessar como" em Empresas exige superusuário atual, com token e cookie normais da mesma conta e contexto
+  cadastral válido. A sessão assumida fica vinculada à origem; Sair retorna à conta original após revalidar origem e
+  destino. Retorno e renovação recusam vínculos obsoletos ou privilégios revogados. A lista de IPs da identidade de
+  destino também vale na emissão dessas sessões, preservando o acesso de recuperação do superusuário.
+- Sessões impersonadas anteriores à vinculação completa exigem novo login. A correção protege a entrada, o retorno
+  e a renovação; tokens de acesso já emitidos mantêm o TTL de até quinze minutos, sem revogação imediata nos demais
+  caminhos. Ver [autorização da impersonação](specs/autorizacao-impersonacao.md).
 - Administradores consultam a auditoria da própria empresa, com período, usuário, ação e paginação. São registrados
   eventos de autenticação, alterações de 2FA, da lista de IPs, de usuários e de configurações, com data, autor, ação e IP.
   Senhas, códigos, segredos de autenticador e tokens não aparecem na auditoria nem nos logs de requisição.
