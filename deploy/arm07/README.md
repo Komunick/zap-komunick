@@ -179,6 +179,13 @@ Somente executar na janela autorizada para aquele perfil, com o pacote novo cong
 backup verificado e **todos os escritores e ingressos da versao antiga parados** antes
 de `--execute`. Nao copiar dados do notebook nem executar nos dois perfis por implicacao.
 
+A sincronizacao mantem fsync de diretorios no Linux. Em Windows nativo, o handle e
+aberto com acesso de escrita para FlushFileBuffers; falhas continuam abortando.
+O preflight verifica os diretorios antes da publicacao e a retomada sincroniza a copia
+privada antes de remover a publica. Nao ignorar EPERM nem apagar origens para contornar
+a prontidao. O ensaio Windows nao comprova a montagem Linux ARM64 da instalacao.
+Ver [recorte tecnico](../../docs/specs/chat-migracao-anexos-windows.md).
+
 No diretorio operacional do perfil, usar o array `compose` com o mesmo projeto/env
 ja conferido acima e as imagens novas selecionadas, sem iniciar a aplicacao. O one-off
 substitui o entrypoint para rodar somente o CLI, sem bootstrap ou servidor HTTP:

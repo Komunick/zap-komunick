@@ -163,6 +163,10 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- Migração de anexos privados no Windows usa um handle de diretório gravável para flush, mantendo o comportamento
+  POSIX. Preflight recusa filesystem/permissões incompatíveis antes da publicação; retomada sincroniza a cópia
+  privada antes de remover a pública, preservando hashes, locks e prontidão.
+
 - Operações de segurança revalidam empresa, perfil e privilégio de superusuário no cadastro atual. Tokens antigos
   deixam de autorizar alterações de 2FA, IPs permitidos ou leitura de auditoria após mudança desses acessos.
 - Criar uma etiqueta já existente preserva seus setores; a alteração continua restrita à edição autorizada.

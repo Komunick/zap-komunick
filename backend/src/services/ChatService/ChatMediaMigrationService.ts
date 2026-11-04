@@ -15,6 +15,7 @@ import {
   publicChatMediaReference
 } from "../../helpers/ChatMediaRules";
 import ChatMessage from "../../models/ChatMessage";
+import syncDirectory from "../../helpers/DirectorySync";
 
 interface MediaReferenceTable {
   table: string;
@@ -254,18 +255,6 @@ export async function isProtectedChatPublicPath(
   return (await ChatMessage.count({ where: { mediaPath: basename } })) > 0;
 }
 
-async function syncDirectory(directory: string): Promise<void> {
-  const handle = await fs.open(
-    directory,
-    constants.O_RDONLY | constants.O_DIRECTORY
-  );
-  try {
-    await handle.sync();
-  } finally {
-    await handle.close();
-  }
-}
-
 async function copyExclusive(
   source: string,
   destination: string,
@@ -351,7 +340,20 @@ export async function migrateChatMedia(): Promise<ChatMediaInventory> {
     if (hasChatMediaMigrationConflict(inventory))
       throw new Error("ERR_CHAT_MEDIA_MIGRATION_CONFLICT");
     const pending = inventory.files.filter(file => file.public);
-    if (pending.length) await ensureChatMediaDirectory();
+    if (pending.length) {
+      await ensureChatMediaDirectory();
+      // Probe every directory before publication, and persist newly-created
+      // private directory entries before any public source can be removed.
+      const directories = [
+        path.dirname(path.dirname(chatMediaDirectory)),
+        path.dirname(chatMediaDirectory),
+        chatMediaDirectory,
+        uploadConfig.directory
+      ];
+      for (let index = 0; index < directories.length; index += 1) {
+        await syncDirectory(directories[index]);
+      }
+    }
     for (let index = 0; index < pending.length; index += 1) {
       const file = pending[index],
         source = path.join(uploadConfig.directory, file.name),
@@ -365,6 +367,16 @@ export async function migrateChatMedia(): Promise<ChatMediaInventory> {
         (await digest(destination)) !== file.publicHash
       )
         throw new Error("ERR_CHAT_MEDIA_MIGRATION_CHANGED");
+      // A resumed private copy also needs a data/metadata flush before unlink.
+      const durable = await fs.open(
+        destination,
+        constants.O_WRONLY | constants.O_NOFOLLOW
+      );
+      try {
+        await durable.sync();
+      } finally {
+        await durable.close();
+      }
       await fs.unlink(source);
       await syncDirectory(uploadConfig.directory);
     }
