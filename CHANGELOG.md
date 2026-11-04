@@ -4,6 +4,11 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ## Não publicado
 
+### Corrigido
+
+- Miniaturas da galeria do chat interno usam a mesma sessão autenticada da imagem principal. Erros e fechamento
+  também liberam essas referências, preservando a galeria dos atendimentos e os downloads existentes.
+
 ### Segurança
 
 - Busca de contatos (tela Contatos e `GET /contacts`, inclusive com token de API): o texto buscado agora chega ao

@@ -371,6 +371,8 @@ legados identificados para armazenamento privado e entrega autenticada por mensa
 são verificadas em cada acesso, inclusive reprodução parcial e download. Links públicos antigos do chat deixam de
 entregar conteúdo; arquivos dos demais módulos mantêm seus contratos. A migração verifica integridade e conflitos
 antes de remover cópias públicas, com retomada segura e sem perda das associações.
+As [miniaturas da galeria privada](specs/chat-miniaturas-privadas.md) usam a mesma sessão autenticada da imagem
+principal e respeitam a limpeza ao fechar ou trocar de identidade, sem fallback para URLs públicas.
 
 **Cenário de sucesso:**
 

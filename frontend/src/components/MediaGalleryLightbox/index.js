@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import Lightbox, {
+  ImageSlide,
   IconButton as YarlIconButton
 } from "yet-another-react-lightbox";
 import Captions from "yet-another-react-lightbox/plugins/captions";
@@ -254,6 +255,34 @@ const MediaGalleryLightbox = ({
         }
       }}
       render={{
+        ...(privateMedia
+          ? {
+              // Zap Komunick: Thumbnails does not inherit carousel.imageProps.
+              // Keep credentialed requests and release these nodes on close too.
+              thumbnail: ({ slide, render, rect, imageFit }) => (
+                <PrivateMediaStage
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                  onMediaError={onMediaError}
+                >
+                  <ImageSlide
+                    slide={{
+                      src: slide.thumbnail || slide.src || slide.poster
+                    }}
+                    render={render}
+                    rect={rect}
+                    imageFit={imageFit}
+                    imageProps={{ crossOrigin }}
+                  />
+                </PrivateMediaStage>
+              )
+            }
+          : {}),
         slideContainer: ({ slide, children }) => {
           const rotation = rotationBySlide[slide?.key] || 0;
           const style = {
