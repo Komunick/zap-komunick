@@ -1,6 +1,5 @@
 import express from "express";
 import isAuth from "../middleware/isAuth";
-import isAdmin from "../middleware/isAdmin";
 
 import * as SecurityController from "../controllers/SecurityController";
 import * as SessionController from "../controllers/SessionController";
@@ -26,28 +25,20 @@ securityRoutes.post(
 securityRoutes.delete(
   "/users/:userId/2fa",
   isAuth,
-  isAdmin,
   SecurityController.resetUser
 );
 
 securityRoutes.get(
   "/security/ip-allowlist",
   isAuth,
-  isAdmin,
   SecurityController.showAllowlist
 );
 securityRoutes.put(
   "/security/ip-allowlist",
   isAuth,
-  isAdmin,
   SecurityController.updateAllowlist
 );
 
-securityRoutes.get(
-  "/audit-logs",
-  isAuth,
-  isAdmin,
-  SecurityController.auditLogs
-);
+securityRoutes.get("/audit-logs", isAuth, SecurityController.auditLogs);
 
 export default securityRoutes;

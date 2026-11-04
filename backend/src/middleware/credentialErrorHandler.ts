@@ -5,6 +5,7 @@ import {
   isAssistantRequest,
   isIntegratedAssistantRequest,
   isAttachmentRequest,
+  isSecurityRequest,
   isSciRequest,
   isSensitiveRequest
 } from "../helpers/CredentialTelemetry";
@@ -20,6 +21,7 @@ const credentialErrorHandler: ErrorRequestHandler = (error, req, res, next) => {
   const acessorias = isAcessoriasRequest(url);
   const sci = isSciRequest(url);
   const attachment = isAttachmentRequest(url);
+  const security = isSecurityRequest(url);
 
   const requestedStatus = Number(error.statusCode || error.status);
   const status =
@@ -31,44 +33,53 @@ const credentialErrorHandler: ErrorRequestHandler = (error, req, res, next) => {
   const code =
     error instanceof AppError && /^ERR_[A-Z0-9_]+$/.test(error.message)
       ? error.message
-      : integratedAssistant
+      : security
         ? [400, 413, 415].includes(status)
-          ? "ERR_INTEGRATED_ASSISTANT_INVALID_REQUEST"
-          : "ERR_INTEGRATED_ASSISTANT_UNAVAILABLE"
-        : attachment
+          ? "ERR_SECURITY_INVALID_REQUEST"
+          : "ERR_SECURITY_REQUEST_FAILED"
+        : integratedAssistant
           ? [400, 413, 415].includes(status)
-            ? "ERR_ATTACHMENT_INVALID_REQUEST"
-            : "ERR_ATTACHMENT_UNAVAILABLE"
-          : sci
+            ? "ERR_INTEGRATED_ASSISTANT_INVALID_REQUEST"
+            : "ERR_INTEGRATED_ASSISTANT_UNAVAILABLE"
+          : attachment
             ? [400, 413, 415].includes(status)
-              ? "ERR_SCI_INVALID_REQUEST"
-              : "ERR_SCI_UNAVAILABLE"
-            : acessorias
-              ? status === 400 || status === 413 || status === 415
-                ? "ERR_ACESSORIAS_INVALID_REQUEST"
-                : "ERR_ACESSORIAS_UNAVAILABLE"
-              : assistant
+              ? "ERR_ATTACHMENT_INVALID_REQUEST"
+              : "ERR_ATTACHMENT_UNAVAILABLE"
+            : sci
+              ? [400, 413, 415].includes(status)
+                ? "ERR_SCI_INVALID_REQUEST"
+                : "ERR_SCI_UNAVAILABLE"
+              : acessorias
                 ? status === 400 || status === 413 || status === 415
-                  ? "ERR_ASSISTANT_INVALID_REQUEST"
-                  : "ERR_ASSISTANT_UNAVAILABLE"
-                : status === 400
-                  ? "ERR_INVALID_CREDENTIAL_REQUEST"
-                  : "ERR_CREDENTIAL_REQUEST_FAILED";
+                  ? "ERR_ACESSORIAS_INVALID_REQUEST"
+                  : "ERR_ACESSORIAS_UNAVAILABLE"
+                : assistant
+                  ? status === 400 || status === 413 || status === 415
+                    ? "ERR_ASSISTANT_INVALID_REQUEST"
+                    : "ERR_ASSISTANT_UNAVAILABLE"
+                  : status === 400
+                    ? "ERR_INVALID_CREDENTIAL_REQUEST"
+                    : "ERR_CREDENTIAL_REQUEST_FAILED";
 
   logger.warn(
     { code, status },
-    integratedAssistant
-      ? "Integrated assistant request failed"
-      : attachment
-        ? "Attachment request failed"
-        : sci
-          ? "SCI request failed"
-          : acessorias
-            ? "Acessorias request failed"
-            : assistant
-              ? "Assistant request failed"
-              : "Credential request failed"
+    security
+      ? "Security request failed"
+      : integratedAssistant
+        ? "Integrated assistant request failed"
+        : attachment
+          ? "Attachment request failed"
+          : sci
+            ? "SCI request failed"
+            : acessorias
+              ? "Acessorias request failed"
+              : assistant
+                ? "Assistant request failed"
+                : "Credential request failed"
   );
+  if (code === "ERR_2FA_TOO_MANY_ATTEMPTS") {
+    res.setHeader("Retry-After", "600");
+  }
   return res.status(status).json({ error: code });
 };
 

@@ -166,6 +166,8 @@ Stitch entra como tokens: `sidebar*` (menu preto, igual nos dois temas), `accent
   ou todas para administrador; `GET /tags/list?queueId=<id>` restringe às gerais e ao setor da conversa. `queueId=0`
   representa uma conversa sem setor e oferece somente etiquetas gerais; a ausência do parâmetro mantém a listagem
   conforme os setores do usuário.
+  `POST /tags` define os setores somente nos valores de criação; encontrar uma etiqueta existente não os altera.
+  Mudar os setores de um registro existente continua passando pela edição autorizada em `PUT /tags/:id`.
 - `GET /contacts?tagIds=[1,2]` (RF-019): lista JSON com até 20 ids inteiros positivos, combinada com busca e carteira.
   `ListContactsService` seleciona contatos com qualquer etiqueta em `ContactTags` ou em `TicketTags` de algum
   atendimento, sem restrição de status, mantendo o filtro de empresa da listagem. O filtro vazio não restringe.
@@ -309,6 +311,12 @@ de pausa ficam no `UpdateTicketService`, não só na tela.
 
 **Ambiente e comandos:** ver `AGENTS.md`.
 
+O workflow `.github/workflows/build-docker.yml` concentra os checks backend e frontend com Node 24.22.1 e permissão
+de leitura. Instala os lockfiles sem scripts de ciclo de vida, gera as chaves de tradução, verifica tipos e build,
+executa lint da busca de contatos e de sua regressão e roda as suítes diretamente, sem os hooks de banco do
+`npm test` backend. Os checks não usam segredos, Docker ou publicação de imagens; o job de publicação é separado
+e depende da ação explícita descrita abaixo. A validação incorporada do PR #2 usa esse mesmo workflow.
+
 **Estratégia de testes:**
 - Regras puras com Jest em `backend/src/__tests__/helpers/` (sem banco): limites do SLA, agregação do painel,
   carteira, Kanban, horário de acesso (inclusive virada da meia-noite), datas da série (fim de mês, bissexto, atrasos,
@@ -405,6 +413,12 @@ recuar a aplicação.
   e desafios antigos ficam inválidos. O access token anterior continua sujeito ao TTL existente de quinze minutos.
   `DELETE /users/:userId/2fa` é administrativo, confere empresa e privilégio de superusuário, e não permite reset da
   própria conta. `ListUsersService` expõe `twoFactorEnabled` e `super` para indicação e disponibilidade da ação.
+- `AuthorizeSecurityActorService` reconsulta o cadastro pela identidade e empresa da sessão antes das operações de
+  segurança. Empresa, perfil ou privilégio de superusuário divergentes do token são recusados; operações administrativas
+  exigem o perfil atual de administrador. Allowlist, auditoria e reset usam o ator revalidado, sem ampliar a autenticação
+  global. `CredentialTelemetry` também classifica autenticação, segurança, auditoria e reset de 2FA como sensíveis;
+  o handler remove corpos, mensagens de parser/ORM e parâmetros antes de logs/Sentry, preservando códigos e status
+  públicos e `Retry-After: 600` na limitação de tentativas de 2FA.
 - `helpers/IpAllowlist` valida IPv4/IPv6 e CIDR; aceita uma entrada por linha, separadores vírgula/ponto e vírgula e
   comentários `#`. `GET/PUT /security/ip-allowlist` são administrativos. A gravação exige entradas válidas, até 100,
   lista não vazia quando ativa e inclusão do IP do administrador (superusuário é a exceção de recuperação).

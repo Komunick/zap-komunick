@@ -4,6 +4,13 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ## Não publicado
 
+### Segurança
+
+- Busca de contatos (tela Contatos e `GET /contacts`, inclusive com token de API): o texto buscado agora chega ao
+  banco só como valor. Antes, uma aspa simples no texto alterava a consulta SQL, falha que veio do Ticketz. A busca
+  continua sem diferenciar acentos e maiúsculas, e nomes com apóstrofo (como "D'Ávila"), que davam erro, passam a ser
+  encontrados.
+
 ### Adicionado
 
 - Menu lateral abre ao passar o mouse sobre o trilho recolhido no desktop, sem precisar clicar. Botão, teclado,
@@ -134,6 +141,11 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- Operações de segurança revalidam empresa, perfil e privilégio de superusuário no cadastro atual. Tokens antigos
+  deixam de autorizar alterações de 2FA, IPs permitidos ou leitura de auditoria após mudança desses acessos.
+- Criar uma etiqueta já existente preserva seus setores; a alteração continua restrita à edição autorizada.
+- Falhas de autenticação e 2FA são sanitizadas antes dos logs e da telemetria, incluindo JSON inválido e erros de
+  persistência. Códigos de erro, status HTTP e espera por limite de tentativas são preservados.
 - Financeiro sai dos menus e a aba Containers Docker sai de Configurações, no desktop e no celular. API e os demais
   itens continuam disponíveis conforme as permissões existentes; a infraestrutura de publicação é preservada.
 - Endosso SuperChat usa a logo oficial completa Komunick Inteligência e Tecnologia, com versões vertical e horizontal.

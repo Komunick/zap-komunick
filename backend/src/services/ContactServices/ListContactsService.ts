@@ -1,4 +1,5 @@
 import { Sequelize, Op } from "sequelize";
+import sequelize from "../../database";
 import Contact from "../../models/Contact";
 import User from "../../models/User";
 
@@ -39,7 +40,7 @@ const ListContactsService = async ({
           ),
           {
             [Op.like]: Sequelize.literal(
-              `'%' || UNACCENT('${normalizedSearchParam}') || '%'`
+              `'%' || UNACCENT(${sequelize.escape(normalizedSearchParam)}) || '%'`
             )
           }
         )

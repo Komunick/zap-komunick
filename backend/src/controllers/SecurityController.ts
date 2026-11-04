@@ -9,6 +9,7 @@ import {
   requestIp
 } from "../services/AuditServices/RecordAuditService";
 import ListAuditLogsService from "../services/AuditServices/ListAuditLogsService";
+import AuthorizeSecurityActorService from "../services/SecurityServices/AuthorizeSecurityActorService";
 import {
   getAllowlist,
   saveAllowlist
@@ -23,13 +24,8 @@ import {
 
 // Zap Komunick: 2FA, IP allowlist and audit trail (docs/PRD.md, RF-016)
 
-const currentUser = async (req: Request): Promise<User> => {
-  const user = await User.unscoped().findByPk(req.user.id);
-  if (!user || user.companyId !== req.user.companyId) {
-    throw new AppError("ERR_NO_USER_FOUND", 404);
-  }
-  return user;
-};
+const currentUser = (req: Request, administrative = false): Promise<User> =>
+  AuthorizeSecurityActorService(req.user, administrative);
 
 export const status = async (
   req: Request,
@@ -85,14 +81,15 @@ export const resetUser = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  if (Number(req.params.userId) === Number(req.user.id)) {
+  const actor = await currentUser(req, true);
+  if (Number(req.params.userId) === actor.id) {
     throw new AppError("ERR_2FA_USE_SELF_DISABLE", 403);
   }
   const target = await User.unscoped().findByPk(req.params.userId);
-  if (!target || target.companyId !== req.user.companyId) {
+  if (!target || target.companyId !== actor.companyId) {
     throw new AppError("ERR_NO_USER_FOUND", 404);
   }
-  if (target.super && !req.user.isSuper) {
+  if (target.super && !actor.super) {
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
   await resetTwoFactor(target);
@@ -106,7 +103,8 @@ export const showAllowlist = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const allowlist = await getAllowlist(req.user.companyId);
+  const actor = await currentUser(req, true);
+  const allowlist = await getAllowlist(actor.companyId);
   return res.json({ ...allowlist, ip: requestIp(req) });
 };
 
@@ -114,18 +112,19 @@ export const updateAllowlist = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
+  const actor = await currentUser(req, true);
   const saved = await saveAllowlist({
-    companyId: req.user.companyId,
+    companyId: actor.companyId,
     enabled: req.body?.enabled === true,
     text: String(req.body?.text || ""),
     currentIp: requestIp(req),
-    isSuper: !!req.user.isSuper
+    isSuper: !!actor.super
   });
   auditRequest(
     req,
     "security.ip_allowlist_updated",
     "company",
-    req.user.companyId,
+    actor.companyId,
     {
       enabled: saved.enabled,
       entries: saved.entries
@@ -138,8 +137,9 @@ export const auditLogs = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
+  const actor = await currentUser(req, true);
   const result = await ListAuditLogsService({
-    companyId: req.user.companyId,
+    companyId: actor.companyId,
     pageNumber: req.query.pageNumber,
     from: req.query.from,
     to: req.query.to,

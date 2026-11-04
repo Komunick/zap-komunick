@@ -43,6 +43,13 @@ jobs:
         run: |
           node node_modules/ts-node/dist/bin.js src/scripts/extractTranslationKeys.ts
           node node_modules/typescript/bin/tsc --sourceMap false
+      - name: Lint contact search and its regression tests
+        working-directory: backend
+        run: >-
+          node node_modules/eslint/bin/eslint.js
+          src/services/ContactServices/ListContactsService.ts
+          src/__tests__/services/ListContactsService.spec.ts
+          --max-warnings=0
       - name: Run backend tests directly without pretest or posttest
         working-directory: backend
         env:

@@ -52,7 +52,18 @@ export const isSciRequest = (url?: string): boolean =>
 export const isAttachmentRequest = (url?: string): boolean =>
   /\/tickets\/[\s\S]+\/attachments(?:[/?#]|$)/i.test(decodedPath(url));
 
+// RF-016: parser and persistence errors can carry passwords, challenges, TOTP
+// secrets/recovery codes or allowlist/audit data even before a route accepts them.
+export const isSecurityRequest = (url?: string): boolean => {
+  const decoded = decodedPath(url);
+  return (
+    /\/(?:auth|security|audit-logs)(?:[/?#]|$)/i.test(decoded) ||
+    /\/users\/[\s\S]+\/2fa(?:[/?#]|$)/i.test(decoded)
+  );
+};
+
 export const isSensitiveRequest = (url?: string): boolean =>
+  isSecurityRequest(url) ||
   isCredentialRequest(url) ||
   isAssistantRequest(url) ||
   isIntegratedAssistantRequest(url) ||

@@ -34,6 +34,45 @@ describe("credential request telemetry", () => {
   );
 });
 
+describe("authentication and security request telemetry", () => {
+  it.each([
+    "/auth/login",
+    "/auth/2fa",
+    "/auth/refresh_token",
+    "/auth/logout",
+    "/%61uth/login?bad=%XX",
+    "/AUTH/2FA",
+    "/security/me",
+    "/security/2fa/setup",
+    "/security/2fa/enable",
+    "/security/2fa/disable",
+    "/security/2fa/recovery-codes",
+    "/security/ip-allowlist",
+    "/%73ecurity/%32fa/disable?bad=%XX",
+    "https://example.invalid/backend/security/2fa/setup",
+    "/audit-logs?userId=11",
+    "/users/11/2fa",
+    "/users/11%2Fextra/2fa",
+    "/users/11%XX/%32fa?bad=%XX",
+    "https://example.invalid/backend/users/11/2fa"
+  ])("excludes sensitive RF-016 error data: %s", url => {
+    expect(isSensitiveRequest(url)).toBe(true);
+  });
+
+  it.each([
+    undefined,
+    "/auth-other/login",
+    "/security-other/2fa",
+    "/audit-logs-other",
+    "/users/11",
+    "/users/11/2fa-other",
+    "/users/11?next=/security/2fa",
+    "/settings/slaMinutes"
+  ])("preserves other endpoint diagnostics: %s", url => {
+    expect(isSensitiveRequest(url)).toBe(false);
+  });
+});
+
 describe("attachment request telemetry", () => {
   it.each([
     "/tickets/301/attachments",

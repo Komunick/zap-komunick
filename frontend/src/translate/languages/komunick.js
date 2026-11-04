@@ -2122,6 +2122,10 @@ const securityMessages = {
       }
     },
     backendErrors: {
+      ERR_SECURITY_INVALID_REQUEST:
+        "Verifique os dados enviados e tente novamente.",
+      ERR_SECURITY_REQUEST_FAILED:
+        "Não foi possível concluir a operação de segurança. Tente novamente.",
       ERR_2FA_ALREADY_ENABLED: "A verificação em duas etapas já está ativada.",
       ERR_2FA_CHALLENGE_EXPIRED:
         "A verificação expirou. Entre com sua senha novamente.",
@@ -2311,6 +2315,9 @@ const securityMessages = {
       }
     },
     backendErrors: {
+      ERR_SECURITY_INVALID_REQUEST: "Check the information and try again.",
+      ERR_SECURITY_REQUEST_FAILED:
+        "Could not complete the security operation. Try again.",
       ERR_2FA_ALREADY_ENABLED: "Two-step verification is already enabled.",
       ERR_2FA_CHALLENGE_EXPIRED:
         "Verification expired. Sign in with your password again.",
@@ -2502,6 +2509,10 @@ const securityMessages = {
       }
     },
     backendErrors: {
+      ERR_SECURITY_INVALID_REQUEST:
+        "Revisa los datos enviados e inténtalo de nuevo.",
+      ERR_SECURITY_REQUEST_FAILED:
+        "No se pudo completar la operación de seguridad. Inténtalo de nuevo.",
       ERR_2FA_ALREADY_ENABLED: "La verificación en dos pasos ya está activada.",
       ERR_2FA_CHALLENGE_EXPIRED:
         "La verificación ha caducado. Introduce tu contraseña de nuevo.",

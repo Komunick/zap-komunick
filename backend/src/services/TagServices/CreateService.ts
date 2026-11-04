@@ -25,7 +25,7 @@ const CreateService = async ({
 
   try {
     await schema.validate({ name });
-  } catch (err: any) {
+  } catch (err) {
     throw new AppError(err.message);
   }
 
@@ -39,12 +39,14 @@ const CreateService = async ({
 
   const [tag] = await Tag.findOrCreate({
     where: { name, color, kanban, companyId },
-    defaults: { name, color, kanban, companyId }
+    defaults: {
+      name,
+      color,
+      kanban,
+      companyId,
+      ...(queueIds !== undefined ? { queueIds } : {})
+    }
   });
-
-  if (queueIds !== undefined) {
-    await tag.update({ queueIds });
-  }
 
   await tag.reload();
 
