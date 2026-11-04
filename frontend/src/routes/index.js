@@ -34,6 +34,12 @@ import ToDoList from "../pages/ToDoList/";
 import Subscription from "../pages/Subscription/";
 import Kanban from "../pages/Kanban/";
 import Sla from "../pages/Sla/";
+import OnlineUsers from "../pages/OnlineUsers/";
+import Metrics from "../pages/Metrics/";
+import CloseReasons from "../pages/CloseReasons/";
+import AccountSecurity from "../pages/AccountSecurity";
+import IpAllowlist from "../pages/IpAllowlist";
+import AuditLogs from "../pages/AuditLogs";
 
 const Routes = () => {
   const [showCampaigns, setShowCampaigns] = useState(false);
@@ -55,7 +61,13 @@ const Routes = () => {
             {/* <Route exact path="/create-company" component={Companies} /> */}
             <WhatsAppsProvider>
               <LoggedInLayout>
-                <Route exact path="/" component={Dashboard} isPrivate />
+                <Route
+                  exact
+                  path="/"
+                  component={Dashboard}
+                  isPrivate
+                  adminOnly
+                />
                 <Route
                   exact
                   path="/tickets/:ticketId?"
@@ -83,6 +95,37 @@ const Routes = () => {
                 <Route exact path="/todolist" component={ToDoList} isPrivate />
                 <Route exact path="/kanban" component={Kanban} isPrivate />
                 <Route exact path="/sla" component={Sla} isPrivate />
+                <Route exact path="/metrics" component={Metrics} isPrivate />
+                <Route
+                  exact
+                  path="/account-security"
+                  component={AccountSecurity}
+                  isPrivate
+                />
+                <Route
+                  exact
+                  path="/ip-allowlist"
+                  component={IpAllowlist}
+                  isPrivate
+                />
+                <Route
+                  exact
+                  path="/audit-logs"
+                  component={AuditLogs}
+                  isPrivate
+                />
+                <Route
+                  exact
+                  path="/users-online"
+                  component={OnlineUsers}
+                  isPrivate
+                />
+                <Route
+                  exact
+                  path="/close-reasons"
+                  component={CloseReasons}
+                  isPrivate
+                />
                 <Route exact path="/tags" component={Tags} isPrivate />
                 <Route exact path="/contacts" component={Contacts} isPrivate />
                 <Route exact path="/helps" component={Helps} isPrivate />

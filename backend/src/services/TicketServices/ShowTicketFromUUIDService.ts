@@ -6,15 +6,21 @@ import Queue from "../../models/Queue";
 import Tag from "../../models/Tag";
 import Whatsapp from "../../models/Whatsapp";
 
-const ShowTicketUUIDService = async (uuid: string): Promise<Ticket> => {
+const ShowTicketUUIDService = async (
+  uuid: string,
+  companyId: number
+): Promise<Ticket> => {
   const ticket = await Ticket.findOne({
     where: {
-      uuid
+      uuid,
+      companyId
     },
     include: [
       {
         model: Contact,
         as: "contact",
+        where: { companyId },
+        required: true,
         attributes: [
           "id",
           "name",
@@ -23,29 +29,49 @@ const ShowTicketUUIDService = async (uuid: string): Promise<Ticket> => {
           "profilePicUrl",
           "profileHiresPictureUrl",
           "presence",
-          "disableBot"
+          "disableBot",
+          "walletUserId"
         ],
-        include: ["tags", "extraInfo"]
+        // Zap Komunick: the customer panel shows the wallet owner
+        include: [
+          { model: Tag, as: "tags", where: { companyId }, required: false },
+          "extraInfo",
+          {
+            model: User,
+            as: "walletUser",
+            where: { companyId },
+            required: false,
+            attributes: ["id", "name"]
+          }
+        ]
       },
       {
         model: User,
         as: "user",
+        where: { companyId },
+        required: false,
         attributes: ["id", "name"]
       },
       {
         model: Queue,
         as: "queue",
+        where: { companyId },
+        required: false,
         attributes: ["id", "name", "color"]
       },
       {
         model: Whatsapp,
         as: "whatsapp",
+        where: { companyId },
+        required: false,
         attributes: ["id", "name"],
         include: ["wavoip"]
       },
       {
         model: Tag,
         as: "tags",
+        where: { companyId },
+        required: false,
         attributes: ["id", "name", "color"]
       }
     ]

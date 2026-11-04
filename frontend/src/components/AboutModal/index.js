@@ -17,14 +17,13 @@ import { useTheme } from "@material-ui/core/styles";
 
 import { loadJSON } from "../../helpers/loadJSON";
 import api from "../../services/api";
+import BrandLogo from "../BrandLogo";
 
 const frontendGitInfo = loadJSON("/gitinfo.json");
 
 // AGPL: users must be able to get the source code of this modified version
 const SOURCE_CODE_URL = "https://github.com/Komunick/zap-komunick";
 const UPSTREAM_URL = "https://github.com/ticketz-oss/ticketz";
-const logo = "/vector/logo.svg";
-const logoDark = "/vector/logo-dark.svg";
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -39,13 +38,10 @@ const useStyles = makeStyles(theme => ({
   },
   logoImg: {
     width: "100%",
-    margin: "0 auto",
-    content: `url("${theme.calculatedLogo()}")`
-  },
-  ticketzLogoImg: {
-    width: "100%",
-    margin: "0 auto",
-    content: "url(" + (theme.mode === "light" ? logo : logoDark) + ")"
+    maxWidth: 360,
+    height: "auto",
+    display: "block",
+    margin: "0 auto 24px"
   },
   textCenter: {
     textAlign: "center"
@@ -84,14 +80,13 @@ const AboutModal = ({ open, onClose }) => {
         scroll="paper"
       >
         <DialogTitle id="form-dialog-title">
-          {i18n.t("about.aboutthe")}{" "}
-          {currentUser?.super ? "ticketz" : theme.appName}
+          {i18n.t("about.aboutthe")} {theme.appName}
         </DialogTitle>
         <DialogContent dividers>
           {currentUser?.super ? (
             <>
               <div>
-                <img className={classes.ticketzLogoImg} />
+                <BrandLogo className={classes.logoImg} />
               </div>
               <Typography variant="body1" gutterBottom>
                 <b>
@@ -179,7 +174,7 @@ const AboutModal = ({ open, onClose }) => {
           ) : (
             <>
               <div>
-                <img className={classes.logoImg} />
+                <BrandLogo className={classes.logoImg} />
               </div>
               <Typography className={classes.textCenter}>
                 <Link target="_blank" href="https://ticke.tz">

@@ -13,10 +13,19 @@ import { GetCompanySetting } from "../../helpers/CheckSettings";
 import User from "../../models/User";
 import formatBody from "../../helpers/Mustache";
 import { logger } from "../../utils/logger";
+import {
+  emitTicketContext,
+  revokeTicketContextRooms
+} from "../SocketServices/TicketContextSocketService";
 import { incrementCounter } from "../CounterServices/IncrementCounter";
 import { getJidOf } from "../WbotServices/getJidOf";
 import Queue from "../../models/Queue";
 import { _t } from "../TranslationServices/i18nService";
+import {
+  checkCloseReason,
+  checkStatusTransition
+} from "../../helpers/TicketPauseAndClose";
+import { ActiveCloseReasonIds } from "../CloseReasonServices/CloseReasonService";
 
 export interface UpdateTicketData {
   status?: string;
@@ -25,6 +34,8 @@ export interface UpdateTicketData {
   chatbot?: boolean;
   queueOptionId?: number;
   justClose?: boolean;
+  closeReasonId?: number | null;
+  closeReasonNote?: string | null;
 }
 
 interface Request {
@@ -55,26 +66,30 @@ const sendFormattedMessage = async (
   await verifyMessage(queueChangedMessage, ticket, ticket.contact);
 };
 
-export function websocketUpdateTicket(ticket: Ticket, moreChannels?: string[]) {
+export async function websocketUpdateTicket(
+  ticket: Ticket,
+  moreChannels?: string[]
+): Promise<void> {
   const io = getIO();
-  let ioStack = io
-    .to(ticket.id.toString())
-    .to(`user-${ticket?.userId}`)
-    .to(`queue-${ticket.queueId}-notification`)
-    .to(`queue-${ticket.queueId}-${ticket.status}`)
-    .to(`company-${ticket.companyId}-notification`)
-    .to(`company-${ticket.companyId}-${ticket.status}`);
-
-  if (moreChannels) {
-    moreChannels.forEach(channel => {
-      ioStack = ioStack.to(channel);
-    });
-  }
-
-  ioStack.emit(`company-${ticket.companyId}-ticket`, {
-    action: "update",
-    ticket
-  });
+  await revokeTicketContextRooms(io, ticket.id);
+  await emitTicketContext(
+    io,
+    ticket.id,
+    `company-${ticket.companyId}-ticket`,
+    {
+      action: "update",
+      ticket
+    },
+    [
+      ticket.id.toString(),
+      `user-${ticket.userId}`,
+      `queue-${ticket.queueId}-notification`,
+      `queue-${ticket.queueId}-${ticket.status}`,
+      `company-${ticket.companyId}-notification`,
+      `company-${ticket.companyId}-${ticket.status}`,
+      ...(moreChannels || [])
+    ]
+  );
 }
 
 const UpdateTicketService = async ({
@@ -123,6 +138,17 @@ const UpdateTicketService = async ({
       if (newQueue.companyId !== ticket.companyId) {
         throw new AppError("Queue does not belong to the same company", 403);
       }
+    }
+
+    if (userId !== undefined && userId !== null) {
+      if (!Number.isSafeInteger(Number(userId)) || Number(userId) <= 0) {
+        throw new AppError("ERR_NO_PERMISSION", 403);
+      }
+      const destinationUser = await User.findOne({
+        where: { id: userId, companyId: ticket.companyId },
+        attributes: ["id"]
+      });
+      if (!destinationUser) throw new AppError("ERR_NO_PERMISSION", 403);
     }
 
     if (user && ticket.status !== "pending") {
@@ -177,6 +203,39 @@ const UpdateTicketService = async ({
       queueOptionId = null;
     }
 
+    // Zap Komunick: pause and close reason (docs/PRD.md, RF-007)
+    const transitionError = checkStatusTransition(oldStatus, status);
+    if (transitionError) {
+      throw new AppError(transitionError, 400);
+    }
+
+    if (status === "closed" && oldStatus !== "closed") {
+      const closeReasonId = Number(ticketData.closeReasonId) || null;
+      const closeReasonError = checkCloseReason({
+        required:
+          (await GetCompanySetting(
+            companyId,
+            "closeReasonRequired",
+            "disabled"
+          )) === "enabled",
+        userInitiated: !!reqUserId,
+        isGroup: !!isGroup,
+        closeReasonId,
+        activeReasonIds: await ActiveCloseReasonIds(companyId)
+      });
+      if (closeReasonError) {
+        throw new AppError(closeReasonError, 400);
+      }
+      if (closeReasonId) {
+        ticketTraking.closeReasonId = closeReasonId;
+      }
+      if (ticketData.closeReasonNote) {
+        ticketTraking.closeReasonNote = String(
+          ticketData.closeReasonNote
+        ).slice(0, 1000);
+      }
+    }
+
     if (status !== undefined && ["closed"].indexOf(status) > -1) {
       if (!ticketTraking.finishedAt) {
         ticketTraking.finishedAt = moment().toDate();
@@ -226,14 +285,22 @@ const UpdateTicketService = async ({
               ticketId: ticket.id
             });
 
-          io.to(`company-${ticket.companyId}-closed`)
-            .to(`queue-${ticket.queueId}-closed`)
-            .to(ticket.id.toString())
-            .emit(`company-${ticket.companyId}-ticket`, {
+          await revokeTicketContextRooms(io, ticket.id);
+          await emitTicketContext(
+            io,
+            ticket.id,
+            `company-${ticket.companyId}-ticket`,
+            {
               action: "update",
               ticket,
               ticketId: ticket.id
-            });
+            },
+            [
+              `company-${ticket.companyId}-closed`,
+              `queue-${ticket.queueId}-closed`,
+              ticket.id.toString()
+            ]
+          );
 
           return { ticket, oldStatus, oldUserId };
         }
@@ -291,6 +358,7 @@ const UpdateTicketService = async ({
       queueOptionId,
       ...(status === "closed" ? { unansweredSince: null } : {})
     });
+    await revokeTicketContextRooms(io, ticket.id);
 
     if (oldStatus !== status) {
       if (oldStatus === "closed" && status === "open") {
@@ -429,7 +497,7 @@ const UpdateTicketService = async ({
         });
     }
 
-    websocketUpdateTicket(ticket, [`user-${oldUserId}`]);
+    await websocketUpdateTicket(ticket, [`user-${oldUserId}`]);
 
     return { ticket, oldStatus, oldUserId };
   } catch (err) {

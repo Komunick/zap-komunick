@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { ACTIVE_TICKET_STATUSES } from "../helpers/TicketPauseAndClose";
 import { Op } from "sequelize";
 import { cacheLayer } from "../libs/cache";
 import { getIO } from "../libs/socket";
@@ -150,7 +151,7 @@ export const remove = async (
         {
           where: {
             whatsappId,
-            status: { [Op.or]: ["open", "pending"] }
+            status: { [Op.or]: ACTIVE_TICKET_STATUSES }
           },
           returning: true
         }
@@ -169,7 +170,7 @@ export const remove = async (
   } else {
     const openTickets: Ticket[] = await whatsapp.$get("tickets", {
       where: {
-        status: { [Op.or]: ["open", "pending"] }
+        status: { [Op.or]: ACTIVE_TICKET_STATUSES }
       }
     });
 

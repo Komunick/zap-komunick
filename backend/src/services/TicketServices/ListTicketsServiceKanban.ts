@@ -11,6 +11,7 @@ import Tag from "../../models/Tag";
 import TicketTag from "../../models/TicketTag";
 import { intersection } from "lodash";
 import Whatsapp from "../../models/Whatsapp";
+import { loadTicketViewer } from "./AuthorizeTicketContextService";
 
 interface Request {
   searchParam?: string;
@@ -39,7 +40,6 @@ const ListTicketsServiceKanban = async ({
   queueIds,
   tags,
   users,
-  status,
   date,
   updatedAt,
   showAll,
@@ -47,6 +47,7 @@ const ListTicketsServiceKanban = async ({
   withUnreadMessages,
   companyId
 }: Request): Promise<Response> => {
+  const viewer = await loadTicketViewer({ userId, companyId });
   let whereCondition: Filterable["where"] = {
     [Op.or]: [{ userId }, { status: "pending" }],
     queueId: { [Op.or]: [queueIds, null] }
@@ -57,26 +58,36 @@ const ListTicketsServiceKanban = async ({
     {
       model: Contact,
       as: "contact",
+      where: { companyId },
+      required: true,
       attributes: ["id", "name", "number", "email", "presence"]
     },
     {
       model: Queue,
       as: "queue",
+      where: { companyId },
+      required: false,
       attributes: ["id", "name", "color"]
     },
     {
       model: User,
       as: "user",
+      where: { companyId },
+      required: false,
       attributes: ["id", "name"]
     },
     {
       model: Tag,
       as: "tags",
+      where: { companyId },
+      required: false,
       attributes: ["id", "name", "color"]
     },
     {
       model: Whatsapp,
       as: "whatsapp",
+      where: { companyId },
+      required: false,
       attributes: ["name"]
     }
   ];
@@ -100,6 +111,7 @@ const ListTicketsServiceKanban = async ({
         as: "messages",
         attributes: ["id", "body"],
         where: {
+          companyId,
           body: where(
             fn("LOWER", col("body")),
             "LIKE",
@@ -164,15 +176,12 @@ const ListTicketsServiceKanban = async ({
   }
 
   if (Array.isArray(tags) && tags.length > 0) {
-    const ticketsTagFilter: any[] | null = [];
-    for (let tag of tags) {
-      const ticketTags = await TicketTag.findAll({
-        where: { tagId: tag }
-      });
-      if (ticketTags) {
-        ticketsTagFilter.push(ticketTags.map(t => t.ticketId));
-      }
-    }
+    const ticketsTagFilter = await Promise.all(
+      tags.map(async tag => {
+        const ticketTags = await TicketTag.findAll({ where: { tagId: tag } });
+        return ticketTags.map(t => t.ticketId);
+      })
+    );
 
     const ticketsIntersection: number[] = intersection(...ticketsTagFilter);
 
@@ -185,15 +194,12 @@ const ListTicketsServiceKanban = async ({
   }
 
   if (Array.isArray(users) && users.length > 0) {
-    const ticketsUserFilter: any[] | null = [];
-    for (let user of users) {
-      const ticketUsers = await Ticket.findAll({
-        where: { userId: user }
-      });
-      if (ticketUsers) {
-        ticketsUserFilter.push(ticketUsers.map(t => t.id));
-      }
-    }
+    const ticketsUserFilter = await Promise.all(
+      users.map(async user => {
+        const ticketUsers = await Ticket.findAll({ where: { userId: user } });
+        return ticketUsers.map(t => t.id);
+      })
+    );
 
     const ticketsIntersection: number[] = intersection(...ticketsUserFilter);
 
@@ -209,8 +215,11 @@ const ListTicketsServiceKanban = async ({
   const offset = limit * (+pageNumber - 1);
 
   whereCondition = {
-    ...whereCondition,
-    companyId
+    companyId,
+    [Op.and]: [
+      whereCondition,
+      ...(viewer.isAdmin ? [] : [{ queueId: { [Op.in]: viewer.queueIds } }])
+    ]
   };
 
   const { count, rows: tickets } = await Ticket.findAndCountAll({

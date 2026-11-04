@@ -49,7 +49,16 @@ const ListUsersService = async ({
 
   const users = await User.findAll({
     where: whereCondition,
-    attributes: ["name", "id", "email", "companyId", "profile", "createdAt"],
+    attributes: [
+      "name",
+      "id",
+      "email",
+      "companyId",
+      "profile",
+      "createdAt",
+      "twoFactorEnabled",
+      "super"
+    ],
     order: [["createdAt", "DESC"]],
     include: [
       { model: Queue, as: "queues", attributes: ["id", "name", "color"] },

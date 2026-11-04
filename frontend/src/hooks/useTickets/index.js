@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import toastError from "../../errors/toastError";
 
 import api from "../../services/api";
+import { filtersToParams } from "../../components/TicketsFilters";
 
 const useTickets = ({
   isSearch,
@@ -19,8 +20,11 @@ const useTickets = ({
   queueIds,
   withUnreadMessages,
   notClosed,
-  all
+  all,
+  filters
 }) => {
+  // Zap Komunick: filter panel (RF-012), sent as plain query parameters
+  const filtersKey = JSON.stringify(filtersToParams(filters));
   const [loading, setLoading] = useState(true);
   const [tickets, setTickets] = useState([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -47,7 +51,8 @@ const useTickets = ({
               queueIds,
               withUnreadMessages,
               notClosed,
-              all
+              all,
+              ...JSON.parse(filtersKey)
             }
           });
           setTickets(data.tickets);
@@ -77,6 +82,7 @@ const useTickets = ({
     isSearch,
     notClosed,
     all,
+    filtersKey,
     refreshTrigger
   ]);
 
@@ -102,7 +108,8 @@ const useTickets = ({
           withUnreadMessages,
           notClosed,
           all,
-          minUpdatedAt
+          minUpdatedAt,
+          ...JSON.parse(filtersKey)
         }
       });
       return data.tickets;
@@ -121,7 +128,8 @@ const useTickets = ({
       queueIds,
       withUnreadMessages,
       notClosed,
-      all
+      all,
+      filtersKey
     ]
   );
 

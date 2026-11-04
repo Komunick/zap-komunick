@@ -45,7 +45,7 @@ import Grid from "@material-ui/core/Grid";
 import FormControl from "@material-ui/core/FormControl";
 import TextField from "@material-ui/core/TextField";
 import Button from "@material-ui/core/Button";
-import { makeStyles } from "@material-ui/core/styles";
+import { makeStyles, useTheme } from "@material-ui/core/styles";
 import OnlyForSuperUser from "../OnlyForSuperUser";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import useSettings from "../../hooks/useSettings";
@@ -59,10 +59,11 @@ import api from "../../services/api";
 import { getBackendURL } from "../../services/config";
 import { i18nToast } from "../../helpers/i18nToast";
 import { i18n } from "../../translate/i18n.js";
+import { PRODUCT_ICON, resolveProductName } from "../../helpers/productBrand";
 
 const defaultLogoLight = "/vector/logo.svg";
 const defaultLogoDark = "/vector/logo-dark.svg";
-const defaultLogoFavicon = "/vector/favicon.svg";
+const defaultLogoFavicon = PRODUCT_ICON;
 const LOGIN_LINKS_KEY = "loginPageLinks";
 const LOGIN_SIDE_PANEL_IMAGE_KEY = "loginSidePanelImage";
 const LOGIN_BACKGROUND_CONTENT_KEY = "loginBackgroundContent";
@@ -209,24 +210,30 @@ const useStyles = makeStyles(theme => ({
 
   appLogoLightPreviewImg: {
     width: "100%",
-    maxHeight: 72,
-    content: `url("${theme.calculatedLogoLight()}")`
+    maxWidth: 280,
+    height: "auto",
+    maxHeight: 160,
+    objectFit: "contain"
   },
   appLogoDarkPreviewImg: {
     width: "100%",
-    maxHeight: 72,
-    content: `url("${theme.calculatedLogoDark()}")`
+    maxWidth: 280,
+    height: "auto",
+    maxHeight: 160,
+    objectFit: "contain"
   },
   appLogoFaviconPreviewImg: {
-    width: "100%",
-    maxHeight: 72,
-    content: `url("${theme.appLogoFavicon ? theme.appLogoFavicon : "/vector/favicon.svg"}")`
+    width: 72,
+    maxWidth: "100%",
+    height: 72,
+    objectFit: "contain"
   }
 }));
 
 export default function Whitelabel(props) {
   const { settings } = props;
   const classes = useStyles();
+  const theme = useTheme();
   const [settingsLoaded, setSettingsLoaded] = useState({});
   const [loginLinks, setLoginLinks] = useState([createEmptyLink()]);
 
@@ -280,7 +287,7 @@ export default function Whitelabel(props) {
       setting => setting.key === LOGIN_BACKGROUND_CONTENT_KEY
     )?.value;
 
-    setAppName(loadedAppName || "");
+    setAppName(resolveProductName(loadedAppName));
     setLoginLinks(parseLinksSetting(loadedLoginLinks));
     setSettingsLoaded({
       primaryColorLight,
@@ -288,7 +295,7 @@ export default function Whitelabel(props) {
       appLogoLight,
       appLogoDark,
       appLogoFavicon,
-      appName: loadedAppName,
+      appName: resolveProductName(loadedAppName),
       loginPageLinks: loadedLoginLinks,
       loginSidePanelImage,
       loginBackgroundContent
@@ -539,7 +546,7 @@ export default function Whitelabel(props) {
                     }}
                     onBlur={async () => {
                       await handleSaveSetting("appName", appName);
-                      colorMode.setAppName(appName || "ticketz");
+                      colorMode.setAppName(resolveProductName(appName));
                     }}
                   />
                 </FormControl>
@@ -695,6 +702,7 @@ export default function Whitelabel(props) {
                 <div className={classes.appLogoLightPreviewDiv}>
                   <img
                     className={classes.appLogoLightPreviewImg}
+                    src={theme.calculatedLogoLight()}
                     alt="light-logo-preview"
                   />
                 </div>
@@ -703,6 +711,7 @@ export default function Whitelabel(props) {
                 <div className={classes.appLogoDarkPreviewDiv}>
                   <img
                     className={classes.appLogoDarkPreviewImg}
+                    src={theme.calculatedLogoDark()}
                     alt="dark-logo-preview"
                   />
                 </div>
@@ -711,6 +720,7 @@ export default function Whitelabel(props) {
                 <div className={classes.appLogoFaviconPreviewDiv}>
                   <img
                     className={classes.appLogoFaviconPreviewImg}
+                    src={theme.appLogoFavicon || PRODUCT_ICON}
                     alt="favicon-preview"
                   />
                 </div>

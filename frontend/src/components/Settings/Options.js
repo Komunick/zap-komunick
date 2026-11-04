@@ -4,6 +4,7 @@ import Grid from "@material-ui/core/Grid";
 import MenuItem from "@material-ui/core/MenuItem";
 import FormControl from "@material-ui/core/FormControl";
 import InputLabel from "@material-ui/core/InputLabel";
+import FormHelperText from "@material-ui/core/FormHelperText";
 import Select from "@material-ui/core/Select";
 import useSettings from "../../hooks/useSettings";
 import { i18nToast } from "../../helpers/i18nToast";
@@ -25,6 +26,11 @@ import { SelectLanguage } from "../SelectLanguage";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import api from "../../services/api";
 import { getBackendURL } from "../../services/config";
+import CompanyCredentialSettings from "../CompanyCredentialSettings";
+import AssistantSettings from "../AssistantSettings";
+import AcessoriasSettings from "../AcessoriasSettings";
+import SciSettings from "../SciSettings";
+import IntegratedAssistantSettings from "../IntegratedAssistantSettings";
 
 const useStyles = makeStyles(theme => ({
   container: {
@@ -111,7 +117,6 @@ export default function Options(props) {
     useState("disabled");
   const [groupsTab, setGroupsTab] = useState("disabled");
   const [apiToken, setApiToken] = useState("");
-  const [openAiKey, setOpenAiKey] = useState("");
   const [aiProvider, setAiProvider] = useState("openai");
   const [audioTranscriptions, setAudioTranscriptions] = useState("disabled");
   const [useMultiThreadedWbot, setUseMultiThreadedWbot] = useState("disabled");
@@ -136,6 +141,8 @@ export default function Options(props) {
   const [slaMinutes, setSlaMinutes] = useState("0");
   const [slaOldTicketHours, setSlaOldTicketHours] = useState("72");
   const [walletAutoAssign, setWalletAutoAssign] = useState("disabled");
+  const [syncPhoneContacts, setSyncPhoneContacts] = useState("enabled");
+  const [closeReasonRequired, setCloseReasonRequired] = useState("disabled");
 
   const [queues, setQueues] = useState([]);
   const { findAll: findAllQueues } = useQueues();
@@ -252,9 +259,6 @@ export default function Options(props) {
       const apiToken = settings.find(s => s.key === "apiToken");
       setApiToken(apiToken?.value || "");
 
-      const openAiKey = settings.find(s => s.key === "openAiKey");
-      setOpenAiKey(openAiKey?.value || "");
-
       const aiProvider = settings.find(s => s.key === "aiProvider");
       setAiProvider(aiProvider?.value || "openai");
 
@@ -335,6 +339,14 @@ export default function Options(props) {
         s => s.key === "walletAutoAssign"
       );
       setWalletAutoAssign(walletAutoAssignSetting?.value || "disabled");
+      const syncPhoneContactsSetting = settings.find(
+        s => s.key === "syncPhoneContacts"
+      );
+      setSyncPhoneContacts(syncPhoneContactsSetting?.value || "enabled");
+      const closeReasonRequiredSetting = settings.find(
+        s => s.key === "closeReasonRequired"
+      );
+      setCloseReasonRequired(closeReasonRequiredSetting?.value || "disabled");
 
       const gracePeriod = settings.find(s => s.key === "gracePeriod");
       setGracePeriod(gracePeriod?.value || 0);
@@ -1016,6 +1028,62 @@ export default function Options(props) {
           </FormControl>
         </Grid>
 
+        <Grid xs={12} sm={6} md={4} item>
+          <FormControl className={classes.selectContainer}>
+            <InputLabel id="sync-phone-contacts-label">
+              {i18n.t("clients.syncSetting")}
+            </InputLabel>
+            <Select
+              labelId="sync-phone-contacts-label"
+              value={syncPhoneContacts}
+              onChange={async e => {
+                handleSetting(
+                  "syncPhoneContacts",
+                  e.target.value,
+                  setSyncPhoneContacts
+                );
+              }}
+            >
+              <MenuItem value={"enabled"}>
+                {i18n.t("clients.syncEnabled")}
+              </MenuItem>
+              <MenuItem value={"disabled"}>
+                {i18n.t("clients.syncDisabled")}
+              </MenuItem>
+            </Select>
+            <FormHelperText>{i18n.t("clients.syncHelper")}</FormHelperText>
+          </FormControl>
+        </Grid>
+
+        <Grid xs={12} sm={6} md={4} item>
+          <FormControl className={classes.selectContainer}>
+            <InputLabel id="close-reason-required-label">
+              {i18n.t("settings.closeReason.required")}
+            </InputLabel>
+            <Select
+              labelId="close-reason-required-label"
+              value={closeReasonRequired}
+              onChange={async e => {
+                handleSetting(
+                  "closeReasonRequired",
+                  e.target.value,
+                  setCloseReasonRequired
+                );
+              }}
+            >
+              <MenuItem value={"disabled"}>
+                {i18n.t("settings.closeReason.options.disabled")}
+              </MenuItem>
+              <MenuItem value={"enabled"}>
+                {i18n.t("settings.closeReason.options.enabled")}
+              </MenuItem>
+            </Select>
+            <FormHelperText>
+              {i18n.t("settings.closeReason.requiredHelper")}
+            </FormHelperText>
+          </FormControl>
+        </Grid>
+
         <Grid item xs={12}>
           <h2 className={classes.groupTitle}>
             {i18n.t("settings.group.officeHours")}
@@ -1293,21 +1361,17 @@ export default function Options(props) {
         </Grid>
 
         <Grid xs={12} sm={12} md={8} item>
-          <FormControl className={classes.selectContainer}>
-            <TextField
-              id="openai-key-field"
-              label="AI Key"
-              variant="standard"
-              value={openAiKey}
-              onChange={e => {
-                setOpenAiKey(e.target.value);
-              }}
-              onBlur={async _ => {
-                await handleSetting("openAiKey", openAiKey);
-              }}
-            />
-          </FormControl>
+          <CompanyCredentialSettings />
         </Grid>
+
+        {currentUser.profile === "admin" && (
+          <Grid xs={12} item>
+            <AssistantSettings settings={settings} />
+            <AcessoriasSettings settings={settings} />
+            <SciSettings settings={settings} />
+            <IntegratedAssistantSettings settings={settings} />
+          </Grid>
+        )}
 
         <Grid xs={12} sm={6} md={4} item>
           <FormControl className={classes.selectContainer}>

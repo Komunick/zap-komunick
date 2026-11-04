@@ -1,13 +1,19 @@
 <!doctype html>
 <html translate="no">
   <head>
+    <title>SuperChat</title>
+    <meta name="application-name" content="SuperChat" />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Roboto:wght@300;400;500;700&display=swap"
     />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/favicon.ico" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/apple-touch-icon.png" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="%PUBLIC_URL%/vector/superchat-icon.svg"
+    />
+    <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico?v=superchat" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <meta name="theme-color" content="#000000" />
     <meta
@@ -206,7 +212,11 @@
     <div id="splash-background">
       <div id="splash-screen">
         <div class="app-logo-div" id="app-logo-div">
-          <img id="app-logo" alt="logo" />
+          <img
+            id="app-logo"
+            src="%PUBLIC_URL%/vector/logo.svg"
+            alt="SuperChat — Powered by Komunick Inteligência e Tecnologia"
+          />
         </div>
         <div class="progress-bar">
           <div class="progress" id="progress-bar"></div>
@@ -330,7 +340,8 @@
           .then(response => response.json())
           .then(data => {
             const root = document.documentElement;
-            const color = data || (theme === "dark" ? "#39ACE7" : "#00f");
+            // Zap Komunick: brand defaults
+            const color = data || (theme === "dark" ? "#35B62E" : "#1F7F1B");
 
             root.style.setProperty("--primary", color);
             // Persist the resolved primary color so the restart
@@ -373,8 +384,16 @@
         fetch(settingsBaseUrl + "/appName")
           .then(response => response.json())
           .then(data => {
-            document.title = data || "ticketz";
-          });
+            const name = typeof data === "string" ? data.trim() : "";
+            const legacy =
+              /^(ticketz|ticketz - chat based ticket system|whitelabel\s*chat)$/i;
+            document.title =
+              !name || legacy.test(name.replace(/\s+/g, " "))
+                ? "SuperChat"
+                : name.replace(/\bZap[\s-]+Komunick\b/gi, "SuperChat");
+          })
+          // Keep the initial title, or a configured name already resolved by React.
+          .catch(() => undefined);
       };
 
       fetch("/config.json").then(async response => {
@@ -430,9 +449,7 @@
           "ticketzBackgroundImage"
         );
         if (storedBackgroundImage) {
-          const splashBackground = document.getElementById(
-            "splash-background"
-          );
+          const splashBackground = document.getElementById("splash-background");
           splashBackground.style.backgroundImage = `url("${storedBackgroundImage}")`;
           splashBackground.style.backgroundSize = "cover";
           splashBackground.style.backgroundPosition = "center";
@@ -466,6 +483,5 @@
         setTimeout(redirect, countdownSeconds * 1000);
       })();
     </script>
-    <script src="/notificame-gateway.js"></script>
   </body>
 </html>

@@ -3,7 +3,11 @@ import * as Yup from "yup";
 import AppError from "../../errors/AppError";
 import Schedule from "../../models/Schedule";
 import ShowService from "./ShowService";
-import { validateRecurrence } from "./CreateService";
+import {
+  effectiveSendAt as businessSendAt,
+  validateRecurrence,
+  validateScheduleMedia
+} from "./CreateService";
 
 interface ScheduleData {
   id?: number;
@@ -16,6 +20,9 @@ interface ScheduleData {
   userId?: number;
   recurrence?: string;
   recurrenceEndAt?: Date | string | null;
+  mediaPath?: string | null;
+  mediaName?: string | null;
+  businessDaysOnly?: boolean;
 }
 
 interface Request {
@@ -55,6 +62,19 @@ const UpdateUserService = async ({
       : schedule.recurrenceEndAt;
   const effectiveSendAt = sendAt || schedule.sendAt;
   validateRecurrence(recurrence, effectiveSendAt, recurrenceEndAt);
+  // Zap Komunick: attachment and business days (docs/PRD.md, RF-008)
+  const businessDaysOnly =
+    scheduleData.businessDaysOnly ?? schedule.businessDaysOnly ?? false;
+  const businessDaysChanged =
+    businessDaysOnly !== (schedule.businessDaysOnly ?? false);
+  const mediaChanges: Partial<Schedule> = {};
+  if (scheduleData.mediaPath !== undefined) {
+    validateScheduleMedia(scheduleData.mediaPath, companyId);
+    mediaChanges.mediaPath = scheduleData.mediaPath || null;
+    mediaChanges.mediaName = scheduleData.mediaPath
+      ? scheduleData.mediaName || null
+      : null;
+  }
   const repeats = recurrence !== "none";
   // editing the date or the recurrence starts the series again from there;
   // other edits keep the original anchor (e.g. monthly on the 31st)
@@ -65,7 +85,10 @@ const UpdateUserService = async ({
 
   await schedule.update({
     body,
-    sendAt,
+    sendAt:
+      sendAt || businessDaysChanged
+        ? businessSendAt(effectiveSendAt, businessDaysOnly)
+        : undefined,
     sentAt,
     contactId,
     ticketId,
@@ -77,7 +100,9 @@ const UpdateUserService = async ({
       ? restartSeries
         ? effectiveSendAt
         : schedule.recurrenceAnchorAt
-      : null
+      : null,
+    businessDaysOnly,
+    ...mediaChanges
   });
 
   await schedule.reload();

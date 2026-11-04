@@ -1,6 +1,7 @@
 import { Op, WhereOptions } from "sequelize";
 import AppError from "../errors/AppError";
 import Ticket from "../models/Ticket";
+import { ACTIVE_TICKET_STATUSES } from "./TicketPauseAndClose";
 
 const CheckContactOpenTickets = async (
   contactId: number,
@@ -9,7 +10,7 @@ const CheckContactOpenTickets = async (
 ): Promise<Ticket> => {
   const where: WhereOptions<Ticket> = {
     contactId,
-    status: { [Op.or]: ["open", "pending"] }
+    status: { [Op.or]: ACTIVE_TICKET_STATUSES }
   };
 
   if (whatsappId) {

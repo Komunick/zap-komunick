@@ -4,7 +4,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { QueryClient, QueryClientProvider } from "react-query";
 
 import { ptBR } from "@material-ui/core/locale";
-import { createTheme, ThemeProvider } from "@material-ui/core/styles";
+import { ThemeProvider } from "@material-ui/core/styles";
 import { useMediaQuery } from "@material-ui/core";
 import ColorModeContext from "./layout/themeContext";
 import { PhoneCallProvider } from "./context/PhoneCall/PhoneCallContext";
@@ -12,13 +12,37 @@ import { SocketContext, socketManager } from "./context/Socket/SocketContext";
 import useSettings from "./hooks/useSettings";
 import Favicon from "react-favicon";
 import { getBackendURL } from "./services/config";
+import {
+  createKomunickTheme,
+  DEFAULT_PRIMARY_DARK,
+  DEFAULT_PRIMARY_LIGHT
+} from "./theme/komunick";
 
 import Routes from "./routes";
+import {
+  PRODUCT_ICON,
+  PRODUCT_NAME,
+  resolveProductName
+} from "./helpers/productBrand";
 
 const queryClient = new QueryClient();
 const defaultLogoLight = "/vector/logo.svg";
 const defaultLogoDark = "/vector/logo-dark.svg";
-const defaultLogoFavicon = "/vector/favicon.svg";
+const defaultLogoFavicon = PRODUCT_ICON;
+
+const systemColorScheme = () =>
+  window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+
+const readThemeMode = () => {
+  try {
+    const saved = window.localStorage.getItem("themeMode");
+    return ["light", "dark"].includes(saved) ? saved : "system";
+  } catch (e) {
+    return "system";
+  }
+};
 
 function useViewportHeight() {
   useEffect(() => {
@@ -48,24 +72,30 @@ function useViewportHeight() {
 const App = () => {
   const [locale, setLocale] = useState();
 
-  const prefersDarkMode = !!window.matchMedia("(prefers-color-scheme: dark)")
-    .matches;
-  const preferredTheme = window.localStorage.getItem("preferredTheme");
-  const [mode, setMode] = useState(
-    preferredTheme ? preferredTheme : prefersDarkMode ? "dark" : "light"
-  );
+  // Zap Komunick: the theme follows the operating system (Windows light or
+  // dark) until the user picks one with the switch; "Tema do sistema" in the
+  // user menu goes back to following it.
+  const [themeMode, setThemeMode] = useState(readThemeMode);
+  const [systemMode, setSystemMode] = useState(systemColorScheme);
+  const mode = themeMode === "system" ? systemMode : themeMode;
   const [primaryColorLight, setPrimaryColorLight] = useState("#888");
   const [primaryColorDark, setPrimaryColorDark] = useState("#888");
-  const [appLogoLight, setAppLogoLight] = useState("");
-  const [appLogoDark, setAppLogoDark] = useState("");
+  const [appLogoLight, setAppLogoLight] = useState(defaultLogoLight);
+  const [appLogoDark, setAppLogoDark] = useState(defaultLogoDark);
   const [appLogoFavicon, setAppLogoFavicon] = useState("");
-  const [appName, setAppName] = useState("");
+  const [appName, setAppName] = useState(PRODUCT_NAME);
   const { getPublicSetting } = useSettings();
 
   const colorMode = useMemo(
     () => ({
       toggleColorMode: () => {
-        setMode(prevMode => (prevMode === "light" ? "dark" : "light"));
+        setThemeMode(prev => {
+          const current = prev === "system" ? systemColorScheme() : prev;
+          return current === "light" ? "dark" : "light";
+        });
+      },
+      followSystem: () => {
+        setThemeMode("system");
       },
       setPrimaryColorLight: color => {
         setPrimaryColorLight(color);
@@ -83,7 +113,7 @@ const App = () => {
         setAppLogoFavicon(file);
       },
       setAppName: name => {
-        setAppName(name);
+        setAppName(resolveProductName(name));
       }
     }),
     []
@@ -104,7 +134,7 @@ const App = () => {
 
   const theme = useMemo(
     () =>
-      createTheme(
+      createKomunickTheme(
         {
           scrollbarStyles: {
             "&::-webkit-scrollbar": {
@@ -206,34 +236,56 @@ const App = () => {
   );
 
   useEffect(() => {
+    document.title = appName;
+  }, [appName]);
+
+  useEffect(() => {
     const i18nlocale = localStorage.getItem("language");
     if (!i18nlocale) {
       return;
     }
 
-    const browserLocale =
-      i18nlocale.substring(0, 2) + i18nlocale.substring(3, 5);
-
-    if (browserLocale === "ptBR") {
+    // "pt" (the default) and "pt-BR" use the Brazilian Material-UI texts
+    if (i18nlocale === "pt" || i18nlocale.replace("_", "-") === "pt-BR") {
       setLocale(ptBR);
     }
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem("preferredTheme", mode);
-  }, [mode]);
+    try {
+      window.localStorage.setItem("themeMode", themeMode);
+      window.localStorage.removeItem("preferredTheme");
+    } catch (e) {
+      // storage blocked: the choice lasts until the page is reloaded
+    }
+  }, [themeMode]);
+
+  useEffect(() => {
+    if (!window.matchMedia) return undefined;
+    const query = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = event => setSystemMode(event.matches ? "dark" : "light");
+    if (query.addEventListener) query.addEventListener("change", onChange);
+    else query.addListener(onChange);
+    return () => {
+      if (query.removeEventListener) {
+        query.removeEventListener("change", onChange);
+      } else {
+        query.removeListener(onChange);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     getPublicSetting("primaryColorLight")
       .then(color => {
-        setPrimaryColorLight(color || "#0000FF");
+        setPrimaryColorLight(color || DEFAULT_PRIMARY_LIGHT);
       })
       .catch(error => {
         console.log("Error reading setting", error);
       });
     getPublicSetting("primaryColorDark")
       .then(color => {
-        setPrimaryColorDark(color || "#39ACE7");
+        setPrimaryColorDark(color || DEFAULT_PRIMARY_DARK);
       })
       .catch(error => {
         console.log("Error reading setting", error);
@@ -268,11 +320,11 @@ const App = () => {
       });
     getPublicSetting("appName")
       .then(name => {
-        setAppName(name || "ticketz");
+        setAppName(resolveProductName(name));
       })
       .catch(error => {
         console.log("Error reading setting", error);
-        setAppName("whitelabel chat");
+        setAppName(PRODUCT_NAME);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -284,7 +336,7 @@ const App = () => {
       <Favicon
         url={appLogoFavicon ? theme.appLogoFavicon : defaultLogoFavicon}
       />
-      <ColorModeContext.Provider value={{ colorMode }}>
+      <ColorModeContext.Provider value={{ colorMode, themeMode }}>
         <PhoneCallProvider>
           <ThemeProvider theme={theme}>
             <QueryClientProvider client={queryClient}>

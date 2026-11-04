@@ -20,6 +20,12 @@ import {
 
 import MenuIcon from "@material-ui/icons/Menu";
 import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
+import ChevronRightIcon from "@material-ui/icons/ChevronRight";
+import SearchIcon from "@material-ui/icons/Search";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Switch from "@material-ui/core/Switch";
+import CommandPalette from "../components/CommandPalette";
+import NavTabs from "./NavTabs";
 import AccountCircle from "@material-ui/icons/AccountCircle";
 import SettingsEthernetIcon from "@material-ui/icons/SettingsEthernet";
 import CachedIcon from "@material-ui/icons/Cached";
@@ -31,6 +37,7 @@ import { PhoneCall } from "../components/PhoneCall";
 import NotificationsVolume from "../components/NotificationsVolume";
 import UserModal from "../components/UserModal";
 import AboutModal from "../components/AboutModal";
+import BrandLogo from "../components/BrandLogo";
 import { AuthContext } from "../context/Auth/AuthContext";
 import BackdropLoading from "../components/BackdropLoading";
 import DarkMode from "../components/DarkMode";
@@ -51,14 +58,12 @@ import Brightness7Icon from "@material-ui/icons/Brightness7";
 import LanguageIcon from "@material-ui/icons/Language";
 import { getBackendURL } from "../services/config";
 import NestedMenuItem from "material-ui-nested-menu-item";
-import GoogleAnalytics from "../components/GoogleAnalytics";
-import OnlyForSuperUser from "../components/OnlyForSuperUser";
 import NewTicketModal from "../components/NewTicketModal/index.js";
 import { loadJSON } from "../helpers/loadJSON";
 
 const gitinfo = loadJSON("/gitinfo.json");
 
-const drawerWidth = 240;
+const drawerWidth = 264;
 const DRAWER_STORAGE_KEY = "drawerOpen";
 
 function getStoredDrawerOpen() {
@@ -73,7 +78,7 @@ const useStyles = makeStyles(theme => ({
   root: {
     display: "flex",
     height: "var(--vh)",
-    backgroundColor: theme.palette.fancyBackground,
+    backgroundColor: theme.palette.background.default,
     "& .MuiButton-outlinedPrimary": {
       color: theme.palette.primary,
       border:
@@ -106,10 +111,8 @@ const useStyles = makeStyles(theme => ({
     borderRadius: 20,
     overflow: "hidden",
     cursor: "pointer",
-    backgroundColor:
-      theme.mode === "dark"
-        ? "rgba(0, 0, 0, 0.2)"
-        : "rgba(255, 255, 255, 0.15)",
+    border: `1px solid ${theme.palette.divider}`,
+    backgroundColor: theme.komunick.subtle,
     [theme.breakpoints.down("xs")]: {
       borderRadius: 20
     }
@@ -141,7 +144,7 @@ const useStyles = makeStyles(theme => ({
     }
   },
   userInfoName: {
-    color: theme.palette.primary.contrastText,
+    color: theme.palette.text.primary,
     fontSize: 11,
     lineHeight: "15px",
     fontWeight: 600,
@@ -151,7 +154,7 @@ const useStyles = makeStyles(theme => ({
     maxWidth: "100%"
   },
   userInfoCompany: {
-    color: theme.palette.primary.contrastText,
+    color: theme.palette.text.secondary,
     fontSize: 11,
     lineHeight: "15px",
     opacity: 0.75,
@@ -165,15 +168,83 @@ const useStyles = makeStyles(theme => ({
     color:
       localStorage.getItem("impersonated") === "true"
         ? theme.palette.secondary.contrastText
-        : theme.palette.primary.contrastText,
+        : theme.palette.text.primary,
     background:
       localStorage.getItem("impersonated") === "true"
         ? theme.palette.secondary.main
-        : theme.palette.primary.main,
+        : theme.palette.background.paper,
     marginRight: "10px",
     marginTop: "10px",
     marginBottom: "10px",
-    borderRadius: "10px"
+    borderRadius: "14px",
+    border: `1px solid ${theme.palette.divider}`,
+    boxShadow: theme.komunick.shadow,
+    // the upstream bar icons use primary.contrastText, made for a colored bar
+    ...(localStorage.getItem("impersonated") === "true"
+      ? {}
+      : {
+          "& .MuiIconButton-root:not(.MuiIconButton-colorSecondary)": {
+            color: theme.palette.text.secondary
+          },
+          "& .MuiIconButton-root:not(.MuiIconButton-colorSecondary) .MuiSvgIcon-root":
+            {
+              color: "inherit !important"
+            },
+          "& $avatar": {
+            color: `${theme.palette.text.secondary} !important`
+          }
+        })
+  },
+  // Zap Komunick: the collapse button lives in the sidebar, next to the logo
+  sidebarHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    minHeight: 84,
+    padding: "0 10px 0 14px",
+    borderBottom: `1px solid ${theme.komunick.sidebarBorder}`,
+    marginBottom: 6
+  },
+  sidebarHeaderClosed: {
+    flexDirection: "column",
+    justifyContent: "center",
+    padding: "12px 0 8px",
+    gap: 8
+  },
+  sidebarBrandHeader: {
+    minHeight: 116,
+    paddingTop: 8,
+    paddingBottom: 8
+  },
+  sidebarLogo: {
+    display: "flex",
+    alignItems: "center",
+    flex: "1 1 auto",
+    minWidth: 0,
+    cursor: "pointer",
+    "& img": {
+      margin: 0,
+      height: "auto",
+      maxWidth: 190
+    }
+  },
+  sidebarLogoClosed: {
+    flex: "none",
+    "& img": {
+      width: 36,
+      height: 36
+    }
+  },
+  sidebarToggle: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    color: theme.komunick.sidebarText,
+    backgroundColor: theme.komunick.sidebarHover,
+    "&:hover": {
+      color: theme.komunick.sidebarHoverText,
+      backgroundColor: theme.komunick.sidebarHover
+    }
   },
   toolbarIcon: {
     display: "flex",
@@ -208,7 +279,7 @@ const useStyles = makeStyles(theme => ({
     }
   },
   menuButton: {
-    color: theme.palette.primary.contrastText
+    color: "inherit"
   },
   menuButtonHidden: {
     display: "none"
@@ -216,11 +287,12 @@ const useStyles = makeStyles(theme => ({
   title: {
     flexGrow: 1,
     fontSize: 14,
-    color: "white"
+    fontWeight: 600,
+    color: "inherit"
   },
   wsConnectionAlertButton: {
     marginRight: theme.spacing(1.5),
-    color: theme.palette.primary.contrastText,
+    color: "inherit",
     padding: theme.spacing(0.5)
   },
   wsConnectionAlertIcon: {
@@ -255,7 +327,10 @@ const useStyles = makeStyles(theme => ({
     }),
     overflowY: "clip",
     border: "unset",
-    backgroundColor: theme.palette.fancyBackground,
+    // Zap Komunick: black side menu (Direção B)
+    borderRight: `1px solid ${theme.komunick.sidebarBorder}`,
+    backgroundColor: theme.komunick.sidebar,
+    color: theme.komunick.sidebarText,
     ...theme.scrollbarStylesSoft
   },
   drawerPaperClose: {
@@ -285,16 +360,13 @@ const useStyles = makeStyles(theme => ({
     marginLeft: "0px",
     marginRight: "10px",
     marginBottom: "10px",
-    borderRadius: "10px",
-    borderColor: theme.palette.primary.main,
-    borderStyle: "solid",
-    borderWidth: "1px",
+    borderRadius: "14px",
     "&::-webkit-scrollbar": {
       width: "10px",
       height: "8px"
     },
     "&::-webkit-scrollbar-thumb": {
-      backgroundColor: theme.palette.primary.main,
+      backgroundColor: theme.komunick.borderStrong,
       borderRadius: "10px"
     }
   },
@@ -324,19 +396,30 @@ const useStyles = makeStyles(theme => ({
     overflowX: "clip",
     marginRight: "10px",
     marginLeft: "10px",
-    borderStyle: "solid",
-    borderColor: theme.palette.primary.main,
-    borderWidth: "1px",
-    borderRadius: "10px",
+    border: "none",
+    // Zap Komunick: section titles of the menu
+    "& .MuiListSubheader-root": {
+      fontSize: "12.5px !important",
+      fontWeight: 700,
+      letterSpacing: "0.1em",
+      textTransform: "uppercase",
+      color: theme.komunick.sidebarMuted,
+      lineHeight: "36px",
+      marginTop: 10
+    },
+    "& .MuiDivider-root": {
+      margin: "10px 4px 4px",
+      backgroundColor: theme.komunick.sidebarBorder
+    },
     "&::-webkit-scrollbar": {
       width: "10px",
       height: "8px"
     },
     "&::-webkit-scrollbar-thumb": {
-      backgroundColor: theme.palette.primary.main,
+      backgroundColor: theme.komunick.sidebarBorder,
       borderRadius: "10px"
     },
-    color: theme.palette.primary.main
+    color: theme.komunick.sidebarText
   },
   containerNarrowWithScroll: {
     flex: 1,
@@ -344,16 +427,27 @@ const useStyles = makeStyles(theme => ({
     overflowX: "hidden",
     marginRight: "10px",
     marginLeft: "10px",
-    borderStyle: "solid",
-    borderColor: theme.palette.primary.main,
-    borderWidth: "1px",
-    borderRadius: "10px",
+    border: "none",
+    // Zap Komunick: section titles of the menu
+    "& .MuiListSubheader-root": {
+      fontSize: "12.5px !important",
+      fontWeight: 700,
+      letterSpacing: "0.1em",
+      textTransform: "uppercase",
+      color: theme.komunick.sidebarMuted,
+      lineHeight: "36px",
+      marginTop: 10
+    },
+    "& .MuiDivider-root": {
+      margin: "10px 4px 4px",
+      backgroundColor: theme.komunick.sidebarBorder
+    },
     "&::-webkit-scrollbar": {
       width: "10px",
       height: "8px"
     },
     "&::-webkit-scrollbar-thumb": {
-      backgroundColor: theme.palette.primary.main,
+      backgroundColor: theme.komunick.sidebarBorder,
       borderRadius: "10px"
     }
   },
@@ -361,32 +455,174 @@ const useStyles = makeStyles(theme => ({
     // color: theme.barraSuperior.secondary.main,
   },
   logo: {
-    maxWidth: "192px",
-    height: "68px",
-    logo: theme.logo,
+    width: "100%",
+    maxWidth: "190px",
+    height: "auto",
     margin: "auto",
-    content: `url("${theme.calculatedLogo()}")`
+    objectFit: "contain"
   },
   logoIcon: {
     width: "48px",
     height: "48px",
-    logo: theme.logo,
-    content: `url("${theme.calculatedLogoFavicon()}")`
+    objectFit: "contain"
   },
   version: {
     margin: "auto",
-    fontSize: "12px",
+    fontSize: "11px",
     textAlign: "center",
-    color: theme.palette.primary.contrastText,
-    fontWeight: "bold"
+    color: theme.komunick.sidebarMuted,
+    fontWeight: 600
   },
   hideLogo: {
     display: "none"
   },
+  // Zap Komunick: flat shell shared by the Workspace and Foco layouts
+  toolbarFlat: {
+    margin: 0,
+    borderRadius: 0,
+    border: "none",
+    borderBottom: `1px solid ${theme.palette.divider}`,
+    boxShadow: "none",
+    minHeight: 56,
+    height: 56,
+    padding: "0 16px",
+    gap: 2
+  },
+  appBarFoco: {
+    marginLeft: 0
+  },
+  // layout "Painel": compact light side menu, 224 px wide
+  appBarPainel: {
+    marginLeft: 224
+  },
+  contentPainel: {
+    left: 224
+  },
+  contentWarm: {
+    backgroundColor: "#F7F6F2"
+  },
+  drawerPainelOpen: {
+    width: 224
+  },
+  drawerCompact: {
+    "& .MuiListItem-root": {
+      minHeight: 36,
+      margin: "1px 0",
+      borderRadius: 8
+    },
+    "& .MuiListItemText-primary": {
+      fontSize: 14,
+      fontWeight: 600
+    },
+    "& .MuiListItemIcon-root": {
+      minWidth: 36
+    },
+    "& .MuiSvgIcon-root, & svg": {
+      fontSize: 20
+    }
+  },
+  sidebarTitle: {
+    flex: 1,
+    paddingLeft: 6,
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: "0.1em",
+    textTransform: "uppercase",
+    color: theme.komunick.sidebarMuted
+  },
+  contentFlat: {
+    top: 56,
+    right: 0,
+    marginRight: 0,
+    marginBottom: 0,
+    borderRadius: 0
+  },
+  contentFlatFoco: {
+    top: 100,
+    left: 0,
+    marginLeft: 0
+  },
+  barLogo: {
+    width: 336,
+    height: 56,
+    objectFit: "contain",
+    flexShrink: 0,
+    marginRight: 14,
+    cursor: "pointer"
+  },
+  barLogoCompact: {
+    width: 36,
+    height: 36
+  },
+  searchSlot: {
+    flex: 1,
+    display: "flex",
+    justifyContent: "center",
+    minWidth: 0,
+    padding: "0 12px",
+    [theme.breakpoints.down("xs")]: {
+      flex: "none",
+      padding: "0 4px"
+    }
+  },
+  searchTrigger: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    width: "min(520px, 100%)",
+    height: 36,
+    padding: "0 12px",
+    border: `1px solid ${theme.palette.divider}`,
+    borderRadius: 10,
+    backgroundColor: theme.komunick.subtle,
+    color: theme.palette.text.secondary,
+    cursor: "pointer",
+    fontFamily: "inherit",
+    fontSize: 14,
+    textAlign: "left",
+    // on phones the search is just the magnifier button
+    [theme.breakpoints.down("xs")]: {
+      width: 36,
+      padding: 0,
+      justifyContent: "center",
+      "& > :not(svg)": { display: "none" }
+    },
+    "&:hover": {
+      borderColor: theme.komunick.borderStrong
+    },
+    "&:focus-visible": {
+      outline: `2px solid ${theme.palette.primary.main}`
+    }
+  },
+  searchLabel: {
+    flex: 1,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap"
+  },
+  kbd: {
+    fontSize: 11,
+    fontWeight: 700,
+    padding: "2px 6px",
+    borderRadius: 6,
+    border: `1px solid ${theme.palette.divider}`,
+    backgroundColor: theme.palette.background.paper
+  },
+  themeSwitch: {
+    margin: "0 8px 0 0",
+    "& .MuiFormControlLabel-label": {
+      fontSize: 12,
+      color: theme.palette.text.secondary
+    },
+    [theme.breakpoints.down("sm")]: {
+      display: "none"
+    }
+  },
   versionBox: {
-    backgroundColor: theme.palette.primary.main,
+    backgroundColor: theme.komunick.sidebarHover,
+    border: `1px solid ${theme.komunick.sidebarBorder}`,
     margin: "10px",
-    padding: "8px",
+    padding: "6px 8px",
     borderRadius: "10px"
   }
 }));
@@ -410,12 +646,60 @@ const LoggedInLayout = ({ children, themeToggle }) => {
     return getStoredDrawerOpen();
   });
   const [drawerVariant, setDrawerVariant] = useState("permanent");
+
+  // Zap Komunick: two layouts, "workspace" (icon rail) and "foco" (top tabs)
+  const [layoutMode, setLayoutMode] = useState(() =>
+    ["foco", "painel"].includes(localStorage.getItem("layoutMode"))
+      ? localStorage.getItem("layoutMode")
+      : "workspace"
+  );
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const focoDesktop = layoutMode === "foco" && drawerVariant !== "temporary";
+  const painelDesktop =
+    layoutMode === "painel" && drawerVariant !== "temporary";
+
+  useEffect(() => {
+    const onKeyDown = event => {
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        event.key?.toLowerCase() === "k"
+      ) {
+        event.preventDefault();
+        setPaletteOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
   // const [dueDate, setDueDate] = useState("");
   const { user } = useContext(AuthContext);
 
   const theme = useTheme();
+  const compactHeaderLogo = useMediaQuery(theme.breakpoints.down("md"));
+
+  // the light, warm side menu of the Painel layout (light theme only)
+  useEffect(() => {
+    const root = document.documentElement;
+    const vars = {
+      "--zk-sidebar": "#F7F6F2",
+      "--zk-sidebar-text": "#4E5C54",
+      "--zk-sidebar-text-active": "#1F7F1B",
+      "--zk-sidebar-hover": "rgba(2, 6, 5, 0.05)",
+      "--zk-sidebar-hover-text": "#020605",
+      "--zk-sidebar-active": "#FFFFFF",
+      "--zk-sidebar-border": "#E8E6DF",
+      "--zk-sidebar-muted": "#8A8F86"
+    };
+    const on = layoutMode === "painel" && theme.mode === "light";
+    Object.entries(vars).forEach(([name, value]) => {
+      if (on) root.style.setProperty(name, value);
+      else root.style.removeProperty(name);
+    });
+    return () =>
+      Object.keys(vars).forEach(name => root.style.removeProperty(name));
+  }, [layoutMode, theme.mode]);
   const greaterThenSm = useMediaQuery(theme.breakpoints.up("sm"));
-  const { colorMode } = useContext(ColorModeContext);
+  const { colorMode, themeMode } = useContext(ColorModeContext);
 
   const [currentLanguage, setCurrentLanguage] = useState(i18n.language);
 
@@ -615,6 +899,18 @@ const LoggedInLayout = ({ children, themeToggle }) => {
     });
   };
 
+  // Zap Komunick: mouse entry opens the desktop rail without changing touch or button controls.
+  const handleDrawerPointerEnter = event => {
+    if (
+      event.pointerType === "mouse" &&
+      greaterThenSm &&
+      drawerVariant === "permanent" &&
+      !drawerOpen
+    ) {
+      setDrawerOpen(true);
+    }
+  };
+
   const handleMenuItemClick = () => {
     const { innerWidth: width } = window;
     if (width <= 600) {
@@ -624,6 +920,13 @@ const LoggedInLayout = ({ children, themeToggle }) => {
 
   const toggleColorMode = () => {
     colorMode.toggleColorMode();
+    handleCloseProfileMenu();
+  };
+
+  const chooseLayout = mode => {
+    localStorage.setItem("layoutMode", mode);
+    setLayoutMode(mode);
+    handleCloseProfileMenu();
   };
 
   const handleChooseLanguage = language => {
@@ -644,49 +947,102 @@ const LoggedInLayout = ({ children, themeToggle }) => {
 
   return (
     <div className={classes.root}>
-      <Drawer
-        variant={drawerVariant}
-        className={drawerOpen ? classes.drawerPaper : classes.drawerPaperClose}
-        onClose={drawerClose}
-        classes={{
-          paper: clsx(
-            classes.drawerPaper,
-            !drawerOpen && classes.drawerPaperClose
-          )
-        }}
-        open={drawerOpen}
-      >
-        <div
-          className={classes.toolbarIcon}
-          onClick={handleDrawerToggle}
-          style={{ cursor: "pointer" }}
-        >
-          <img
-            className={drawerOpen ? classes.logo : classes.logoIcon}
-            alt="logo"
-          />
-        </div>
-        <List
+      {!focoDesktop && (
+        <Drawer
+          variant={drawerVariant}
           className={
-            drawerOpen
-              ? classes.containerWideWithScroll
-              : classes.containerNarrowWithScroll
+            drawerOpen ? classes.drawerPaper : classes.drawerPaperClose
           }
+          onClose={drawerClose}
+          PaperProps={{ onPointerEnter: handleDrawerPointerEnter }}
+          classes={{
+            paper: clsx(
+              classes.drawerPaper,
+              !drawerOpen && classes.drawerPaperClose,
+              painelDesktop && drawerOpen && classes.drawerPainelOpen,
+              painelDesktop && classes.drawerCompact
+            )
+          }}
+          open={drawerOpen}
         >
-          <MainListItems
-            drawerClose={drawerClose}
-            drawerOpen={drawerOpen}
-            collapsed={!drawerOpen}
-          />
-        </List>
-        {drawerOpen && gitinfo.commitHash !== "N/A" && (
-          <div className={classes.versionBox}>
-            <Typography className={classes.version}>
-              {gitinfo.tagName || `${gitinfo.branchName} ${gitinfo.commitHash}`}
-            </Typography>
+          <div
+            className={clsx(
+              classes.sidebarHeader,
+              drawerOpen && !painelDesktop && classes.sidebarBrandHeader,
+              !drawerOpen && classes.sidebarHeaderClosed
+            )}
+          >
+            {painelDesktop ? (
+              drawerOpen && (
+                <span className={classes.sidebarTitle}>
+                  {i18n.t("layoutMode.menu")}
+                </span>
+              )
+            ) : (
+              <div
+                className={clsx(
+                  classes.sidebarLogo,
+                  !drawerOpen && classes.sidebarLogoClosed
+                )}
+                onClick={handleDrawerToggle}
+              >
+                <BrandLogo
+                  className={drawerOpen ? classes.logo : classes.logoIcon}
+                  compact={!drawerOpen}
+                  surface={
+                    layoutMode === "painel" && theme.mode === "light"
+                      ? "page"
+                      : "sidebar"
+                  }
+                />
+              </div>
+            )}
+            {drawerVariant !== "temporary" && (
+              <Tooltip
+                title={
+                  drawerOpen
+                    ? i18n.t("mainDrawer.collapseMenu")
+                    : i18n.t("mainDrawer.expandMenu")
+                }
+                placement="right"
+              >
+                <IconButton
+                  aria-label={
+                    drawerOpen
+                      ? i18n.t("mainDrawer.collapseMenu")
+                      : i18n.t("mainDrawer.expandMenu")
+                  }
+                  className={classes.sidebarToggle}
+                  onClick={handleDrawerToggle}
+                >
+                  {drawerOpen ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+                </IconButton>
+              </Tooltip>
+            )}
           </div>
-        )}
-      </Drawer>
+          <List
+            className={
+              drawerOpen
+                ? classes.containerWideWithScroll
+                : classes.containerNarrowWithScroll
+            }
+          >
+            <MainListItems
+              drawerClose={drawerClose}
+              drawerOpen={drawerOpen}
+              collapsed={!drawerOpen}
+            />
+          </List>
+          {drawerOpen && gitinfo.commitHash !== "N/A" && (
+            <div className={classes.versionBox}>
+              <Typography className={classes.version}>
+                {gitinfo.tagName ||
+                  `${gitinfo.branchName} ${gitinfo.commitHash}`}
+              </Typography>
+            </div>
+          )}
+        </Drawer>
+      )}
       <UserModal
         open={userModalOpen}
         onClose={() => setUserModalOpen(false)}
@@ -696,32 +1052,74 @@ const LoggedInLayout = ({ children, themeToggle }) => {
         open={aboutModalOpen}
         onClose={() => setAboutModalOpen(false)}
       />
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+      />
       <AppBar
         position="absolute"
         className={clsx(
           classes.appBar,
           drawerVariant === "temporary" && classes.appBarMobile,
-          drawerOpen && classes.appBarShift
+          drawerOpen && !focoDesktop && classes.appBarShift,
+          focoDesktop && classes.appBarFoco,
+          painelDesktop && drawerOpen && classes.appBarPainel
         )}
         color="transparent"
       >
-        <Toolbar variant="dense" className={classes.toolbar}>
-          <IconButton
-            edge="start"
-            variant="contained"
-            aria-label="open drawer"
-            onClick={handleDrawerToggle}
-            className={classes.menuButton}
-          >
-            {drawerOpen ? <ChevronLeftIcon /> : <MenuIcon />}
-          </IconButton>
+        <Toolbar
+          variant="dense"
+          className={clsx(classes.toolbar, classes.toolbarFlat)}
+        >
+          {(focoDesktop || painelDesktop) && (
+            <BrandLogo
+              className={clsx(
+                classes.barLogo,
+                compactHeaderLogo && classes.barLogoCompact
+              )}
+              variant="header"
+              compact={compactHeaderLogo}
+              onClick={() => history.push("/tickets")}
+            />
+          )}
+          {drawerVariant === "temporary" && (
+            <IconButton
+              edge="start"
+              variant="contained"
+              aria-label="open drawer"
+              onClick={handleDrawerToggle}
+              className={classes.menuButton}
+            >
+              {drawerOpen ? <ChevronLeftIcon /> : <MenuIcon />}
+            </IconButton>
+          )}
 
-          <Typography
-            component="h2"
-            variant="h6"
-            color="inherit"
-            noWrap
-            className={classes.title}
+          <div className={classes.searchSlot}>
+            <button
+              type="button"
+              className={classes.searchTrigger}
+              onClick={() => setPaletteOpen(true)}
+              aria-label={i18n.t("layoutMode.searchPlaceholder")}
+            >
+              <SearchIcon fontSize="small" />
+              <span className={classes.searchLabel}>
+                {i18n.t("layoutMode.searchPlaceholder")}
+              </span>
+              <span className={classes.kbd}>Ctrl K</span>
+            </button>
+          </div>
+
+          <FormControlLabel
+            className={classes.themeSwitch}
+            control={
+              <Switch
+                size="small"
+                color="primary"
+                checked={theme.mode === "dark"}
+                onChange={toggleColorMode}
+              />
+            }
+            label={i18n.t("layoutMode.darkMode")}
           />
 
           {wsConnectionIssue && (
@@ -823,10 +1221,45 @@ const LoggedInLayout = ({ children, themeToggle }) => {
               <MenuItem onClick={handleOpenUserModal}>
                 {i18n.t("mainDrawer.appBar.user.profile")}
               </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  handleCloseProfileMenu();
+                  history.push("/account-security");
+                }}
+              >
+                {i18n.t("accountSecurity.title")}
+              </MenuItem>
               <MenuItem onClick={toggleColorMode}>
                 {theme.mode === "dark"
                   ? i18n.t("mainDrawer.appBar.user.lightmode")
                   : i18n.t("mainDrawer.appBar.user.darkmode")}
+              </MenuItem>
+              <MenuItem
+                selected={layoutMode === "workspace"}
+                onClick={() => chooseLayout("workspace")}
+              >
+                {i18n.t("layoutMode.title")}: {i18n.t("layoutMode.workspace")}
+              </MenuItem>
+              <MenuItem
+                selected={layoutMode === "foco"}
+                onClick={() => chooseLayout("foco")}
+              >
+                {i18n.t("layoutMode.title")}: {i18n.t("layoutMode.foco")}
+              </MenuItem>
+              <MenuItem
+                selected={layoutMode === "painel"}
+                onClick={() => chooseLayout("painel")}
+              >
+                {i18n.t("layoutMode.title")}: {i18n.t("layoutMode.painel")}
+              </MenuItem>
+              <MenuItem
+                selected={themeMode === "system"}
+                onClick={() => {
+                  colorMode.followSystem();
+                  handleCloseProfileMenu();
+                }}
+              >
+                {i18n.t("layoutMode.systemTheme")}
               </MenuItem>
               <NestedMenuItem
                 label={i18n.t("mainDrawer.appBar.user.language")}
@@ -845,8 +1278,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
                 ))}
               </NestedMenuItem>
               <MenuItem onClick={handleOpenAboutModal}>
-                {i18n.t("about.aboutthe")}{" "}
-                {currentUser?.super ? "ticketz" : theme.appName}
+                {i18n.t("about.aboutthe")} {theme.appName}
               </MenuItem>
               <MenuItem onClick={handleClickLogout}>
                 {i18n.t("mainDrawer.appBar.user.logout")}
@@ -855,6 +1287,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
           </div>
         </Toolbar>
       </AppBar>
+      {focoDesktop && <NavTabs isAdmin={user?.profile === "admin"} />}
       <NewTicketModal
         modalOpen={!!newTicketContact}
         contact={newTicketContact}
@@ -868,11 +1301,14 @@ const LoggedInLayout = ({ children, themeToggle }) => {
       <main
         className={clsx(
           drawerVariant === "temporary" && classes.contentMobile,
-          drawerOpen && classes.contentShift,
-          classes.content
+          drawerOpen && !focoDesktop && classes.contentShift,
+          classes.content,
+          classes.contentFlat,
+          focoDesktop && classes.contentFlatFoco,
+          painelDesktop && drawerOpen && classes.contentPainel,
+          painelDesktop && theme.mode === "light" && classes.contentWarm
         )}
       >
-        <OnlyForSuperUser user={currentUser} yes={() => <GoogleAnalytics />} />
         {children ? children : null}
       </main>
     </div>

@@ -2,6 +2,7 @@ import React, {
   useState,
   useEffect,
   useReducer,
+  useRef,
   useCallback,
   useContext
 } from "react";
@@ -110,24 +111,43 @@ const Tags = () => {
   const [searchParam, setSearchParam] = useState("");
   const [tags, dispatch] = useReducer(reducer, []);
   const [tagModalOpen, setTagModalOpen] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+  const requestSequence = useRef(0);
+  // Zap Komunick: names of the sectors of each tag (RF-019)
+  const [queueNames, setQueueNames] = useState({});
+
+  useEffect(() => {
+    api
+      .get("/queue")
+      .then(({ data }) =>
+        setQueueNames(Object.fromEntries(data.map(q => [q.id, q.name])))
+      )
+      .catch(toastError);
+  }, []);
 
   const fetchTags = useCallback(async () => {
+    const request = ++requestSequence.current;
     try {
       const { data } = await api.get("/tags/", {
         params: { searchParam, pageNumber }
       });
+      if (request !== requestSequence.current) return;
       dispatch({ type: "LOAD_TAGS", payload: data.tags, kanban: 0 });
       setHasMore(data.hasMore);
       setNeedMore(false);
       setLoading(false);
     } catch (err) {
-      toastError(err);
+      if (request === requestSequence.current) {
+        toastError(err);
+        setLoading(false);
+      }
     }
   }, [searchParam, pageNumber]);
 
   const socketManager = useContext(SocketContext);
 
   useEffect(() => {
+    requestSequence.current += 1;
     dispatch({ type: "RESET" });
     setPageNumber(1);
   }, [searchParam]);
@@ -137,8 +157,11 @@ const Tags = () => {
     const delayDebounceFn = setTimeout(() => {
       fetchTags();
     }, 500);
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchParam, pageNumber, fetchTags]);
+    return () => {
+      requestSequence.current += 1;
+      clearTimeout(delayDebounceFn);
+    };
+  }, [searchParam, pageNumber, fetchTags, reloadKey]);
 
   useEffect(() => {
     if (needMore && hasMore && !loading) {
@@ -148,27 +171,28 @@ const Tags = () => {
 
   useEffect(() => {
     const socket = socketManager.GetSocket(user.companyId);
+    let reloadTimer;
 
     const onTag = data => {
-      if (searchParam) {
-        return;
-      }
-
-      if (data.action === "update" || data.action === "create") {
-        dispatch({ type: "UPDATE_TAGS", payload: data.tag });
-      }
-
-      if (data.action === "delete") {
-        dispatch({ type: "DELETE_TAG", payload: +data.tagId });
-      }
+      if (!["update", "create", "delete"].includes(data.action)) return;
+      // Socket events go to the whole company. Only the API can decide
+      // whether the changed tag belongs in this user's sector and search.
+      clearTimeout(reloadTimer);
+      reloadTimer = setTimeout(() => {
+        requestSequence.current += 1;
+        dispatch({ type: "RESET" });
+        setPageNumber(1);
+        setReloadKey(value => value + 1);
+      }, 200);
     };
 
     socket.on("tag", onTag);
 
     return () => {
+      clearTimeout(reloadTimer);
       socket.disconnect();
     };
-  }, [user, socketManager]);
+  }, [user.companyId, socketManager]);
 
   const handleOpenTagModal = () => {
     setSelectedTag(null);
@@ -280,6 +304,9 @@ const Tags = () => {
                 {i18n.t("tags.table.kanban")}
               </TableCell>
               <TableCell align="center">
+                {i18n.t("tags.table.queues")}
+              </TableCell>
+              <TableCell align="center">
                 {i18n.t("tags.table.actions")}
               </TableCell>
             </TableRow>
@@ -312,6 +339,14 @@ const Tags = () => {
                     ) : null}
                   </TableCell>
                   <TableCell align="center">
+                    {tag.queueIds?.length
+                      ? tag.queueIds
+                          .map(id => queueNames[id])
+                          .filter(Boolean)
+                          .join(", ")
+                      : i18n.t("tags.table.allQueues")}
+                  </TableCell>
+                  <TableCell align="center">
                     <>
                       {(user.profile === "admin" ||
                         user.profile === "supervisor") && (
@@ -339,7 +374,7 @@ const Tags = () => {
                   </TableCell>
                 </TableRow>
               ))}
-              {loading && <TableRowSkeleton columns={6} />}
+              {loading && <TableRowSkeleton columns={7} />}
             </>
           </TableBody>
         </Table>

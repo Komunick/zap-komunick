@@ -5,8 +5,10 @@ import { toast } from "react-toastify";
 import clsx from "clsx";
 
 import { Paper, makeStyles } from "@material-ui/core";
+import useMediaQuery from "@material-ui/core/useMediaQuery";
 
 import ContactDrawer from "../ContactDrawer";
+import CustomerPanel from "../CustomerPanel";
 import MessageInput from "../MessageInputCustom/";
 import TicketHeader from "../TicketHeader";
 import TicketInfo from "../TicketInfo";
@@ -20,6 +22,9 @@ import { AuthContext } from "../../context/Auth/AuthContext";
 import { TagsContainer } from "../TagsContainer";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import useSettings from "../../hooks/useSettings";
+import AcessoriasPanel from "../AcessoriasPanel";
+import SciPanel from "../SciPanel";
+import AttachmentsPanel from "../AttachmentsPanel";
 
 const drawerWidth = 320;
 
@@ -55,6 +60,13 @@ const useStyles = makeStyles(theme => ({
     }),
     marginRight: 0
   },
+  attachmentToolbar: {
+    display: "flex",
+    justifyContent: "flex-end",
+    flexWrap: "wrap",
+    padding: theme.spacing(0.5, 2),
+    minWidth: 0
+  },
   drawerShade: {
     display: "none",
     [theme.breakpoints.down(1400)]: {
@@ -77,6 +89,9 @@ const Ticket = () => {
 
   const { user } = useContext(AuthContext);
 
+  // Zap Komunick: on wide screens the customer panel is fixed beside the
+  // conversation; below that the contact drawer keeps opening on click
+  const wide = useMediaQuery("(min-width:1400px)");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [contact, setContact] = useState({});
@@ -102,11 +117,16 @@ const Ticket = () => {
   }, []);
 
   useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
     setLoading(true);
     const delayDebounceFn = setTimeout(() => {
       const fetchTicket = async () => {
         try {
-          const { data } = await api.get("/tickets/u/" + ticketId);
+          const { data } = await api.get("/tickets/u/" + ticketId, {
+            signal: controller.signal
+          });
+          if (!active) return;
           const { queueId } = data;
           const { queues, profile } = user;
 
@@ -121,21 +141,34 @@ const Ticket = () => {
           setTicket(data);
           setLoading(false);
         } catch (err) {
+          if (!active || controller.signal.aborted) return;
           setLoading(false);
           toastError(err);
         }
       };
       fetchTicket();
     }, 500);
-    return () => clearTimeout(delayDebounceFn);
+    return () => {
+      active = false;
+      controller.abort();
+      clearTimeout(delayDebounceFn);
+    };
   }, [ticketId, user, history]);
 
   useEffect(() => {
     const companyId = localStorage.getItem("companyId");
 
     const socket = socketManager.GetSocket(companyId);
+    let active = true;
 
     const onConnectTicket = () => {
+      if (
+        !active ||
+        !Number.isSafeInteger(Number(ticket.id)) ||
+        Number(ticket.id) <= 0 ||
+        ticket.uuid !== ticketId
+      )
+        return;
       socket.emit("joinChatBox", `${ticket.id}`);
     };
 
@@ -166,6 +199,7 @@ const Ticket = () => {
     socket.on(`company-${companyId}-contact`, onCompanyContact);
 
     return () => {
+      active = false;
       socket.disconnect();
     };
   }, [ticketId, ticket, history, socketManager]);
@@ -184,11 +218,29 @@ const Ticket = () => {
         <TicketInfo
           contact={contact}
           ticket={ticket}
-          onClick={handleDrawerOpen}
+          onClick={wide ? undefined : handleDrawerOpen}
         />
       );
     }
   };
+
+  const attachmentContextReady =
+    !loading &&
+    Number.isSafeInteger(Number(ticket.id)) &&
+    Number(ticket.id) > 0 &&
+    ticket.uuid === ticketId;
+  const attachmentContextKey = [
+    ticketId,
+    ticket.id,
+    ticket.contactId,
+    ticket.queueId,
+    ticket.userId,
+    ticket.status,
+    user.id,
+    user.companyId,
+    user.profile,
+    ...(user.queues || []).map(queue => queue.id).sort()
+  ].join(":");
 
   const renderMessagesList = () => {
     return (
@@ -198,8 +250,15 @@ const Ticket = () => {
           ticketId={ticket.id}
           isGroup={ticket.isGroup}
           markAsRead={true}
+          attachmentContextReady={attachmentContextReady}
+          attachmentContextKey={attachmentContextKey}
         ></MessagesList>
-        <MessageInput ticket={ticket} showTabGroups />
+        {!loading &&
+          Number.isSafeInteger(Number(ticket.id)) &&
+          Number(ticket.id) > 0 &&
+          ticket.uuid === ticketId && (
+            <MessageInput ticket={ticket} showTabGroups />
+          )}
       </>
     );
   };
@@ -210,12 +269,12 @@ const Ticket = () => {
         variant="outlined"
         elevation={0}
         className={clsx(classes.mainWrapper, {
-          [classes.mainWrapperShift]: drawerOpen
+          [classes.mainWrapperShift]: drawerOpen && !wide
         })}
       >
         <div
           className={clsx({
-            [classes.drawerShade]: drawerOpen
+            [classes.drawerShade]: drawerOpen && !wide
           })}
           onClick={() => setDrawerOpen(false)}
         ></div>
@@ -224,22 +283,55 @@ const Ticket = () => {
           <TicketActionButtons ticket={ticket} showTabGroups={showTabGroups} />
         </TicketHeader>
         <Paper>
+          {attachmentContextReady && (
+            <div className={classes.attachmentToolbar}>
+              <AttachmentsPanel
+                ticketId={ticket.id}
+                contextKey={attachmentContextKey}
+              />
+            </div>
+          )}
+          {!loading &&
+            Number.isSafeInteger(Number(ticket.id)) &&
+            Number(ticket.id) > 0 &&
+            ticket.uuid === ticketId && (
+              <>
+                <AcessoriasPanel
+                  key={`${ticket.id}:${ticket.contactId}:${ticket.queueId}:${ticket.userId}:${ticket.status}`}
+                  ticketId={ticket.id}
+                  contactId={ticket.contactId}
+                  companyId={ticket.companyId}
+                />
+                <SciPanel
+                  contextKey={`${ticket.id}:${ticket.contactId}:${ticket.queueId}:${ticket.userId}:${ticket.status}`}
+                  ticketId={ticket.id}
+                  contactId={ticket.contactId}
+                  companyId={ticket.companyId}
+                />
+              </>
+            )}
           <TagsContainer
             ticket={["ticket", "both"].includes(tagsMode) && ticket}
             contact={tagsMode === "contact" && contact}
+            queueId={ticket?.queueId}
+            ticketId={ticket?.id}
           />
         </Paper>
         <ReplyMessageProvider>
           <EditMessageProvider>{renderMessagesList()}</EditMessageProvider>
         </ReplyMessageProvider>
       </Paper>
-      <ContactDrawer
-        open={drawerOpen}
-        handleDrawerClose={handleDrawerClose}
-        contact={contact}
-        loading={loading}
-        ticket={ticket}
-      />
+      {wide ? (
+        <CustomerPanel ticket={ticket} contact={contact} loading={loading} />
+      ) : (
+        <ContactDrawer
+          open={drawerOpen}
+          handleDrawerClose={handleDrawerClose}
+          contact={contact}
+          loading={loading}
+          ticket={ticket}
+        />
+      )}
     </div>
   );
 };

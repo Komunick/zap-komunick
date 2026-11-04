@@ -22,6 +22,11 @@ import TicketTag from "../../models/TicketTag";
 import Whatsapp from "../../models/Whatsapp";
 import { GetCompanySetting } from "../../helpers/CheckSettings";
 import ContactTag from "../../models/ContactTag";
+import {
+  buildTicketFilterWhere,
+  TicketFilters
+} from "../../helpers/TicketFilters";
+import { loadTicketViewer } from "./AuthorizeTicketContextService";
 
 interface Request {
   isSearch?: boolean;
@@ -42,6 +47,7 @@ interface Request {
   tags: number[];
   users: number[];
   companyId: number;
+  filters?: TicketFilters;
 }
 
 interface Response {
@@ -67,7 +73,8 @@ const ListTicketsService = async ({
   withUnreadMessages,
   notClosed,
   all,
-  companyId
+  companyId,
+  filters
 }: Request): Promise<Response> => {
   let ticketId: number;
 
@@ -96,6 +103,7 @@ const ListTicketsService = async ({
     (await GetCompanySetting(companyId, "groupsTab", "disabled")) === "enabled";
 
   const user = await ShowUserService(userId);
+  const viewer = await loadTicketViewer({ userId, companyId });
 
   const andedOrs: WhereOptions<Ticket>[] = [
     {
@@ -119,27 +127,40 @@ const ListTicketsService = async ({
     {
       model: Contact,
       as: "contact",
-      include: ["tags", "extraInfo"],
+      where: { companyId },
+      required: true,
+      include: [
+        { model: Tag, as: "tags", where: { companyId }, required: false },
+        "extraInfo"
+      ],
       attributes: ["id", "name", "number", "email", "profilePicUrl", "presence"]
     },
     {
       model: Queue,
       as: "queue",
+      where: { companyId },
+      required: false,
       attributes: ["id", "name", "color"]
     },
     {
       model: User,
       as: "user",
+      where: { companyId },
+      required: false,
       attributes: ["id", "name"]
     },
     {
       model: Tag,
       as: "tags",
+      where: { companyId },
+      required: false,
       attributes: ["id", "name", "color"]
     },
     {
       model: Whatsapp,
       as: "whatsapp",
+      where: { companyId },
+      required: false,
       attributes: ["id", "name"]
     }
   ];
@@ -172,6 +193,7 @@ const ListTicketsService = async ({
         as: "messages",
         attributes: ["id", "body"],
         where: {
+          companyId,
           body: where(
             fn("LOWER", col("body")),
             "LIKE",
@@ -230,6 +252,11 @@ const ListTicketsService = async ({
       ...whereCondition,
       unreadMessages: { [Op.gt]: 0 }
     };
+  }
+
+  // Zap Komunick: the panel's tags add to the tags of the search (RF-012)
+  if (filters?.tagIds?.length) {
+    tags = Array.from(new Set([...(tags || []), ...filters.tagIds]));
   }
 
   if (Array.isArray(tags) && tags.length > 0) {
@@ -304,6 +331,17 @@ const ListTicketsService = async ({
     };
   }
 
+  if (filters) {
+    andedOrs.push(
+      ...buildTicketFilterWhere(filters, {
+        userId: Number(userId),
+        isAdmin: user.profile === "admin",
+        slaMinutes:
+          Number(await GetCompanySetting(companyId, "slaMinutes", "0")) || 0
+      })
+    );
+  }
+
   const limit = all ? undefined : 40;
 
   if (!all && nextUpdatedAt) {
@@ -338,8 +376,11 @@ const ListTicketsService = async ({
   }
 
   whereCondition = {
-    ...whereCondition,
-    companyId
+    companyId,
+    [Op.and]: [
+      whereCondition,
+      ...(viewer.isAdmin ? [] : [{ queueId: { [Op.in]: viewer.queueIds } }])
+    ]
   };
 
   const tickets = await Ticket.findAll({

@@ -3,6 +3,7 @@ import { getIO } from "../../libs/socket";
 import Setting from "../../models/Setting";
 import { updateDefaultLanguage } from "../TranslationServices/i18nService";
 import { safeSettingsKeys } from "./GetSettingService";
+import { isCredentialKey } from "../../helpers/CredentialRules";
 
 interface Request {
   key: string;
@@ -15,6 +16,27 @@ const UpdateSettingService = async ({
   value,
   companyId
 }: Request): Promise<Setting | undefined> => {
+  if (isCredentialKey(key)) {
+    throw new AppError("ERR_USE_CREDENTIALS_ROUTE", 400);
+  }
+  if (
+    key === "aiAssistantEnabled" &&
+    !["enabled", "disabled"].includes(value)
+  ) {
+    throw new AppError("ERR_ASSISTANT_INVALID_REQUEST", 400);
+  }
+  if (key === "acessoriasEnabled" && !["enabled", "disabled"].includes(value)) {
+    throw new AppError("ERR_ACESSORIAS_INVALID_REQUEST", 400);
+  }
+  if (key === "sciEnabled" && !["enabled", "disabled"].includes(value)) {
+    throw new AppError("ERR_SCI_INVALID_REQUEST", 400);
+  }
+  if (
+    key === "integratedAssistantEnabled" &&
+    !["enabled", "disabled"].includes(value)
+  ) {
+    throw new AppError("ERR_INTEGRATED_ASSISTANT_INVALID_REQUEST", 400);
+  }
   const [setting] = await Setting.findOrCreate({
     where: {
       key,
@@ -36,6 +58,18 @@ const UpdateSettingService = async ({
   }
 
   await setting.update({ value });
+
+  // P1: legacy Settings allows duplicate keys. A successful toggle must converge them.
+  if (
+    [
+      "aiAssistantEnabled",
+      "acessoriasEnabled",
+      "sciEnabled",
+      "integratedAssistantEnabled"
+    ].includes(key)
+  ) {
+    await Setting.update({ value }, { where: { companyId, key } });
+  }
 
   if (setting.key === "defaultLanguage" && companyId === 1) {
     updateDefaultLanguage(value);

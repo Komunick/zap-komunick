@@ -29,40 +29,20 @@ export async function loadCountries() {
   }
 }
 
-async function geolocateCountry() {
-  // Try browser geolocation
-  if ("geolocation" in navigator) {
-    try {
-      const position = await new Promise((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          timeout: 5000
-        })
-      );
-      const { latitude, longitude } = position.coords;
-      // Use OpenStreetMap Nominatim for reverse geocoding
-      const geoRes = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
-      );
-      const geoData = await geoRes.json();
-      const countryCode = geoData.address?.country_code;
-      if (countryCode) {
-        return countryCode.toUpperCase();
-      }
-    } catch (e) {
-      // Permission denied or error, fallback below
+// Zap Komunick: the country of the phone field comes from the browser language
+// (pt-BR -> BR). The upstream version asked the browser for the location on
+// every page load and sent it to nominatim.openstreetmap.org, with an IP lookup
+// at ipinfo.io as fallback; neither is done here.
+async function detectCountry() {
+  const languages = [...(navigator.languages || []), navigator.language];
+  for (const language of languages) {
+    const match = /[-_]([A-Za-z]{2})(?![A-Za-z])/.exec(language || "");
+    if (match) {
+      return match[1].toUpperCase();
     }
   }
-
-  // Fallback to ipinfo.io
-  try {
-    const response = await fetch("https://ipinfo.io/json");
-    const data = await response.json();
-    return data.country;
-  } catch (error) {
-    console.error("Error fetching country:", error);
-    return null;
-  }
+  return "BR";
 }
 
 export const loadedCountries = await loadCountries();
-export const currentCountry = await geolocateCountry();
+export const currentCountry = await detectCountry();

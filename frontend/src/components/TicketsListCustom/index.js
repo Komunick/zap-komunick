@@ -12,6 +12,8 @@ import Paper from "@material-ui/core/Paper";
 
 import TicketListItem from "../TicketListItemCustom";
 import TicketsListSkeleton from "../TicketsListSkeleton";
+import { BulkSelectionContext } from "../TicketsBulk";
+import { countFilters, ticketMatchesFilters } from "../TicketsFilters";
 
 import useTickets from "../../hooks/useTickets";
 import { i18n } from "../../translate/i18n";
@@ -190,8 +192,10 @@ const TicketsListCustom = props => {
     updateCount,
     style,
     setTabOpen,
-    showTabGroups
+    showTabGroups,
+    filters
   } = props;
+  const filtersKey = JSON.stringify(filters || {});
   const classes = useStyles();
   const [paginationCursor, setPaginationCursor] = useState({
     nextUpdatedAt: null,
@@ -212,11 +216,16 @@ const TicketsListCustom = props => {
   // Zap Komunick: SLA highlight (docs/PRD.md, RF-002)
   const { getSetting } = useSettings();
   const [slaMinutes, setSlaMinutes] = useState("0");
+  // Zap Komunick: close reason (docs/PRD.md, RF-007)
+  const [closeReasonRequired, setCloseReasonRequired] = useState("disabled");
   const [, setSlaTick] = useState(0);
 
   useEffect(() => {
     getSetting("slaMinutes", "0")
       .then(value => setSlaMinutes(value || "0"))
+      .catch(() => {});
+    getSetting("closeReasonRequired", "disabled")
+      .then(value => setCloseReasonRequired(value || "disabled"))
       .catch(() => {});
     // re-render once a minute so tickets cross the deadline without events
     const timer = setInterval(() => setSlaTick(tick => tick + 1), 60000);
@@ -229,6 +238,9 @@ const TicketsListCustom = props => {
     const onSettings = data => {
       if (data?.key === "slaMinutes") {
         setSlaMinutes(data.value || "0");
+      }
+      if (data?.key === "closeReasonRequired") {
+        setCloseReasonRequired(data.value || "disabled");
       }
     };
     socket.on("settings", onSettings);
@@ -248,7 +260,8 @@ const TicketsListCustom = props => {
     contactId,
     tags,
     users,
-    selectedQueueIds
+    selectedQueueIds,
+    filtersKey
   ]);
 
   const {
@@ -270,7 +283,8 @@ const TicketsListCustom = props => {
     contactId,
     tags: JSON.stringify(tags),
     users: JSON.stringify(users),
-    queueIds: JSON.stringify(selectedQueueIds)
+    queueIds: JSON.stringify(selectedQueueIds),
+    filters
   });
 
   useEffect(() => {
@@ -290,8 +304,19 @@ const TicketsListCustom = props => {
     const companyId = localStorage.getItem("companyId");
     const socket = socketManager.GetSocket(companyId);
 
+    // Zap Komunick: the filter panel also applies to realtime updates (RF-012)
+    const filterContext = {
+      isAdmin: profile === "admin",
+      userId: user?.id,
+      slaMinutes: Number(slaMinutes) || 0
+    };
+    const filtersActive = !!filters && countFilters(filters) > 0;
+    const matchesPanel = ticket =>
+      ticketMatchesFilters(ticket, filters, filterContext);
+
     const shouldUpdateTicket = ticket => {
       return (
+        matchesPanel(ticket) &&
         (!isSearch || !searchParam) &&
         (!contactId || ticket.contactId === contactId) &&
         (!tags?.length ||
@@ -318,6 +343,15 @@ const TicketsListCustom = props => {
     };
 
     const onCompanyTicket = data => {
+      if (
+        data.action === "update" &&
+        filtersActive &&
+        !matchesPanel(data.ticket)
+      ) {
+        dispatch({ type: "DELETE_TICKET", payload: data.ticket?.id });
+        return;
+      }
+
       if (data.action === "updateUnread") {
         dispatch({
           type: "RESET_UNREAD",
@@ -459,7 +493,9 @@ const TicketsListCustom = props => {
     profile,
     queues,
     socketManager,
-    refetchTickets
+    refetchTickets,
+    filtersKey,
+    slaMinutes
   ]);
 
   useEffect(() => {
@@ -468,6 +504,15 @@ const TicketsListCustom = props => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticketsList]);
+
+  // Zap Komunick: tell the bulk selection what this list shows (RF-011)
+  const bulk = useContext(BulkSelectionContext);
+  const bulkKey = isSearch ? "search" : groups ? "groups" : status;
+  const bulkRegister = bulk?.register;
+  useEffect(() => {
+    if (bulkRegister) bulkRegister(bulkKey, ticketsList);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticketsList, bulkKey]);
 
   const loadMore = () => {
     const lastTicket = ticketsList[ticketsList.length - 1];
@@ -522,6 +567,7 @@ const TicketsListCustom = props => {
                   key={ticket.id}
                   groupActionButtons={!groups && !showTabGroups}
                   slaMinutes={slaMinutes}
+                  closeReasonRequired={closeReasonRequired === "enabled"}
                 />
               ))}
             </>

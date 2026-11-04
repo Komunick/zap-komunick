@@ -1,16 +1,18 @@
-import { FindOptions, Op } from "sequelize";
+import { FindOptions, Op, WhereOptions } from "sequelize";
 import AppError from "../../errors/AppError";
 import Message from "../../models/Message";
 import Ticket from "../../models/Ticket";
 import ShowTicketService from "../TicketServices/ShowTicketService";
 import Queue from "../../models/Queue";
 import { GetCompanySetting } from "../../helpers/CheckSettings";
+import AuthorizeTicketContextService from "../TicketServices/AuthorizeTicketContextService";
+import Contact from "../../models/Contact";
 
 interface Request {
   ticketId: string;
   companyId: number;
   nextId?: string;
-  queues?: number[];
+  userId: string | number;
   minUpdatedAt?: string;
 }
 
@@ -26,9 +28,14 @@ const ListMessagesService = async ({
   nextId,
   ticketId,
   companyId,
-  queues = [],
+  userId,
   minUpdatedAt
 }: Request): Promise<Response> => {
+  const { viewer } = await AuthorizeTicketContextService(ticketId, {
+    userId,
+    companyId
+  });
+  const queues = viewer.queueIds;
   const ticket = await ShowTicketService(ticketId, companyId);
 
   if (!ticket) {
@@ -37,10 +44,21 @@ const ListMessagesService = async ({
 
   const limit = 100;
 
-  const options: FindOptions = {
-    where: {
-      ticketId,
-      companyId,
+  // Zap Komunick: the whole history of the client, not only this ticket
+  // (docs/PRD.md, RF-017). A client who writes again after a resolved
+  // conversation gets a new ticket; its old messages stay visible here.
+  const contactTickets = await Ticket.findAll({
+    where: { contactId: ticket.contactId, companyId },
+    attributes: ["id"]
+  });
+  const ticketIds = Array.from(
+    new Set([ticket.id, ...contactTickets.map(t => t.id)])
+  );
+
+  const conditions: WhereOptions[] = [
+    { ticketId: { [Op.in]: ticketIds } },
+    { companyId },
+    {
       mediaType: {
         [Op.or]: {
           [Op.ne]: "reactionMessage",
@@ -48,20 +66,36 @@ const ListMessagesService = async ({
         }
       }
     }
-  };
+  ];
 
   if (
-    queues.length > 0 &&
+    !viewer.isAdmin &&
     (await GetCompanySetting(companyId, "messageVisibility", "message")) ===
       "message"
   ) {
-    options.where["queueId"] = {
-      [Op.or]: {
-        [Op.in]: queues,
-        [Op.eq]: null
-      }
-    };
+    // the queue privacy holds for the client's other tickets; inside this
+    // ticket everything shows, so a transfer keeps its context
+    conditions.push({
+      [Op.or]: [
+        { ticketId: ticket.id },
+        {
+          queueId: {
+            [Op.or]: {
+              [Op.in]: queues,
+              [Op.eq]: null
+            }
+          }
+        }
+      ]
+    });
   }
+
+  const options: FindOptions = {
+    where: { [Op.and]: conditions }
+  };
+  // The same client/office/sector fence applies to cursors and associations.
+  // Keep this copy free of pagination predicates for quoted messages/replies.
+  const contextConditions = [...conditions];
 
   if (minUpdatedAt) {
     const parsedMinUpdatedAt = new Date(minUpdatedAt);
@@ -70,15 +104,11 @@ const ListMessagesService = async ({
       throw new AppError("ERR_INVALID_MIN_UPDATED_AT", 400);
     }
 
-    options.where["updatedAt"] = {
-      [Op.gte]: parsedMinUpdatedAt
-    };
+    conditions.push({ updatedAt: { [Op.gte]: parsedMinUpdatedAt } });
   } else if (nextId) {
     const cursorMessage = await Message.findOne({
       where: {
-        id: nextId,
-        ticketId,
-        companyId
+        [Op.and]: [...contextConditions, { id: nextId }]
       },
       attributes: ["id", "createdAt"]
     });
@@ -87,32 +117,40 @@ const ListMessagesService = async ({
       throw new AppError("ERR_MESSAGE_NOT_FOUND", 404);
     }
 
-    options.where["createdAt"] = {
-      [Op.lt]: cursorMessage.createdAt
-    };
+    conditions.push({ createdAt: { [Op.lt]: cursorMessage.createdAt } });
   }
 
   const messages = await Message.findAll({
     ...options,
     limit: limit + 1,
     include: [
-      "contact",
+      { model: Contact, as: "contact", where: { companyId }, required: false },
       {
         model: Message,
         as: "quotedMsg",
-        include: ["contact"],
-        where: {
-          companyId: ticket.companyId
-        },
+        include: [
+          {
+            model: Contact,
+            as: "contact",
+            where: { companyId },
+            required: false
+          }
+        ],
+        where: { [Op.and]: contextConditions },
         required: false
       },
       {
         model: Message,
         as: "replies",
-        where: {
-          ticketId: ticket.id
-        },
-        include: ["contact"],
+        where: { [Op.and]: contextConditions },
+        include: [
+          {
+            model: Contact,
+            as: "contact",
+            where: { companyId },
+            required: false
+          }
+        ],
         required: false
       },
       {

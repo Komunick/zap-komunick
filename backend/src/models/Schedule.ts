@@ -63,6 +63,16 @@ class Schedule extends Model<Schedule> {
   @Column
   recurrenceAnchorAt: Date;
 
+  // Zap Komunick: attachment and business days
+  @Column
+  mediaPath: string;
+
+  @Column
+  mediaName: string;
+
+  @Column({ defaultValue: false })
+  businessDaysOnly: boolean;
+
   @CreatedAt
   createdAt: Date;
 

@@ -7,21 +7,26 @@ import cookieParser from "cookie-parser";
 import * as Sentry from "@sentry/node";
 
 import "./database";
-import path from "path";
-import uploadConfig from "./config/upload";
 import AppError from "./errors/AppError";
 import routes from "./routes";
 import { logger } from "./utils/logger";
 import { messageQueue, sendScheduledMessages } from "./queues";
 import { corsOrigin } from "./helpers/corsOrigin";
+import { isSensitiveRequest } from "./helpers/CredentialTelemetry";
+import credentialErrorHandler from "./middleware/credentialErrorHandler";
+import servePublicFile from "./services/PublicFileService";
 
-class SystemError extends Error {
-  code?: string;
-}
-
-Sentry.init({ dsn: process.env.SENTRY_DSN });
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  // Zap Komunick P0: remote telemetry must never receive credential write bodies.
+  beforeSend: event => (isSensitiveRequest(event.request?.url) ? null : event)
+});
 
 const app = express();
+
+// Zap Komunick: the real client IP (audit trail and IP allowlist, RF-016)
+// trusts forwarded headers only when the deployment explicitly names its proxies.
+app.set("trust proxy", process.env.TRUST_PROXY || false);
 
 app.set("queues", {
   messageQueue,
@@ -44,62 +49,23 @@ app.use(
 app.use(cookieParser());
 app.use(express.json({ limit: "10mb" }));
 app.use(Sentry.Handlers.requestHandler());
-app.get("/public/*", (req, res) => {
-  const filePath = path.join(uploadConfig.directory, req.params[0]);
-
-  if (filePath.endsWith(".aac")) {
-    res.setHeader("Content-Type", "audio/aac");
-  }
-
-  // ?inline=1 → serve with Content-Disposition: inline so browsers display
-  // the file in-place (e.g. PDF viewer iframe) instead of downloading it.
-  if (req.query.inline === "1") {
-    res.setHeader("Content-Disposition", "inline");
-    return res.sendFile(filePath, err => {
-      if (err) {
-        const sysErr = err as SystemError;
-        if (sysErr.code === "ENOENT") {
-          res.status(404).end();
-        } else {
-          logger.debug(
-            { err },
-            `Error serving inline file ${req.params[0]}: ${sysErr.message}`
-          );
-          res.status(500).end();
-        }
-      }
-    });
-  }
-
-  res.download(filePath, (err: SystemError) => {
-    if (err) {
-      if (err.code === "ENOENT") {
-        res.status(404).end();
-      } else {
-        logger.debug(
-          { err },
-          `Error downloading file ${req.params[0]}: ${err.message}`
-        );
-        res.status(500).end();
-      }
-    }
-  });
-});
+app.get("/public/*", servePublicFile);
 
 app.use((req, _res, next) => {
-  const { method, url, query, body, headers } = req;
-  logger.trace(
-    { method, url, query, body, headers },
-    `Incoming request: ${req.method} ${req.url}`
-  );
+  const { method, path: requestPath } = req;
+  logger.trace({ method, path: requestPath }, "Incoming request");
   next();
 });
 
 app.use(routes);
 
+app.use(credentialErrorHandler);
 app.use(Sentry.Handlers.errorHandler());
 app.use(async (err: Error, req: Request, res: Response, _: NextFunction) => {
   if (err instanceof AppError) {
+    if (err.message === "ERR_2FA_TOO_MANY_ATTEMPTS") {
+      res.setHeader("Retry-After", "600");
+    }
     logger[err.level](err);
     return res.status(err.statusCode).json({ error: err.message });
   }

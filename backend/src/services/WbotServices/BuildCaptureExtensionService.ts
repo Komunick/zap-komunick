@@ -13,6 +13,7 @@ import uploadConfig from "../../config/upload";
 import { getIO } from "../../libs/socket";
 import { logger } from "../../utils/logger";
 import GetPublicSettingService from "../SettingServices/GetPublicSettingService";
+import { resolveProductName } from "../../helpers/ProductBrand";
 import UpdateSettingService from "../SettingServices/UpdateSettingService";
 import { GetSettingService } from "../SettingServices/GetSettingService";
 
@@ -236,8 +237,9 @@ async function getBuildVersion(upstreamVersion: string): Promise<string> {
 }
 
 async function build(companyId: number, frontendUrl?: string): Promise<void> {
-  const appName =
-    (await GetPublicSettingService({ key: "appName" })) || "ticketz";
+  const appName = resolveProductName(
+    await GetPublicSettingService({ key: "appName" })
+  );
   const favicon = await GetPublicSettingService({ key: "appLogoFavicon" });
   const title = `${appName} WA Session Capture`;
 

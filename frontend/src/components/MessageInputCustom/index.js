@@ -56,6 +56,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignature } from "@fortawesome/free-solid-svg-icons";
 import { isMobile } from "../../helpers/isMobile";
 import { SocketContext } from "../../context/Socket/SocketContext";
+import TicketAssistant from "../TicketAssistant";
+import IntegratedAssistant from "../IntegratedAssistant";
+import useTicketDraft from "../../hooks/useTicketDraft";
 
 const Mp3Recorder = new MicRecorder({ bitRate: 128 });
 
@@ -64,23 +67,31 @@ const useStyles = makeStyles(theme => ({
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    borderTop: "1px solid rgba(0, 0, 0, 0.12)"
+    paddingTop: 8,
+    backgroundColor: theme.komunick.chatBackground
   },
 
   newMessageBox: {
-    width: "100%",
     display: "flex",
-    padding: "7px",
-    alignItems: "center"
+    alignItems: "center",
+    // Zap Komunick: the composer is a rounded bar in its own tone over the
+    // conversation background, apart from the rest of the screen
+    margin: "0 12px 10px",
+    width: "calc(100% - 24px)",
+    padding: "4px 6px",
+    borderRadius: 26,
+    border: `1px solid ${theme.komunick.composerBorder}`,
+    backgroundColor: theme.komunick.composer,
+    boxShadow: theme.komunick.composerShadow,
+    "&:focus-within": {
+      borderColor: theme.komunick.accent
+    }
   },
 
   messageInputWrapper: {
-    padding: 6,
-    marginRight: 7,
-    //background: "#fff",
-    border: "1px solid #ccc",
+    padding: "6px 4px",
+    marginRight: 4,
     display: "flex",
-    borderRadius: 20,
     flex: 1
   },
 
@@ -459,6 +470,10 @@ const CustomInput = props => {
   };
 
   const renderPlaceholder = () => {
+    // Zap Komunick: paused tickets wait for "Retomar" (docs/PRD.md, RF-007)
+    if (ticketStatus === "paused") {
+      return i18n.t("messagesInput.placeholderPaused");
+    }
     if (ticketStatus === "open") {
       return i18n.t("messagesInput.placeholderOpen");
     }
@@ -663,6 +678,10 @@ const CustomInput = props => {
               <InputBase
                 {...params.InputProps}
                 {...rest}
+                inputProps={{
+                  ...params.inputProps,
+                  "aria-label": i18n.t("assistant.composerDraft")
+                }}
                 disabled={disableOption}
                 inputRef={input => setInputRef(input)}
                 placeholder={renderPlaceholder()}
@@ -804,17 +823,47 @@ const MessageInputCustom = props => {
   const classes = useStyles();
 
   const [medias, setMedias] = useState([]);
-  const [inputMessage, setInputMessage] = useState("");
+  const [inputMessage, setInputMessage] = useTicketDraft(ticketId);
   const [showEmoji, setShowEmoji] = useState(false);
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(false);
   const [percentLoading, setPercentLoading] = useState(0);
+  const assistantComposer = useRef(null);
 
   const inputRef = useRef();
   const { setReplyingMessage, replyingMessage } =
     useContext(ReplyMessageContext);
   const { setEditingMessage, editingMessage } = useContext(EditMessageContext);
   const { user } = useContext(AuthContext);
+  assistantComposer.current = {
+    ticketId,
+    blocked:
+      loading ||
+      recording ||
+      medias.length > 0 ||
+      !!replyingMessage ||
+      !!editingMessage ||
+      ticketStatus === "closed" ||
+      ticketStatus === "paused"
+  };
+
+  const useAssistantDraft = (text, sourceTicketId) => {
+    if (
+      Number(assistantComposer.current.ticketId) !== Number(sourceTicketId) ||
+      assistantComposer.current.blocked
+    )
+      return false;
+    setInputMessage(previous => {
+      if (
+        Number(assistantComposer.current.ticketId) !== Number(sourceTicketId) ||
+        assistantComposer.current.blocked
+      )
+        return previous;
+      return previous ? `${previous}\n\n${text}` : text;
+    });
+    inputRef.current?.focus();
+    return true;
+  };
 
   const [signMessage, setSignMessage] = useLocalStorage("signOption", true);
 
@@ -822,21 +871,6 @@ const MessageInputCustom = props => {
   const [socket, setSocket] = useState(null);
   const [currentPresence, setCurrentPresence] = useState(null);
   const [presenceTimeout, setPresenceTimeout] = useState(null);
-
-  useEffect(() => {
-    if (!inputMessage) {
-      sessionStorage.removeItem("messageDraft-" + ticketId);
-      return;
-    }
-    sessionStorage.setItem("messageDraft-" + ticketId, inputMessage);
-  }, [inputMessage]);
-
-  useEffect(() => {
-    const draftMessage = sessionStorage.getItem("messageDraft-" + ticketId);
-    if (draftMessage) {
-      setInputMessage(draftMessage);
-    }
-  }, [ticketId]);
 
   useEffect(() => {
     const socket = socketManager.GetSocket();
@@ -871,7 +905,6 @@ const MessageInputCustom = props => {
       setMedias([]);
       setReplyingMessage(null);
       setEditingMessage(null);
-      setInputMessage("");
     };
   }, [ticketId]);
 
@@ -1088,7 +1121,10 @@ const MessageInputCustom = props => {
 
   const isGroup = showTabGroups && ticket.isGroup;
   const disableOption =
-    (!isGroup && loading) || recording || ticketStatus === "closed";
+    (!isGroup && loading) ||
+    recording ||
+    ticketStatus === "closed" ||
+    ticketStatus === "paused";
 
   const renderReplyingMessage = message => {
     return (
@@ -1172,6 +1208,20 @@ const MessageInputCustom = props => {
   else {
     return (
       <Paper square elevation={0} className={classes.mainWrapper}>
+        <TicketAssistant
+          key={`${ticketId}:${ticket.contactId}:${ticket.queueId}:${ticket.userId}:${ticketStatus}`}
+          ticketId={ticketId}
+          disabled={assistantComposer.current.blocked}
+          onUseDraft={useAssistantDraft}
+        />
+        <IntegratedAssistant
+          contextKey={`${ticketId}:${ticket.contactId}:${ticket.queueId}:${ticket.userId}:${ticketStatus}`}
+          ticketId={ticketId}
+          contactId={ticket.contactId}
+          companyId={ticket.companyId}
+          disabled={assistantComposer.current.blocked}
+          onUseDraft={useAssistantDraft}
+        />
         {(replyingMessage && renderReplyingMessage(replyingMessage)) ||
           (editingMessage && renderReplyingMessage(editingMessage))}
         <div className={classes.newMessageBox}>
@@ -1227,4 +1277,11 @@ const MessageInputCustom = props => {
   }
 };
 
-export default withWidth()(MessageInputCustom);
+// Zap Komunick: loading placeholders must never own an interactive draft.
+const ScopedMessageInput = props => {
+  const id = Number(props.ticket?.id);
+  if (!Number.isSafeInteger(id) || id <= 0) return null;
+  return <MessageInputCustom {...props} />;
+};
+
+export default withWidth()(ScopedMessageInput);

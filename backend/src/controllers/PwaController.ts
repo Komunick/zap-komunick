@@ -1,11 +1,14 @@
 import { Request, Response } from "express";
 import GetPublicSettingService from "../services/SettingServices/GetPublicSettingService";
+import { resolveProductName } from "../helpers/ProductBrand";
 
 export const manifest = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const appName = await GetPublicSettingService({ key: "appName" });
+  const appName = resolveProductName(
+    await GetPublicSettingService({ key: "appName" })
+  );
   const logoFavicon = await GetPublicSettingService({ key: "appLogoFavicon" });
 
   const mimes = {
@@ -22,13 +25,13 @@ export const manifest = async (
   }
 
   const data = {
-    short_name: appName || "TIcketz",
-    name: appName || "Ticketz - Chat Based Ticket System",
+    short_name: appName,
+    name: appName,
     icons: [
       {
         src: logoFavicon
           ? `/backend/public/${logoFavicon}`
-          : "/vector/favicon.svg",
+          : "/vector/superchat-icon.svg",
         sizes: "512x512 192x192 64x64 32x32 24x24 16x16",
         type: mimeFavicon
       }

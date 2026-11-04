@@ -1,62 +1,29 @@
 import { Chip, Paper, TextField } from "@material-ui/core";
 import Autocomplete from "@material-ui/lab/Autocomplete";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { isArray, isString } from "lodash";
 import toastError from "../../errors/toastError";
 import api from "../../services/api";
+import { useSectorTags } from "../TagPicker";
 
-export function TagsContainer({ ticket, contact }) {
-  const [tags, setTags] = useState([]);
+export function TagsContainer({ ticket, contact, queueId, ticketId }) {
   const [selecteds, setSelecteds] = useState([]);
-  const isMounted = useRef(true);
+  const conversationId = ticketId || ticket?.id;
+  const sector = conversationId ? queueId || ticket?.queueId || 0 : queueId;
+  const { tags, refresh: loadTags } = useSectorTags(
+    Boolean(ticket?.id || contact?.id),
+    sector
+  );
 
   useEffect(() => {
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!ticket) return;
-
-    if (isMounted.current) {
-      loadTags().then(() => {
-        if (Array.isArray(ticket.tags)) {
-          setSelecteds(ticket.tags);
-        } else {
-          setSelecteds([]);
-        }
-      });
-    }
-  }, [ticket]);
-
-  useEffect(() => {
-    if (!contact) return;
-
-    if (isMounted.current) {
-      loadTags().then(() => {
-        if (Array.isArray(contact.tags)) {
-          setSelecteds(contact.tags);
-        } else {
-          setSelecteds([]);
-        }
-      });
-    }
-  }, [contact]);
+    const current = ticket || contact;
+    setSelecteds(Array.isArray(current?.tags) ? current.tags : []);
+  }, [ticket, contact]);
 
   const createTag = async data => {
     try {
       const { data: responseData } = await api.post(`/tags`, data);
       return responseData;
-    } catch (err) {
-      toastError(err);
-    }
-  };
-
-  const loadTags = async () => {
-    try {
-      const { data } = await api.get(`/tags/list`);
-      setTags(data);
     } catch (err) {
       toastError(err);
     }
@@ -86,13 +53,13 @@ export function TagsContainer({ ticket, contact }) {
           }
         }
       }
-      await loadTags();
+      loadTags();
     } else {
       optionsChanged = value;
     }
     setSelecteds(optionsChanged);
     await syncTags({
-      ticketId: ticket?.id,
+      ticketId: conversationId,
       contactId: contact?.id,
       tags: optionsChanged
     });

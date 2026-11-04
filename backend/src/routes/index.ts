@@ -1,4 +1,10 @@
 import { Router } from "express";
+import credentialRoutes from "./credentialRoutes";
+import assistantRoutes from "./assistantRoutes";
+import integratedAssistantRoutes from "./integratedAssistantRoutes";
+import acessoriasRoutes from "./acessoriasRoutes";
+import sciRoutes from "./sciRoutes";
+import attachmentRoutes from "./attachmentRoutes";
 
 import userRoutes from "./userRoutes";
 import authRoutes from "./authRoutes";
@@ -35,7 +41,10 @@ import i18nRoutes from "./i18nRoutes";
 import wavoipRoutes from "./wavoipRoutes";
 import dockerRoutes from "./dockerRoutes";
 import slaRoutes from "./slaRoutes";
+import metricsRoutes from "./metricsRoutes";
+import securityRoutes from "./securityRoutes";
 import kanbanRoutes from "./kanbanRoutes";
+import closeReasonRoutes from "./closeReasonRoutes";
 
 const routes = Router();
 
@@ -75,6 +84,15 @@ routes.use(i18nRoutes);
 routes.use(wavoipRoutes);
 routes.use(dockerRoutes);
 routes.use(slaRoutes);
+routes.use(metricsRoutes);
+routes.use(securityRoutes);
 routes.use(kanbanRoutes);
+routes.use(closeReasonRoutes);
+routes.use(credentialRoutes);
+routes.use(assistantRoutes);
+routes.use(integratedAssistantRoutes);
+routes.use(acessoriasRoutes);
+routes.use(sciRoutes);
+routes.use(attachmentRoutes);
 
 export default routes;
