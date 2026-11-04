@@ -373,7 +373,7 @@ entregar conteúdo; arquivos dos demais módulos mantêm seus contratos. A migra
 antes de remover cópias públicas, com retomada segura e sem perda das associações.
 
 O [suporte à migração no Windows](specs/chat-migracao-anexos-windows.md) mantém flush de diretórios, hashes e
-retomada; uma falha de sincronização recusa o cutover antes de publicar cópias privadas. A cópia privada existente
+retomada; uma falha no preflight recusa o cutover antes de publicar cópias privadas. A cópia privada existente
 também é sincronizada antes de remover a origem pública. Não há fallback público nem dispensa da prontidão.
 
 **Cenário de sucesso:**
