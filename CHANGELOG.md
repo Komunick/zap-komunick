@@ -13,6 +13,7 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- O menu lateral do desktop se recolhe quando o mouse sai da barra.
 - Miniaturas da galeria do chat interno usam a mesma sessão autenticada da imagem principal. Erros e fechamento
   também liberam essas referências, preservando a galeria dos atendimentos e os downloads existentes.
 
