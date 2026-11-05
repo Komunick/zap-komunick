@@ -675,7 +675,7 @@ Configuração e limites estão em DEPLOY, seção 12. Nenhuma mudança de crede
 
 O P3 de `docs/specs/p3-sci-consultas.md` segue autorização P0 e usa exclusivamente provedor local com contrato
 interno de metadados. `SCI_MODE=mock` e flag administrativa `sciEnabled=enabled` são condições independentes, ambas
-inicialmente desligadas; modo desconhecido e duplicatas divergentes falham fechados. O compose ARM07 fixa SCI disabled,
+inicialmente desligadas; modo desconhecido e duplicatas divergentes falham fechados. A ARM04 mantém SCI desativada,
 e seu wrapper recusa mock/modo ausente nesse perfil operacional. Não existe adaptador de rede, leitura de tokens,
 SDK/MCP, fila, download, sincronização, marcação de leitura ou consulta pela IA neste percurso.
 
@@ -726,11 +726,11 @@ JSON inválido. Auditoria guarda apenas ação, identificadores e metadados mín
 credencial ou hash de contexto em logs/jobs. Sem DDL/dependência nova; recuar o código preserva mensagens/vínculos.
 A validação usa projeto local novo sem saída, duas empresas/clientes, provedores com IDs iguais, mudanças durante
 awaits e antes do review, paginação/falhas/stale, rascunho e snapshots, além dos dois temas e desktop/celular.
-Resultados executados ficam no PR. ARM07 mantém o modo integrado disabled; a demonstração P3 não é reutilizada como DB.
+Resultados executados ficam no PR. A ARM04 mantém o modo integrado desativado e usa bancos próprios por ambiente.
 
-### Ambientes preparados para ARM07
+### Ambientes na ARM04
 
-O pacote `deploy/arm07/` define dois perfis fechados: `development`, domínio
+Na ARM04 (`144.24.36.23`), a base de build ARM64 em `deploy/arm07/` define dois perfis: `development`, domínio
 `superchatdev.komunick.com` e projeto Compose `superchatdev`; `production`, domínio
 `superchat.komunick.com` e projeto `superchat`. Usa imagens Linux ARM64 identificadas por revisão,
 construídas de uma exportação Git. Não usa o diretório de trabalho que contém mídias
@@ -749,8 +749,8 @@ Cada instalação tem banco/Redis/volumes, administrador e segredos próprios. A
 Docker não se sobrepõem: desenvolvimento usa `172.29.249.0/28` (edge) e
 `172.29.250.0/28` (interna), produção usa `172.29.251.0/28` e `172.29.252.0/28`.
 O backend comum fica numa rede interna sem saída externa; o frontend de cada perfil
-alcança sua rede e publica somente uma porta em loopback (5481 em desenvolvimento,
-5480 em produção) para o Caddy do host. Cada domínio tem fragmento Caddy independente.
+alcança sua rede e publica uma porta em loopback (5481 em desenvolvimento,
+5480 em produção). O Traefik encaminha cada domínio ao frontend do perfil correspondente.
 A cadeia de proxies aceita apenas os endereços previstos para o perfil e
 sobrescreve o encaminhamento recebido do cliente. O frontend publica configuração
 por lista explícita, mantendo os segredos no backend/banco. Domínio e gateway do
@@ -760,12 +760,11 @@ as variantes homologadas; promover a aplicação preserva seus hashes e não cop
 banco, mídias, master ou sessão de desenvolvimento para produção. A sessão local
 não é migrada e IA/Acessórias permanecem desligados.
 
-O desenho e os comandos operacionais estão em `deploy/arm07/README.md` e DEPLOY.
+O [guia de publicação](DEPLOY.md#13-superchat-na-arm04) registra a operação na ARM04.
 A estratégia de validação cobre ARM nativo, bootstrap/recusa/reinício, ausência de
 segredos públicos, isolamento de saída e API/Socket/anexos pelo ingresso HTTPS em
 ambiente fictício separado, além da coexistência dos perfis e recusa de autenticação
-cruzada entre bases. Esta configuração preparada não indica ativação pública;
-a especificação é `docs/specs/deploy-arm07-superchat.md`.
+cruzada entre bases. O desenho original da ARM07 fica em `docs/specs/deploy-arm07-superchat.md`.
 
 ## 5. Decisões e pendências
 

@@ -1,18 +1,12 @@
-# Publicação — Zap Komunick em superchat.komunick.com
+# Publicação do SuperChat
 
-Como colocar o Zap Komunick no ar em **`superchat.komunick.com`** (endereço escolhido em 27/10/2026). Os arquivos ficam
-na raiz do repositório (`docker-compose-komunick.yaml`, `docker-compose-komunick-proxy.yaml`) e em `deploy/`; os
-modelos de ambiente e do nginx já vêm com esse endereço.
+O único destino de publicação do SuperChat é a **ARM04 (`144.24.36.23`)**, para homologação e produção.
+Siga a [operação na ARM04](#13-superchat-na-arm04) para as próximas versões.
 
-> **ARM07:** para os ambientes ARM64 `superchatdev` (desenvolvimento) e `superchat`
-> (produção), com o Caddy já existente no servidor, usar
-> [deploy/arm07/README.md](../deploy/arm07/README.md) e seus arquivos próprios.
-> Esse recorte mantém WhatsApp desconectado, bancos separados e imagens por hash; não
-> usar o bootstrap automático do compose genérico abaixo nessa instalação.
-
-> **Antes de publicar:** o `zap.komunick.com` roda hoje o Ticketz 1.0.132 (com backup do Ticketz PRO em
-> `Komunick/ticketz-pro`). Este guia sobe o Zap Komunick num **subdomínio novo**, ao lado do atual. Trocar o
-> `zap.komunick.com` por este fork faz perder o que é exclusivo do PRO e é decisão do responsável (docs/PRD.md, seção 5).
+As seções 1 a 12 registram o roteiro anterior para uma instalação nova com os arquivos
+`docker-compose-komunick.yaml`, `docker-compose-komunick-proxy.yaml` e os modelos em `deploy/`.
+O Ticketz PRO em `zap.komunick.com` é uma instalação separada. Consulte a seção 5 do [PRD](PRD.md)
+para as diferenças de recursos entre os produtos.
 
 ## 1. O que é preciso
 
@@ -277,27 +271,34 @@ Conferir paginação e acesso por empresa/cliente/setor, HEAD/Range/download, PD
 falhas e troca de contexto; remover apenas IDs e diretório rastreados das fixtures. Preservar a master P0 e os modos
 IA/Acessórias desligados. Recuar o código não exige apagar arquivos nem reverter dados.
 
-## 13. Ambientes ARM07 com Caddy existente
+## 13. SuperChat na ARM04
 
-O recorte para ARM07 está em [deploy/arm07/README.md](../deploy/arm07/README.md), conforme
-[a especificação](specs/deploy-arm07-superchat.md). Os perfis `development` (`superchatdev.komunick.com`) e
-`production` (`superchat.komunick.com`) usam imagens Linux ARM64 por hash, projetos/bancos/Redis/volumes separados,
-API e WebSocket atrás do Caddy existente e portas de aplicação somente em loopback (5481 e 5480, respectivamente).
-Não instalar o proxy genérico
-das seções anteriores nessa VM nem usar o bootstrap automático do Dockerfile genérico.
+Os dois domínios apontam para a ARM04 (`144.24.36.23`), onde o Traefik atende HTTPS,
+API e WebSocket. Cada ambiente tem projeto Compose, PostgreSQL, Redis, volumes e credenciais próprios.
 
-A preparação mantém WhatsApp sem conexão e IA/Acessórias desligados, sem importar banco, mídias, chaves ou sessão
-do notebook. O backend permanece sem saída externa. Migração e bootstrap inicial são operações separadas do runtime;
-reiniciar não recria administrador. Os três arquivos privados são gerados uma vez por `prepare-env.sh`, fora de Git,
-em diretório próprio para cada perfil; nunca reutilizar senha/master de desenvolvimento em produção. O frontend
-é uma variante imutável por domínio e publica somente a configuração permitida. A master de cada ambiente precisa
-de cópia segura separada de seu backup do banco. Promover uma revisão não copia dados, arquivos nem sessão entre ambientes.
+| Ambiente | Domínio | Projeto Compose | Release ativa | Porta local |
+| --- | --- | --- | --- | --- |
+| Homologação | `superchatdev.komunick.com` | `superchatdev` | `/opt/zap-komunick/superchatdev/current` | `127.0.0.1:5481` |
+| Produção | `superchat.komunick.com` | `superchat` | `/opt/zap-komunick/superchat/current` | `127.0.0.1:5480` |
 
-Em 29/10/2026, o acesso confirmado à ARM07 é `170.9.14.1`, enquanto os registros A observados de
-`superchat.komunick.com` e `superchatdev.komunick.com` apontam para `144.24.36.23`. Resolver a diferença e conferir
-AAAA de cada domínio antes de habilitar seu fragmento Caddy; inicialmente usar Somente DNS. Preparar os
-candidatos não altera esses registros nem ativa os domínios. As etapas de ingresso, validação, backup e recuperação
-estão no README; a ativação pública exige uma solicitação posterior.
+Antes de publicar, confirme `arm04` como hostname do destino, a revisão do candidato e o vínculo do backend
+com o banco e os volumes do perfil. Confira a compatibilidade das migrações e o backup do banco e dos arquivos
+de produção. Guarde a master de cada ambiente separadamente do backup do banco.
+
+Na ARM04, o timer `zapk-poller.timer` chama `/opt/zap-komunick/zapk.sh poll`. O arquivo
+`/opt/zap-komunick/branch` aponta para `dev`. Quando essa branch avança, o operador publica em homologação.
+O script de publicação exige o hostname `arm04`. Confira `/deployment.json`, `/login`, `/backend/`,
+a revisão e a saúde do backend.
+
+Após o aceite, execute `sudo /opt/zap-komunick/zapk.sh promote <SHA>` na ARM04. O comando exige a revisão
+exata que está em homologação e faz o backup de produção antes de atualizar. Confira a variante ARM64 do frontend
+para o domínio de produção e repita as verificações.
+Preserve o Traefik, o DNS e os bancos, arquivos e segredos de cada perfil. O backend permanece na rede interna,
+com WhatsApp desconectado e as integrações desligadas. O bootstrap inicial fica reservado a uma instalação nova.
+
+Os arquivos em [`deploy/arm07/`](../deploy/arm07/README.md) incluem a base de build ARM64 e o roteiro histórico da ARM07.
+As instâncias da ARM07 estão paradas com os volumes preservados. Os comandos de ativação, DNS e Caddy desse
+roteiro pertencem à instalação antiga.
 
 ## 14. Painel SCI simulado — RF-024
 
@@ -307,7 +308,7 @@ sem promessa de compatibilidade com Report/Atendimento. Não marcar leitura nem 
 
 Começa desligado: em ambiente descartável de desenvolvimento, definir `SCI_MODE=mock` no backend e habilitar
 `sciEnabled` nas configurações da empresa como administrador. Modo `disabled`, desconhecido ou flag ausente/divergente
-recusa consultas. P1/P2 seguem suas flags próprias e não são habilitados pela SCI. Os perfis ARM07 mantêm SCI disabled;
+recusa consultas. P1/P2 seguem suas flags próprias e não são habilitados pela SCI. Os perfis na ARM04 mantêm `SCI_MODE=disabled`;
 esta entrega não publica a revisão nova nos ambientes existentes e não reconecta WhatsApp.
 
 A consulta parte do atendimento autorizado e exige cliente SCI vinculado explicitamente ao contato. Administração
@@ -327,7 +328,7 @@ ou banco, master e sessão existentes para QA. Não executar o npm test com seus
 
 O recorte está em [specs/p4-consultas-integradas.md](specs/p4-consultas-integradas.md). Não precisa de chave, modelo,
 licença ou rede de fornecedor. Não implementa sincronização ou documentos; não habilitar em empresas com dados reais
-para seguir o roteiro fictício. Os perfis ARM07 mantêm `INTEGRATED_ASSISTANT_MODE=disabled` e não recebem mocks.
+para seguir o roteiro fictício. Os perfis na ARM04 mantêm `INTEGRATED_ASSISTANT_MODE=disabled` e não recebem mocks.
 
 Em projeto local isolado, definir `INTEGRATED_ASSISTANT_MODE=mock` e habilitar `integratedAssistantEnabled` como
 administrador. P1 também precisa de `AI_ASSISTANT_MODE=mock` e `aiAssistantEnabled=enabled`; cada fonte selecionada
