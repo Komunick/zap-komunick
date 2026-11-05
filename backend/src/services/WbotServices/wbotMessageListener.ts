@@ -61,6 +61,7 @@ import CheckSettings, { GetCompanySetting } from "../../helpers/CheckSettings";
 import Whatsapp from "../../models/Whatsapp";
 import { SimpleObjectCache } from "../../helpers/simpleObjectCache";
 import { getPublicPath } from "../../helpers/GetPublicPath";
+import { getWhatsAppMediaDownloadOptions } from "../../helpers/WhatsAppProxyAgent";
 import { Session } from "../../libs/wbot";
 import { checkCompanyCompliant } from "../../helpers/CheckCompanyCompliant";
 import { transcriber } from "../../helpers/transcriber";
@@ -427,7 +428,8 @@ const downloadThumbnail = async ({
 
   const stream = await downloadContentFromMessage(
     { mediaKey, directPath },
-    mediaType
+    mediaType,
+    getWhatsAppMediaDownloadOptions()
   );
 
   if (!stream) {
@@ -510,6 +512,7 @@ const downloadMedia = async (
 
   let stream: Transform;
   let contDownload = 0;
+  const downloadOptions = getWhatsAppMediaDownloadOptions();
 
   while (contDownload < 10 && !stream) {
     try {
@@ -518,7 +521,11 @@ const downloadMedia = async (
         tmpMessage.url = "";
       }
 
-      stream = await downloadContentFromMessage(tmpMessage, messageType);
+      stream = await downloadContentFromMessage(
+        tmpMessage,
+        messageType,
+        downloadOptions
+      );
     } catch {
       contDownload += 1;
 
