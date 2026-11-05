@@ -1,0 +1,53 @@
+# Opcional, apenas no projeto de produção da ARM04.
+services:
+  backend:
+    environment:
+      SUPERCHAT_WHATSAPP_PROXY_URL: http://172.29.252.14:3128
+    depends_on:
+      whatsapp-proxy:
+        condition: service_healthy
+
+  whatsapp-proxy:
+    image: ${ZK_BACKEND_IMAGE:?defina ZK_BACKEND_IMAGE}
+    platform: linux/arm64
+    entrypoint: [node, /opt/superchat/whatsapp-connect-proxy.cjs]
+    command: []
+    user: "1000:1000"
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 64
+    mem_limit: 128m
+    restart: unless-stopped
+    environment:
+      SUPERCHAT_WA_PROXY_BIND: "172.29.252.14"
+      SUPERCHAT_WA_PROXY_CLIENT: "172.29.252.11"
+    volumes:
+      - type: bind
+        source: /opt/zap-komunick/superchat/whatsapp-egress/whatsapp-connect-proxy.cjs
+        target: /opt/superchat/whatsapp-connect-proxy.cjs
+        read_only: true
+    networks:
+      internal:
+        ipv4_address: 172.29.252.14
+      whatsapp_egress:
+        gw_priority: 1
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - >-
+          const s=require('node:net').createConnection(3128,process.env.SUPERCHAT_WA_PROXY_BIND);
+          s.setTimeout(1500,()=>process.exit(1));
+          s.on('connect',()=>process.exit(0));
+          s.on('error',()=>process.exit(1));
+      interval: 5s
+      timeout: 3s
+      retries: 6
+
+networks:
+  whatsapp_egress:
+    driver: bridge
+    enable_ipv6: false

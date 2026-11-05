@@ -227,6 +227,8 @@ export const initWASocket = async (
         }
 
         const autoVersion = await waVersionMutex.runExclusive(async () => {
+          if (proxy) return waVersion;
+
           let wv = waVersionCache.get("waVersion");
 
           if (!wv) {
@@ -356,6 +358,7 @@ export const initWASocket = async (
 
         let makeWASocket: typeof makeWASocketSingleProcess;
         if (
+          !proxy &&
           (await GetCompanySetting(1, "useMultiThreadedWbot", "disabled")) ===
           "enabled"
         ) {

@@ -37,7 +37,7 @@ jobs:
         working-directory: backend
         run: npm ci --ignore-scripts --legacy-peer-deps --no-audit --no-fund
       - name: Check workflow policy
-        run: node --test .github/scripts/image-policy.test.cjs
+        run: node --test .github/scripts/image-policy.test.cjs deploy/arm04/whatsapp-connect-proxy.test.cjs
       - name: Generate translation keys and compile TypeScript
         working-directory: backend
         run: |
