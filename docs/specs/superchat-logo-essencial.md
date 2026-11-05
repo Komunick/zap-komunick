@@ -1,5 +1,8 @@
 # Logo SuperChat Essencial
 
+O desenho abaixo registra a composição original. O [guia da marca](../../frontend/public/vector/README.md)
+descreve a aplicação atual, com a assinatura oficial no rodapé.
+
 ## Objetivo e decisão
 
 Após comparar quatro propostas, o usuário escolheu a opção A, Essencial, e autorizou sua aplicação no sistema:

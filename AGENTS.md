@@ -61,14 +61,13 @@ confirmadas de inspiração e observações do sistema atual; estas não viram r
   código novo fica em arquivos próprios (`helpers/*Rules.ts`, `services/SlaServices`, `services/KanbanServices`,
   `pages/Sla`, `pages/Kanban`, `pages/CloseReasons`, `components/ScheduleExtras`, `translate/languages/komunick.js`)
   e as mudanças em arquivos do upstream são pequenas; os trechos maiores levam um comentário "Zap Komunick".
-- **Marca do produto:** SuperChat; logo tipográfica `superChat`, com endosso `Powered by Komunick` e geometria
-  oficial preservada. Reutilize `components/BrandLogo`; a sidebar preta precisa da variante clara nos dois temas.
+- **Marca do produto:** SuperChat; logo tipográfica `superChat` sem assinatura junto ao nome.
+  Reutilize `components/BrandLogo`; a sidebar preta precisa da variante clara nos dois temas.
   Preserve uploads Whitelabel, URLs AGPL, identificadores técnicos e históricos. Não renomeie banco/Compose/repositório
   como parte de uma troca visual. Ver `docs/specs/superchat-identidade.md` e `public/vector/README.md`.
   A assinatura completa usa `vector/komunick-completa.svg`, publicado pela própria Komunick e com PNG embutido.
-  Preserve o arquivo original; use a variante horizontal em cabeçalhos e a vertical no menu, login e Sobre.
-  A composição padrão é a opção A, Essencial: wordmark sem símbolo junto ao nome, Manrope 450/650 e Powered by
-  menor. O ícone compacto permanece no trilho e no favicon. Ver `docs/specs/superchat-logo-essencial.md`.
+  Preserve o arquivo original e exiba `Powered by` com a assinatura oficial apenas no rodapé.
+  A composição usa os traços Essencial, Manrope 450/650, e o ícone compacto fica no trilho e no favicon.
   O favicon padrão tem endereço próprio em `vector/superchat-icon.svg`; mantenha os aliases e uploads personalizados.
 - **Navegação:** Financeiro não aparece nos menus. Configurações não oferece a aba, seletor ou painel Containers Docker.
   APIs e arquivos de publicação continuam preservados. Ver `docs/specs/superchat-navegacao-marca.md`.

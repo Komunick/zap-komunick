@@ -2,16 +2,9 @@ import React from "react";
 import { useTheme } from "@material-ui/core/styles";
 import {
   PRODUCT_ICON,
-  PRODUCT_NAME,
-  resolveProductName
+  resolveProductName,
+  usesDefaultProductLogo
 } from "../../helpers/productBrand";
-
-const defaultLogos = new Set([
-  "/vector/logo.svg",
-  "/vector/logo-dark.svg",
-  "/vector/logo-header.svg",
-  "/vector/logo-header-dark.svg"
-]);
 
 const BrandLogo = ({
   compact = false,
@@ -29,22 +22,11 @@ const BrandLogo = ({
     ? PRODUCT_ICON
     : `/vector/logo${variant === "header" ? "-header" : ""}${darkSurface ? "-dark" : ""}.svg`;
   const src =
-    !configured || (!compact && defaultLogos.has(configured))
+    !configured || (!compact && usesDefaultProductLogo(configured))
       ? fallback
       : configured;
-  const isProductLogo = !compact && defaultLogos.has(src);
 
-  return (
-    <img
-      {...props}
-      src={src}
-      alt={
-        isProductLogo && name === PRODUCT_NAME
-          ? `${PRODUCT_NAME} — Powered by Komunick Inteligência e Tecnologia`
-          : name
-      }
-    />
-  );
+  return <img {...props} src={src} alt={name} />;
 };
 
 export default BrandLogo;

@@ -43,6 +43,7 @@ import { loadJSON } from "../../helpers/loadJSON";
 import { BRAND_BLACK, BRAND_GREEN } from "../../theme/komunick";
 import TwoFactorForm from "./TwoFactorForm";
 import BrandLogo from "../../components/BrandLogo";
+import KomunickEndorsement from "../../components/KomunickEndorsement";
 
 // Zap Komunick: two column sign in (form + brand panel), following the
 // authentication layout of the Komunick Patterns. Whitelabel side image and
@@ -186,10 +187,13 @@ const useStyles = makeStyles(theme => ({
   },
   formFooter: {
     display: "flex",
+    flexWrap: "wrap",
     justifyContent: "space-between",
     alignItems: "center",
+    gap: theme.spacing(1, 2),
     color: theme.palette.text.secondary,
-    fontSize: 12
+    fontSize: 12,
+    overflowWrap: "anywhere"
   },
   brandSide: {
     position: "relative",
@@ -711,15 +715,16 @@ const Login = () => {
           </div>
         </div>
 
-        <div className={classes.formFooter}>
+        <footer className={classes.formFooter}>
           <span>
             © {new Date().getFullYear()} {theme.appName}
           </span>
+          <KomunickEndorsement />
           <span>
             {gitinfo.tagName ||
               `${gitinfo.branchName || "N/A"} ${gitinfo.commitHash || "N/A"}`}
           </span>
-        </div>
+        </footer>
       </div>
 
       <div className={classes.brandSide}>

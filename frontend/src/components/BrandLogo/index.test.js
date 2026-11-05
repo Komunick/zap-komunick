@@ -24,20 +24,13 @@ const showLogo = ({
     </ThemeProvider>
   );
 
-test.each(["light", "dark"])(
-  "identifies the full brand and official endorsement in %s",
-  mode => {
-    showLogo({ mode });
-    expect(
-      screen.getByRole("img", {
-        name: "SuperChat — Powered by Komunick Inteligência e Tecnologia"
-      })
-    ).toHaveAttribute(
-      "src",
-      mode === "dark" ? "/vector/logo-dark.svg" : "/vector/logo.svg"
-    );
-  }
-);
+test.each(["light", "dark"])("identifies the product wordmark in %s", mode => {
+  showLogo({ mode });
+  expect(screen.getByRole("img", { name: "SuperChat" })).toHaveAttribute(
+    "src",
+    mode === "dark" ? "/vector/logo-dark.svg" : "/vector/logo.svg"
+  );
+});
 
 test.each(["light", "dark"])(
   "keeps the default logo legible on the black sidebar in %s",
@@ -78,18 +71,14 @@ it("preserves the configured compact icon", () => {
 });
 
 test.each(["light", "dark"])(
-  "uses the official endorsement in the horizontal header in %s",
+  "uses the product wordmark in the horizontal header in %s",
   mode => {
     showLogo({
       mode,
       variant: "header",
       logo: mode === "dark" ? "/vector/logo-dark.svg" : "/vector/logo.svg"
     });
-    expect(
-      screen.getByRole("img", {
-        name: "SuperChat — Powered by Komunick Inteligência e Tecnologia"
-      })
-    ).toHaveAttribute(
+    expect(screen.getByRole("img", { name: "SuperChat" })).toHaveAttribute(
       "src",
       mode === "dark"
         ? "/vector/logo-header-dark.svg"

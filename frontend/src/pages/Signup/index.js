@@ -35,9 +35,20 @@ import config from "../../services/config";
 import useSettings from "../../hooks/useSettings";
 import { safeValueFormat } from "../../helpers/safeValueFormat";
 import BrandLogo from "../../components/BrandLogo";
+import KomunickEndorsement from "../../components/KomunickEndorsement";
 import { PhoneNumberInput } from "../../components/PhoneNumberInput";
 
 const useStyles = makeStyles(theme => ({
+  root: {
+    display: "flex",
+    flexDirection: "column",
+    minHeight: "100%"
+  },
+  brandFooter: {
+    justifyContent: "center",
+    marginTop: "auto",
+    padding: theme.spacing(3, 0, 2)
+  },
   paper: {
     marginTop: theme.spacing(8),
     display: "flex",
@@ -141,7 +152,7 @@ const SignUp = () => {
   });
 
   return (
-    <Container component="main" maxWidth="xs">
+    <Container className={classes.root} component="main" maxWidth="xs">
       <CssBaseline />
       <div className={classes.paper}>
         <div>
@@ -300,6 +311,7 @@ const SignUp = () => {
           )}
         </Formik>
       </div>
+      <KomunickEndorsement component="footer" className={classes.brandFooter} />
       {config.RECAPTCHA_SITE_KEY && allowSignup && (
         <ReCAPTCHA
           size="invisible"

@@ -1,6 +1,15 @@
 export const PRODUCT_NAME = "SuperChat";
 export const PRODUCT_ICON = "/vector/superchat-icon.svg";
 
+const defaultLogos = new Set([
+  "/vector/logo.svg",
+  "/vector/logo-dark.svg",
+  "/vector/logo-header.svg",
+  "/vector/logo-header-dark.svg"
+]);
+
+export const usesDefaultProductLogo = logo => !logo || defaultLogos.has(logo);
+
 const legacyNames = new Set([
   "ticketz",
   "ticketz - chat based ticket system",
@@ -17,3 +26,7 @@ export const resolveProductName = value => {
   }
   return name.replace(/\bZap[\s-]+Komunick\b/gi, PRODUCT_NAME);
 };
+
+export const showsKomunickEndorsement = theme =>
+  resolveProductName(theme.appName) === PRODUCT_NAME &&
+  usesDefaultProductLogo(theme.calculatedLogo?.());
