@@ -14,6 +14,7 @@ jest.mock("../components/BackdropLoading", () => () => (
 
 const dashboardRequest = jest.fn();
 const dashboardUnmount = jest.fn();
+const layoutMount = jest.fn();
 const locations = [];
 
 const Dashboard = () => {
@@ -34,7 +35,12 @@ const Location = () => {
 const regularUser = { id: 1, profile: "user" };
 const admin = { id: 2, profile: "admin" };
 const ready = user => ({ isAuth: true, loading: false, user });
-const Layout = ({ children }) => <div>{children}</div>;
+const Layout = ({ children }) => {
+  useEffect(() => {
+    layoutMount();
+  }, []);
+  return <div>{children}</div>;
+};
 
 // Match the application's public Switch and its sibling private routes inside
 // a layout: an unmatched dashboard route must not redirect another page.
@@ -44,21 +50,23 @@ const App = ({ session, entry = "/login", extraRoute }) => (
       <Location />
       <Switch>
         <Route exact path="/login" render={() => <div>Login form</div>} />
-        <Layout>
-          <Route exact path="/" component={Dashboard} isPrivate adminOnly />
-          <Route
-            exact
-            path="/tickets"
-            render={() => <div>Tickets page</div>}
-            isPrivate
-          />
-          <Route
-            path="/chats"
-            render={() => <div>Internal chat</div>}
-            isPrivate
-          />
-          {extraRoute}
-        </Layout>
+        <Route isPrivate>
+          <Layout>
+            <Route exact path="/" component={Dashboard} isPrivate adminOnly />
+            <Route
+              exact
+              path="/tickets"
+              render={() => <div>Tickets page</div>}
+              isPrivate
+            />
+            <Route
+              path="/chats"
+              render={() => <div>Internal chat</div>}
+              isPrivate
+            />
+            {extraRoute}
+          </Layout>
+        </Route>
       </Switch>
     </MemoryRouter>
   </AuthContext.Provider>
@@ -67,6 +75,7 @@ const App = ({ session, entry = "/login", extraRoute }) => (
 beforeEach(() => {
   dashboardRequest.mockClear();
   dashboardUnmount.mockClear();
+  layoutMount.mockClear();
   locations.length = 0;
 });
 
@@ -121,6 +130,7 @@ test.each([
     expect(screen.queryByText("Tickets page")).toBeNull();
     expect(screen.queryByText("Login form")).toBeNull();
     expect(dashboardRequest).not.toHaveBeenCalled();
+    expect(layoutMount).not.toHaveBeenCalled();
   }
 );
 
@@ -148,6 +158,7 @@ test("failed restoration ends loading and preserves the denied location", () => 
   );
   expect(screen.getByText("Login form")).toBeTruthy();
   expect(screen.queryByRole("status")).toBeNull();
+  expect(layoutMount).not.toHaveBeenCalled();
   expect(locations[locations.length - 1].state.from).toMatchObject({
     pathname: "/chats",
     search: "?fixture=1"

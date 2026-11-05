@@ -65,12 +65,10 @@ const deferred = () => {
 const row = (id, uuid) => ({ id, uuid, queueId: 401, contact: {} });
 beforeEach(() => {
   jest.clearAllMocks();
-  jest.useFakeTimers("legacy");
   mockRoute = "fixture-a";
 });
-afterEach(() => jest.useRealTimers());
 
-test("hides composer while initial ticket is unresolved and mounts only the matching loaded ticket", async () => {
+test("requests the ticket immediately and mounts the composer only after it is loaded", async () => {
   const pending = deferred();
   api.get.mockReturnValue(pending.promise);
   render(<Ticket />);
@@ -82,7 +80,6 @@ test("hides composer while initial ticket is unresolved and mounts only the matc
     "data-ready",
     "false"
   );
-  await act(async () => jest.advanceTimersByTime(501));
   expect(api.get).toHaveBeenCalledWith(
     "/tickets/u/fixture-a",
     expect.objectContaining({ signal: expect.anything() })
@@ -107,7 +104,7 @@ test("hides composer while initial ticket is unresolved and mounts only the matc
 test("hides the old ticket composer immediately while the next route is pending", async () => {
   api.get.mockResolvedValueOnce({ data: row(301, "fixture-a") });
   const view = render(<Ticket />);
-  await act(async () => jest.advanceTimersByTime(501));
+  await screen.findByTestId("composer");
   expect(screen.getByTestId("attachments-action")).toBeInTheDocument();
   expect(screen.getByTestId("sci-action")).toHaveAttribute(
     "data-ticket-id",
@@ -127,8 +124,6 @@ test("hides the old ticket composer immediately while the next route is pending"
   view.rerender(<Ticket />);
   expect(screen.queryByTestId("composer")).not.toBeInTheDocument();
   expect(screen.queryByTestId("sci-action")).not.toBeInTheDocument();
-  await act(async () => jest.advanceTimersByTime(501));
-  expect(screen.queryByTestId("composer")).not.toBeInTheDocument();
   await act(async () => pending.resolve({ data: row(302, "fixture-b") }));
   expect(screen.getByTestId("attachments-action")).toBeInTheDocument();
   expect(screen.getByTestId("sci-action")).toHaveAttribute(
@@ -150,10 +145,10 @@ test("an old ticket response cannot replace the next loaded conversation", async
   const b = deferred();
   api.get.mockReturnValueOnce(a.promise).mockReturnValueOnce(b.promise);
   const view = render(<Ticket />);
-  await act(async () => jest.advanceTimersByTime(501));
+  const initialSignal = api.get.mock.calls[0][1].signal;
   mockRoute = "fixture-b";
   view.rerender(<Ticket />);
-  await act(async () => jest.advanceTimersByTime(501));
+  expect(initialSignal.aborted).toBe(true);
   await act(async () => b.resolve({ data: row(302, "fixture-b") }));
   expect(screen.getByTestId("attachments-action")).toBeInTheDocument();
   expect(screen.getByTestId("sci-action")).toHaveAttribute(

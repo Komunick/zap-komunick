@@ -120,38 +120,35 @@ const Ticket = () => {
     let active = true;
     const controller = new AbortController();
     setLoading(true);
-    const delayDebounceFn = setTimeout(() => {
-      const fetchTicket = async () => {
-        try {
-          const { data } = await api.get("/tickets/u/" + ticketId, {
-            signal: controller.signal
-          });
-          if (!active) return;
-          const { queueId } = data;
-          const { queues, profile } = user;
+    const fetchTicket = async () => {
+      try {
+        const { data } = await api.get("/tickets/u/" + ticketId, {
+          signal: controller.signal
+        });
+        if (!active) return;
+        const { queueId } = data;
+        const { queues, profile } = user;
 
-          const queueAllowed = queues.find(q => q.id === queueId);
-          if (queueAllowed === undefined && profile !== "admin") {
-            toast.error("Acesso não permitido");
-            history.push("/tickets");
-            return;
-          }
-
-          setContact(data.contact);
-          setTicket(data);
-          setLoading(false);
-        } catch (err) {
-          if (!active || controller.signal.aborted) return;
-          setLoading(false);
-          toastError(err);
+        const queueAllowed = queues.find(q => q.id === queueId);
+        if (queueAllowed === undefined && profile !== "admin") {
+          toast.error("Acesso não permitido");
+          history.push("/tickets");
+          return;
         }
-      };
-      fetchTicket();
-    }, 500);
+
+        setContact(data.contact);
+        setTicket(data);
+        setLoading(false);
+      } catch (err) {
+        if (!active || controller.signal.aborted) return;
+        setLoading(false);
+        toastError(err);
+      }
+    };
+    fetchTicket();
     return () => {
       active = false;
       controller.abort();
-      clearTimeout(delayDebounceFn);
     };
   }, [ticketId, user, history]);
 

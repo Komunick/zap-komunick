@@ -6,6 +6,8 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Alterado
 
+- O login carrega só o código de que precisa. As telas internas são baixadas conforme o uso.
+- A consulta de um atendimento começa ao abrir a conversa, sem a espera fixa de 500 ms.
 - A abertura do SuperChat ganha fundo mais suave e uma barra de carregamento discreta. A assinatura oficial
   “Powered by Komunick” sai da logo e passa para o rodapé.
 

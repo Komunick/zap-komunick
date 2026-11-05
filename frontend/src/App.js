@@ -78,11 +78,14 @@ const App = () => {
   const [themeMode, setThemeMode] = useState(readThemeMode);
   const [systemMode, setSystemMode] = useState(systemColorScheme);
   const mode = themeMode === "system" ? systemMode : themeMode;
-  const [primaryColorLight, setPrimaryColorLight] = useState("#888");
-  const [primaryColorDark, setPrimaryColorDark] = useState("#888");
+  const [primaryColorLight, setPrimaryColorLight] = useState(
+    DEFAULT_PRIMARY_LIGHT
+  );
+  const [primaryColorDark, setPrimaryColorDark] =
+    useState(DEFAULT_PRIMARY_DARK);
   const [appLogoLight, setAppLogoLight] = useState(defaultLogoLight);
   const [appLogoDark, setAppLogoDark] = useState(defaultLogoDark);
-  const [appLogoFavicon, setAppLogoFavicon] = useState("");
+  const [appLogoFavicon, setAppLogoFavicon] = useState(null);
   const [appName, setAppName] = useState(PRODUCT_NAME);
   const { getPublicSetting } = useSettings();
 
