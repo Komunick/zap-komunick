@@ -38,6 +38,7 @@ import NotificationsVolume from "../components/NotificationsVolume";
 import UserModal from "../components/UserModal";
 import AboutModal from "../components/AboutModal";
 import BrandLogo from "../components/BrandLogo";
+import KomunickEndorsement from "../components/KomunickEndorsement";
 import { AuthContext } from "../context/Auth/AuthContext";
 import BackdropLoading from "../components/BackdropLoading";
 import DarkMode from "../components/DarkMode";
@@ -60,10 +61,15 @@ import { getBackendURL } from "../services/config";
 import NestedMenuItem from "material-ui-nested-menu-item";
 import NewTicketModal from "../components/NewTicketModal/index.js";
 import { loadJSON } from "../helpers/loadJSON";
+import {
+  showsKomunickEndorsement,
+  usesDefaultProductLogo
+} from "../helpers/productBrand";
 
 const gitinfo = loadJSON("/gitinfo.json");
 
 const drawerWidth = 264;
+const brandFooterHeight = 32;
 const DRAWER_STORAGE_KEY = "drawerOpen";
 
 function getStoredDrawerOpen() {
@@ -542,6 +548,15 @@ const useStyles = makeStyles(theme => ({
     left: 0,
     marginLeft: 0
   },
+  contentWithBrandFooter: {
+    bottom: brandFooterHeight
+  },
+  brandFooter: {
+    position: "absolute",
+    right: 16,
+    bottom: 0,
+    height: brandFooterHeight
+  },
   barLogo: {
     width: 336,
     height: 56,
@@ -549,6 +564,10 @@ const useStyles = makeStyles(theme => ({
     flexShrink: 0,
     marginRight: 14,
     cursor: "pointer"
+  },
+  barLogoWordmark: {
+    width: 156,
+    height: 36
   },
   barLogoCompact: {
     width: 36,
@@ -676,6 +695,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
 
   const theme = useTheme();
   const compactHeaderLogo = useMediaQuery(theme.breakpoints.down("md"));
+  const showBrandFooter = showsKomunickEndorsement(theme);
 
   // the light, warm side menu of the Painel layout (light theme only)
   useEffect(() => {
@@ -1075,6 +1095,9 @@ const LoggedInLayout = ({ children, themeToggle }) => {
             <BrandLogo
               className={clsx(
                 classes.barLogo,
+                !compactHeaderLogo &&
+                  usesDefaultProductLogo(theme.calculatedLogo?.()) &&
+                  classes.barLogoWordmark,
                 compactHeaderLogo && classes.barLogoCompact
               )}
               variant="header"
@@ -1306,11 +1329,13 @@ const LoggedInLayout = ({ children, themeToggle }) => {
           classes.contentFlat,
           focoDesktop && classes.contentFlatFoco,
           painelDesktop && drawerOpen && classes.contentPainel,
-          painelDesktop && theme.mode === "light" && classes.contentWarm
+          painelDesktop && theme.mode === "light" && classes.contentWarm,
+          showBrandFooter && classes.contentWithBrandFooter
         )}
       >
         {children ? children : null}
       </main>
+      <KomunickEndorsement component="footer" className={classes.brandFooter} />
     </div>
   );
 };

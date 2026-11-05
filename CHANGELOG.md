@@ -4,6 +4,11 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ## Não publicado
 
+### Alterado
+
+- A abertura do SuperChat ganha fundo mais suave e uma barra de carregamento discreta. A assinatura oficial
+  “Powered by Komunick” sai da logo e passa para o rodapé.
+
 ### Corrigido
 
 - Miniaturas da galeria do chat interno usam a mesma sessão autenticada da imagem principal. Erros e fechamento
