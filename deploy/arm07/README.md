@@ -1,4 +1,7 @@
-# SuperChat e SuperChat Dev na ARM07
+# Instalação anterior do SuperChat na ARM07
+
+O destino das próximas publicações é a [ARM04](../../docs/DEPLOY.md#13-superchat-na-arm04).
+Este roteiro registra a instalação anterior. Os Dockerfiles e os perfis ARM64 ainda servem de base para o build.
 
 Este diretorio prepara duas instalacoes novas e independentes. `superchatdev`
 recebe desenvolvimento e homologacao com dados ficticios; `superchat` e o destino
@@ -21,12 +24,8 @@ e Redis `.13` na rede interna. O frontend usa `.10` tambem na edge. As redes e
 portas foram conferidas livres durante a preparacao; conferir novamente antes de
 criar qualquer stack. `development` usa build de release, sem servidor de hot reload.
 
-Os registros A de ambos os dominios observados em 29/10/2026 apontam para
-**144.24.36.23**, diferente do destino ARM07. A ativacao de cada dominio depende de
-identificar/corrigir esse registro e conferir eventual AAAA. Na primeira ativacao,
-usar **Somente DNS** no Cloudflare e A para
-`170.9.14.1`; nao configurar um AAAA sem IPv6 confirmado. O Caddy obtem HTTPS apos
-o DNS correto. A preparacao atual nao mudou nenhum registro.
+Os dois domínios ficam em `144.24.36.23` (ARM04) com HTTPS no Traefik.
+As referências a Caddy e ao preflight neste documento são específicas da ARM07.
 
 ## O que o candidato preserva
 

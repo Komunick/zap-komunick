@@ -25,7 +25,7 @@ sessão WhatsApp salva permanecerão paradas; use uma cópia sanitizada com dado
   roda `sequelize db:migrate` na subida.
 - Anexos privados do chat: não é uma migration SQL. Após build, inventarie com
   `node dist/scripts/migrateChatMedia.js`; execute com `--execute` somente em manutenção sem escritores e confirme
-  `--check` antes de subir a versão nova. Veja `docs/specs/chat-anexos-privados.md` e a operação em `deploy/arm07/README.md`.
+  `--check` antes de subir a versão nova. Veja `docs/specs/chat-anexos-privados.md` e a operação na ARM04 em `docs/DEPLOY.md`.
   Não iniciar código antigo após o cutover nem remover arquivos para contornar uma falha de prontidão.
 
 O backend recarrega sozinho (`ts-node-dev --poll`); o frontend também (`react-scripts start` com polling).
