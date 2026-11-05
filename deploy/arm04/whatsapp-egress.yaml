@@ -20,6 +20,8 @@ services:
     pids_limit: 64
     mem_limit: 128m
     restart: unless-stopped
+    labels:
+      traefik.enable: "false"
     environment:
       SUPERCHAT_WA_PROXY_BIND: "172.29.252.14"
       SUPERCHAT_WA_PROXY_CLIENT: "172.29.252.11"

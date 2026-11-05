@@ -1,5 +1,7 @@
 import { Agent, AgentOptions } from "https";
 
+let configuredProxy: { value: string; agent: Agent };
+
 export function createWhatsAppProxyAgent(
   value = process.env.SUPERCHAT_WHATSAPP_PROXY_URL
 ): Agent | null {
@@ -36,4 +38,29 @@ export function createWhatsAppProxyAgent(
     proxyEnv: { HTTPS_PROXY: url.href }
   };
   return new Agent(options);
+}
+
+export function getWhatsAppProxyAgent(): Agent | null {
+  const value = process.env.SUPERCHAT_WHATSAPP_PROXY_URL;
+  if (!value) return null;
+  if (configuredProxy?.value !== value) {
+    configuredProxy = { value, agent: createWhatsAppProxyAgent(value) };
+  }
+  return configuredProxy.agent;
+}
+
+export function getWhatsAppMediaDownloadOptions() {
+  const httpsAgent = getWhatsAppProxyAgent();
+  if (!httpsAgent) return undefined;
+  return {
+    options: {
+      httpsAgent,
+      proxy: false as const,
+      beforeRedirect: ({ protocol }: { protocol?: string }) => {
+        if (protocol !== "https:") {
+          throw new Error("WhatsApp media redirects must use HTTPS");
+        }
+      }
+    }
+  };
 }

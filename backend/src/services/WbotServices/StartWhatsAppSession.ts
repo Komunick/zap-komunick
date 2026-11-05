@@ -4,16 +4,16 @@ import { wbotMessageListener } from "./wbotMessageListener";
 import wbotMonitor from "./wbotMonitor";
 import { logger } from "../../utils/logger";
 import { sendWhatsappUpdate } from "../WhatsappService/SocketSendWhatsappUpdate";
-import { createWhatsAppProxyAgent } from "../../helpers/WhatsAppProxyAgent";
+import { getWhatsAppProxyAgent } from "../../helpers/WhatsAppProxyAgent";
 
 export const StartWhatsAppSession = async (
   whatsapp: Whatsapp,
   companyId: number,
   isRefresh = false
 ): Promise<void> => {
-  let proxy: ReturnType<typeof createWhatsAppProxyAgent>;
+  let proxy: ReturnType<typeof getWhatsAppProxyAgent>;
   try {
-    proxy = createWhatsAppProxyAgent();
+    proxy = getWhatsAppProxyAgent();
   } catch (err) {
     logger.error(err);
     return;
