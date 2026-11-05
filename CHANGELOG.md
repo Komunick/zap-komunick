@@ -13,6 +13,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- Com o proxy de saída do WhatsApp configurado, os downloads de estado e de conteúdo (mmg.whatsapp.net) passam
+  pelo mesmo caminho da conexão. Antes saíam direto, falhavam onde só o proxy alcança a internet e derrubavam a
+  sincronização depois de reconectar.
 - A tela de Conexões acompanha o QR Code do WhatsApp, avisa quando ele expira e permite gerar outro na mesma janela.
 - Miniaturas da galeria do chat interno usam a mesma sessão autenticada da imagem principal. Erros e fechamento
   também liberam essas referências, preservando a galeria dos atendimentos e os downloads existentes.

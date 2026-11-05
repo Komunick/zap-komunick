@@ -1,7 +1,11 @@
 import { createServer } from "http";
 import { get } from "https";
 import { AddressInfo } from "net";
-import { createWhatsAppProxyAgent } from "../../helpers/WhatsAppProxyAgent";
+import {
+  createWhatsAppProxyAgent,
+  getWhatsAppHttpOptions,
+  getWhatsAppMediaDownloadOptions
+} from "../../helpers/WhatsAppProxyAgent";
 
 describe("WhatsApp proxy agent", () => {
   it("preserves direct mode when no proxy is configured", () => {
@@ -56,5 +60,46 @@ describe("WhatsApp proxy agent", () => {
       agent.destroy();
       await new Promise<void>(resolve => proxy.close(() => resolve()));
     }
+  });
+
+  describe("HTTP options for the WhatsApp library", () => {
+    const previousValue = process.env.SUPERCHAT_WHATSAPP_PROXY_URL;
+
+    afterEach(() => {
+      if (previousValue === undefined) {
+        delete process.env.SUPERCHAT_WHATSAPP_PROXY_URL;
+      } else {
+        process.env.SUPERCHAT_WHATSAPP_PROXY_URL = previousValue;
+      }
+    });
+
+    it("stays undefined without a configured proxy, keeping direct mode", () => {
+      delete process.env.SUPERCHAT_WHATSAPP_PROXY_URL;
+      expect(getWhatsAppHttpOptions()).toBeUndefined();
+      expect(getWhatsAppMediaDownloadOptions()).toBeUndefined();
+    });
+
+    it("routes the library's axios requests through the proxy agent", () => {
+      process.env.SUPERCHAT_WHATSAPP_PROXY_URL = "http://127.0.0.1:3128";
+      const options = getWhatsAppHttpOptions();
+      expect(options.httpsAgent).toBeDefined();
+      // axios must not read HTTP(S)_PROXY from the environment on its own
+      expect(options.proxy).toBe(false);
+      // redirects outside HTTPS are refused before following
+      expect(() => options.beforeRedirect({ protocol: "http:" })).toThrow(
+        "WhatsApp media redirects must use HTTPS"
+      );
+      expect(() =>
+        options.beforeRedirect({ protocol: "https:" })
+      ).not.toThrow();
+    });
+
+    it("shares the same agent between socket options and media downloads", () => {
+      process.env.SUPERCHAT_WHATSAPP_PROXY_URL = "http://127.0.0.1:3128";
+      const http = getWhatsAppHttpOptions();
+      const media = getWhatsAppMediaDownloadOptions();
+      expect(media.options.httpsAgent).toBe(http.httpsAgent);
+      expect(media.options.proxy).toBe(false);
+    });
   });
 });

@@ -33,6 +33,7 @@ import GetPublicSettingService from "../services/SettingServices/GetPublicSettin
 import { resolveProductName } from "../helpers/ProductBrand";
 import waVersion from "../waversion.json";
 import { decideReconnect } from "../helpers/ReconnectPolicy";
+import { getWhatsAppHttpOptions } from "../helpers/WhatsAppProxyAgent";
 import Message from "../models/Message";
 import OutOfTicketMessage from "../models/OutOfTicketMessages";
 import BaileysKeys from "../models/BaileysKeys";
@@ -390,6 +391,10 @@ export const initWASocket = async (
           getMessage,
           agent: proxy,
           fetchAgent: proxy,
+          // Axios options for the library's HTTP requests (app state blobs,
+          // media). Without them these requests bypass the egress proxy and
+          // fail with EAI_AGAIN where only the proxy can reach WhatsApp.
+          options: getWhatsAppHttpOptions() ?? {},
           cachedGroupMetadata: async jid => groupCache.get(jid),
           shouldIgnoreJid: jid =>
             isJidBroadcast(jid) || jid?.endsWith("@newsletter"),
