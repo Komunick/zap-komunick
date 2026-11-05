@@ -81,7 +81,6 @@ export type Session = WASocket & {
 
 const sessions: Session[] = [];
 
-const retriesQrCodeMap = new Map<number, number>();
 // Zap Komunick: reconnections in a row per connection, for the backoff
 const reconnectAttempts = new Map<number, number>();
 
@@ -187,7 +186,7 @@ export const initWASocket = async (
   whatsapp: Whatsapp,
   proxy?: Agent,
   isRefresh = false
-): Promise<Session> => {
+): Promise<Session | null> => {
   return new Promise((resolve, reject) => {
     try {
       (async () => {
@@ -197,7 +196,10 @@ export const initWASocket = async (
           where: { id: whatsapp.id }
         });
 
-        if (!whatsappUpdate) return;
+        if (!whatsappUpdate) {
+          resolve(null);
+          return;
+        }
 
         const { id, name, provider } = whatsappUpdate;
 
@@ -253,6 +255,7 @@ export const initWASocket = async (
         logger.info(`isLegacy: ${isLegacy}`);
         logger.info(`Starting session ${name}`);
         let retriesQrCode = 0;
+        let qrExpired = false;
 
         let wsocket: Session = null;
         const store = new NodeCache({
@@ -414,6 +417,8 @@ export const initWASocket = async (
         wsocket.ev.on(
           "connection.update",
           async ({ connection, lastDisconnect, qr, reachoutTimeLock }) => {
+            if (qrExpired) return;
+
             if (reachoutTimeLock) {
               handleReachoutTimelock(reachoutTimeLock, { reachoutTimeLock });
             }
@@ -586,29 +591,44 @@ export const initWASocket = async (
             }
 
             if (qr !== undefined) {
-              if (retriesQrCodeMap.get(id) && retriesQrCodeMap.get(id) >= 3) {
-                await whatsappUpdate.update({
+              if (retriesQrCode >= 3) {
+                qrExpired = true;
+                wsocket.ev.removeAllListeners("connection.update");
+                wsocket.ev.removeAllListeners("creds.update");
+                const sessionIndex = sessions.indexOf(wsocket);
+                if (sessionIndex !== -1) sessions.splice(sessionIndex, 1);
+                await wsocket.ws.close().catch(err => logger.error(err));
+                await DeleteBaileysService(whatsapp.id).catch(err =>
+                  logger.error(err)
+                );
+                await whatsapp.update({
                   status: "DISCONNECTED",
                   qrcode: ""
                 });
-                await DeleteBaileysService(whatsappUpdate.id);
-                io.emit("whatsappSession", {
-                  action: "update",
-                  session: whatsappUpdate
-                });
-                wsocket.ev.removeAllListeners("connection.update");
-                wsocket.ws.close();
-                wsocket = null;
-                retriesQrCodeMap.delete(id);
+                io.to(`company-${whatsapp.companyId}-admin`).emit(
+                  `company-${whatsapp.companyId}-whatsappSession`,
+                  {
+                    action: "update",
+                    session: {
+                      id: whatsapp.id,
+                      status: whatsapp.status,
+                      qrcode: whatsapp.qrcode,
+                      updatedAt: whatsapp.updatedAt,
+                      retries: whatsapp.retries
+                    }
+                  }
+                );
+                resolve(null);
               } else {
                 logger.info(`Session QRCode Generate ${name}`);
-                retriesQrCodeMap.set(id, (retriesQrCode += 1));
+                retriesQrCode += 1;
 
                 await whatsapp.update({
                   qrcode: qr,
                   status: "qrcode",
                   retries: 0
                 });
+                if (qrExpired) return;
                 const sessionIndex = sessions.findIndex(
                   s => s.id === whatsapp.id
                 );
@@ -747,7 +767,7 @@ export const initWASocket = async (
             groupCache.del(event.id);
           }
         });
-      })();
+      })().catch(reject);
     } catch (error) {
       Sentry.captureException(error);
       console.log(error);
