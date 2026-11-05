@@ -4,6 +4,13 @@
 // here fall back to English.
 
 const pt = {
+  qrCode: {
+    scan: "Escaneie o QR Code pelo WhatsApp no celular.",
+    label: "QR Code de conexão do WhatsApp",
+    waiting: "Aguardando o QR Code do WhatsApp…",
+    expired: "O QR Code expirou ou não está disponível. Gere um novo código.",
+    unavailable: "Não foi possível consultar o QR Code. Tentando novamente…"
+  },
   login: {
     welcome: "Entrar na sua conta",
     welcomeSubtitle: "Use o e-mail e a senha cadastrados pelo administrador.",
@@ -657,6 +664,13 @@ const pt = {
 };
 
 const en = {
+  qrCode: {
+    scan: "Scan the QR code with WhatsApp on your phone.",
+    label: "WhatsApp pairing QR code",
+    waiting: "Waiting for the WhatsApp QR code…",
+    expired: "The QR code expired or is unavailable. Generate a new code.",
+    unavailable: "Could not check the QR code. Retrying…"
+  },
   login: {
     welcome: "Sign in to your account",
     welcomeSubtitle: "Use the email and password set up by your administrator.",
@@ -1304,6 +1318,13 @@ const en = {
 };
 
 const es = {
+  qrCode: {
+    scan: "Escanea el código QR con WhatsApp en tu teléfono.",
+    label: "Código QR de conexión de WhatsApp",
+    waiting: "Esperando el código QR de WhatsApp…",
+    expired: "El código QR caducó o no está disponible. Genera uno nuevo.",
+    unavailable: "No se pudo consultar el código QR. Reintentando…"
+  },
   login: {
     welcome: "Inicie sesión en su cuenta",
     welcomeSubtitle:

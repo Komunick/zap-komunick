@@ -9,12 +9,14 @@ import { getWhatsAppProxyAgent } from "../../helpers/WhatsAppProxyAgent";
 export const StartWhatsAppSession = async (
   whatsapp: Whatsapp,
   companyId: number,
-  isRefresh = false
+  isRefresh = false,
+  { propagateErrors = false } = {}
 ): Promise<void> => {
   let proxy: ReturnType<typeof getWhatsAppProxyAgent>;
   try {
     proxy = getWhatsAppProxyAgent();
   } catch (err) {
+    if (propagateErrors) throw err;
     logger.error(err);
     return;
   }
@@ -25,9 +27,11 @@ export const StartWhatsAppSession = async (
 
   try {
     const wbot = await initWASocket(whatsapp, proxy, isRefresh);
+    if (!wbot) return;
     wbotMessageListener(wbot, companyId);
     wbotMonitor(wbot, whatsapp, companyId);
   } catch (err) {
+    if (propagateErrors) throw err;
     logger.error(err);
   }
 };

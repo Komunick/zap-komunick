@@ -13,10 +13,13 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- A tela de Conexões acompanha o QR Code do WhatsApp, avisa quando ele expira e permite gerar outro na mesma janela.
 - Miniaturas da galeria do chat interno usam a mesma sessão autenticada da imagem principal. Erros e fechamento
   também liberam essas referências, preservando a galeria dos atendimentos e os downloads existentes.
 
 ### Segurança
+
+- A geração de um novo QR Code fica restrita a administradores da empresa dona do canal desconectado.
 
 - A consulta de setores confere o usuário e seus privilégios atuais antes de listar outra empresa. Usuários e
   administradores comuns ficam na própria empresa; a seleção empresarial do superusuário continua disponível.
