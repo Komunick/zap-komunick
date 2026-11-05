@@ -419,6 +419,14 @@ desconhecido) reconecta com espera crescente de 2 s até 5 min, com até 20% de 
 Cada queda fica no log como `Socket <nome> closed: <motivo> -> <ação>`. Antes, toda queda que não fosse 401
 reconectava em 2 s fixos, inclusive 440, e o 403 apagava a sessão e ainda tentava reconectar.
 
+**Saída pelo proxy (RNF):** quando `SUPERCHAT_WHATSAPP_PROXY_URL` está definida, `helpers/WhatsAppProxyAgent`
+entrega o mesmo agente HTTPS para três caminhos: o WebSocket (`agent`), o upload de mídia (`fetchAgent`) e as
+requisições HTTP da biblioteca via axios (`options` do socket e `getWhatsAppMediaDownloadOptions`) — downloads de
+estado do aplicativo (mmg.whatsapp.net), de histórico e de conteúdo das mensagens. Sem o campo `options`, esses
+downloads saíam direto do contêiner; numa rede onde só o proxy alcança a internet, falhavam com `EAI_AGAIN`,
+quebravam o `resyncAppState` após cada reconexão e geravam erros em série no tratamento de mensagens. O axios fica
+com `proxy: false` (não lê `HTTP(S)_PROXY` do ambiente) e recusa redirecionamentos fora de HTTPS.
+
 **Recuperação:** as migrações de avanço não removem dados existentes. As migrações têm `down`, mas a reversão pode
 perder dados (o `down` da `20261021130000` apaga os motivos cadastrados). Desligar `slaMinutes`, `walletAutoAssign` e
 `closeReasonRequired` devolve o comportamento original
