@@ -282,7 +282,14 @@
         .matches
         ? "dark"
         : "light";
-      const preferredTheme = localStorage.getItem("preferredTheme");
+      let preferredTheme;
+      try {
+        preferredTheme =
+          localStorage.getItem("themeMode") ||
+          localStorage.getItem("preferredTheme");
+      } catch {
+        // The system preference still applies if browser storage is blocked.
+      }
       const theme =
         preferredTheme === "light" || preferredTheme === "dark"
           ? preferredTheme

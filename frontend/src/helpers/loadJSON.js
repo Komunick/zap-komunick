@@ -16,12 +16,22 @@ function loadTextFileAjaxSync(filePath, mimeType) {
   }
 }
 
-var loadJSON = function (filePath) {
+const startupFiles = new Set([
+  "/config.json",
+  "/config-dev.json",
+  "/gitinfo.json"
+]);
+const startupValues = new Map();
+
+const loadJSON = filePath => {
+  if (startupValues.has(filePath)) return startupValues.get(filePath);
+
   try {
-    // Load json file;
-    var json = loadTextFileAjaxSync(filePath, "application/json");
-    // Parse json
-    return JSON.parse(json);
+    const data = JSON.parse(loadTextFileAjaxSync(filePath, "application/json"));
+    if (data && typeof data === "object" && startupFiles.has(filePath)) {
+      startupValues.set(filePath, data);
+    }
+    return data;
   } catch (e) {
     return null;
   }
