@@ -6,8 +6,9 @@ lado, com `super` mais leve e `Chat` verde em peso maior. Os cabeçalhos usam os
 para fundo escuro nos dois temas. Imagens personalizadas mantêm sua proporção.
 
 O rodapé da abertura, do login, do cadastro e da área autenticada exibe “Powered by” ao lado de
-`komunick-completa.svg`. O fundo local escuro mantém o slogan branco legível. Quando o nome ou a logo
-Whitelabel está configurado, prevalece a marca personalizada.
+`komunick-rodape.svg` (tema claro) ou `komunick-rodape-dark.svg` (tema escuro). Os dois SVGs usam o PNG
+da assinatura oficial. Os filtros removem o fundo opaco e ajustam o contraste do slogan. Quando o nome ou
+a logo Whitelabel está configurado, prevalece a marca personalizada.
 
 O [registro da opção Essencial](../../../docs/specs/superchat-logo-essencial.md) mostra a composição anterior.
 
@@ -19,7 +20,7 @@ O arquivo [`komunick-completa.svg`](komunick-completa.svg) é uma cópia integra
 SHA256 `b5e5ec62236eb6228bc9dfa79aef652f13646294871c1e23cabf085c8ff01512`, 15050 bytes, viewBox 173×48.
 
 O SVG oficial contém um PNG de 173×48, recortes e filtro fornecidos pela empresa. Ampliações ficam sujeitas à resolução
-desse PNG. O rodapé usa o SVG oficial com a proporção e as cores originais.
+desse PNG. As versões para rodapé preservam as proporções do ativo oficial.
 
 O arquivo `komunick.svg` preserva o wordmark anterior, sem assinatura, da revisão
 `3057ab969a52b18adda2ff883e78df57b4e94e09`. Ele permanece como referência histórica. O rodapé usa

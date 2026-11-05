@@ -2,7 +2,6 @@ import React from "react";
 import clsx from "clsx";
 import { makeStyles, useTheme } from "@material-ui/core/styles";
 import { showsKomunickEndorsement } from "../../helpers/productBrand";
-import { BRAND_BLACK } from "../../theme/komunick";
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -16,17 +15,14 @@ const useStyles = makeStyles(theme => ({
   logo: {
     display: "block",
     width: 84,
-    height: 25,
-    objectFit: "contain",
-    padding: "2px 4px",
-    borderRadius: 4,
-    backgroundColor: BRAND_BLACK
+    height: "auto"
   }
 }));
 
 const KomunickEndorsement = ({ component: Component = "span", className }) => {
   const theme = useTheme();
   const classes = useStyles();
+  const logoSuffix = theme.palette.type === "dark" ? "-dark" : "";
 
   if (!showsKomunickEndorsement(theme)) return null;
 
@@ -35,7 +31,9 @@ const KomunickEndorsement = ({ component: Component = "span", className }) => {
       <span lang="en">Powered by</span>
       <img
         className={classes.logo}
-        src="/vector/komunick-completa.svg"
+        src={`/vector/komunick-rodape${logoSuffix}.svg`}
+        width="173"
+        height="48"
         alt="Komunick Inteligência e Tecnologia"
       />
     </Component>

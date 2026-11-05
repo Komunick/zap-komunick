@@ -165,12 +165,8 @@
 
       #splash-endorsement img {
         display: block;
-        box-sizing: content-box;
-        width: 76px;
+        width: 84px;
         height: auto;
-        padding: 2px 4px;
-        background: #020605;
-        border-radius: 4px;
       }
 
       .progress.regress {
@@ -239,7 +235,8 @@
       <footer id="splash-endorsement">
         <span lang="en">Powered by</span>
         <img
-          src="%PUBLIC_URL%/vector/komunick-completa.svg"
+          id="splash-endorsement-logo"
+          src="%PUBLIC_URL%/vector/komunick-rodape.svg"
           width="173"
           height="48"
           alt="Komunick Inteligência e Tecnologia"
@@ -294,6 +291,8 @@
       if (theme === "dark") {
         document.getElementById("app-logo").src =
           "%PUBLIC_URL%/vector/logo-dark.svg";
+        document.getElementById("splash-endorsement-logo").src =
+          "%PUBLIC_URL%/vector/komunick-rodape-dark.svg";
       }
 
       window.renderError = message => {
