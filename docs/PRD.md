@@ -293,14 +293,17 @@ referências do Dribbble (painéis de atendimento e CRMs de 2025 e 2026).
 - Nome de produto padrão SuperChat, inclusive na inicialização, PWA, títulos, Sobre e configurações legadas de marca.
   Preservar nomes personalizados, uploads Whitelabel, identificadores técnicos e créditos AGPL/Ticketz.
   Ver [identidade SuperChat](specs/superchat-identidade.md); a troca não reescreve dados reais nem segredos 2FA.
-- Logo `superChat`, símbolo compacto e endosso com geometria oficial Komunick preservada. Usar as cores da Komunick:
+- Logo tipográfica `superChat` na composição Essencial, sem símbolo junto ao nome; símbolo compacto preservado
+  no trilho recolhido e nos ícones. Endosso com geometria oficial Komunick preservada. Usar as cores da Komunick:
   verde #35B62E, preto #020605 e a fonte Manrope. Botões e textos em verde
   usam o tom mais escuro #1F7F1B no tema claro, para manter o contraste. O logo e a cor que a empresa configurar em
   Whitelabel continuam valendo.
-- SuperChat tem destaque no topo; Powered by e a assinatura oficial Komunick formam um endosso menor. No login,
-  Sobre e menu aberto, o endosso ocupa uma linha discreta abaixo da marca; no header Foco/Painel, fica à direita.
-  O menu aberto usa um cabeçalho mais baixo, que continua crescendo para acomodar logos personalizadas sem cortes.
-  Conferir legibilidade e proporção nos dois temas e no celular. Ver [topo minimalista](specs/superchat-topo-minimalista.md).
+- A opção A, Essencial, usa Manrope mais leve em `super` e peso maior no `Chat` verde, com Powered by menor.
+  No login, Sobre e menu aberto, o endosso ocupa uma linha discreta abaixo da marca; no header Foco/Painel,
+  fica à direita.
+  O cabeçalho do menu aberto tem altura mínima de 72 px e continua crescendo para acomodar logos personalizadas sem
+  cortes. Conferir legibilidade e proporção nos dois temas e no celular. Ver [logo Essencial](specs/superchat-logo-essencial.md);
+  o [topo minimalista anterior](specs/superchat-topo-minimalista.md) preserva o registro da composição substituída.
 - Tema claro e escuro com as mesmas cores em todas as telas: menu, barra do topo, lista de atendimentos, chat, Kanban,
   SLA, cadastros e login.
 - Direção visual "B — Menu preto" (escolhida pelo responsável entre três no Stitch): menu lateral #020605 nos dois

@@ -67,6 +67,8 @@ confirmadas de inspiração e observações do sistema atual; estas não viram r
   como parte de uma troca visual. Ver `docs/specs/superchat-identidade.md` e `public/vector/README.md`.
   A assinatura completa usa `vector/komunick-completa.svg`, publicado pela própria Komunick e com PNG embutido.
   Preserve o arquivo original; use a variante horizontal em cabeçalhos e a vertical no menu, login e Sobre.
+  A composição padrão é a opção A, Essencial: wordmark sem símbolo junto ao nome, Manrope 450/650 e Powered by
+  menor. O ícone compacto permanece no trilho e no favicon. Ver `docs/specs/superchat-logo-essencial.md`.
   O favicon padrão tem endereço próprio em `vector/superchat-icon.svg`; mantenha os aliases e uploads personalizados.
 - **Navegação:** Financeiro não aparece nos menus. Configurações não oferece a aba, seletor ou painel Containers Docker.
   APIs e arquivos de publicação continuam preservados. Ver `docs/specs/superchat-navegacao-marca.md`.

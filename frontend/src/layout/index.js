@@ -200,7 +200,7 @@ const useStyles = makeStyles(theme => ({
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    minHeight: 84,
+    minHeight: 72,
     padding: "0 10px 0 14px",
     borderBottom: `1px solid ${theme.komunick.sidebarBorder}`,
     marginBottom: 6
@@ -212,9 +212,9 @@ const useStyles = makeStyles(theme => ({
     gap: 8
   },
   sidebarBrandHeader: {
-    minHeight: 84,
-    paddingTop: 8,
-    paddingBottom: 8
+    minHeight: 72,
+    paddingTop: 4,
+    paddingBottom: 4
   },
   sidebarLogo: {
     display: "flex",
