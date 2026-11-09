@@ -130,4 +130,31 @@ describe("ticket mutations cannot bypass context authorization", () => {
     );
     expect(CreateTicketService).not.toHaveBeenCalled();
   });
+
+  it("routes Novo atendimento by the validated queue", async () => {
+    (loadTicketViewer as jest.Mock).mockResolvedValue({
+      companyId: 10,
+      isAdmin: false,
+      queueIds: [401]
+    });
+    (Contact.findOne as jest.Mock).mockResolvedValue({ id: 201 });
+    (User.findOne as jest.Mock).mockResolvedValue({ id: 101 });
+    (Queue.findOne as jest.Mock).mockResolvedValue({ id: 401 });
+    (CreateTicketService as jest.Mock).mockRejectedValue(
+      new AppError("ERR_NO_CONNECTED_WHATSAPP_FOR_QUEUE")
+    );
+    req.body = { contactId: 201, userId: 101, queueId: "401" };
+
+    await expect(TicketController.store(req, res)).rejects.toMatchObject({
+      message: "ERR_NO_CONNECTED_WHATSAPP_FOR_QUEUE"
+    });
+    expect(CreateTicketService).toHaveBeenCalledWith({
+      contactId: 201,
+      userId: 101,
+      companyId: 10,
+      queueId: 401,
+      routeByQueue: true
+    });
+    expect(res.json).not.toHaveBeenCalled();
+  });
 });

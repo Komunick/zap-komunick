@@ -13,6 +13,8 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- Em Novo atendimento, a fila escolhida define o WhatsApp de envio. Se ela não tiver um canal conectado,
+  o sistema avisa e bloqueia a abertura.
 - A tela de Conexões acompanha o QR Code do WhatsApp, avisa quando ele expira e permite gerar outro na mesma janela.
 - Miniaturas da galeria do chat interno usam a mesma sessão autenticada da imagem principal. Erros e fechamento
   também liberam essas referências, preservando a galeria dos atendimentos e os downloads existentes.
