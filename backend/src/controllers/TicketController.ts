@@ -221,7 +221,8 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     contactId,
     userId,
     companyId,
-    queueId
+    queueId: queue?.id ?? queueId,
+    routeByQueue: true
   });
 
   const io = getIO();

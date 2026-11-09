@@ -1,3 +1,4 @@
+import { col, fn } from "sequelize";
 import AppError from "../../errors/AppError";
 import CheckContactOpenTickets from "../../helpers/CheckContactOpenTickets";
 import GetDefaultWhatsApp from "../../helpers/GetDefaultWhatsApp";
@@ -8,27 +9,51 @@ import { emitTicketContext } from "../SocketServices/TicketContextSocketService"
 import FindOrCreateATicketTrakingService from "./FindOrCreateATicketTrakingService";
 import Contact from "../../models/Contact";
 import { incrementCounter } from "../CounterServices/IncrementCounter";
+import Queue from "../../models/Queue";
+import Whatsapp from "../../models/Whatsapp";
 
 interface Request {
   contactId: number;
   userId: number;
   companyId: number;
   queueId?: number;
+  routeByQueue?: boolean;
 }
 
 const CreateTicketService = async ({
   contactId,
   userId,
   queueId,
-  companyId
+  companyId,
+  routeByQueue = false
 }: Request): Promise<Ticket> => {
-  const defaultWhatsapp = await GetDefaultWhatsApp(companyId);
+  const useQueueWhatsapp = routeByQueue && Boolean(queueId);
+  const whatsapp = useQueueWhatsapp
+    ? await Whatsapp.findOne({
+        attributes: ["id", "isDefault"],
+        where: { companyId, channel: "whatsapp", status: "CONNECTED" },
+        include: [
+          {
+            model: Queue,
+            as: "queues",
+            attributes: [],
+            through: { attributes: [] },
+            required: true,
+            where: { id: queueId, companyId }
+          }
+        ],
+        order: [
+          [fn("COALESCE", col("Whatsapp.isDefault"), false), "DESC"],
+          ["id", "ASC"]
+        ]
+      })
+    : await GetDefaultWhatsApp(companyId);
 
-  let ticket = await CheckContactOpenTickets(
-    contactId,
-    defaultWhatsapp.id,
-    true
-  );
+  if (!whatsapp) {
+    throw new AppError("ERR_NO_CONNECTED_WHATSAPP_FOR_QUEUE");
+  }
+
+  let ticket = await CheckContactOpenTickets(contactId, whatsapp.id, true);
 
   const include = [
     {
@@ -43,7 +68,11 @@ const CreateTicketService = async ({
   ];
 
   if (ticket) {
-    if (ticket.status === "open" && ticket.userId === userId) {
+    if (
+      ticket.status === "open" &&
+      ticket.userId === userId &&
+      (!useQueueWhatsapp || ticket.queueId === queueId)
+    ) {
       await ticket.reload({
         include
       });
@@ -58,7 +87,7 @@ const CreateTicketService = async ({
     contactId,
     companyId,
     queueId,
-    whatsappId: defaultWhatsapp.id,
+    whatsappId: whatsapp.id,
     status: "open",
     isGroup,
     userId

@@ -59,6 +59,11 @@ O P4 foi autorizado em 30/10/2026 como [consultas integradas com mocks](specs/p4
 de SLA mostra a espera e destaca o que passou do prazo → o atendente responde e move o atendimento pelas colunas do
 Kanban → lembretes recorrentes continuam saindo nas datas da série.
 
+Em **Novo atendimento**, a fila selecionada usa um WhatsApp conectado da própria empresa e vinculado a ela.
+Se houver mais de um, o sistema prioriza o canal padrão entre os elegíveis e depois o de menor ID.
+Sem canal elegível, o sistema avisa e não abre o atendimento. Quando a abertura sem fila é permitida,
+o sistema continua usando a escolha padrão da empresa.
+
 ## 3. Funcionalidades e critérios de aceite
 
 ### RF-001 — Código-fonte acessível (AGPL)

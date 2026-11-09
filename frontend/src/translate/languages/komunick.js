@@ -622,6 +622,8 @@ const pt = {
     businessDaysTooltip: "Só em dia útil"
   },
   backendErrors: {
+    ERR_NO_CONNECTED_WHATSAPP_FOR_QUEUE:
+      "A fila selecionada não tem um canal de WhatsApp conectado.",
     ERR_CHAT_MEDIA_STORAGE_UNSAFE:
       "Os anexos estão temporariamente indisponíveis. Tente novamente.",
     ERR_CHAT_MEDIA_UNAVAILABLE:
@@ -1278,6 +1280,8 @@ const en = {
     businessDaysTooltip: "Business days only"
   },
   backendErrors: {
+    ERR_NO_CONNECTED_WHATSAPP_FOR_QUEUE:
+      "The selected queue has no connected WhatsApp channel.",
     ERR_CHAT_MEDIA_STORAGE_UNSAFE:
       "Attachments are temporarily unavailable. Please try again.",
     ERR_CHAT_MEDIA_UNAVAILABLE:
@@ -1936,6 +1940,8 @@ const es = {
     businessDaysTooltip: "Solo en día hábil"
   },
   backendErrors: {
+    ERR_NO_CONNECTED_WHATSAPP_FOR_QUEUE:
+      "La cola seleccionada no tiene un canal de WhatsApp conectado.",
     ERR_CHAT_MEDIA_STORAGE_UNSAFE:
       "Los adjuntos no están disponibles temporalmente. Inténtalo de nuevo.",
     ERR_CHAT_MEDIA_UNAVAILABLE:
