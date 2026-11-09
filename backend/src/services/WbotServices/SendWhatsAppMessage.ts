@@ -41,7 +41,9 @@ const SendWhatsAppMessage = async ({
   if (quotedMsg) {
     const chatMessage = await Message.findOne({
       where: {
-        id: quotedMsg.id
+        id: quotedMsg.id,
+        ticketId: quotedMsg.ticketId,
+        companyId: ticket.companyId
       }
     });
 

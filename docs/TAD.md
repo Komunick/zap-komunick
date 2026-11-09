@@ -399,9 +399,10 @@ exige `workflow_dispatch` com `publish_images=true`, desligado por padrão, no p
 após os dois jobs de validação. Os destinos são `ghcr.io/komunick/zap-komunick-backend` e `...-frontend`, com tags
 do SHA de origem; uma futura implantação deve selecionar o digest resultante. O workflow não faz deploy.
 
-**Histórico do cliente e nota de transferência (RF-017):** `ListMessagesService` busca as mensagens de todos os
-`Tickets` do mesmo `contactId` na empresa (cursor `nextId` e respostas no mesmo conjunto); com `messageVisibility` =
-`message`, o filtro de fila vale só para mensagens de outros atendimentos. `PUT /tickets/:id` aceita `transferNote` e
+**Histórico do cliente e nota de transferência (RF-017):** `ListMessagesService` busca mensagens de `Tickets` do mesmo
+`contactId` na empresa. Com `messageVisibility=message`, atendentes só consultam outros atendimentos em filas às quais
+têm acesso, além do filtro da fila registrada na mensagem. Cursors, anexos e citações seguem a mesma regra.
+`PUT /tickets/:id` aceita `transferNote` e
 `transferMessageIds`: se a fila ou o atendente mudou, `CreateTransferNoteService` grava uma `Message` com
 `mediaType` = `transferNote` (id `ZKNOTE…`, `fromMe`, `read`), texto e cópia das mensagens citadas em `dataJson`
 (só do mesmo cliente, `helpers/TransferNote` limita tamanho e quantidade), e emite o `appMessage` normal. Ela não passa

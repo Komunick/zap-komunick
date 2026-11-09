@@ -13,12 +13,12 @@ userRoutes.get("/users/list", isAuth, UserController.list);
 // Zap Komunick: team online (RF-013)
 userRoutes.get("/users/online", isAuth, isAdmin, UserController.online);
 
-userRoutes.post("/users", isAuth, UserController.store);
+userRoutes.post("/users", isAuth, isAdmin, UserController.store);
 
 userRoutes.put("/users/:userId", isAuth, UserController.update);
 
 userRoutes.get("/users/:userId", isAuth, UserController.show);
 
-userRoutes.delete("/users/:userId", isAuth, UserController.remove);
+userRoutes.delete("/users/:userId", isAuth, isAdmin, UserController.remove);
 
 export default userRoutes;

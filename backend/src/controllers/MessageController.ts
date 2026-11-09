@@ -3,6 +3,7 @@ import fs from "fs";
 import AppError from "../errors/AppError";
 
 import SetTicketMessagesAsRead from "../helpers/SetTicketMessagesAsRead";
+import { sanitizeMessageQuotePayload } from "../helpers/MessageQuotePrivacy";
 import { getIO } from "../libs/socket";
 import Queue from "../models/Queue";
 import User from "../models/User";
@@ -68,7 +69,15 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     SetTicketMessagesAsRead(ticket);
   }
 
-  return res.json({ count, messages, ticket, hasMore, nextId: responseNextId });
+  return res.json({
+    count,
+    messages: messages.map(message =>
+      sanitizeMessageQuotePayload(message.toJSON())
+    ),
+    ticket,
+    hasMore,
+    nextId: responseNextId
+  });
 };
 
 export const historyByMessageId = async (
@@ -113,7 +122,8 @@ export const historyByMessageId = async (
 
   const oldMessages = await OldMessage.findAll({
     where: {
-      messageId
+      messageId,
+      ticketId: ticket.id
     },
     order: [["createdAt", "ASC"]]
   });
@@ -132,13 +142,14 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     userId: req.user.id,
     companyId
   });
-  if (quotedMsg) {
-    await AuthorizeMessageContextService(
-      quotedMsg.id,
-      { userId: req.user.id, companyId },
-      ticketId
-    );
-  }
+  const authorizedQuote = quotedMsg
+    ? await AuthorizeMessageContextService(
+        quotedMsg.id,
+        { userId: req.user.id, companyId },
+        ticketId,
+        quotedMsg.ticketId
+      )
+    : undefined;
   const ticket = await ShowTicketService(ticketId, companyId);
   const { channel } = ticket;
   if (channel === "whatsapp") {
@@ -166,7 +177,12 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
       );
     }
   } else if (channel === "whatsapp") {
-    await SendWhatsAppMessage({ body, ticket, userId, quotedMsg });
+    await SendWhatsAppMessage({
+      body,
+      ticket,
+      userId,
+      quotedMsg: authorizedQuote
+    });
   }
 
   return res.send();

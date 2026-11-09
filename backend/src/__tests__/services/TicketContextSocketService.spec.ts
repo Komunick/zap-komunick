@@ -137,4 +137,46 @@ describe("context recipients use current authorization", () => {
     expect(message.quotedMsg.id).toBe("foreign-quote");
     expect(message.replies).toHaveLength(1);
   });
+
+  it("authorizes each referenced message by source ticket before emitting it", async () => {
+    const socket = recipient(101);
+    const io = {
+      in: jest.fn().mockReturnValue({ fetchSockets: async () => [socket] })
+    };
+    allowed.add(101);
+    (AuthorizeMessageContextService as jest.Mock).mockImplementation(
+      async (_id, _actor, _ticketId, sourceId) => {
+        if (sourceId === 303) throw new AppError("ERR_NO_PERMISSION", 403);
+        return { id: "duplicate", ticketId: 301 };
+      }
+    );
+    const dataJson = JSON.stringify({
+      message: {
+        extendedTextMessage: {
+          text: "Atual",
+          contextInfo: { quotedMessage: { conversation: "Inacessivel" } }
+        }
+      }
+    });
+    const message = {
+      companyId: 10,
+      ticketId: 301,
+      dataJson,
+      quotedMsg: { id: "duplicate", ticketId: 303, body: "Inacessivel" },
+      replies: [
+        { id: "duplicate", ticketId: 303 },
+        { id: "duplicate", ticketId: 301 }
+      ]
+    };
+    await emitTicketContext(io as never, 301, "fixture-message", { message }, [
+      "301"
+    ]);
+    const emitted = socket.emit.mock.calls[0][1].message;
+    expect(emitted).toMatchObject({
+      quotedMsg: null,
+      replies: [{ id: "duplicate", ticketId: 301 }]
+    });
+    expect(emitted.dataJson).not.toContain("Inacessivel");
+    expect(message.dataJson).toBe(dataJson);
+  });
 });

@@ -68,6 +68,10 @@ Em um atendimento de WhatsApp, transferências para outra fila exigem que a fila
 atenda pelo número da conversa. Saudações, avisos de horário e opções do chatbot só usam textos de
 uma fila atendida por esse canal.
 
+Na entrada, a primeira mensagem de um WhatsApp vinculado a uma única fila já fica nessa fila.
+Se um atendimento reutilizado estiver em uma fila incompatível, a entrada resolve o vínculo antes de gravar
+a nova mensagem. Com várias filas elegíveis, o atendimento volta à seleção normal de fila.
+
 ## 3. Funcionalidades e critérios de aceite
 
 ### RF-001 — Código-fonte acessível (AGPL)
@@ -564,8 +568,9 @@ mostrava as mensagens do atendimento aberto.
 
 - A conversa mostra o histórico de todos os atendimentos do cliente, do mais antigo ao atual, com uma divisória
   "Atendimento anterior #N" e "Atendimento atual #N".
-- A privacidade por fila (configuração de visibilidade de mensagens) continua valendo para os atendimentos anteriores;
-  dentro do atendimento atual, tudo aparece, para quem recebe uma transferência ter o contexto.
+- Com a visibilidade por fila, o histórico de um atendimento anterior só aparece se a equipe tiver acesso
+  à fila desse atendimento. A regra vale para mensagens antigas sem fila, anexos e citações. O atendimento
+  atual mantém o contexto que a equipe recebe em uma transferência.
 - Na janela de transferência, um campo "Contexto para o setor" e a lista das últimas mensagens do atendimento para
   destacar. A nota aparece na conversa num cartão próprio ("Nota de transferência", de onde para onde, quem
   escreveu), visível só para a equipe: o cliente não recebe nada, não conta como resposta no SLA e não vira a última

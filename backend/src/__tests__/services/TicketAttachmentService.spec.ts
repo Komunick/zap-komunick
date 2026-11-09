@@ -15,10 +15,13 @@ import {
   MAX_ATTACHMENT_PREVIEW_BYTES
 } from "../../helpers/AttachmentRules";
 import AppError from "../../errors/AppError";
+import ListMessagesService from "../../services/MessageServices/ListMessagesService";
+import ShowTicketService from "../../services/TicketServices/ShowTicketService";
 
 jest.mock("../../models/User", () => ({ findOne: jest.fn() }));
 jest.mock("../../models/Ticket", () => ({
   findOne: jest.fn(),
+  findAll: jest.fn(),
   update: jest.fn()
 }));
 jest.mock("../../models/Contact", () => ({ findOne: jest.fn() }));
@@ -34,9 +37,26 @@ jest.mock("../../models/Message", () => ({
 jest.mock("../../services/AttachmentServices/AttachmentFileService", () => ({
   openAttachmentFile: jest.fn()
 }));
+jest.mock("../../services/TicketServices/ShowTicketService", () => jest.fn());
 
 type Values = Record<string, unknown>;
 type Predicate = Record<string | symbol, unknown>;
+const matchesValue = (actual: unknown, expected: unknown): boolean => {
+  if (!expected || typeof expected !== "object") return actual === expected;
+  return Reflect.ownKeys(expected).every(operator => {
+    const target = (expected as Predicate)[operator];
+    if (operator === Op.or)
+      return Reflect.ownKeys(target as object).some(key =>
+        matchesValue(actual, { [key]: (target as Predicate)[key] })
+      );
+    if (operator === Op.eq || operator === Op.is) return actual === target;
+    if (operator === Op.ne) return actual !== target;
+    if (operator === Op.in) return (target as unknown[]).includes(actual);
+    if (operator === Op.notIn) return !(target as unknown[]).includes(actual);
+    if (operator === Op.lt) return actual < target;
+    throw new Error("Unknown test predicate");
+  });
+};
 // Small generic evaluator for the ORM predicates: fixture expectations below
 // define which clients/messages may be visible, independently of service output.
 const matches = (row: Values, condition: Predicate): boolean => {
@@ -61,16 +81,7 @@ const matches = (row: Values, condition: Predicate): boolean => {
       return (value as Predicate[]).every(item => matches(row, item));
     if (key === Op.or)
       return (value as Predicate[]).some(item => matches(row, item));
-    const actual = row[key as string];
-    if (!value || typeof value !== "object") return actual === value;
-    return Reflect.ownKeys(value).every(operator => {
-      const target = (value as Predicate)[operator];
-      if (operator === Op.ne) return actual !== target;
-      if (operator === Op.in) return (target as unknown[]).includes(actual);
-      if (operator === Op.notIn) return !(target as unknown[]).includes(actual);
-      if (operator === Op.lt) return actual < target;
-      throw new Error("Unknown test predicate");
-    });
+    return matchesValue(row[key as string], value);
   });
 };
 const actor = { userId: "101", companyId: 10 };
@@ -99,17 +110,19 @@ let visibility: string;
 let close: jest.Mock;
 const ormRows = (options: {
   where: Predicate;
-  include?: { where: Predicate }[];
+  include?: { as: string; where: Predicate }[];
   limit?: number;
   order?: unknown;
 }) => {
   let result = rows.filter(row => matches(row, options.where));
-  if (options.include)
+  const joinedTicket = options.include?.find(
+    include => include.as === "ticket"
+  );
+  if (joinedTicket)
     result = result.filter(row =>
       tickets.some(
         ticket =>
-          ticket.id === row.ticketId &&
-          matches(ticket, options.include[0].where)
+          ticket.id === row.ticketId && matches(ticket, joinedTicket.where)
       )
     );
   result.sort(
@@ -121,7 +134,28 @@ const ormRows = (options: {
       Number(b.ticketId) - Number(a.ticketId)
   );
   if (options.limit) result = result.slice(0, options.limit);
-  return result.map(model);
+  const quoted = options.include?.find(include => include.as === "quotedMsg");
+  const replies = options.include?.find(include => include.as === "replies");
+  return result.map(row =>
+    model({
+      ...row,
+      ...(quoted && {
+        quotedMsg:
+          rows.find(
+            candidate =>
+              candidate.id === row.quotedMsgId &&
+              matches(candidate, quoted.where)
+          ) || null
+      }),
+      ...(replies && {
+        replies: rows.filter(
+          candidate =>
+            candidate.quotedMsgId === row.id &&
+            matches(candidate, replies.where)
+        )
+      })
+    })
+  );
 };
 describe("authorized attachment history and descriptor lifecycle", () => {
   beforeEach(() => {
@@ -129,8 +163,10 @@ describe("authorized attachment history and descriptor lifecycle", () => {
     rows = [message("current")];
     tickets = [
       { id: 301, companyId: 10, contactId: 201, queueId: 401, isGroup: false },
-      { id: 300, companyId: 10, contactId: 201, queueId: 402, isGroup: false },
+      { id: 300, companyId: 10, contactId: 201, queueId: 401, isGroup: false },
       { id: 302, companyId: 10, contactId: 202, queueId: 401, isGroup: false },
+      { id: 303, companyId: 10, contactId: 201, queueId: 402, isGroup: false },
+      { id: 304, companyId: 10, contactId: 201, queueId: null, isGroup: false },
       { id: 501, companyId: 20, contactId: 601, queueId: 401, isGroup: false }
     ];
     profile = "user";
@@ -146,6 +182,12 @@ describe("authorized attachment history and descriptor lifecycle", () => {
             queues: queues.map(id => ({ id, companyId: 10 }))
           }
         : null
+    );
+    (Ticket.findAll as jest.Mock).mockImplementation(async ({ where }) =>
+      tickets.filter(row => matches(row, where))
+    );
+    (ShowTicketService as jest.Mock).mockImplementation(async id =>
+      tickets.find(row => row.id === Number(id))
     );
     (Ticket.findOne as jest.Mock).mockImplementation(
       async ({ where }) =>
@@ -216,12 +258,15 @@ describe("authorized attachment history and descriptor lifecycle", () => {
     expect(options.logging).toBe(false);
     expect(close).toHaveBeenCalledTimes(1);
   });
-  it("preserves RF-017: all current ticket context, permitted/null historical queues, only the same client and company", async () => {
+  it("preserves transferred context and checks both ticket and message queue for other tickets", async () => {
     rows = [
       message("today", 301, { queueId: 402 }),
       message("old-allowed", 300, { queueId: 401 }),
       message("old-null", 300, { queueId: null }),
       message("old-denied", 300, { queueId: 402 }),
+      message("other-queue-null", 303, { queueId: null }),
+      message("other-queue-old-match", 303),
+      message("unassigned-ticket", 304),
       message("other-client", 302),
       message("other-office", 501, { companyId: 20 }),
       message("deleted", 301, { isDeleted: true }),
@@ -238,13 +283,79 @@ describe("authorized attachment history and descriptor lifecycle", () => {
       message: "ERR_NO_PERMISSION",
       statusCode: 403
     });
+    await Promise.all(
+      [
+        ["303", "other-queue-null"],
+        ["303", "other-queue-old-match"],
+        ["304", "unassigned-ticket"]
+      ].map(([source, id]) =>
+        expect(detail(source, id)).rejects.toMatchObject({
+          message: "ERR_NO_PERMISSION",
+          statusCode: 403
+        })
+      )
+    );
     visibility = "ticket";
     expect((await list()).items.map(item => item.messageId).sort()).toEqual([
       "old-allowed",
       "old-denied",
       "old-null",
-      "today"
+      "other-queue-null",
+      "other-queue-old-match",
+      "today",
+      "unassigned-ticket"
     ]);
+  });
+  it("keeps foreign same-contact tickets out of message history, cursors, quotes and replies", async () => {
+    rows = [
+      message("current", 301, { queueId: 402, quotedMsgId: "hidden-quote" }),
+      message("allowed", 300, { queueId: null }),
+      message("hidden-quote", 303, { queueId: null }),
+      message("hidden-reply", 303, { quotedMsgId: "current" }),
+      message("hidden-unassigned", 304)
+    ];
+    const listHistory = (nextId?: string) =>
+      ListMessagesService({ ...actor, ticketId: "301", nextId });
+    const history = await listHistory();
+    expect(history.messages.map(row => row.id).sort()).toEqual([
+      "allowed",
+      "current"
+    ]);
+    expect(history.messages.find(row => row.id === "current")).toMatchObject({
+      quotedMsg: null,
+      replies: []
+    });
+    await expect(listHistory("hidden-quote")).rejects.toMatchObject({
+      message: "ERR_MESSAGE_NOT_FOUND",
+      statusCode: 404
+    });
+
+    visibility = "ticket";
+    const companyHistory = await listHistory();
+    expect(companyHistory.messages.map(row => row.id).sort()).toEqual([
+      "allowed",
+      "current",
+      "hidden-quote",
+      "hidden-reply",
+      "hidden-unassigned"
+    ]);
+    expect(
+      companyHistory.messages.find(row => row.id === "current").quotedMsg.id
+    ).toBe("hidden-quote");
+  });
+  it("revalidates a historical attachment when its own ticket transfers during file access", async () => {
+    rows = [message("old-null", 300, { queueId: null })];
+    (openAttachmentFile as jest.Mock).mockImplementation(async () => {
+      tickets.find(ticket => ticket.id === 300).queueId = 402;
+      return { handle: { close }, size: 50, mimeType: "application/pdf" };
+    });
+    await expect(
+      openTicketAttachment("301", actor, "300", "old-null", {})
+    ).rejects.toMatchObject({
+      message: "ERR_ATTACHMENT_CONTEXT_CHANGED",
+      statusCode: 409
+    });
+    expect(close).toHaveBeenCalledTimes(1);
   });
   it("keeps admin within its office and denies attendants without a permitted sector", async () => {
     queues = [];

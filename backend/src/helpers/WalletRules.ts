@@ -34,7 +34,10 @@ export function resolveWalletAssignment(
   const queueId =
     input.ownerQueueIds.find(id => input.connectionQueueIds.includes(id)) ??
     null;
-  if (queueId === null && input.ownerQueueIds.length > 0) {
+  if (
+    queueId === null &&
+    (input.ownerQueueIds.length > 0 || input.connectionQueueIds.length > 0)
+  ) {
     return null;
   }
 
