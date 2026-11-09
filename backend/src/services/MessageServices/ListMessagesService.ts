@@ -43,12 +43,20 @@ const ListMessagesService = async ({
   }
 
   const limit = 100;
+  const restrictHistory =
+    !viewer.isAdmin &&
+    (await GetCompanySetting(companyId, "messageVisibility", "message")) ===
+      "message";
 
   // Zap Komunick: the whole history of the client, not only this ticket
   // (docs/PRD.md, RF-017). A client who writes again after a resolved
   // conversation gets a new ticket; its old messages stay visible here.
   const contactTickets = await Ticket.findAll({
-    where: { contactId: ticket.contactId, companyId },
+    where: {
+      contactId: ticket.contactId,
+      companyId,
+      ...(restrictHistory && { queueId: { [Op.in]: queues } })
+    },
     attributes: ["id"]
   });
   const ticketIds = Array.from(
@@ -68,13 +76,9 @@ const ListMessagesService = async ({
     }
   ];
 
-  if (
-    !viewer.isAdmin &&
-    (await GetCompanySetting(companyId, "messageVisibility", "message")) ===
-      "message"
-  ) {
-    // the queue privacy holds for the client's other tickets; inside this
-    // ticket everything shows, so a transfer keeps its context
+  if (restrictHistory) {
+    // Other tickets must still belong to an allowed queue. Their messages
+    // also retain their original queue restrictions.
     conditions.push({
       [Op.or]: [
         { ticketId: ticket.id },

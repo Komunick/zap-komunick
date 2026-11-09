@@ -38,7 +38,8 @@ import { logger } from "../../utils/logger";
 import FindOrCreateTicketService from "../TicketServices/FindOrCreateTicketService";
 import ShowWhatsAppService from "../WhatsappService/ShowWhatsAppService";
 import UpdateTicketService, {
-  UpdateTicketData
+  UpdateTicketData,
+  websocketUpdateTicket
 } from "../TicketServices/UpdateTicketService";
 import formatBody from "../../helpers/Mustache";
 import TicketTraking from "../../models/TicketTraking";
@@ -78,7 +79,10 @@ import saveMediaToFile from "../../helpers/saveMediaFile";
 import { _t } from "../TranslationServices/i18nService";
 import WhatsappLidMap from "../../models/WhatsappLidMap";
 import normalizePhone from "../../helpers/NormalizePhone";
-import { emitTicketContext } from "../SocketServices/TicketContextSocketService";
+import {
+  emitTicketContext,
+  revokeTicketContextRooms
+} from "../SocketServices/TicketContextSocketService";
 
 export interface ImessageUpsert {
   messages: proto.IWebMessageInfo[];
@@ -635,23 +639,45 @@ const verifyQuotedMessage = async (
 
   if (!quotedId) return null;
 
-  const quotedTicketId = `${quotedId}-${ticket.id}`;
-
-  // find message for any of quotedId and quotedTicketId
-  const dbQuotedMsg = await Message.findOne({
+  const originals = await Message.findAll({
     where: {
-      id: {
-        [Op.or]: [quotedId, quotedTicketId]
-      },
-      ticketId: ticket?.id
-    }
+      id: quotedId,
+      companyId: ticket.companyId
+    },
+    attributes: ["id", "ticketId"],
+    include: [
+      {
+        model: Ticket,
+        as: "ticket",
+        where: { companyId: ticket.companyId },
+        attributes: ["contactId", "whatsappId"],
+        required: true
+      }
+    ],
+    limit: 2
   });
 
-  if (!dbQuotedMsg) {
-    return storeQuotedMessage(quotedMessage, ticket, wbot);
+  if (originals.length) {
+    const [original] = originals;
+    // quotedMsgId alone cannot identify one of several matching rows.
+    if (
+      originals.length !== 1 ||
+      original.ticket.contactId !== ticket.contactId ||
+      original.ticket.whatsappId !== ticket.whatsappId
+    ) {
+      return null;
+    }
+    return original;
   }
 
-  return dbQuotedMsg;
+  const storedQuote = await Message.findOne({
+    where: {
+      id: `${quotedId}-${ticket.id}`,
+      ticketId: ticket.id,
+      companyId: ticket.companyId
+    }
+  });
+  return storedQuote ?? storeQuotedMessage(quotedMessage, ticket, wbot);
 };
 
 /**
@@ -1933,21 +1959,31 @@ const handleMessage = async (
       "protocolMessage"
     ].includes(msgType);
 
-    const { ticket, justCreated } = await FindOrCreateTicketService(
-      contact,
-      wbot.id!,
-      companyId,
-      {
+    const { ticket, justCreated, queueRepaired, startInboundQueue } =
+      await FindOrCreateTicketService(contact, wbot.id!, companyId, {
         groupContact,
         incrementUnread: !msg.key.fromMe,
         findOnly,
+        inboundQueueIds: msg.key.fromMe
+          ? undefined
+          : whatsapp.queues.map(queue => queue.id),
         queue:
           whatsapp.queues.find(queue => queue.id === queueId) ?? defaultQueue
-      }
-    );
+      });
 
     if (!ticket) {
       return;
+    }
+
+    if (queueRepaired) {
+      try {
+        await revokeTicketContextRooms(getIO(), ticket.id);
+      } catch {
+        logger.warn(
+          { ticketId: ticket.id },
+          "Could not revoke stale ticket rooms"
+        );
+      }
     }
 
     // voltar para o menu inicial
@@ -1963,6 +1999,7 @@ const handleMessage = async (
     }
 
     let newMessage: Message;
+    const deferMessagePublish = justCreated || queueRepaired;
 
     if (
       messageMedia ||
@@ -1971,7 +2008,7 @@ const handleMessage = async (
       newMessage = await verifyMediaMessage(msg, ticket, contact, {
         wbot,
         messageMedia,
-        skipWebsocket: justCreated
+        skipWebsocket: deferMessagePublish
       });
     } else if (
       msg.message?.editedMessage?.message?.protocolMessage?.editedMessage
@@ -2045,18 +2082,34 @@ const handleMessage = async (
       await verifyDeleteMessage(msg.message.protocolMessage, ticket);
     } else {
       newMessage = await verifyMessage(msg, ticket, contact, {
-        skipWebsocket: justCreated
+        skipWebsocket: deferMessagePublish
       });
     }
+
+    const publishInboundChange = async () => {
+      try {
+        if (queueRepaired) {
+          await ticket.reload();
+          await websocketUpdateTicket(ticket);
+        }
+        if (deferMessagePublish && newMessage) {
+          await newMessage.reload();
+          await websocketCreateMessage(newMessage);
+        }
+      } catch {
+        logger.warn(
+          { ticketId: ticket.id },
+          "Could not publish inbound update"
+        );
+      }
+    };
 
     if (isGroup || contact.disableBot || msg.key.fromMe) {
       if (ticket.chatbot) {
         await updateTicket(ticket, { chatbot: false });
         await ticket.reload();
       }
-      if (justCreated && newMessage) {
-        websocketCreateMessage(newMessage);
-      }
+      await publishInboundChange();
       return;
     }
 
@@ -2093,12 +2146,14 @@ const handleMessage = async (
                 companyId: ticket.companyId
               });
             }
+            await publishInboundChange();
             return;
           }
         }
 
         if (
           scheduleType === "queue" &&
+          !startInboundQueue &&
           ticket.queueId &&
           hasCurrentQueueRoute &&
           !isOpenOnline
@@ -2133,6 +2188,7 @@ const handleMessage = async (
                 companyId: ticket.companyId
               });
             }
+            await publishInboundChange();
             return;
           }
         }
@@ -2142,7 +2198,9 @@ const handleMessage = async (
       console.log(e);
     }
 
-    if (
+    if (startInboundQueue) {
+      await startQueue(wbot, ticket, whatsapp.queues[0], false);
+    } else if (
       !ticket.queueId &&
       !isGroup &&
       !ticket.userId &&
@@ -2151,13 +2209,9 @@ const handleMessage = async (
       await verifyQueue(wbot, msg, ticket, ticket.contact);
     }
 
-    if (justCreated && newMessage) {
-      await newMessage.reload();
-      websocketCreateMessage(newMessage);
-    }
+    const dontReadTheFirstQuestion = startInboundQueue || ticket.queue === null;
 
-    const dontReadTheFirstQuestion = ticket.queue === null;
-
+    await publishInboundChange();
     await ticket.reload();
 
     if (

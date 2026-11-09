@@ -56,7 +56,10 @@ const updateChannel = Whatsapp.update as jest.Mock;
 const start = StartWhatsAppSession as jest.Mock;
 
 beforeEach(() => {
-  (User.findByPk as jest.Mock).mockResolvedValue({ profile: "admin" });
+  (User.findByPk as jest.Mock).mockResolvedValue({
+    profile: "admin",
+    companyId: channel.companyId
+  });
   findChannel.mockResolvedValue(null);
   updateChannel.mockReset();
   start.mockReset();

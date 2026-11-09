@@ -13,6 +13,8 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- Quando um WhatsApp atende uma única fila, a primeira mensagem recebida já fica registrada nela. Se o atendimento
+  existente estiver em uma fila incompatível, a entrada corrige o vínculo antes de registrar a nova mensagem.
 - Agendamentos usam o WhatsApp da fila selecionada ou o canal do atendimento de origem. Se o canal
   não estiver disponível ou o agendamento antigo tiver origem ambígua, o envio fica com erro.
 - Mensagens automáticas da fila só saem por um WhatsApp vinculado a ela. O sistema recusa
@@ -24,6 +26,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   também liberam essas referências, preservando a galeria dos atendimentos e os downloads existentes.
 
 ### Segurança
+
+- Na visibilidade por fila, o histórico de outro atendimento exige acesso à fila desse atendimento, inclusive
+  para mensagens antigas sem fila, anexos e citações. Criar ou excluir usuários exige o perfil administrativo atual.
 
 - A geração de um novo QR Code fica restrita a administradores da empresa dona do canal desconectado.
 

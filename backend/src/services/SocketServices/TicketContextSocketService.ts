@@ -5,6 +5,10 @@ import AuthorizeTicketContextService, {
 } from "../TicketServices/AuthorizeTicketContextService";
 import AuthorizeMessageContextService from "../MessageServices/AuthorizeMessageContextService";
 import { logger } from "../../utils/logger";
+import {
+  MessageQuotePayload,
+  sanitizeMessageQuotePayload
+} from "../../helpers/MessageQuotePrivacy";
 
 interface ContextSocket {
   data: {
@@ -99,14 +103,21 @@ export async function refreshUserContextSockets(
   );
 }
 
+interface MessageReference extends MessageQuotePayload {
+  id: string;
+  ticketId?: number;
+}
+
+interface EventMessage extends MessageQuotePayload {
+  companyId?: number;
+  ticketId?: number;
+  quotedMsg?: MessageReference | null;
+  replies?: MessageReference[];
+  toJSON?: () => EventMessage;
+}
+
 interface EventPayload {
-  message?: {
-    companyId?: number;
-    ticketId?: number;
-    quotedMsg?: { id: string } | null;
-    replies?: { id: string }[];
-    toJSON?: () => EventPayload["message"];
-  };
+  message?: EventMessage;
   [key: string]: unknown;
 }
 
@@ -119,31 +130,33 @@ async function visiblePayload(
   const message = payload.message.toJSON
     ? payload.message.toJSON()
     : { ...payload.message };
-  if (message.quotedMsg) {
+  const canReadReference = async (reference: MessageReference) => {
+    const sourceId = reference.ticketId;
+    if (!Number.isSafeInteger(sourceId) || sourceId <= 0) return false;
     try {
       await AuthorizeMessageContextService(
-        message.quotedMsg.id,
+        reference.id,
         actor,
-        ticketId
+        ticketId,
+        sourceId
       );
+      return true;
     } catch {
-      message.quotedMsg = null;
+      return false;
     }
+  };
+  if (message.quotedMsg && !(await canReadReference(message.quotedMsg))) {
+    message.quotedMsg = null;
   }
   if (message.replies) {
     const allowed = await Promise.all(
-      message.replies.map(async reply => {
-        try {
-          await AuthorizeMessageContextService(reply.id, actor, ticketId);
-          return reply;
-        } catch {
-          return null;
-        }
-      })
+      message.replies.map(async reply =>
+        (await canReadReference(reply)) ? reply : null
+      )
     );
     message.replies = allowed.filter(reply => reply !== null);
   }
-  return { ...payload, message };
+  return { ...payload, message: sanitizeMessageQuotePayload(message) };
 }
 
 // Zap Komunick: keep the existing candidate rooms, but authorize actual current

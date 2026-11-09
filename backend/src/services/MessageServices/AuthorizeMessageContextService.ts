@@ -33,13 +33,15 @@ const AuthorizeMessageContextService = async (
         companyId: actor.companyId,
         contactId: ticket.contactId
       },
-      attributes: ["id"]
+      attributes: ["id", "queueId"]
     });
     if (!sourceTicket) throw new AppError("ERR_MESSAGE_NOT_FOUND", 404);
     if (
       !viewer.isAdmin &&
-      message.queueId !== null &&
-      !viewer.queueIds.includes(message.queueId) &&
+      (sourceTicket.queueId === null ||
+        !viewer.queueIds.includes(sourceTicket.queueId) ||
+        (message.queueId !== null &&
+          !viewer.queueIds.includes(message.queueId))) &&
       (await GetCompanySetting(
         actor.companyId,
         "messageVisibility",
