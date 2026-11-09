@@ -1,17 +1,14 @@
-import path from "path";
-import * as Sentry from "@sentry/node";
 import Queue, { Job } from "bull";
 import moment from "moment";
 import { Op, WhereOptions } from "sequelize";
 import { CronJob } from "cron";
 import { subDays, subMinutes } from "date-fns";
 import { MessageData, SendMessage } from "./helpers/SendMessage";
+import IsWhatsAppQueueLinked from "./helpers/IsWhatsAppQueueLinked";
 import Whatsapp from "./models/Whatsapp";
 import { logger } from "./utils/logger";
 import Schedule from "./models/Schedule";
 import Contact from "./models/Contact";
-import GetDefaultWhatsApp from "./helpers/GetDefaultWhatsApp";
-import GetWhatsappWbot from "./helpers/GetWhatsappWbot";
 import User from "./models/User";
 import Company from "./models/Company";
 import Plan from "./models/Plan";
@@ -20,17 +17,17 @@ import { GetCompanySetting } from "./helpers/CheckSettings";
 import { getWbot } from "./libs/wbot";
 import Ticket from "./models/Ticket";
 import QueueModel from "./models/Queue";
-import UpdateTicketService from "./services/TicketServices/UpdateTicketService";
-import { handleMessage } from "./services/WbotServices/wbotMessageListener";
+import UpdateTicketService, {
+  UpdateTicketData
+} from "./services/TicketServices/UpdateTicketService";
 import Invoices from "./models/Invoices";
-import formatBody, { mustacheFormat } from "./helpers/Mustache";
+import formatBody from "./helpers/Mustache";
 import Setting from "./models/Setting";
 import { parseToMilliseconds } from "./helpers/parseToMilliseconds";
 import { startCampaignQueues } from "./queues/campaign";
 import { clearRepeatableJobsFromQueues } from "./queues/repeatableJobs";
 import OutOfTicketMessage from "./models/OutOfTicketMessages";
-import CreateNextOccurrenceService from "./services/ScheduleServices/CreateNextOccurrenceService";
-import { getPublicPath } from "./helpers/GetPublicPath";
+import SendScheduledMessageService from "./services/ScheduleServices/SendScheduledMessageService";
 import { getJidOf } from "./services/WbotServices/getJidOf";
 import { _t } from "./services/TranslationServices/i18nService";
 import { makeRandomId } from "./helpers/MakeRandomId";
@@ -87,8 +84,7 @@ async function handleVerifySchedules() {
           [Op.gte]: moment().format("YYYY-MM-DD HH:mm:ss"),
           [Op.lte]: moment().add("30", "seconds").format("YYYY-MM-DD HH:mm:ss")
         }
-      },
-      include: [{ model: Contact, as: "contact" }]
+      }
     });
     if (count > 0) {
       schedules.map(async schedule => {
@@ -97,10 +93,13 @@ async function handleVerifySchedules() {
         });
         sendScheduledMessages.add(
           "SendMessage",
-          { schedule },
+          { scheduleId: schedule.id },
           { delay: 40000, removeOnComplete: true, removeOnFail: 100 }
         );
-        logger.info(`Delivery scheduled for: ${schedule.contact.name}`);
+        logger.info(
+          { scheduleId: schedule.id },
+          "Message scheduled for delivery"
+        );
       });
     }
   } catch (e) {
@@ -124,73 +123,19 @@ async function handleExpireOutOfTicketMessages() {
 
 async function handleSendScheduledMessage(job) {
   handleExpireOutOfTicketMessages();
-  const {
-    data: { schedule }
-  } = job;
-  let scheduleRecord: Schedule | null = null;
-
+  // Jobs already waiting in Redis may still have the old payload.
+  const scheduleId = job.data.scheduleId ?? job.data.schedule?.id;
   try {
-    scheduleRecord = await Schedule.findByPk(schedule.id, {
-      include: [
-        { model: Contact, as: "contact" },
-        { model: User, as: "user" }
-      ]
-    });
-  } catch (e) {
-    Sentry.captureException(e);
-    logger.info(`Erro ao tentar consultar agendamento: ${schedule.id}`);
-  }
-
-  try {
-    const whatsapp = await GetDefaultWhatsApp(schedule.companyId);
-
-    const message = await SendMessage(whatsapp, {
-      number: schedule.contact.number,
-      body: mustacheFormat({
-        body: schedule.body,
-        contact: schedule.contact,
-        currentUser: schedule.user
-      }),
-      // Zap Komunick: attachment of the schedule
-      ...(scheduleRecord?.mediaPath
-        ? {
-            mediaPath: path.resolve(getPublicPath(), scheduleRecord.mediaPath)
-          }
-        : {})
-    });
-
-    if (schedule.saveMessage) {
-      handleMessage(
-        message,
-        await GetWhatsappWbot(whatsapp),
-        schedule.companyId
-      );
+    if (await SendScheduledMessageService(scheduleId)) {
+      logger.info({ scheduleId }, "Scheduled message sent");
+      sendScheduledMessages.clean(15000, "completed");
     }
-
-    await scheduleRecord?.update({
-      sentAt: new Date(),
-      status: "ENVIADA"
-    });
-
-    logger.info(`Scheduled message sent to: ${schedule.contact.name}`);
-    sendScheduledMessages.clean(15000, "completed");
   } catch (e) {
-    await scheduleRecord?.update({
-      status: "ERRO"
-    });
     logger.error(
-      { message: e?.message },
+      { message: e?.message, scheduleId },
       "SendScheduledMessage -> SendMessage: error"
     );
     throw e;
-  } finally {
-    // a failed send keeps its error status, but the series goes on
-    await CreateNextOccurrenceService(scheduleRecord).catch(error => {
-      logger.error(
-        { message: error?.message, scheduleId: scheduleRecord?.id },
-        "SendScheduledMessage -> CreateNextOccurrence: error"
-      );
-    });
   }
 }
 
@@ -217,7 +162,21 @@ async function setRatingExpired(tracking: TicketTraking, threshold: Date) {
     return;
   }
 
-  const wbot = getWbot(tracking.whatsapp.id);
+  const { ticket, whatsapp, companyId } = tracking;
+  if (
+    !ticket ||
+    !whatsapp ||
+    ticket.companyId !== companyId ||
+    whatsapp.companyId !== companyId ||
+    ticket.whatsappId !== whatsapp.id ||
+    whatsapp.channel !== "whatsapp" ||
+    whatsapp.status !== "CONNECTED" ||
+    (ticket.queueId &&
+      !(await IsWhatsAppQueueLinked(companyId, whatsapp.id, ticket.queueId)))
+  ) {
+    return;
+  }
+  const wbot = getWbot(whatsapp.id);
 
   const complationMessage =
     tracking.whatsapp.complationMessage.trim() ||
@@ -278,6 +237,29 @@ async function handleRatingsTimeout() {
     if (tracking.ratingAt < ratingThresholds[tracking.companyId]) {
       await setRatingExpired(tracking, ratingThresholds[tracking.companyId]);
     }
+  }
+}
+
+async function updateExpiredTicket(
+  ticket: Ticket,
+  ticketData: UpdateTicketData
+) {
+  try {
+    await UpdateTicketService({
+      ticketId: ticket.id,
+      ticketData,
+      companyId: ticket.companyId
+    });
+  } catch (error) {
+    if (error?.message !== "ERR_QUEUE_NOT_LINKED_TO_WHATSAPP") throw error;
+    logger.warn(
+      {
+        ticketId: ticket.id,
+        queueId: ticketData.queueId,
+        whatsappId: ticket.whatsappId
+      },
+      "Timeout destination queue does not serve the ticket's WhatsApp"
+    );
   }
 }
 
@@ -355,11 +337,7 @@ async function handleNoQueueTimeout(
     );
     const userId = status === "pending" ? null : ticket.userId;
 
-    await UpdateTicketService({
-      ticketId: ticket.id,
-      ticketData: { status, userId, queueId },
-      companyId: company.id
-    });
+    await updateExpiredTicket(ticket, { status, userId, queueId });
   }
 
   logger.trace(
@@ -434,7 +412,7 @@ async function handleChatbotTicketTimeout(
     "handleChatbotTicketTimeout -> tickets"
   );
 
-  const ticketData: any = {
+  const ticketData: UpdateTicketData = {
     status: action ? "pending" : "closed"
   };
 
@@ -449,11 +427,7 @@ async function handleChatbotTicketTimeout(
       "handleChatbotTicketTimeout -> UpdateTicketService"
     );
 
-    await UpdateTicketService({
-      ticketId: ticket.id,
-      ticketData,
-      companyId: company.id
-    });
+    await updateExpiredTicket(ticket, ticketData);
   }
 
   logger.trace(
@@ -532,11 +506,7 @@ async function handlePendingTicketTimeout(
       ? { status: "pending", queueId: action, userId: null }
       : { status: "closed" };
 
-    await UpdateTicketService({
-      ticketId: ticket.id,
-      ticketData,
-      companyId: company.id
-    });
+    await updateExpiredTicket(ticket, ticketData);
   }
 
   logger.trace(
@@ -662,7 +632,8 @@ async function handleTicketTimeouts() {
 
 async function handleEveryMinute(job: Job) {
   const now = Date.now();
-  const delay = now - ((job.opts as any).prevMillis || now);
+  const { prevMillis } = job.opts as Job["opts"] & { prevMillis?: number };
+  const delay = now - (prevMillis || now);
 
   // only start jobs that are up to 10s after its scheduled time
   if (delay > 10 * 1000) {

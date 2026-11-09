@@ -40,6 +40,8 @@ const CreateNextOccurrenceService = async (
     sendAt: finalSendAt,
     contactId: schedule.contactId,
     ticketId: schedule.ticketId,
+    queueId: schedule.queueId,
+    routingMode: schedule.routingMode,
     companyId: schedule.companyId,
     userId: schedule.userId,
     saveMessage: schedule.saveMessage,

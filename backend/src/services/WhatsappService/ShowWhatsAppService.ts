@@ -1,4 +1,4 @@
-import { FindOptions } from "sequelize/types";
+import { FindOptions } from "sequelize";
 import { Sequelize } from "sequelize-typescript";
 import Whatsapp from "../../models/Whatsapp";
 import Queue from "../../models/Queue";
@@ -7,6 +7,7 @@ import Company from "../../models/Company";
 
 type ShowWhatsAppOptions = {
   hideSession?: boolean;
+  companyId?: number;
 };
 
 const ShowWhatsAppService = async (
@@ -18,6 +19,9 @@ const ShowWhatsAppService = async (
       {
         model: Queue,
         as: "queues",
+        ...(options.companyId === undefined
+          ? {}
+          : { where: { companyId: options.companyId }, required: false }),
         attributes: [
           "id",
           "name",
@@ -50,6 +54,13 @@ const ShowWhatsAppService = async (
 
   if (options.hideSession) {
     findOptions.attributes = { exclude: ["session"] };
+  }
+
+  if (options.companyId !== undefined) {
+    return Whatsapp.findOne({
+      ...findOptions,
+      where: { id, companyId: options.companyId }
+    });
   }
 
   return Whatsapp.findByPk(id, findOptions);

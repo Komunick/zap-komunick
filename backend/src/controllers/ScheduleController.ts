@@ -42,6 +42,8 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     body,
     sendAt,
     contactId,
+    ticketId,
+    queueId,
     saveMessage,
     recurrence,
     recurrenceEndAt,
@@ -59,8 +61,11 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     const schedules = await CreateSchedulesService({
       body,
       sendAt,
+      contactId: ticketId ? contactId : undefined,
       contactIds: Array.isArray(contactIds) ? contactIds : [],
       tagId,
+      ticketId,
+      queueId,
       companyId,
       userId,
       saveMessage: !!saveMessage,
@@ -86,6 +91,8 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     body,
     sendAt,
     contactId,
+    ticketId,
+    queueId,
     companyId,
     userId,
     saveMessage: !!saveMessage,
@@ -132,7 +139,8 @@ export const update = async (
   const schedule = await UpdateService({
     scheduleData,
     id: scheduleId,
-    companyId
+    companyId,
+    actorId: req.user.id
   });
 
   const io = getIO();

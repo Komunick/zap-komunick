@@ -41,11 +41,28 @@ const findWalletAssignment = async (
   const [owner, whatsapp] = await Promise.all([
     User.findByPk(contact.walletUserId, {
       attributes: ["id", "companyId"],
-      include: [{ model: Queue, as: "queues", attributes: ["id"] }]
+      include: [
+        {
+          model: Queue,
+          as: "queues",
+          attributes: ["id"],
+          where: { companyId },
+          required: false
+        }
+      ]
     }),
-    Whatsapp.findByPk(whatsappId, {
+    Whatsapp.findOne({
+      where: { id: whatsappId, companyId, channel: "whatsapp" },
       attributes: ["id"],
-      include: [{ model: Queue, as: "queues", attributes: ["id"] }]
+      include: [
+        {
+          model: Queue,
+          as: "queues",
+          attributes: ["id"],
+          where: { companyId },
+          required: false
+        }
+      ]
     })
   ]);
 
@@ -181,8 +198,16 @@ const internalFindOrCreateTicketService = async (
     let queueId = queue?.id || null;
 
     if (groupContact) {
-      const whatsapp = await Whatsapp.findByPk(whatsappId, {
-        include: ["queues"]
+      const whatsapp = await Whatsapp.findOne({
+        where: { id: whatsappId, companyId },
+        include: [
+          {
+            model: Queue,
+            as: "queues",
+            where: { companyId },
+            required: false
+          }
+        ]
       });
 
       if (whatsapp?.queues.length === 1) {
