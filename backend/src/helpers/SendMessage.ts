@@ -96,11 +96,18 @@ export const SendMessage = async (
     }
 
     if (messageData.saveOnTicket) {
+      const { saveOnTicket } = messageData;
+      const queueId =
+        typeof saveOnTicket === "number" &&
+        Number.isSafeInteger(saveOnTicket) &&
+        saveOnTicket > 0
+          ? saveOnTicket
+          : undefined;
       handleMessage(
         message,
         await GetWhatsappWbot(whatsapp),
         whatsapp.companyId,
-        Number(messageData.saveOnTicket) || null
+        queueId
       );
     } else {
       wbot.cacheMessage(message);

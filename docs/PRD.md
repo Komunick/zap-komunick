@@ -64,6 +64,10 @@ Se houver mais de um, o sistema prioriza o canal padrão entre os elegíveis e d
 Sem canal elegível, o sistema avisa e não abre o atendimento. Quando a abertura sem fila é permitida,
 o sistema continua usando a escolha padrão da empresa.
 
+Em um atendimento de WhatsApp, transferências para outra fila exigem que a fila de destino também
+atenda pelo número da conversa. Saudações, avisos de horário e opções do chatbot só usam textos de
+uma fila atendida por esse canal.
+
 ## 3. Funcionalidades e critérios de aceite
 
 ### RF-001 — Código-fonte acessível (AGPL)
@@ -129,7 +133,8 @@ direto para ele. Inspiração: "Carteira de clientes" do ZapContábil.
 - Opção da empresa "Atendimento de contato da carteira": "Seguir o fluxo normal" (padrão) ou "Enviar direto para o
   responsável".
 - Ligada, o atendimento novo ou reaberto do contato fica aguardando com o responsável atribuído, sem passar pelo
-  chatbot, na primeira fila do responsável atendida pela conexão (ou na primeira fila dele).
+  chatbot, na primeira fila do responsável atendida pela conexão. Se o responsável tem filas e nenhuma atende pelo
+  canal da conversa, vale o roteamento normal da entrada.
 - A tela de contatos mostra a coluna "Carteira" e o filtro de carteira descrito no RF-019, incluindo "Minha carteira".
 
 **Cenário de sucesso:**
@@ -207,6 +212,7 @@ opcional. Inspiração: lembretes recorrentes do ZapContábil.
   atrasados.
 - A data final vale até o fim daquele dia e não pode ser antes do primeiro envio. Editar a data ou a repetição
   recomeça a série a partir do novo envio; editar só o texto mantém a série.
+- A próxima ocorrência conserva o vínculo com a fila ou atendimento escolhido no agendamento.
 
 **Cenário de sucesso:**
 
@@ -262,6 +268,11 @@ anexo e a opção de enviar só em dia útil. Inspiração: os agendamentos do Z
 - No novo agendamento, os contatos escolhidos e os da etiqueta somam, sem repetir, até 500 por vez; só contatos da
   empresa. Cada contato ganha o seu agendamento, que depois se edita e exclui um a um. A edição continua com um contato
   por agendamento, como no Ticketz.
+- Na tela Agendamentos, a fila escolhida define os canais elegíveis para o envio. Quando o agendamento é aberto
+  dentro de uma conversa, ele fica vinculado ao contato, à fila e ao canal desse atendimento.
+- O envio fica com erro se o vínculo exigido for removido, o atendimento mudar para outra fila ou o canal
+  necessário estiver indisponível. Agendamentos antigos sem vínculo só saem se houver um único WhatsApp
+  cadastrado na empresa e ele estiver conectado.
 - Anexo: um arquivo por agendamento, enviado uma vez e guardado na pasta da empresa; vai junto com a mensagem para
   cada contato. O servidor só aceita anexo que esteja na pasta da própria empresa.
 - "Enviar só em dia útil": se a data cair em sábado, domingo ou feriado, o envio passa para o próximo dia útil, no mesmo

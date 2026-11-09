@@ -606,6 +606,12 @@ const pt = {
   },
   scheduleExtras: {
     contacts: "Contatos",
+    queueHelper: "Selecione a fila que deve enviar a mensagem.",
+    queueUnavailable: "Fila indisponível",
+    noQueue: "Sem fila",
+    ticketQueue: "Fila do atendimento",
+    ticketRoute: "A fila e o contato vêm do atendimento.",
+    loadFailed: "Não foi possível carregar o formulário de agendamento.",
     tag: "Ou todos os contatos de uma etiqueta",
     noTag: "Nenhuma etiqueta",
     recipientsHelper:
@@ -624,6 +630,13 @@ const pt = {
   backendErrors: {
     ERR_NO_CONNECTED_WHATSAPP_FOR_QUEUE:
       "A fila selecionada não tem um canal de WhatsApp conectado.",
+    ERR_QUEUE_NOT_LINKED_TO_WHATSAPP:
+      "O canal de WhatsApp não está vinculado à fila selecionada.",
+    ERR_SCHEDULE_QUEUE_REQUIRED: "Selecione uma fila para agendar a mensagem.",
+    ERR_SCHEDULE_TICKET_CONTEXT:
+      "Não foi possível confirmar o contato ou a fila deste atendimento.",
+    ERR_SCHEDULE_CHANNEL_UNAVAILABLE:
+      "O canal de WhatsApp deste agendamento está indisponível.",
     ERR_CHAT_MEDIA_STORAGE_UNSAFE:
       "Os anexos estão temporariamente indisponíveis. Tente novamente.",
     ERR_CHAT_MEDIA_UNAVAILABLE:
@@ -1264,6 +1277,12 @@ const en = {
   },
   scheduleExtras: {
     contacts: "Contacts",
+    queueHelper: "Choose the queue that should send the message.",
+    queueUnavailable: "Queue unavailable",
+    noQueue: "No queue",
+    ticketQueue: "Ticket queue",
+    ticketRoute: "The queue and contact come from the ticket.",
+    loadFailed: "The scheduling form could not be loaded.",
     tag: "Or every contact of a tag",
     noTag: "No tag",
     recipientsHelper:
@@ -1282,6 +1301,13 @@ const en = {
   backendErrors: {
     ERR_NO_CONNECTED_WHATSAPP_FOR_QUEUE:
       "The selected queue has no connected WhatsApp channel.",
+    ERR_QUEUE_NOT_LINKED_TO_WHATSAPP:
+      "The WhatsApp channel is not linked to the selected queue.",
+    ERR_SCHEDULE_QUEUE_REQUIRED: "Choose a queue to schedule the message.",
+    ERR_SCHEDULE_TICKET_CONTEXT:
+      "The contact or queue for this ticket could not be verified.",
+    ERR_SCHEDULE_CHANNEL_UNAVAILABLE:
+      "The WhatsApp channel for this scheduled message is unavailable.",
     ERR_CHAT_MEDIA_STORAGE_UNSAFE:
       "Attachments are temporarily unavailable. Please try again.",
     ERR_CHAT_MEDIA_UNAVAILABLE:
@@ -1924,6 +1950,12 @@ const es = {
   },
   scheduleExtras: {
     contacts: "Contactos",
+    queueHelper: "Selecciona la cola que debe enviar el mensaje.",
+    queueUnavailable: "Cola no disponible",
+    noQueue: "Sin cola",
+    ticketQueue: "Cola del ticket",
+    ticketRoute: "La cola y el contacto se toman del ticket.",
+    loadFailed: "No se pudo cargar el formulario de programación.",
     tag: "O todos los contactos de una etiqueta",
     noTag: "Ninguna etiqueta",
     recipientsHelper:
@@ -1942,6 +1974,14 @@ const es = {
   backendErrors: {
     ERR_NO_CONNECTED_WHATSAPP_FOR_QUEUE:
       "La cola seleccionada no tiene un canal de WhatsApp conectado.",
+    ERR_QUEUE_NOT_LINKED_TO_WHATSAPP:
+      "El canal de WhatsApp no está vinculado a la cola seleccionada.",
+    ERR_SCHEDULE_QUEUE_REQUIRED:
+      "Selecciona una cola para programar el mensaje.",
+    ERR_SCHEDULE_TICKET_CONTEXT:
+      "No se pudo confirmar el contacto o la cola de este ticket.",
+    ERR_SCHEDULE_CHANNEL_UNAVAILABLE:
+      "El canal de WhatsApp de este mensaje programado no está disponible.",
     ERR_CHAT_MEDIA_STORAGE_UNSAFE:
       "Los adjuntos no están disponibles temporalmente. Inténtalo de nuevo.",
     ERR_CHAT_MEDIA_UNAVAILABLE:

@@ -13,6 +13,10 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- Agendamentos usam o WhatsApp da fila selecionada ou o canal do atendimento de origem. Se o canal
+  não estiver disponível ou o agendamento antigo tiver origem ambígua, o envio fica com erro.
+- Mensagens automáticas da fila só saem por um WhatsApp vinculado a ela. O sistema recusa
+  transferências para filas que não atendem pelo número da conversa.
 - Em Novo atendimento, a fila escolhida define o WhatsApp de envio. Se ela não tiver um canal conectado,
   o sistema avisa e bloqueia a abertura.
 - A tela de Conexões acompanha o QR Code do WhatsApp, avisa quando ele expira e permite gerar outro na mesma janela.

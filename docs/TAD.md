@@ -54,9 +54,13 @@ do upstream para facilitar a mesclagem de novas versões.
   do DTO também são limitadas à empresa. Ver [correções de integração](specs/correcoes-integracao-pr29.md).
 - Horário de acesso: `AuthUserService` (login) e `RefreshTokenService` (renovação) recusam com
   `ERR_OUT_OF_ACCESS_HOURS` quando `canAccessNow` é falso; sessões de impersonação não são checadas.
-- Recorrência: `queues.ts` (`handleSendScheduledMessage`) chama `CreateNextOccurrenceService` no `finally`, após o envio
-  ou a falha. A próxima data vem de `nextOccurrence(recurrenceAnchorAt, recurrence, max(agora, sendAt), recurrenceEndAt)`
-  e, com `businessDaysOnly`, passa por `nextBusinessDay`.
+- Recorrência: `SendScheduledMessageService` chama `CreateNextOccurrenceService` após o envio ou a falha. A próxima
+  data vem de `nextOccurrence(recurrenceAnchorAt, recurrence, max(agora, sendAt), recurrenceEndAt)` e, com
+  `businessDaysOnly`, passa por `nextBusinessDay`. A ocorrência copia os campos de roteamento.
+- Roteamento agendado: o job carrega a ocorrência atual pelo ID. `Schedules.queueId` identifica a fila escolhida
+  e `routingMode` conserva a exigência de fila ou atendimento mesmo após a remoção de um vínculo. Antes do
+  envio, o serviço confere a empresa, o contato e o canal conectado. `GetQueueWhatsApp` aplica a mesma seleção
+  de canais do Novo atendimento e restringe ao WhatsApp da conversa quando há `ticketId`.
 - Pausa: `paused` é um status novo de `Tickets.status`. `UpdateTicketService` recusa com `checkStatusTransition` a pausa
   de quem não está `open`. As buscas de "atendimento ativo do contato" (`FindOrCreateTicketService`,
   `FindOrCreateTicketServiceMeta`, `CheckContactOpenTickets`, `MergeContactsService`, `WhatsAppController` e o Kanban)

@@ -28,7 +28,7 @@ import {
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import moment from "moment";
 import { AuthContext } from "../../context/Auth/AuthContext";
-import { isArray, capitalize } from "lodash";
+import { capitalize } from "lodash";
 import { timeZonesNames } from "@vvo/tzdb";
 import {
   ScheduleAttachment,
@@ -82,114 +82,143 @@ const ScheduleSchema = Yup.object().shape({
   saveMessage: Yup.bool()
 });
 
+const createInitialSchedule = () => ({
+  body: "",
+  contactId: "",
+  ticketId: null,
+  queueId: "",
+  sendAt: moment().add(1, "hour").format("YYYY-MM-DDTHH:mm"),
+  sentAt: "",
+  saveMessage: false,
+  recurrence: "none",
+  recurrenceEndAt: "",
+  contactIds: [],
+  tagId: "",
+  mediaPath: null,
+  mediaName: null,
+  businessDaysOnly: false
+});
+
 const ScheduleModal = ({
   open,
   onClose,
   scheduleId,
   contactId,
+  contactName,
+  ticketId,
+  ticketQueueId,
+  ticketQueueName,
   cleanContact,
   reload
 }) => {
   const classes = useStyles();
   const history = useHistory();
   const { user } = useContext(AuthContext);
-
-  const initialState = {
-    body: "",
-    contactId: "",
-    sendAt: moment().add(1, "hour").format("YYYY-MM-DDTHH:mm"),
-    sentAt: "",
-    saveMessage: false,
-    recurrence: "none",
-    recurrenceEndAt: "",
-    contactIds: [],
-    tagId: "",
-    mediaPath: null,
-    mediaName: null,
-    businessDaysOnly: false
-  };
-
-  const initialContact = {
-    id: "",
-    name: ""
-  };
-
-  const [schedule, setSchedule] = useState(initialState);
-  const [currentContact, setCurrentContact] = useState(initialContact);
-  const [contacts, setContacts] = useState([initialContact]);
+  const { companyId, profile, queues: userQueues } = user;
+  const [schedule, setSchedule] = useState(null);
+  const [contacts, setContacts] = useState([]);
+  const [queues, setQueues] = useState([]);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [timezone, setTimezone] = useState(
     Intl.DateTimeFormat().resolvedOptions().timeZone
   );
 
   useEffect(() => {
-    if (contactId && contacts.length) {
-      const contact = contacts.find(c => c.id === contactId);
-      if (contact) {
-        setCurrentContact(contact);
-      }
-    }
-  }, [contactId, contacts]);
+    if (!open) return;
 
-  useEffect(() => {
-    const { companyId } = user;
-    if (open) {
+    let active = true;
+    setSchedule(null);
+    setLoadFailed(false);
+
+    const load = async () => {
       try {
-        (async () => {
-          const { data: contactList } = await api.get("/contacts/list", {
-            params: { companyId: companyId }
-          });
-          let customList = contactList.map(c => ({ id: c.id, name: c.name }));
-          if (isArray(customList)) {
-            setContacts([{ id: "", name: "" }, ...customList]);
-          }
-          if (contactId) {
-            setSchedule(prevState => {
-              return { ...prevState, contactId, contactIds: [contactId] };
-            });
-          }
+        const { data } = scheduleId
+          ? await api.get(`/schedules/${scheduleId}`)
+          : {};
+        const linkedTicketId = data?.ticketId || ticketId;
+        const [{ data: contactList }, { data: queueList }] = await Promise.all([
+          linkedTicketId
+            ? { data: [] }
+            : api.get("/contacts/list", { params: { companyId } }),
+          !ticketId && profile === "admin"
+            ? api.get("/queue")
+            : { data: userQueues || [] }
+        ]);
+        if (!active) return;
 
-          if (!scheduleId) return;
-
-          const { data } = await api.get(`/schedules/${scheduleId}`);
-          setSchedule(prevState => {
-            return {
-              ...prevState,
-              ...data,
-              sendAt: moment(data.sendAt).format("YYYY-MM-DDTHH:mm"),
-              recurrence: data.recurrence || "none",
-              recurrenceEndAt: data.recurrenceEndAt
-                ? moment(data.recurrenceEndAt).format("YYYY-MM-DD")
-                : ""
-            };
-          });
-          setCurrentContact(data.contact);
-        })();
+        const defaultQueueId =
+          !data && queueList.length === 1 ? queueList[0].id : "";
+        const contactOptions = contactList.map(({ id, name }) => ({
+          id,
+          name
+        }));
+        if (
+          !linkedTicketId &&
+          data?.contact &&
+          !contactOptions.some(({ id }) => id === data.contact.id)
+        ) {
+          contactOptions.push(data.contact);
+        }
+        setContacts(contactOptions);
+        setQueues(queueList);
+        setSchedule({
+          ...createInitialSchedule(),
+          ...data,
+          contactId: data?.contactId ?? (contactId || ""),
+          contactIds:
+            !scheduleId && !linkedTicketId && contactId ? [contactId] : [],
+          ticketId: linkedTicketId || null,
+          queueId: linkedTicketId
+            ? ((data ? data.queueId : ticketQueueId) ?? "")
+            : (data?.queueId ?? defaultQueueId),
+          ...(data && {
+            sendAt: moment(data.sendAt).format("YYYY-MM-DDTHH:mm"),
+            recurrence: data.recurrence || "none",
+            recurrenceEndAt: data.recurrenceEndAt
+              ? moment(data.recurrenceEndAt).format("YYYY-MM-DD")
+              : ""
+          })
+        });
       } catch (err) {
-        toastError(err);
+        if (active) {
+          toastError(err);
+          setLoadFailed(true);
+        }
       }
-    }
-  }, [scheduleId, contactId, open, user]);
+    };
+
+    load();
+    return () => {
+      active = false;
+    };
+  }, [
+    scheduleId,
+    contactId,
+    open,
+    companyId,
+    profile,
+    userQueues,
+    ticketId,
+    ticketQueueId
+  ]);
 
   const handleClose = () => {
     onClose();
-    setSchedule(initialState);
+    setSchedule(null);
     setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone);
   };
+
+  const ticketLinked =
+    Boolean(schedule?.ticketId) ||
+    ["ticket", "ticket_queue"].includes(schedule?.routingMode);
+  const queueRequired = schedule?.routingMode === "queue" || queues.length > 0;
+  const findQueue = id => queues.find(queue => queue.id === id);
 
   const handleSaveSchedule = async values => {
     const [datePart, timePart] = values.sendAt.split("T");
     const [year, month, day] = datePart.split("-");
     const [hour, minute] = timePart.split(":");
     const second = "00";
-
-    const naiveDate = new Date(
-      Number(year),
-      Number(month) - 1,
-      Number(day),
-      Number(hour),
-      Number(minute),
-      0
-    );
 
     const formatter = new Intl.DateTimeFormat("en-US", {
       timeZone: timezone,
@@ -251,17 +280,26 @@ const ScheduleModal = ({
         ? `${values.recurrenceEndAt}T23:59:59${offsetSign}${offsetHours}:${offsetMins}`
         : null;
 
-    const { contactIds, tagId, ...rest } = values;
+    const { contactId: recipientId, contactIds, tagId, queueId } = values;
+    const recipients = ticketLinked
+      ? { contactId: recipientId, ticketId: values.ticketId }
+      : scheduleId
+        ? { contactId: recipientId }
+        : { contactIds, tagId: tagId || null };
     const scheduleData = {
-      ...rest,
-      userId: user.id,
+      ...recipients,
+      body: values.body,
+      saveMessage: values.saveMessage,
       sendAt: sendAtWithTimezone,
       recurrence: values.recurrence || "none",
       recurrenceEndAt,
-      // Zap Komunick: recipients of a new schedule (docs/PRD.md, RF-008)
-      ...(scheduleId
-        ? {}
-        : { contactId: undefined, contactIds, tagId: tagId || null })
+      mediaPath: values.mediaPath,
+      mediaName: values.mediaName,
+      businessDaysOnly: values.businessDaysOnly,
+      // Legacy ticket-linked schedules may not have a stored queue yet.
+      ...(!scheduleId || !ticketLinked || queueId
+        ? { queueId: queueId || null }
+        : {})
     };
     try {
       if (scheduleId) {
@@ -286,44 +324,35 @@ const ScheduleModal = ({
       }
     } catch (err) {
       toastError(err);
+      return;
     }
-    setCurrentContact(initialContact);
-    setSchedule(initialState);
     handleClose();
   };
 
-  return (
-    <div className={classes.root}>
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        maxWidth="xs"
-        fullWidth
-        scroll="paper"
-      >
-        <DialogTitle id="form-dialog-title">
-          {!scheduleId
-            ? i18n.t("scheduleModal.title.add")
-            : schedule.status === "ERRO"
-            ? "Erro de Envio"
-            : `Mensagem ${capitalize(schedule.status)}`}
-        </DialogTitle>
+  const renderForm = () => {
+    if (schedule) {
+      return (
         <Formik
           initialValues={schedule}
-          enableReinitialize={true}
+          enableReinitialize
           validationSchema={ScheduleSchema}
-          onSubmit={(values, actions) => {
-            setTimeout(() => {
-              handleSaveSchedule(values);
-              actions.setSubmitting(false);
-            }, 400);
-          }}
+          onSubmit={handleSaveSchedule}
         >
           {({ touched, errors, isSubmitting, values, setFieldValue }) => (
             <Form>
               <DialogContent dividers>
                 {/* Zap Komunick: a new schedule can go to several contacts or a tag */}
-                {!scheduleId ? (
+                {ticketLinked ? (
+                  <TextField
+                    id="schedule-contact"
+                    label={i18n.t("scheduleModal.form.contact")}
+                    value={schedule.contact?.name || contactName || ""}
+                    InputProps={{ readOnly: true }}
+                    variant="outlined"
+                    margin="dense"
+                    fullWidth
+                  />
+                ) : !scheduleId ? (
                   <ScheduleRecipients
                     contacts={contacts}
                     contactIds={values.contactIds || []}
@@ -340,12 +369,13 @@ const ScheduleModal = ({
                     <FormControl fullWidth>
                       <Autocomplete
                         fullWidth
-                        value={currentContact}
+                        value={
+                          contacts.find(({ id }) => id === values.contactId) ||
+                          null
+                        }
                         options={contacts}
                         onChange={(e, contact) => {
-                          const contactId = contact ? contact.id : "";
-                          setFieldValue("contactId", contactId);
-                          setCurrentContact(contact ? contact : initialContact);
+                          setFieldValue("contactId", contact?.id || "");
                         }}
                         getOptionLabel={option => option.name}
                         getOptionSelected={(option, value) => {
@@ -356,12 +386,70 @@ const ScheduleModal = ({
                             variant="outlined"
                             margin="dense"
                             {...params}
-                            placeholder="Contato"
+                            label={i18n.t("scheduleModal.form.contact")}
                           />
                         )}
                       />
                     </FormControl>
                   </div>
+                )}
+                {ticketLinked || queues.length === 0 ? (
+                  <TextField
+                    id="schedule-queue"
+                    label={i18n.t("common.queue")}
+                    value={
+                      values.queueId
+                        ? ticketQueueName ||
+                          schedule.queue?.name ||
+                          findQueue(values.queueId)?.name ||
+                          i18n.t("scheduleExtras.queueUnavailable")
+                        : schedule.routingMode === "queue" ||
+                            schedule.routingMode === "ticket_queue"
+                          ? i18n.t("scheduleExtras.queueUnavailable")
+                          : ticketLinked && scheduleId && !schedule.routingMode
+                            ? i18n.t("scheduleExtras.ticketQueue")
+                            : i18n.t("scheduleExtras.noQueue")
+                    }
+                    helperText={
+                      ticketLinked
+                        ? i18n.t(
+                            schedule.ticketId
+                              ? "scheduleExtras.ticketRoute"
+                              : "backendErrors.ERR_SCHEDULE_TICKET_CONTEXT"
+                          )
+                        : undefined
+                    }
+                    InputProps={{ readOnly: true }}
+                    variant="outlined"
+                    margin="dense"
+                    fullWidth
+                  />
+                ) : (
+                  <TextField
+                    id="schedule-queue"
+                    select
+                    required
+                    label={i18n.t("common.queue")}
+                    value={values.queueId}
+                    onChange={event =>
+                      setFieldValue("queueId", event.target.value)
+                    }
+                    helperText={i18n.t("scheduleExtras.queueHelper")}
+                    variant="outlined"
+                    margin="dense"
+                    fullWidth
+                  >
+                    {values.queueId && !findQueue(values.queueId) && (
+                      <MenuItem value={values.queueId} disabled>
+                        {i18n.t("scheduleExtras.queueUnavailable")}
+                      </MenuItem>
+                    )}
+                    {queues.map(({ id, name }) => (
+                      <MenuItem key={id} value={id}>
+                        {name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
                 )}
                 <div className={classes.multFieldLine}>
                   <FormControlLabel
@@ -468,6 +556,7 @@ const ScheduleModal = ({
                     margin="dense"
                     as={TextField}
                     name="body"
+                    id="schedule-body"
                     rows={9}
                     multiline={true}
                     label={i18n.t("scheduleModal.form.body")}
@@ -499,7 +588,13 @@ const ScheduleModal = ({
                   <Button
                     type="submit"
                     color="primary"
-                    disabled={isSubmitting}
+                    disabled={
+                      isSubmitting ||
+                      (ticketLinked
+                        ? !schedule.ticketId
+                        : (queueRequired || Boolean(values.queueId)) &&
+                          !findQueue(values.queueId))
+                    }
                     variant="contained"
                     className={classes.btnWrapper}
                   >
@@ -518,6 +613,47 @@ const ScheduleModal = ({
             </Form>
           )}
         </Formik>
+      );
+    }
+
+    return (
+      <>
+        <DialogContent dividers>
+          {loadFailed ? (
+            i18n.t("scheduleExtras.loadFailed")
+          ) : (
+            <CircularProgress size={24} />
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose} color="secondary" variant="outlined">
+            {i18n.t("scheduleModal.buttons.cancel")}
+          </Button>
+        </DialogActions>
+      </>
+    );
+  };
+
+  return (
+    <div className={classes.root}>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        maxWidth="xs"
+        fullWidth
+        scroll="paper"
+        aria-labelledby="schedule-dialog-title"
+      >
+        <DialogTitle id="schedule-dialog-title">
+          {!scheduleId
+            ? i18n.t("scheduleModal.title.add")
+            : !schedule
+              ? i18n.t("scheduleModal.title.edit")
+              : schedule.status === "ERRO"
+                ? "Erro de Envio"
+                : `Mensagem ${capitalize(schedule.status)}`}
+        </DialogTitle>
+        {renderForm()}
       </Dialog>
     </div>
   );

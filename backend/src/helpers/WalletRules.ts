@@ -31,12 +31,12 @@ export function resolveWalletAssignment(
     return null;
   }
 
-  // prefer a queue of the owner that is served by the connection, so the
-  // ticket stays visible to the owner
   const queueId =
     input.ownerQueueIds.find(id => input.connectionQueueIds.includes(id)) ??
-    input.ownerQueueIds[0] ??
     null;
+  if (queueId === null && input.ownerQueueIds.length > 0) {
+    return null;
+  }
 
   return { userId: input.walletUserId, queueId };
 }

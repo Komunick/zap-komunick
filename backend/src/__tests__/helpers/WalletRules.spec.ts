@@ -15,10 +15,10 @@ describe("resolveWalletAssignment", () => {
     expect(resolveWalletAssignment(base)).toEqual({ userId: 7, queueId: 5 });
   });
 
-  it("uses the first owner queue when the connection serves none of them", () => {
+  it("keeps normal routing when the connection serves none of the owner's queues", () => {
     expect(
       resolveWalletAssignment({ ...base, connectionQueueIds: [9] })
-    ).toEqual({ userId: 7, queueId: 3 });
+    ).toBeNull();
   });
 
   it("assigns without queue when the owner has no queues", () => {

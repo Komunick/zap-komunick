@@ -72,6 +72,8 @@ import { getJidOf } from "./getJidOf";
 import { verifyContact } from "./verifyContact";
 import { decryptMessageEdit } from "./decryptMessageEdit";
 import GetTicketWbot from "../../helpers/GetTicketWbot";
+import IsWhatsAppQueueLinked from "../../helpers/IsWhatsAppQueueLinked";
+import { authorizeQueueOption } from "../QueueOptionService/AuthorizeQueueOptionService";
 import saveMediaToFile from "../../helpers/saveMediaFile";
 import { _t } from "../TranslationServices/i18nService";
 import WhatsappLidMap from "../../models/WhatsappLidMap";
@@ -1182,10 +1184,13 @@ const sendMenu = async (
     currentOption instanceof Queue
       ? (currentOption as Queue).greetingMessage
       : (currentOption as QueueOption).message;
+  const menuOptions = currentOption.options.filter(
+    option => option.queueId == null || option.queueId === ticket.queueId
+  );
 
   const botText = async () => {
     const showNumericIcons =
-      currentOption.options.length <= 10 &&
+      menuOptions.length <= 10 &&
       (await GetCompanySetting(
         ticket.companyId,
         "showNumericIcons",
@@ -1194,7 +1199,7 @@ const sendMenu = async (
 
     let options = "";
 
-    currentOption.options.forEach(option => {
+    menuOptions.forEach(option => {
       options += showNumericIcons
         ? `${emojiNumberOption(Number(option.option))} - `
         : `*[ ${option.option} ]* - `;
@@ -1217,7 +1222,7 @@ const sendMenu = async (
     await verifyMessage(sendMsg, ticket, ticket.contact);
   };
 
-  botText();
+  await botText();
 };
 
 export const startQueue = async (
@@ -1227,7 +1232,8 @@ export const startQueue = async (
   sendBackToMain = true
 ) => {
   if (!queue) {
-    queue = await Queue.findByPk(ticket.queueId, {
+    queue = await Queue.findOne({
+      where: { id: ticket.queueId, companyId: ticket.companyId },
       include: [
         {
           model: QueueOption,
@@ -1240,18 +1246,27 @@ export const startQueue = async (
     });
   }
 
+  if (
+    !queue ||
+    (ticket.channel === "whatsapp" &&
+      (ticket.whatsappId !== wbot.id ||
+        !(await IsWhatsAppQueueLinked(ticket.companyId, wbot.id, queue.id))))
+  ) {
+    return;
+  }
+
   const { companyId, contact } = ticket;
   let chatbot = false;
 
   if (queue?.options) {
     chatbot = queue.options.length > 0;
   }
-  await UpdateTicketService({
+  ({ ticket } = await UpdateTicketService({
     ticketData: { queueId: queue.id, chatbot, status: "pending" },
     ticketId: ticket.id,
     companyId: ticket.companyId,
     dontRunChatbot: true
-  });
+  }));
 
   // do not process queue if company is not compliant with payments
   if (!(await checkCompanyCompliant(companyId))) {
@@ -1344,7 +1359,7 @@ export const startQueue = async (
       });
       await verifyMediaMessage(sentMediaMessage, ticket, contact);
     }
-    sendMenu(wbot, ticket, queue, sendBackToMain);
+    await sendMenu(wbot, ticket, queue, sendBackToMain);
   }
 };
 
@@ -1354,7 +1369,9 @@ const verifyQueue = async (
   ticket: Ticket,
   _contact: Contact
 ) => {
-  const whatsapp = await ShowWhatsAppService(wbot.id!);
+  const whatsapp = await ShowWhatsAppService(wbot.id!, {
+    companyId: ticket.companyId
+  });
 
   if (!whatsapp) {
     throw new Error("ERR_NO_WAPP_FOUND");
@@ -1400,7 +1417,7 @@ const verifyQueue = async (
   if (choosenQueue) {
     await startQueue(wbot, ticket, choosenQueue);
   } else {
-    botText();
+    await botText();
     await updateTicket(ticket, {
       chatbot: true
     });
@@ -1413,7 +1430,9 @@ const handleRating = async (
   ticketTraking: TicketTraking,
   wbot: Session
 ) => {
-  const whatsapp = await ShowWhatsAppService(ticket.whatsappId);
+  const whatsapp = await ShowWhatsAppService(ticket.whatsappId, {
+    companyId: ticket.companyId
+  });
 
   if (!whatsapp) {
     throw new Error("ERR_NO_WAPP_FOUND");
@@ -1434,6 +1453,15 @@ const handleRating = async (
     userId: ticketTraking.userId,
     rate: finalRate
   });
+
+  if (
+    ticket.whatsappId !== wbot.id ||
+    (ticket.queueId &&
+      !(await IsWhatsAppQueueLinked(ticket.companyId, wbot.id, ticket.queueId)))
+  ) {
+    await ticketTraking.update({ rated: true });
+    return;
+  }
 
   const complationMessage =
     whatsapp.complationMessage.trim() || _t("Service completed", ticket);
@@ -1460,7 +1488,8 @@ const handleChartbot = async (
   wbot: Session,
   dontReadTheFirstQuestion = false
 ) => {
-  const queue = await Queue.findByPk(ticket.queueId, {
+  const queue = await Queue.findOne({
+    where: { id: ticket.queueId, companyId: ticket.companyId },
     include: [
       {
         model: QueueOption,
@@ -1470,6 +1499,22 @@ const handleChartbot = async (
     ],
     order: [["options", "option", "ASC"]]
   });
+
+  if (
+    !queue ||
+    ticket.whatsappId !== wbot.id ||
+    !(await IsWhatsAppQueueLinked(ticket.companyId, wbot.id, queue.id))
+  ) {
+    return;
+  }
+
+  if (
+    ticket.queueOptionId &&
+    (await authorizeQueueOption(ticket.queueOptionId, ticket.companyId)).queue
+      .id !== queue.id
+  ) {
+    return;
+  }
 
   const messageBody = await getBodyMessage(msg?.message);
 
@@ -1491,19 +1536,23 @@ const handleChartbot = async (
 
     // escolheu uma opção
   } else if (!isNil(queue) && !isNil(ticket.queueOptionId)) {
+    const childOptions = {
+      parentId: ticket.queueOptionId,
+      [Op.or]: [{ queueId: null }, { queueId: queue.id }]
+    };
     const count = await QueueOption.count({
-      where: { parentId: ticket.queueOptionId }
+      where: childOptions
     });
     let option: QueueOption = null;
     if (count === 1) {
       option = await QueueOption.findOne({
-        where: { parentId: ticket.queueOptionId }
+        where: childOptions
       });
     } else {
       option = await QueueOption.findOne({
         where: {
-          option: messageBody || "",
-          parentId: ticket.queueOptionId
+          ...childOptions,
+          option: messageBody || ""
         }
       });
     }
@@ -1554,7 +1603,16 @@ const handleChartbot = async (
   /* * /
   if (!isNil(queue) && isNil(ticket.queueOptionId)) {
     sendMenu(wbot, ticket, queue);
-  } else /* */ if (!isNil(queue) && !isNil(ticket.queueOptionId)) {
+  } else /* */ if (
+    ticket.queueId === queue.id &&
+    !isNil(ticket.queueOptionId)
+  ) {
+    const { queue: optionQueue } = await authorizeQueueOption(
+      ticket.queueOptionId,
+      ticket.companyId
+    );
+    if (optionQueue.id !== queue.id) return;
+
     const currentOption = await QueueOption.findByPk(ticket.queueOptionId, {
       include: [
         {
@@ -1586,6 +1644,21 @@ const handleChartbot = async (
         [Sequelize.cast(Sequelize.col("options.option"), "INTEGER"), "ASC"]
       ]
     });
+
+    if (!currentOption) return;
+
+    if (
+      !currentOption.exitChatbot &&
+      currentOption.forwardQueueId &&
+      (!currentOption.forwardQueue ||
+        !(await IsWhatsAppQueueLinked(
+          ticket.companyId,
+          wbot.id,
+          currentOption.forwardQueueId
+        )))
+    ) {
+      return;
+    }
 
     let filePath = null;
     let optionsMsg = null;
@@ -1623,12 +1696,7 @@ const handleChartbot = async (
           queueOptionId: null
         });
       } else if (currentOption.forwardQueueId) {
-        await updateTicket(ticket, {
-          queueOptionId: null,
-          chatbot: false,
-          queueId: currentOption.forwardQueueId
-        });
-        startQueue(wbot, ticket, currentOption.forwardQueue);
+        await startQueue(wbot, ticket, currentOption.forwardQueue);
       }
       return;
     }
@@ -1641,7 +1709,7 @@ const handleChartbot = async (
     }
 
     if (currentOption.options.length > -1) {
-      sendMenu(wbot, ticket, currentOption);
+      await sendMenu(wbot, ticket, currentOption);
     }
   }
 };
@@ -1721,7 +1789,7 @@ const handleMessage = async (
       });
     }
 
-    const whatsapp = await ShowWhatsAppService(wbot.id!);
+    const whatsapp = await ShowWhatsAppService(wbot.id!, { companyId });
 
     if (!whatsapp) {
       throw new Error("ERR_NO_WAPP_FOUND");
@@ -1738,6 +1806,7 @@ const handleMessage = async (
         (await TicketTraking.findOne({
           where: {
             whatsappId: whatsapp.id,
+            companyId,
             rated: false,
             expired: false,
             ratingAt: { [Op.not]: null }
@@ -1747,7 +1816,8 @@ const handleMessage = async (
               model: Ticket,
               where: {
                 status: "closed",
-                contactId: contact.id
+                contactId: contact.id,
+                companyId
               },
               include: [
                 {
@@ -1871,9 +1941,8 @@ const handleMessage = async (
         groupContact,
         incrementUnread: !msg.key.fromMe,
         findOnly,
-        queue: queueId
-          ? (await Queue.findByPk(queueId)) || defaultQueue
-          : defaultQueue
+        queue:
+          whatsapp.queues.find(queue => queue.id === queueId) ?? defaultQueue
       }
     );
 
@@ -1995,6 +2064,9 @@ const handleMessage = async (
       if (scheduleType) {
         const isOpenOnline =
           ticket.status === "open" && ticket.user.socketSessions.length > 0;
+        const hasCurrentQueueRoute =
+          !ticket.queueId ||
+          whatsapp.queues.some(queue => queue.id === ticket.queueId);
 
         const avoidResend =
           !isOpenOnline && outOfHoursCache.get(`ticket-${ticket.id}`);
@@ -2004,7 +2076,7 @@ const handleMessage = async (
             !isNil(currentSchedule) &&
             (!currentSchedule || currentSchedule.inActivity === false)
           ) {
-            if (!avoidResend) {
+            if (!avoidResend && hasCurrentQueueRoute) {
               outOfHoursCache.set(`ticket-${ticket.id}`, true);
               const outOfHoursMessage =
                 whatsapp.outOfHoursMessage.trim() ||
@@ -2027,16 +2099,20 @@ const handleMessage = async (
 
         if (
           scheduleType === "queue" &&
-          ticket.queueId !== null &&
+          ticket.queueId &&
+          hasCurrentQueueRoute &&
           !isOpenOnline
         ) {
           currentSchedule = await VerifyCurrentSchedule(
             companyId,
             ticket.queueId
           );
-          const queue = await Queue.findByPk(ticket.queueId);
+          const queue = await Queue.findOne({
+            where: { id: ticket.queueId, companyId }
+          });
 
           if (
+            queue &&
             !isNil(currentSchedule) &&
             (!currentSchedule || currentSchedule.inActivity === false)
           ) {
@@ -2067,7 +2143,7 @@ const handleMessage = async (
     }
 
     if (
-      !ticket.queue &&
+      !ticket.queueId &&
       !isGroup &&
       !ticket.userId &&
       whatsapp.queues.length >= 1
@@ -2087,6 +2163,7 @@ const handleMessage = async (
     if (
       justCreated &&
       !whatsapp?.queues?.length &&
+      !ticket.queueId &&
       !ticket.userId &&
       !isGroup
     ) {
