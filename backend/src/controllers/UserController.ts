@@ -76,10 +76,13 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   auditRequest(req, "user.created", "user", user.id);
 
   const io = getIO();
-  io.emit(`company-${userCompanyId}-user`, {
-    action: "create",
-    user
-  });
+  io.to(`company-${userCompanyId}-mainchannel`).emit(
+    `company-${userCompanyId}-user`,
+    {
+      action: "create",
+      user
+    }
+  );
 
   return res.status(200).json(user);
 };
@@ -119,7 +122,7 @@ export const update = async (
   });
 
   const io = getIO();
-  io.emit(`company-${companyId}-user`, {
+  io.to(`company-${companyId}-mainchannel`).emit(`company-${companyId}-user`, {
     action: "update",
     user
   });
@@ -146,7 +149,7 @@ export const remove = async (
   auditRequest(req, "user.deleted", "user", userId);
 
   const io = getIO();
-  io.emit(`company-${companyId}-user`, {
+  io.to(`company-${companyId}-mainchannel`).emit(`company-${companyId}-user`, {
     action: "delete",
     userId
   });

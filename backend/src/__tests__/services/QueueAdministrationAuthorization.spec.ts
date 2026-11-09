@@ -101,7 +101,9 @@ jest.mock("../../config/upload", () => {
 jest.mock("../../helpers/GetPublicPath", () => ({
   getPublicPath: () => mockStorageRoot
 }));
-jest.mock("../../libs/socket", () => ({ getIO: () => ({ emit: mockEmit }) }));
+jest.mock("../../libs/socket", () => ({
+  getIO: () => ({ to: jest.fn(() => ({ emit: mockEmit })) })
+}));
 jest.mock("../../models/User", () => ({
   __esModule: true,
   default: {
