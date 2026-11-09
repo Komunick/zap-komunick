@@ -27,6 +27,10 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Segurança
 
+- Avisos em tempo real de filas, usuários, campanhas, listas de contatos, respostas rápidas, ajuda e agendamentos
+  chegam só aos usuários conectados da própria empresa. Antes, qualquer usuário autenticado podia escutar os
+  eventos de outra empresa. Os avisos da plataforma continuam para todos.
+
 - Na visibilidade por fila, o histórico de outro atendimento exige acesso à fila desse atendimento, inclusive
   para mensagens antigas sem fila, anexos e citações. Criar ou excluir usuários exige o perfil administrativo atual.
 
