@@ -56,6 +56,7 @@ import { campaignQueue } from "../../queues/campaign";
 import User from "../../models/User";
 import Setting from "../../models/Setting";
 import { debounce } from "../../helpers/Debounce";
+import { collectStream } from "../../helpers/CollectStream";
 import { getMessageFileOptions, MediaInfo } from "./SendWhatsAppMedia";
 import { makeRandomId } from "../../helpers/MakeRandomId";
 import CheckSettings, { GetCompanySetting } from "../../helpers/CheckSettings";
@@ -378,26 +379,18 @@ const downloadStream = async (stream: Transform): Promise<Buffer> => {
   const LARGE_FILE_SIZE = 1024 * 1024; // 1 MiB
 
   const throttle = new Throttle({ rate: MAX_SPEED });
-  let buffer = Buffer.from([]);
-  let totalSize = 0;
 
   try {
-    // eslint-disable-next-line no-restricted-syntax
-    for await (const chunk of stream.pipe(throttle)) {
-      buffer = Buffer.concat([buffer, chunk]);
-      totalSize += chunk.length;
-
+    return await collectStream(stream.pipe(throttle), totalSize => {
       if (totalSize > LARGE_FILE_SIZE) {
         throttle.rate = THROTTLE_SPEED;
       }
-    }
+    });
   } catch (error) {
     Sentry.setExtra("ERR_WAPP_DOWNLOAD_MEDIA", { error });
     Sentry.captureException(new Error("ERR_WAPP_DOWNLOAD_MEDIA"));
     throw new Error("ERR_WAPP_DOWNLOAD_MEDIA");
   }
-
-  return buffer;
 };
 
 type ThumbnailMessage = {

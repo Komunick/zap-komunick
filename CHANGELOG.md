@@ -6,6 +6,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Alterado
 
+- O download de mídia recebida pelo WhatsApp junta os pedaços uma única vez no fim, em vez de copiar o acumulado
+  a cada pedaço. Em um arquivo de 15 MiB, o custo de CPU cai de cerca de 1,9 s para poucos milissegundos, sem
+  mudar o arquivo salvo nem o limite de velocidade.
 - O login carrega só o código de que precisa. As telas internas são baixadas conforme o uso.
 - A consulta de um atendimento começa ao abrir a conversa, sem a espera fixa de 500 ms.
 - A abertura do SuperChat ganha fundo mais suave e uma barra de carregamento discreta. A assinatura oficial
