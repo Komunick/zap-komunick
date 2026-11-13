@@ -6,6 +6,7 @@ import AuthorizeMessageContextService from "../../services/MessageServices/Autho
 import DeleteWhatsAppMessage from "../../services/WbotServices/DeleteWhatsAppMessage";
 import SendWhatsAppMessage from "../../services/WbotServices/SendWhatsAppMessage";
 import ListMessagesService from "../../services/MessageServices/ListMessagesService";
+import ShowPendingMessagePreviewService from "../../services/MessageServices/ShowPendingMessagePreviewService";
 import SetTicketMessagesAsRead from "../../helpers/SetTicketMessagesAsRead";
 import ShowTicketService from "../../services/TicketServices/ShowTicketService";
 import Message from "../../models/Message";
@@ -22,6 +23,10 @@ jest.mock("../../models/Ticket", () => ({}));
 jest.mock("../../models/OldMessage", () => ({ findAll: jest.fn() }));
 jest.mock("../../services/MessageServices/ListMessagesService", () =>
   jest.fn()
+);
+jest.mock(
+  "../../services/MessageServices/ShowPendingMessagePreviewService",
+  () => jest.fn()
 );
 jest.mock("../../services/TicketServices/ShowTicketService", () => jest.fn());
 jest.mock("../../services/WbotServices/DeleteWhatsAppMessage", () => jest.fn());
@@ -90,6 +95,22 @@ describe("message authorization before side effects", () => {
         ticketId: "301"
       })
     );
+    expect(SetTicketMessagesAsRead).not.toHaveBeenCalled();
+  });
+
+  it("returns an uncached preview without marking read even when requested", async () => {
+    const preview = { kind: "text", text: "Mensagem fictícia" };
+    res.set = jest.fn().mockReturnValue(res);
+    (ShowPendingMessagePreviewService as jest.Mock).mockResolvedValue(preview);
+
+    await MessageController.preview(req, res);
+
+    expect(ShowPendingMessagePreviewService).toHaveBeenCalledWith("301", {
+      userId: "101",
+      companyId: 10
+    });
+    expect(res.set).toHaveBeenCalledWith("Cache-Control", "private, no-store");
+    expect(res.json).toHaveBeenCalledWith({ preview });
     expect(SetTicketMessagesAsRead).not.toHaveBeenCalled();
   });
 

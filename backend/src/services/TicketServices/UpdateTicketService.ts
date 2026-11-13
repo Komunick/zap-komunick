@@ -30,6 +30,7 @@ import { ActiveCloseReasonIds } from "../CloseReasonServices/CloseReasonService"
 
 export interface UpdateTicketData {
   status?: string;
+  onlyIfPending?: boolean;
   userId?: number | null;
   queueId?: number | null;
   chatbot?: boolean;
@@ -134,6 +135,9 @@ const UpdateTicketService = async ({
     );
 
     const ticket = await ShowTicketService(ticketId, companyId);
+    if (ticketData.onlyIfPending === true && ticket.status !== "pending") {
+      throw new AppError("ERR_TICKET_NOT_PENDING", 409);
+    }
     const isGroup = ticket.contact?.isGroup || ticket.isGroup;
 
     if (queueId && Number(queueId) !== ticket.queueId) {
@@ -295,7 +299,8 @@ const UpdateTicketService = async ({
           chatbot: null,
           queueOptionId: null,
           status: "closed",
-          unansweredSince: null
+          unansweredSince: null,
+          generalTriageStartedAt: null
         });
 
         await ticket.reload();
@@ -365,6 +370,12 @@ const UpdateTicketService = async ({
       whatsappId: ticket.whatsappId,
       chatbot,
       queueOptionId,
+      ...(queueId != null ||
+      userId != null ||
+      (status && status !== "pending") ||
+      !chatbot
+        ? { generalTriageStartedAt: null }
+        : {}),
       ...(status === "closed" ? { unansweredSince: null } : {})
     });
     await revokeTicketContextRooms(io, ticket.id);

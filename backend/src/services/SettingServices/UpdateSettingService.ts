@@ -4,6 +4,12 @@ import Setting from "../../models/Setting";
 import { updateDefaultLanguage } from "../TranslationServices/i18nService";
 import { safeSettingsKeys } from "./GetSettingService";
 import { isCredentialKey } from "../../helpers/CredentialRules";
+import {
+  GENERAL_TRIAGE_QUEUE,
+  GENERAL_TRIAGE_TIMEOUT,
+  parseGeneralTriageInteger
+} from "../../helpers/GeneralTriage";
+import Queue from "../../models/Queue";
 
 interface Request {
   key: string;
@@ -37,6 +43,18 @@ const UpdateSettingService = async ({
   ) {
     throw new AppError("ERR_INTEGRATED_ASSISTANT_INVALID_REQUEST", 400);
   }
+  if (key === GENERAL_TRIAGE_QUEUE && value !== "" && value !== "0") {
+    const id = parseGeneralTriageInteger(value, 2147483647);
+    if (!id || !(await Queue.findOne({ where: { id, companyId } }))) {
+      throw new AppError("ERR_GENERAL_TRIAGE_INVALID_QUEUE", 400);
+    }
+  }
+  if (
+    key === GENERAL_TRIAGE_TIMEOUT &&
+    !parseGeneralTriageInteger(value, 1440)
+  ) {
+    throw new AppError("ERR_GENERAL_TRIAGE_INVALID_TIMEOUT", 400);
+  }
   const [setting] = await Setting.findOrCreate({
     where: {
       key,
@@ -65,7 +83,9 @@ const UpdateSettingService = async ({
       "aiAssistantEnabled",
       "acessoriasEnabled",
       "sciEnabled",
-      "integratedAssistantEnabled"
+      "integratedAssistantEnabled",
+      GENERAL_TRIAGE_QUEUE,
+      GENERAL_TRIAGE_TIMEOUT
     ].includes(key)
   ) {
     await Setting.update({ value }, { where: { companyId, key } });

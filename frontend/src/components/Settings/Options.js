@@ -25,12 +25,14 @@ import { i18n } from "../../translate/i18n.js";
 import { SelectLanguage } from "../SelectLanguage";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import api from "../../services/api";
+import toastError from "../../errors/toastError";
 import { getBackendURL } from "../../services/config";
 import CompanyCredentialSettings from "../CompanyCredentialSettings";
 import AssistantSettings from "../AssistantSettings";
 import AcessoriasSettings from "../AcessoriasSettings";
 import SciSettings from "../SciSettings";
 import IntegratedAssistantSettings from "../IntegratedAssistantSettings";
+import SlaAlertSettings from "./SlaAlertSettings";
 
 const useStyles = makeStyles(theme => ({
   container: {
@@ -139,6 +141,8 @@ export default function Options(props) {
 
   // Zap Komunick
   const [slaMinutes, setSlaMinutes] = useState("0");
+  const [generalTriageQueueId, setGeneralTriageQueueId] = useState("0");
+  const [generalTriageTimeout, setGeneralTriageTimeout] = useState("15");
   const [slaOldTicketHours, setSlaOldTicketHours] = useState("72");
   const [walletAutoAssign, setWalletAutoAssign] = useState("disabled");
   const [syncPhoneContacts, setSyncPhoneContacts] = useState("enabled");
@@ -331,6 +335,13 @@ export default function Options(props) {
 
       const slaMinutesSetting = settings.find(s => s.key === "slaMinutes");
       setSlaMinutes(slaMinutesSetting?.value || "0");
+      setGeneralTriageQueueId(
+        settings.find(s => s.key === "generalTriageQueueId")?.value || "0"
+      );
+      setGeneralTriageTimeout(
+        settings.find(s => s.key === "generalTriageTimeoutMinutes")?.value ||
+          "15"
+      );
       const slaOldTicketHoursSetting = settings.find(
         s => s.key === "slaOldTicketHours"
       );
@@ -957,6 +968,71 @@ export default function Options(props) {
         </Grid>
 
         <Grid item xs={12}>
+          <h2 className={classes.groupTitle}>
+            {i18n.t("generalTriage.title")}
+          </h2>
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <FormControl className={classes.selectContainer}>
+            <InputLabel id="general-triage-queue-label">
+              {i18n.t("generalTriage.queue")}
+            </InputLabel>
+            <Select
+              labelId="general-triage-queue-label"
+              value={
+                queues.some(queue => String(queue.id) === generalTriageQueueId)
+                  ? generalTriageQueueId
+                  : "0"
+              }
+              onChange={async event => {
+                const value = event.target.value;
+                try {
+                  await handleSetting("generalTriageQueueId", value);
+                  setGeneralTriageQueueId(value);
+                } catch (error) {
+                  toastError(error);
+                }
+              }}
+            >
+              <MenuItem value="0">{i18n.t("generalTriage.disabled")}</MenuItem>
+              {queues.map(queue => (
+                <MenuItem key={queue.id} value={String(queue.id)}>
+                  {queue.name}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>{i18n.t("generalTriage.queueHint")}</FormHelperText>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <TextField
+            fullWidth
+            id="general-triage-timeout"
+            type="number"
+            label={i18n.t("generalTriage.timeout")}
+            helperText={i18n.t("generalTriage.timeoutHint")}
+            inputProps={{ min: 1, max: 1440, step: 1 }}
+            disabled={generalTriageQueueId === "0"}
+            value={generalTriageTimeout}
+            onChange={event => setGeneralTriageTimeout(event.target.value)}
+            onBlur={async () => {
+              const previous =
+                settings.find(s => s.key === "generalTriageTimeoutMinutes")
+                  ?.value || "15";
+              if (generalTriageTimeout === previous) return;
+              try {
+                await handleSetting(
+                  "generalTriageTimeoutMinutes",
+                  generalTriageTimeout
+                );
+              } catch (error) {
+                setGeneralTriageTimeout(previous);
+                toastError(error);
+              }
+            }}
+          />
+        </Grid>
+        <Grid item xs={12}>
           <h2 className={classes.groupTitle}>{i18n.t("settings.sla.group")}</h2>
         </Grid>
 
@@ -979,6 +1055,9 @@ export default function Options(props) {
               }}
             />
           </FormControl>
+        </Grid>
+        <Grid item xs={12}>
+          <SlaAlertSettings queues={queues} />
         </Grid>
 
         <Grid xs={12} sm={6} md={4} item>

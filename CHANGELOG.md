@@ -52,6 +52,13 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Adicionado
 
+- O atendente pode consultar a última mensagem recebida de um atendimento pendente e depois usar
+  **Aceitar e abrir**. Consultar a prévia preserva o status e a leitura.
+- Uma fila geral configurada no WhatsApp recebe atendimentos que escolhem **Geral** ou passam do prazo de triagem.
+  Os atendentes da fila podem assumir esses atendimentos.
+- Alertas de SLA aparecem no SuperChat após três horas sem resposta. Cada setor pode ter responsáveis
+  e a empresa pode indicar pessoas para acompanhar todos os setores.
+
 - Menu lateral abre ao passar o mouse sobre o trilho recolhido no desktop, sem precisar clicar. Botão, teclado,
   preferência salva e funcionamento por toque no celular continuam disponíveis.
 

@@ -13,12 +13,15 @@ import Typography from "@material-ui/core/Typography";
 import Avatar from "@material-ui/core/Avatar";
 import Divider from "@material-ui/core/Divider";
 import Badge from "@material-ui/core/Badge";
+import IconButton from "@material-ui/core/IconButton";
+import SubjectIcon from "@material-ui/icons/Subject";
 
 import { i18n } from "../../translate/i18n";
 import { formatWhatsappContactName } from "../../helpers/formatWhatsappDisplay";
 
 import api from "../../services/api";
 import ButtonWithSpinner from "../ButtonWithSpinner";
+import TicketPreviewDialog from "../TicketPreviewDialog";
 import WhatsMarked from "react-whatsmarked";
 import { Tooltip } from "@material-ui/core";
 import { AuthContext } from "../../context/Auth/AuthContext";
@@ -97,6 +100,10 @@ const useStyles = makeStyles(theme => ({
     alignSelf: "center",
     marginLeft: 12
   },
+  previewButton: {
+    flexShrink: 0,
+    marginLeft: 4
+  },
 
   ticketQueueColor: {
     flex: "none",
@@ -112,9 +119,12 @@ const TicketListItem = ({ ticket, groupActionButtons }) => {
   const classes = useStyles();
   const history = useHistory();
   const [loading, setLoading] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const { ticketId } = useParams();
   const isMounted = useRef(true);
   const { user } = useContext(AuthContext);
+  const canPreview = ticket.status === "pending";
+  const canAccept = canPreview && (groupActionButtons || !ticket.isGroup);
 
   useEffect(() => {
     return () => {
@@ -122,19 +132,19 @@ const TicketListItem = ({ ticket, groupActionButtons }) => {
     };
   }, []);
 
-  const handleAcepptTicket = async ticket => {
+  const handleAcceptTicket = async () => {
     setLoading(true);
     try {
       await api.put(`/tickets/${ticket.id}`, {
         status: "open",
+        onlyIfPending: true,
         userId: user?.id
       });
     } catch (err) {
-      setLoading(false);
       toastError(err);
-    }
-    if (isMounted.current) {
-      setLoading(false);
+      return;
+    } finally {
+      if (isMounted.current) setLoading(false);
     }
     history.push(`/tickets/${ticket.uuid}`);
   };
@@ -145,15 +155,22 @@ const TicketListItem = ({ ticket, groupActionButtons }) => {
 
   return (
     <React.Fragment key={ticket.id}>
+      {previewOpen && canPreview && (
+        <TicketPreviewDialog
+          ticket={ticket}
+          onClose={() => setPreviewOpen(false)}
+          onAccept={canAccept ? handleAcceptTicket : undefined}
+          accepting={loading}
+        />
+      )}
       <ListItem
         dense
         button
-        onClick={e => {
-          if (
-            ticket.status === "pending" &&
-            (groupActionButtons || !ticket.isGroup)
-          )
+        onClick={() => {
+          if (canAccept) {
+            setPreviewOpen(true);
             return;
+          }
           handleSelectTicket(ticket);
         }}
         selected={ticketId && +ticketId === ticket.id}
@@ -239,19 +256,36 @@ const TicketListItem = ({ ticket, groupActionButtons }) => {
             </span>
           }
         />
-        {ticket.status === "pending" &&
-          (groupActionButtons || !ticket.isGroup) && (
-            <ButtonWithSpinner
-              color="primary"
-              variant="contained"
-              className={classes.acceptButton}
+        {canPreview && (
+          <Tooltip title={i18n.t("ticketPreview.action")}>
+            <IconButton
               size="small"
-              loading={loading}
-              onClick={e => handleAcepptTicket(ticket)}
+              aria-label={i18n.t("ticketPreview.action")}
+              className={classes.previewButton}
+              onClick={event => {
+                event.stopPropagation();
+                setPreviewOpen(true);
+              }}
             >
-              {i18n.t("ticketsList.buttons.accept")}
-            </ButtonWithSpinner>
-          )}
+              <SubjectIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
+        {canAccept && (
+          <ButtonWithSpinner
+            color="primary"
+            variant="contained"
+            className={classes.acceptButton}
+            size="small"
+            loading={loading}
+            onClick={event => {
+              event.stopPropagation();
+              handleAcceptTicket();
+            }}
+          >
+            {i18n.t("ticketsList.buttons.accept")}
+          </ButtonWithSpinner>
+        )}
       </ListItem>
       <Divider variant="inset" component="li" />
     </React.Fragment>

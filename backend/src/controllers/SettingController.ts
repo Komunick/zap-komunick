@@ -50,7 +50,14 @@ export const update = async (
   }
 
   // P3: a still-valid JWT from a transferred/demoted administrator grants no flag write.
-  if (["sciEnabled", "integratedAssistantEnabled"].includes(key)) {
+  if (
+    [
+      "sciEnabled",
+      "integratedAssistantEnabled",
+      "generalTriageQueueId",
+      "generalTriageTimeoutMinutes"
+    ].includes(key)
+  ) {
     const viewer = await loadTicketViewer({ userId: req.user.id, companyId });
     if (!viewer.isAdmin) throw new AppError("ERR_NO_PERMISSION", 403);
   }
