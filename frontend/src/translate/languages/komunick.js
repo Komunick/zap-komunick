@@ -3897,6 +3897,21 @@ Object.assign(es.backendErrors, {
   ERR_SLA_ALERT_NOT_FOUND: "Este aviso ya no está disponible."
 });
 
+pt.companyMessageSignature = {
+  required: "Sua empresa exige a assinatura nas mensagens de texto.",
+  loading: "Consultando a regra de assinatura."
+};
+
+en.companyMessageSignature = {
+  required: "Your company requires a signature on text messages.",
+  loading: "Checking the signature setting."
+};
+
+es.companyMessageSignature = {
+  required: "Tu empresa exige la firma en los mensajes de texto.",
+  loading: "Consultando la configuración de firma."
+};
+
 export const komunickMessages = {
   pt: { translations: pt },
   pt_PT: { translations: pt },

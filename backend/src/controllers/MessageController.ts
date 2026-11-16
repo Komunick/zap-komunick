@@ -4,6 +4,7 @@ import AppError from "../errors/AppError";
 
 import SetTicketMessagesAsRead from "../helpers/SetTicketMessagesAsRead";
 import { sanitizeMessageQuotePayload } from "../helpers/MessageQuotePrivacy";
+import { isMessageSignatureRequired } from "../helpers/MessageSignature";
 import { getIO } from "../libs/socket";
 import Queue from "../models/Queue";
 import User from "../models/User";
@@ -195,7 +196,8 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
       body,
       ticket,
       userId,
-      quotedMsg: authorizedQuote
+      quotedMsg: authorizedQuote,
+      forceSignature: await isMessageSignatureRequired(companyId)
     });
   }
 

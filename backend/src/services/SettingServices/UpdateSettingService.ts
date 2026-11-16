@@ -10,6 +10,7 @@ import {
   parseGeneralTriageInteger
 } from "../../helpers/GeneralTriage";
 import Queue from "../../models/Queue";
+import { FORCE_MESSAGE_SIGNATURE } from "../../helpers/MessageSignature";
 
 interface Request {
   key: string;
@@ -42,6 +43,12 @@ const UpdateSettingService = async ({
     !["enabled", "disabled"].includes(value)
   ) {
     throw new AppError("ERR_INTEGRATED_ASSISTANT_INVALID_REQUEST", 400);
+  }
+  if (
+    key === FORCE_MESSAGE_SIGNATURE &&
+    !["enabled", "disabled"].includes(value)
+  ) {
+    throw new AppError("ERR_SYNTAX", 400);
   }
   if (key === GENERAL_TRIAGE_QUEUE && value !== "" && value !== "0") {
     const id = parseGeneralTriageInteger(value, 2147483647);
@@ -85,7 +92,8 @@ const UpdateSettingService = async ({
       "sciEnabled",
       "integratedAssistantEnabled",
       GENERAL_TRIAGE_QUEUE,
-      GENERAL_TRIAGE_TIMEOUT
+      GENERAL_TRIAGE_TIMEOUT,
+      FORCE_MESSAGE_SIGNATURE
     ].includes(key)
   ) {
     await Setting.update({ value }, { where: { companyId, key } });

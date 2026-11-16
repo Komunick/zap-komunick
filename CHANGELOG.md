@@ -4,6 +4,12 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ## Não publicado
 
+### Adicionado
+
+- A empresa pode exigir o nome do atendente nas mensagens manuais de texto do WhatsApp. A configuração
+  prevalece sobre a preferência de assinatura do navegador e mantém o acesso por setor.
+
+
 ### Alterado
 
 - O login carrega só o código de que precisa. As telas internas são baixadas conforme o uso.

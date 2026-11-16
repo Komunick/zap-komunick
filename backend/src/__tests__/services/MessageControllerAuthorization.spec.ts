@@ -8,11 +8,15 @@ import SendWhatsAppMessage from "../../services/WbotServices/SendWhatsAppMessage
 import ListMessagesService from "../../services/MessageServices/ListMessagesService";
 import ShowPendingMessagePreviewService from "../../services/MessageServices/ShowPendingMessagePreviewService";
 import SetTicketMessagesAsRead from "../../helpers/SetTicketMessagesAsRead";
+import { isMessageSignatureRequired } from "../../helpers/MessageSignature";
 import ShowTicketService from "../../services/TicketServices/ShowTicketService";
 import Message from "../../models/Message";
 import OldMessage from "../../models/OldMessage";
 
 jest.mock("../../helpers/SetTicketMessagesAsRead", () => jest.fn());
+jest.mock("../../helpers/MessageSignature", () => ({
+  isMessageSignatureRequired: jest.fn()
+}));
 jest.mock("../../libs/socket", () => ({ getIO: jest.fn() }));
 jest.mock("../../models/Queue", () => ({}));
 jest.mock("../../models/User", () => ({}));
@@ -62,6 +66,7 @@ describe("message authorization before side effects", () => {
   let res: Response;
 
   beforeEach(() => {
+    jest.clearAllMocks();
     req = {
       params: { messageId: "fixture-message-B", ticketId: "301" },
       query: { markAsRead: "true" },
@@ -83,6 +88,7 @@ describe("message authorization before side effects", () => {
     await expect(MessageController.store(req, res)).rejects.toBe(denied);
     expect(SendWhatsAppMessage).not.toHaveBeenCalled();
     expect(SetTicketMessagesAsRead).not.toHaveBeenCalled();
+    expect(isMessageSignatureRequired).not.toHaveBeenCalled();
   });
 
   it("does not mark read when listing context is denied", async () => {
@@ -164,6 +170,28 @@ describe("message authorization before side effects", () => {
     );
     expect(SendWhatsAppMessage).toHaveBeenCalledWith(
       expect.objectContaining({ quotedMsg: source })
+    );
+  });
+
+  it("loads the signature policy only from the authorized company for a manual text", async () => {
+    const ticket = { id: 301, channel: "whatsapp", isGroup: true };
+    req.files = undefined;
+    req.body.companyId = 20;
+    req.body.forceSignature = false;
+    (AuthorizeTicketContextService as jest.Mock).mockResolvedValue({ ticket });
+    (ShowTicketService as jest.Mock).mockResolvedValue(ticket);
+    (isMessageSignatureRequired as jest.Mock).mockResolvedValue(true);
+
+    await MessageController.store(req, res);
+
+    expect(isMessageSignatureRequired).toHaveBeenCalledWith(10);
+    expect(SendWhatsAppMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: "Fixture",
+        forceSignature: true,
+        ticket,
+        userId: 101
+      })
     );
   });
 
