@@ -137,12 +137,18 @@ export const preview = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const previewMessage = await ShowPendingMessagePreviewService(
+  const { messages, truncated } = await ShowPendingMessagePreviewService(
     req.params.ticketId,
     { userId: req.user.id, companyId: req.user.companyId }
   );
+  // `preview` keeps the last received message for older clients.
+  const lastReceived = [...messages].reverse().find(item => !item.fromMe);
   return res.set("Cache-Control", "private, no-store").json({
-    preview: previewMessage
+    preview: lastReceived
+      ? { kind: lastReceived.kind, text: lastReceived.text }
+      : null,
+    messages,
+    truncated
   });
 };
 

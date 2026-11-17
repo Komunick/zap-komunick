@@ -3727,13 +3727,16 @@ es.backendErrors.ERR_TICKET_NOT_PENDING =
 
 pt.ticketPreview = {
   action: "Ver prévia da mensagem",
-  title: "Prévia da mensagem",
+  title: "Prévia da conversa",
   accept: "Aceitar e abrir",
   loading: "Carregando a prévia…",
   unavailable: "Não foi possível carregar a prévia.",
-  empty: "Ainda não há mensagem recebida neste atendimento.",
+  empty: "Ainda não há mensagens neste atendimento.",
+  conversation: "Mensagens do atendimento",
+  sent: "Enviada",
+  truncated: "Mostrando as 500 mensagens mais recentes deste atendimento.",
   kinds: {
-    text: "Mensagem recebida",
+    text: "Mensagem",
     image: "Imagem",
     video: "Vídeo",
     audio: "Áudio",
@@ -3744,13 +3747,16 @@ pt.ticketPreview = {
 };
 en.ticketPreview = {
   action: "Preview message",
-  title: "Message preview",
+  title: "Conversation preview",
   accept: "Accept and open",
   loading: "Loading preview…",
   unavailable: "Could not load the preview.",
-  empty: "No messages have been received in this ticket yet.",
+  empty: "This ticket has no messages yet.",
+  conversation: "Ticket messages",
+  sent: "Sent",
+  truncated: "Showing the 500 most recent messages of this ticket.",
   kinds: {
-    text: "Incoming message",
+    text: "Message",
     image: "Image",
     video: "Video",
     audio: "Audio",
@@ -3761,13 +3767,16 @@ en.ticketPreview = {
 };
 es.ticketPreview = {
   action: "Ver vista previa del mensaje",
-  title: "Vista previa del mensaje",
+  title: "Vista previa de la conversación",
   accept: "Aceptar y abrir",
   loading: "Cargando vista previa…",
   unavailable: "No se pudo cargar la vista previa.",
-  empty: "Aún no se ha recibido ningún mensaje en esta conversación.",
+  empty: "Aún no hay mensajes en esta conversación.",
+  conversation: "Mensajes de la conversación",
+  sent: "Enviado",
+  truncated: "Se muestran los 500 mensajes más recientes de esta conversación.",
   kinds: {
-    text: "Mensaje recibido",
+    text: "Mensaje",
     image: "Imagen",
     video: "Vídeo",
     audio: "Audio",
