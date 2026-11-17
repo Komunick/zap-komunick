@@ -27,6 +27,10 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Segurança
 
+- A conversão de áudio gravado chama o ffmpeg sem shell, com cada argumento separado. Um nome de arquivo com aspas,
+  `;`, `&` ou `$()` não executa mais comandos no servidor. Os uploads guardam só extensões alfanuméricas simples.
+- Entrar em outra empresa (impersonação) exige conta Super já na rota, antes das checagens do serviço.
+
 - Na visibilidade por fila, o histórico de outro atendimento exige acesso à fila desse atendimento, inclusive
   para mensagens antigas sem fila, anexos e citações. Criar ou excluir usuários exige o perfil administrativo atual.
 
