@@ -16,6 +16,7 @@ import formatBody from "../../helpers/Mustache";
 import { logger } from "../../utils/logger";
 import {
   emitTicketContext,
+  invalidateTicketNotifications,
   revokeTicketContextRooms
 } from "../SocketServices/TicketContextSocketService";
 import { incrementCounter } from "../CounterServices/IncrementCounter";
@@ -326,6 +327,7 @@ const UpdateTicketService = async ({
           [
             `company-${ticket.companyId}-closed`,
             `queue-${ticket.queueId}-closed`,
+            `queue-${ticket.queueId}-notification`,
             ticket.id.toString()
           ]
         );
@@ -379,6 +381,13 @@ const UpdateTicketService = async ({
       ...(status === "closed" ? { unansweredSince: null } : {})
     });
     await revokeTicketContextRooms(io, ticket.id);
+    if (
+      ticket.status !== "pending" &&
+      ticket.status !== "open" &&
+      (ticket.queueId !== oldQueueId || ticket.userId !== (oldUserId ?? null))
+    ) {
+      await invalidateTicketNotifications(io, ticket, oldQueueId);
+    }
 
     if (oldStatus !== status) {
       if (oldStatus === "closed" && status === "open") {

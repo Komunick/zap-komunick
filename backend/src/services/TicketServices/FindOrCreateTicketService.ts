@@ -90,6 +90,7 @@ type TicketResult = {
   ticket: Ticket;
   justCreated: boolean;
   queueRepaired: boolean;
+  previousQueueId?: number | null;
   startInboundQueue: boolean;
 };
 
@@ -281,6 +282,7 @@ const internalFindOrCreateTicketService = async (
       };
     }
 
+    const previousQueueId = ticket?.queueId;
     const queueRepaired = ticket
       ? await repairInboundQueue(ticket, inboundQueueIds, singleInboundQueueId)
       : false;
@@ -320,6 +322,7 @@ const internalFindOrCreateTicketService = async (
       ticket,
       justCreated,
       queueRepaired,
+      ...(queueRepaired ? { previousQueueId } : {}),
       startInboundQueue:
         singleInboundQueueId !== null &&
         ticket.queueId === singleInboundQueueId &&
