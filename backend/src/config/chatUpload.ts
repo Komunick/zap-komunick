@@ -8,6 +8,7 @@ import {
   inspectChatMediaDirectory
 } from "./chatMedia";
 import { isChatUploadName } from "../helpers/ChatMediaRules";
+import { safeUploadExtension } from "../helpers/SafeUploadExtension";
 
 // Zap Komunick: unique request-owned names make rollback cleanup safe. Other
 // modules retain their existing storage and public delivery contracts.
@@ -20,11 +21,10 @@ export const chatUpload = multer({
       );
     },
     filename(_req, file, callback) {
-      const originalExtension = path.extname(file.originalname);
-      const extension = /^\.[a-zA-Z0-9]{1,32}$/.test(originalExtension)
-        ? originalExtension
-        : "";
-      callback(null, `chat-${randomUUID()}${extension}`);
+      callback(
+        null,
+        `chat-${randomUUID()}${safeUploadExtension(file.originalname)}`
+      );
     }
   })
 });
