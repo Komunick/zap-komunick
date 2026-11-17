@@ -209,6 +209,8 @@ const pt = {
   },
   customerPanel: {
     title: "Painel do cliente",
+    collapse: "Recolher dados do contato",
+    expand: "Mostrar dados do contato",
     wallet: "Carteira",
     noWallet: "Sem responsável",
     queue: "Fila",
@@ -564,7 +566,11 @@ const pt = {
     }
   },
   messagesInput: {
-    placeholderPaused: "Atendimento pausado. Clique em Retomar para responder."
+    placeholderPaused: "Atendimento pausado. Clique em Retomar para responder.",
+    dropFiles: "Solte os arquivos para anexar",
+    dropUnavailable: "Não é possível anexar arquivos neste atendimento agora.",
+    skippedFiles: "Pastas e arquivos vazios não podem ser anexados: {{names}}",
+    moreFiles: "+{{count}} arquivo(s)"
   },
   closeReasons: {
     title: "Motivos de finalização",
@@ -881,6 +887,8 @@ const en = {
   },
   customerPanel: {
     title: "Customer panel",
+    collapse: "Hide contact details",
+    expand: "Show contact details",
     wallet: "Wallet",
     noWallet: "No owner",
     queue: "Queue",
@@ -1234,7 +1242,11 @@ const en = {
     }
   },
   messagesInput: {
-    placeholderPaused: "Ticket paused. Click Resume to reply."
+    placeholderPaused: "Ticket paused. Click Resume to reply.",
+    dropFiles: "Drop the files to attach them",
+    dropUnavailable: "Files cannot be attached to this ticket right now.",
+    skippedFiles: "Folders and empty files cannot be attached: {{names}}",
+    moreFiles: "+{{count}} file(s)"
   },
   closeReasons: {
     title: "Close reasons",
@@ -1554,6 +1566,8 @@ const es = {
   },
   customerPanel: {
     title: "Panel del cliente",
+    collapse: "Ocultar datos del contacto",
+    expand: "Mostrar datos del contacto",
     wallet: "Cartera",
     noWallet: "Sin responsable",
     queue: "Cola",
@@ -1908,7 +1922,13 @@ const es = {
     }
   },
   messagesInput: {
-    placeholderPaused: "Atención pausada. Haga clic en Retomar para responder."
+    placeholderPaused: "Atención pausada. Haga clic en Retomar para responder.",
+    dropFiles: "Suelte los archivos para adjuntarlos",
+    dropUnavailable:
+      "No es posible adjuntar archivos en esta conversación ahora.",
+    skippedFiles:
+      "No se pueden adjuntar carpetas ni archivos vacíos: {{names}}",
+    moreFiles: "+{{count}} archivo(s)"
   },
   closeReasons: {
     title: "Motivos de cierre",

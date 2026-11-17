@@ -8,6 +8,10 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 - A empresa pode exigir o nome do atendente nas mensagens manuais de texto do WhatsApp. A configuração
   prevalece sobre a preferência de assinatura do navegador e mantém o acesso por setor.
+- Na tela de atendimento, um botão no cabeçalho, ao lado de Finalizar, recolhe e reabre o painel do cliente.
+  Recolhido, a conversa ocupa a largura toda. O SuperChat lembra a escolha de cada usuário neste navegador.
+- Arquivos arrastados para a conversa ou para o campo de mensagem entram como anexo, com a mesma validação do botão
+  de anexo. Pastas e arquivos vazios são recusados com aviso, inclusive pelo botão.
 
 
 ### Alterado
