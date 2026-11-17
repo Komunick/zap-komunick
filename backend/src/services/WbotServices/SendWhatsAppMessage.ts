@@ -6,6 +6,7 @@ import Message from "../../models/Message";
 import Ticket from "../../models/Ticket";
 
 import formatBody from "../../helpers/Mustache";
+import { formatSignedMessage } from "../../helpers/MessageSignature";
 import { verifyMediaMessage, verifyMessage } from "./wbotMessageListener";
 import User from "../../models/User";
 import { getJidOf } from "./getJidOf";
@@ -16,13 +17,15 @@ interface Request {
   ticket: Ticket;
   userId?: number;
   quotedMsg?: Message;
+  forceSignature?: boolean;
 }
 
 const SendWhatsAppMessage = async ({
   body,
   ticket,
   userId,
-  quotedMsg
+  quotedMsg,
+  forceSignature = false
 }: Request): Promise<WAMessage> => {
   let options = {};
 
@@ -61,7 +64,11 @@ const SendWhatsAppMessage = async ({
 
   try {
     const user = userId && (await User.findByPk(userId));
-    const formattedBody = formatBody(body, ticket, user);
+    const formattedBody = forceSignature
+      ? formatSignedMessage(body, ticket.companyId, user, text =>
+          formatBody(text, ticket, user)
+        )
+      : formatBody(body, ticket, user);
     const sentMessage = await wbot.sendMessage(
       getJidOf(ticket),
       {

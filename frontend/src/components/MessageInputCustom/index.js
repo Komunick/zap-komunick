@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef } from "react";
+import React, { useState, useEffect, useContext, useMemo, useRef } from "react";
 import withWidth, { isWidthUp } from "@material-ui/core/withWidth";
 import "emoji-mart/css/emoji-mart.css";
 import { Picker } from "emoji-mart";
@@ -53,7 +53,7 @@ import Compressor from "compressorjs";
 import LinearWithValueLabel from "./ProgressBarCustom";
 import WhatsMarked from "react-whatsmarked";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSignature } from "@fortawesome/free-solid-svg-icons";
+import { faLock, faSignature } from "@fortawesome/free-solid-svg-icons";
 import { isMobile } from "../../helpers/isMobile";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import TicketAssistant from "../TicketAssistant";
@@ -207,7 +207,11 @@ const useStyles = makeStyles(theme => ({
   iconSwitch: {
     color: props => (props.value ? theme.palette.primary.main : "gray"),
     width: 48,
-    height: 48
+    height: 48,
+    "&.Mui-disabled": {
+      color: props =>
+        props.value ? theme.palette.primary.main : theme.palette.text.disabled
+    }
   },
 
   formatMenu: {
@@ -263,14 +267,22 @@ const SignSwitch = props => {
 };
 
 const IconSwitch = props => {
-  const { setter, value, icon, tooltip } = props;
+  const { setter, value, icon, tooltip, disabled } = props;
   const classes = useStyles({ value });
 
   return (
     <Tooltip title={tooltip}>
-      <IconButton onClick={() => setter(!value)} className={classes.iconSwitch}>
-        <FontAwesomeIcon icon={icon} />
-      </IconButton>
+      <span>
+        <IconButton
+          aria-label={tooltip}
+          aria-pressed={value}
+          disabled={disabled}
+          onClick={() => setter(!value)}
+          className={classes.iconSwitch}
+        >
+          <FontAwesomeIcon icon={icon} />
+        </IconButton>
+      </span>
     </Tooltip>
   );
 };
@@ -817,6 +829,38 @@ const CustomInput = props => {
   );
 };
 
+function useCompanyMessageSignature(companyId, userId) {
+  const scope = useMemo(
+    () => (companyId && userId ? { companyId, userId } : null),
+    [companyId, userId]
+  );
+  const [policy, setPolicy] = useState(null);
+
+  useEffect(() => {
+    if (!scope) return;
+    let active = true;
+    api
+      .get("/settings/forceMessageSignature")
+      .then(({ data }) => {
+        if (active) {
+          setPolicy({
+            scope,
+            value: data === "enabled" ? "enabled" : "disabled"
+          });
+        }
+      })
+      .catch(() => {
+        if (active) setPolicy({ scope, value: "disabled" });
+      });
+    return () => {
+      active = false;
+    };
+  }, [scope]);
+
+  if (!scope) return "disabled";
+  return policy?.scope === scope ? policy.value : "loading";
+}
+
 const MessageInputCustom = props => {
   const { ticket, showTabGroups } = props;
   const { status: ticketStatus, id: ticketId } = ticket;
@@ -829,6 +873,7 @@ const MessageInputCustom = props => {
   const [recording, setRecording] = useState(false);
   const [percentLoading, setPercentLoading] = useState(0);
   const assistantComposer = useRef(null);
+  const prefilledEdit = useRef(null);
 
   const inputRef = useRef();
   const { setReplyingMessage, replyingMessage } =
@@ -865,7 +910,19 @@ const MessageInputCustom = props => {
     return true;
   };
 
-  const [signMessage, setSignMessage] = useLocalStorage("signOption", true);
+  const [signPreference, setSignPreference] = useLocalStorage(
+    "signOption",
+    true
+  );
+  const signaturePolicy = useCompanyMessageSignature(user?.companyId, user?.id);
+  const signatureRequired = signaturePolicy === "enabled";
+  const signatureLocked = signaturePolicy !== "disabled";
+  const signMessage = signatureRequired || signPreference;
+  const signatureTooltip = {
+    disabled: "messagesInput.signMessage",
+    enabled: "companyMessageSignature.required",
+    loading: "companyMessageSignature.loading"
+  }[signaturePolicy];
 
   const socketManager = useContext(SocketContext);
   const [socket, setSocket] = useState(null);
@@ -884,13 +941,21 @@ const MessageInputCustom = props => {
 
   useEffect(() => {
     if (editingMessage) {
-      if (signMessage && editingMessage.body.startsWith(`*${user.name}:*\n`)) {
-        setInputMessage(
-          editingMessage.body.substr(editingMessage.body.indexOf("\n") + 1)
-        );
-      } else {
-        setInputMessage(editingMessage.body);
-      }
+      const prefix = `*${user.name}:*\n`;
+      const body =
+        signMessage && editingMessage.body.startsWith(prefix)
+          ? editingMessage.body.slice(prefix.length)
+          : editingMessage.body;
+      const previousEdit = prefilledEdit.current;
+      setInputMessage(current =>
+        previousEdit?.message === editingMessage &&
+        current !== previousEdit.body
+          ? current
+          : body
+      );
+      prefilledEdit.current = { message: editingMessage, body };
+    } else {
+      prefilledEdit.current = null;
     }
 
     if (replyingMessage || editingMessage) {
@@ -1044,9 +1109,10 @@ const MessageInputCustom = props => {
       read: 1,
       fromMe: true,
       mediaUrl: "",
-      body: signMessage
-        ? `*${user?.name}:*\n${inputMessage.trim()}`
-        : inputMessage.trim(),
+      body:
+        signPreference && !signatureRequired
+          ? `*${user?.name}:*\n${inputMessage.trim()}`
+          : inputMessage.trim(),
       quotedMsg: replyingMessage
     };
 
@@ -1240,10 +1306,11 @@ const MessageInputCustom = props => {
           />
 
           <IconSwitch
-            setter={setSignMessage}
+            setter={setSignPreference}
             value={signMessage}
-            icon={faSignature}
-            tooltip={i18n.t("messagesInput.signMessage")}
+            icon={signatureLocked ? faLock : faSignature}
+            tooltip={i18n.t(signatureTooltip)}
+            disabled={signatureLocked}
           />
 
           <CustomInput

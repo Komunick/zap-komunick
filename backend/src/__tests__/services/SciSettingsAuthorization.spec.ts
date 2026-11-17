@@ -4,10 +4,12 @@ import { update } from "../../controllers/SettingController";
 import UpdateSettingService from "../../services/SettingServices/UpdateSettingService";
 import Setting from "../../models/Setting";
 import User from "../../models/User";
+import { FORCE_MESSAGE_SIGNATURE } from "../../helpers/MessageSignature";
 
 jest.mock("../../models/Setting", () => ({
   findOne: jest.fn(),
-  findAll: jest.fn()
+  findAll: jest.fn(),
+  count: jest.fn()
 }));
 jest.mock("../../models/User", () => ({ findOne: jest.fn() }));
 jest.mock("../../models/Ticket", () => ({}));
@@ -16,6 +18,7 @@ jest.mock("../../models/Queue", () => ({}));
 jest.mock("../../services/SettingServices/UpdateSettingService", () =>
   jest.fn()
 );
+
 jest.mock("../../services/SettingServices/ListSettingsService", () =>
   jest.fn()
 );
@@ -162,3 +165,52 @@ describe.each(["sciEnabled", "integratedAssistantEnabled"])(
     });
   }
 );
+
+describe("mandatory signature setting authorization", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("lets current staff read their company policy", async () => {
+    (User.findOne as jest.Mock).mockResolvedValue(current("user"));
+    (Setting.count as jest.Mock).mockResolvedValue(1);
+    await expect(
+      GetSettingService({
+        key: FORCE_MESSAGE_SIGNATURE,
+        user: { ...actor, profile: "user" }
+      })
+    ).resolves.toBe("enabled");
+    expect(Setting.count).toHaveBeenCalledWith({
+      where: {
+        companyId: actor.companyId,
+        key: FORCE_MESSAGE_SIGNATURE,
+        value: "enabled"
+      }
+    });
+  });
+
+  it("refuses a stale JWT for a user transferred to another company", async () => {
+    (User.findOne as jest.Mock).mockResolvedValue(current("admin", 20));
+    await expect(
+      GetSettingService({ key: FORCE_MESSAGE_SIGNATURE, user: actor })
+    ).rejects.toMatchObject({ statusCode: 403 });
+    expect(Setting.count).not.toHaveBeenCalled();
+  });
+
+  it("requires a current company administrator to update the policy", async () => {
+    (User.findOne as jest.Mock).mockResolvedValue(current("user"));
+    await expect(
+      update(req(FORCE_MESSAGE_SIGNATURE), {} as Response)
+    ).rejects.toMatchObject({ statusCode: 403 });
+    expect(UpdateSettingService).not.toHaveBeenCalled();
+
+    (User.findOne as jest.Mock).mockResolvedValue(current());
+    const response = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+    await update(req(FORCE_MESSAGE_SIGNATURE), response as unknown as Response);
+    expect(UpdateSettingService).toHaveBeenCalledWith({
+      key: FORCE_MESSAGE_SIGNATURE,
+      companyId: actor.companyId,
+      value: "enabled"
+    });
+  });
+});

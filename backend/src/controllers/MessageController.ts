@@ -4,12 +4,14 @@ import AppError from "../errors/AppError";
 
 import SetTicketMessagesAsRead from "../helpers/SetTicketMessagesAsRead";
 import { sanitizeMessageQuotePayload } from "../helpers/MessageQuotePrivacy";
+import { isMessageSignatureRequired } from "../helpers/MessageSignature";
 import { getIO } from "../libs/socket";
 import Queue from "../models/Queue";
 import User from "../models/User";
 import Whatsapp from "../models/Whatsapp";
 
 import ListMessagesService from "../services/MessageServices/ListMessagesService";
+import ShowPendingMessagePreviewService from "../services/MessageServices/ShowPendingMessagePreviewService";
 import ShowTicketService from "../services/TicketServices/ShowTicketService";
 import DeleteWhatsAppMessage from "../services/WbotServices/DeleteWhatsAppMessage";
 import SendWhatsAppMedia from "../services/WbotServices/SendWhatsAppMedia";
@@ -131,6 +133,19 @@ export const historyByMessageId = async (
   return res.json({ oldMessages });
 };
 
+export const preview = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const previewMessage = await ShowPendingMessagePreviewService(
+    req.params.ticketId,
+    { userId: req.user.id, companyId: req.user.companyId }
+  );
+  return res.set("Cache-Control", "private, no-store").json({
+    preview: previewMessage
+  });
+};
+
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { ticketId } = req.params;
   const { body, quotedMsg }: MessageData = req.body;
@@ -181,7 +196,8 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
       body,
       ticket,
       userId,
-      quotedMsg: authorizedQuote
+      quotedMsg: authorizedQuote,
+      forceSignature: await isMessageSignatureRequired(companyId)
     });
   }
 
