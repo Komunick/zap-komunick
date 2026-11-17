@@ -19,6 +19,8 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- O painel de notificações e os avisos do navegador respeitam os setores vinculados ao usuário.
+  Ao transferir um atendimento, a notificação é retirada da fila de origem.
 - Quando um WhatsApp atende uma única fila, a primeira mensagem recebida já fica registrada nela. Se o atendimento
   existente estiver em uma fila incompatível, a entrada corrige o vínculo antes de registrar a nova mensagem.
 - Agendamentos usam o WhatsApp da fila selecionada ou o canal do atendimento de origem. Se o canal

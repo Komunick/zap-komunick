@@ -86,6 +86,7 @@ import WhatsappLidMap from "../../models/WhatsappLidMap";
 import normalizePhone from "../../helpers/NormalizePhone";
 import {
   emitTicketContext,
+  invalidateTicketNotifications,
   revokeTicketContextRooms
 } from "../SocketServices/TicketContextSocketService";
 
@@ -2000,17 +2001,21 @@ const handleMessage = async (
       "protocolMessage"
     ].includes(msgType);
 
-    const { ticket, justCreated, queueRepaired, startInboundQueue } =
-      await FindOrCreateTicketService(contact, wbot.id!, companyId, {
-        groupContact,
-        incrementUnread: !msg.key.fromMe,
-        findOnly,
-        inboundQueueIds: msg.key.fromMe
-          ? undefined
-          : whatsapp.queues.map(queue => queue.id),
-        queue:
-          whatsapp.queues.find(queue => queue.id === queueId) ?? defaultQueue
-      });
+    const {
+      ticket,
+      justCreated,
+      queueRepaired,
+      previousQueueId,
+      startInboundQueue
+    } = await FindOrCreateTicketService(contact, wbot.id!, companyId, {
+      groupContact,
+      incrementUnread: !msg.key.fromMe,
+      findOnly,
+      inboundQueueIds: msg.key.fromMe
+        ? undefined
+        : whatsapp.queues.map(queue => queue.id),
+      queue: whatsapp.queues.find(queue => queue.id === queueId) ?? defaultQueue
+    });
 
     if (!ticket) {
       return;
@@ -2019,6 +2024,7 @@ const handleMessage = async (
     if (queueRepaired) {
       try {
         await revokeTicketContextRooms(getIO(), ticket.id);
+        await invalidateTicketNotifications(getIO(), ticket, previousQueueId);
       } catch {
         logger.warn(
           { ticketId: ticket.id },

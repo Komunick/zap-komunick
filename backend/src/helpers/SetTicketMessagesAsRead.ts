@@ -7,8 +7,8 @@ import { logger } from "../utils/logger";
 import GetTicketWbot from "./GetTicketWbot";
 
 const SetTicketMessagesAsRead = async (ticket: Ticket): Promise<void> => {
+  let hadUnread = ticket.unreadMessages > 0;
   await ticket.update({ unreadMessages: 0 }, { silent: true });
-  let companyId: number;
 
   try {
     const wbot = await GetTicketWbot(ticket);
@@ -33,9 +33,8 @@ const SetTicketMessagesAsRead = async (ticket: Ticket): Promise<void> => {
           ];
         }
 
-        // eslint-disable-next-line no-await-in-loop
         const messages = await Message.findAll({
-          attributes: ["id", "companyId", "dataJson", "createdAt"],
+          attributes: ["id", "dataJson", "createdAt"],
           where: whereClause,
           order: [
             ["createdAt", "DESC"],
@@ -47,6 +46,7 @@ const SetTicketMessagesAsRead = async (ticket: Ticket): Promise<void> => {
         if (messages.length === 0) break;
 
         if (isFirstBatch) {
+          hadUnread = true;
           const lastMessage: proto.IWebMessageInfo = JSON.parse(
             messages[0].dataJson
           );
@@ -64,7 +64,6 @@ const SetTicketMessagesAsRead = async (ticket: Ticket): Promise<void> => {
                 );
               });
           }
-          companyId = messages[0]?.companyId;
           isFirstBatch = false;
         }
 
@@ -81,7 +80,6 @@ const SetTicketMessagesAsRead = async (ticket: Ticket): Promise<void> => {
         );
 
         try {
-          // eslint-disable-next-line no-await-in-loop
           await (wbot as WASocket).readMessages(messageKeys);
         } catch (err) {
           logger.error(
@@ -113,16 +111,16 @@ const SetTicketMessagesAsRead = async (ticket: Ticket): Promise<void> => {
     );
   }
 
-  const io = getIO();
-  if (companyId) {
-    io.to(ticket.id.toString())
-      .to(`company-${companyId}-${ticket.status}`)
-      .to(`queue-${ticket.queueId}-${ticket.status}`)
-      .emit(`company-${companyId}-ticket`, {
-        action: "updateUnread",
-        ticketId: ticket.id
-      });
+  if (!hadUnread) return;
+  const { companyId, id, queueId, status } = ticket;
+  const rooms = [id.toString(), `company-${companyId}-${status}`];
+  if (queueId != null) {
+    rooms.push(`queue-${queueId}-${status}`, `queue-${queueId}-notification`);
   }
+  getIO().to(rooms).emit(`company-${companyId}-ticket`, {
+    action: "updateUnread",
+    ticketId: id
+  });
 };
 
 export default SetTicketMessagesAsRead;

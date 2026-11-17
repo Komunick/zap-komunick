@@ -30,6 +30,7 @@ const useTickets = ({
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
+    let active = true;
     setLoading(true);
     const delayDebounceFn = setTimeout(() => {
       const fetchTickets = async () => {
@@ -55,16 +56,21 @@ const useTickets = ({
               ...JSON.parse(filtersKey)
             }
           });
+          if (!active) return;
           setTickets(data.tickets);
           setLoading(false);
         } catch (err) {
+          if (!active) return;
           setLoading(false);
           toastError(err);
         }
       };
       fetchTickets();
     }, 500);
-    return () => clearTimeout(delayDebounceFn);
+    return () => {
+      active = false;
+      clearTimeout(delayDebounceFn);
+    };
   }, [
     searchParam,
     contactId,
