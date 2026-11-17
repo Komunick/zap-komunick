@@ -349,3 +349,15 @@ origem distinta da demonstração P3 para não compartilhar cookie de sessão en
 Validar serviços/API/UI com duas empresas e fixtures rastreadas, IDs repetidos entre fornecedores, modo desligado/
 desconhecido, review após alteração de vínculo/mensagem/perfil/flag, paginação, falhas e respostas antigas. Conferir
 rascunho, leitura/SLA e snapshot de negócio/credenciais, remover somente fixtures. Evidências e limites ficam no PR.
+
+## Assinatura obrigatória de mensagens
+
+A configuração da empresa `forceMessageSignature` pode ser ativada com
+`PUT /settings/forceMessageSignature` e o corpo `{"value":"enabled"}`, usando uma sessão administrativa
+da empresa. Com a regra ativa, o compositor mantém **Assinar** ligado e o backend usa o nome atual do
+usuário autenticado nas mensagens manuais de texto do WhatsApp. Os vínculos de setor seguem as permissões
+do atendimento.
+
+O valor `disabled` ou a ausência da configuração mantém a preferência do navegador para essa empresa.
+Automações, agendamentos, arquivos e encaminhamentos continuam com seus fluxos próprios. Para validar,
+use uma empresa fictícia, um navegador com **Assinar** desativado e um transporte WhatsApp simulado.

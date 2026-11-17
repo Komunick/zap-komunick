@@ -45,6 +45,8 @@ import CloseReason from "../models/CloseReason";
 import AuditLog from "../models/AuditLog";
 import CompanyCredential from "../models/CompanyCredential";
 import ContactExternalClientLink from "../models/ContactExternalClientLink";
+import SlaAlertConfiguration from "../models/SlaAlertConfiguration";
+import SlaAlert from "../models/SlaAlert";
 
 const dbConfig = require("../config/database");
 
@@ -102,7 +104,9 @@ const models = [
   CloseReason,
   AuditLog,
   CompanyCredential,
-  ContactExternalClientLink
+  ContactExternalClientLink,
+  SlaAlertConfiguration,
+  SlaAlert
 ];
 
 sequelize.addModels(models);

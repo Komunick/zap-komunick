@@ -32,6 +32,7 @@ import CachedIcon from "@material-ui/icons/Cached";
 
 import MainListItems from "./MainListItems";
 import NotificationsPopOver from "../components/NotificationsPopOver";
+import SlaAlertsPopover from "../components/SlaAlertsPopover";
 import { Backendlogs } from "../components/Backendlogs";
 import { PhoneCall } from "../components/PhoneCall";
 import NotificationsVolume from "../components/NotificationsVolume";
@@ -1173,6 +1174,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
           <NotificationsVolume setVolume={setVolume} volume={volume} />
 
           {user.id && <NotificationsPopOver volume={volume} />}
+          {user.id && <SlaAlertsPopover key={`${user.companyId}:${user.id}`} />}
 
           <AnnouncementsPopover />
 

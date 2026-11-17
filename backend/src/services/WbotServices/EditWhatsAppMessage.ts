@@ -1,3 +1,4 @@
+import { getContentType, normalizeMessageContent } from "libzapitu-rf";
 import AppError from "../../errors/AppError";
 import GetTicketWbot from "../../helpers/GetTicketWbot";
 import Message from "../../models/Message";
@@ -5,6 +6,10 @@ import OldMessage from "../../models/OldMessage";
 import Ticket from "../../models/Ticket";
 
 import formatBody from "../../helpers/Mustache";
+import {
+  formatSignedMessage,
+  isMessageSignatureRequired
+} from "../../helpers/MessageSignature";
 import User from "../../models/User";
 import { getIO } from "../../libs/socket";
 import Contact from "../../models/Contact";
@@ -58,7 +63,21 @@ const EditWhatsAppMessage = async ({
   const wbot = await GetTicketWbot(ticket);
 
   const msg = JSON.parse(message.dataJson);
-  const formattedBody = formatBody(body, ticket, user);
+  const contentType = getContentType(normalizeMessageContent(msg.message));
+  const isText =
+    contentType === "conversation" ||
+    contentType === "extendedTextMessage" ||
+    (!contentType && !message.mediaType);
+  const forceSignature =
+    message.fromMe &&
+    ticket.channel === "whatsapp" &&
+    isText &&
+    (await isMessageSignatureRequired(companyId));
+  const formattedBody = forceSignature
+    ? formatSignedMessage(body, companyId, user, text =>
+        formatBody(text, ticket, user)
+      )
+    : formatBody(body, ticket, user);
 
   try {
     await wbot.sendMessage(

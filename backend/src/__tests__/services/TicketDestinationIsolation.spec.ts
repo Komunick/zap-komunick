@@ -4,6 +4,7 @@ import User from "../../models/User";
 import Queue from "../../models/Queue";
 import Whatsapp from "../../models/Whatsapp";
 import { GetCompanySetting } from "../../helpers/CheckSettings";
+import SetTicketMessagesAsRead from "../../helpers/SetTicketMessagesAsRead";
 import GetTicketWbot from "../../helpers/GetTicketWbot";
 import FindOrCreateATicketTrakingService from "../../services/TicketServices/FindOrCreateATicketTrakingService";
 import SendWhatsAppMessage from "../../services/WbotServices/SendWhatsAppMessage";
@@ -79,6 +80,26 @@ describe("destination user belongs to the ticket office", () => {
       save: jest.fn()
     });
     (User.findOne as jest.Mock).mockResolvedValue(null);
+  });
+
+  it("does not claim an already accepted ticket from a stale preview, even as an admin", async () => {
+    const ticket = await ShowTicketService(301, 10);
+    ticket.channel = "whatsapp";
+    ticket.userId = 102;
+
+    await expect(
+      UpdateTicketService({
+        ticketId: 301,
+        reqUserId: 101,
+        ticketData: { status: "open", userId: 101, onlyIfPending: true }
+      })
+    ).rejects.toMatchObject({
+      message: "ERR_TICKET_NOT_PENDING",
+      statusCode: 409
+    });
+    expect(update).not.toHaveBeenCalled();
+    expect(FindOrCreateATicketTrakingService).not.toHaveBeenCalled();
+    expect(SetTicketMessagesAsRead).not.toHaveBeenCalled();
   });
 
   it("rejects another office's destination user before changing ticket or tracking", async () => {

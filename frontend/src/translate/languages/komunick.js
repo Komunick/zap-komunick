@@ -3718,6 +3718,200 @@ es.whitelabel = {
   logoHint: "Conserva las proporciones originales de la marca."
 };
 
+pt.backendErrors.ERR_TICKET_NOT_PENDING =
+  "Este atendimento não está mais aguardando aceite.";
+en.backendErrors.ERR_TICKET_NOT_PENDING =
+  "This ticket is no longer awaiting acceptance.";
+es.backendErrors.ERR_TICKET_NOT_PENDING =
+  "Esta conversación ya no está pendiente de aceptación.";
+
+pt.ticketPreview = {
+  action: "Ver prévia da mensagem",
+  title: "Prévia da mensagem",
+  accept: "Aceitar e abrir",
+  loading: "Carregando a prévia…",
+  unavailable: "Não foi possível carregar a prévia.",
+  empty: "Ainda não há mensagem recebida neste atendimento.",
+  kinds: {
+    text: "Mensagem recebida",
+    image: "Imagem",
+    video: "Vídeo",
+    audio: "Áudio",
+    attachment: "Anexo",
+    contact: "Contato",
+    location: "Localização"
+  }
+};
+en.ticketPreview = {
+  action: "Preview message",
+  title: "Message preview",
+  accept: "Accept and open",
+  loading: "Loading preview…",
+  unavailable: "Could not load the preview.",
+  empty: "No messages have been received in this ticket yet.",
+  kinds: {
+    text: "Incoming message",
+    image: "Image",
+    video: "Video",
+    audio: "Audio",
+    attachment: "Attachment",
+    contact: "Contact",
+    location: "Location"
+  }
+};
+es.ticketPreview = {
+  action: "Ver vista previa del mensaje",
+  title: "Vista previa del mensaje",
+  accept: "Aceptar y abrir",
+  loading: "Cargando vista previa…",
+  unavailable: "No se pudo cargar la vista previa.",
+  empty: "Aún no se ha recibido ningún mensaje en esta conversación.",
+  kinds: {
+    text: "Mensaje recibido",
+    image: "Imagen",
+    video: "Vídeo",
+    audio: "Audio",
+    attachment: "Adjunto",
+    contact: "Contacto",
+    location: "Ubicación"
+  }
+};
+
+pt.generalTriage = {
+  title: "Triagem sem setor",
+  queue: "Fila de atendimento geral",
+  disabled: "Desativada",
+  queueHint: "Vincule a fila ao WhatsApp e aos atendentes que fazem a triagem.",
+  timeout: "Tempo para escolher um setor (minutos)",
+  timeoutHint: "Depois desse prazo, o atendimento vai para a fila geral."
+};
+
+pt.slaNotifications = {
+  title: "Alertas de SLA",
+  settingsTitle: "Avisos após 3 horas sem resposta",
+  settingsHint:
+    "Avise no SuperChat os responsáveis pelo setor e as pessoas que acompanham os atendimentos.",
+  enabled: "Ativar avisos de 3 horas",
+  extraRecipients: "Pessoas que acompanham todos os setores",
+  extraRecipientsHint:
+    "Selecione as contas que devem receber avisos de todos os setores.",
+  queue: "Setor",
+  responsible: "Responsáveis pelo setor",
+  save: "Salvar alertas de SLA",
+  loadError: "Não foi possível carregar os alertas de SLA.",
+  empty: "Nenhum alerta de SLA.",
+  waitingInQueue: "Atendimento sem resposta há pelo menos 3 horas em {{queue}}",
+  waiting: "Há um atendimento sem resposta há pelo menos 3 horas."
+};
+
+Object.assign(pt.backendErrors, {
+  ERR_INVALID_SLA_ALERT_CONFIG: "Confira a configuração dos alertas de SLA.",
+  ERR_INVALID_SLA_ALERT_RECIPIENT:
+    "Selecione destinatários da empresa e responsáveis com acesso ao setor."
+});
+
+en.generalTriage = {
+  title: "Tickets without a department",
+  queue: "General service queue",
+  disabled: "Disabled",
+  queueHint:
+    "Link this queue to the WhatsApp channel and the agents handling triage.",
+  timeout: "Time to select a department (minutes)",
+  timeoutHint: "After this period, the ticket moves to the general queue."
+};
+
+en.slaNotifications = {
+  title: "SLA alerts",
+  settingsTitle: "Alerts after 3 hours without a reply",
+  settingsHint:
+    "Notify queue owners and people overseeing tickets in SuperChat.",
+  enabled: "Enable 3-hour alerts",
+  extraRecipients: "People overseeing all departments",
+  extraRecipientsHint:
+    "Choose the accounts that should receive alerts for all departments.",
+  queue: "Department",
+  responsible: "Department owners",
+  save: "Save SLA alerts",
+  loadError: "Could not load the SLA alerts.",
+  empty: "No SLA alerts.",
+  waitingInQueue: "Ticket in {{queue}} has waited at least 3 hours for a reply",
+  waiting: "A ticket has waited at least 3 hours for a reply."
+};
+
+Object.assign(en.backendErrors, {
+  ERR_INVALID_SLA_ALERT_CONFIG: "Check the SLA alert settings.",
+  ERR_INVALID_SLA_ALERT_RECIPIENT:
+    "Choose recipients from this company and owners with access to the department."
+});
+
+es.generalTriage = {
+  title: "Conversaciones sin sector",
+  queue: "Cola de atención general",
+  disabled: "Desactivada",
+  queueHint:
+    "Vincula la cola al WhatsApp y a los agentes que hacen la clasificación.",
+  timeout: "Tiempo para elegir un sector (minutos)",
+  timeoutHint: "Después de ese plazo, la conversación pasa a la cola general."
+};
+
+es.slaNotifications = {
+  title: "Alertas de SLA",
+  settingsTitle: "Avisos después de 3 horas sin respuesta",
+  settingsHint:
+    "Notifica en SuperChat a los responsables del sector y a quienes supervisan las conversaciones.",
+  enabled: "Activar avisos de 3 horas",
+  extraRecipients: "Personas que supervisan todos los sectores",
+  extraRecipientsHint:
+    "Selecciona las cuentas que deben recibir avisos de todos los sectores.",
+  queue: "Sector",
+  responsible: "Responsables del sector",
+  save: "Guardar alertas de SLA",
+  loadError: "No se pudieron cargar las alertas de SLA.",
+  empty: "No hay alertas de SLA.",
+  waitingInQueue:
+    "Conversación sin respuesta durante al menos 3 horas en {{queue}}",
+  waiting: "Hay una conversación sin respuesta durante al menos 3 horas."
+};
+
+Object.assign(es.backendErrors, {
+  ERR_INVALID_SLA_ALERT_CONFIG:
+    "Revisa la configuración de las alertas de SLA.",
+  ERR_INVALID_SLA_ALERT_RECIPIENT:
+    "Elige destinatarios de la empresa y responsables con acceso al sector."
+});
+
+Object.assign(pt.backendErrors, {
+  ERR_GENERAL_TRIAGE_INVALID_QUEUE: "Escolha uma fila desta empresa.",
+  ERR_GENERAL_TRIAGE_INVALID_TIMEOUT: "Informe um prazo de 1 a 1440 minutos.",
+  ERR_SLA_ALERT_NOT_FOUND: "Este alerta já não está disponível."
+});
+Object.assign(en.backendErrors, {
+  ERR_GENERAL_TRIAGE_INVALID_QUEUE: "Choose a queue from this company.",
+  ERR_GENERAL_TRIAGE_INVALID_TIMEOUT:
+    "Enter a time between 1 and 1440 minutes.",
+  ERR_SLA_ALERT_NOT_FOUND: "This alert is no longer available."
+});
+Object.assign(es.backendErrors, {
+  ERR_GENERAL_TRIAGE_INVALID_QUEUE: "Elige una cola de esta empresa.",
+  ERR_GENERAL_TRIAGE_INVALID_TIMEOUT: "Indica un plazo de 1 a 1440 minutos.",
+  ERR_SLA_ALERT_NOT_FOUND: "Este aviso ya no está disponible."
+});
+
+pt.companyMessageSignature = {
+  required: "Sua empresa exige a assinatura nas mensagens de texto.",
+  loading: "Consultando a regra de assinatura."
+};
+
+en.companyMessageSignature = {
+  required: "Your company requires a signature on text messages.",
+  loading: "Checking the signature setting."
+};
+
+es.companyMessageSignature = {
+  required: "Tu empresa exige la firma en los mensajes de texto.",
+  loading: "Consultando la configuración de firma."
+};
+
 export const komunickMessages = {
   pt: { translations: pt },
   pt_PT: { translations: pt },
