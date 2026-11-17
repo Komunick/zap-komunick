@@ -1,4 +1,5 @@
 import path from "path";
+import { randomBytes } from "crypto";
 import multer from "multer";
 import { safeUploadExtension } from "../helpers/SafeUploadExtension";
 
@@ -12,8 +13,11 @@ export default {
   storage: multer.diskStorage({
     destination: publicFolder,
     filename(req, file, cb) {
-      const fileName =
-        new Date().getTime() + safeUploadExtension(file.originalname);
+      // Zap Komunick: several files of one request can start in the same
+      // millisecond; the random part keeps one from overwriting another.
+      const fileName = `${new Date().getTime()}-${randomBytes(6).toString(
+        "hex"
+      )}${safeUploadExtension(file.originalname)}`;
 
       return cb(null, fileName);
     }

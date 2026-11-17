@@ -32,6 +32,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 - A tela de Conexões acompanha o QR Code do WhatsApp, avisa quando ele expira e permite gerar outro na mesma janela.
 - Miniaturas da galeria do chat interno usam a mesma sessão autenticada da imagem principal. Erros e fechamento
   também liberam essas referências, preservando a galeria dos atendimentos e os downloads existentes.
+- PDF e outros documentos com nome longo voltam a ser enviados e registrados na conversa. A cópia em disco
+  usa um nome encurtado e sem caracteres que quebram caminho ou link; o cliente recebe o nome original. Vários
+  arquivos enviados juntos não se sobrescrevem mais.
 
 ### Segurança
 

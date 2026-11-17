@@ -134,8 +134,9 @@ describe("stored upload names", () => {
         )
     );
 
-    expect(names[0]).toMatch(/^\d+\.mp3$/);
-    expect(names[1]).toMatch(/^\d+$/);
-    expect(names[2]).toMatch(/^\d+$/);
+    // Public uploads add a random hex part so files of one request never collide.
+    expect(names[0]).toMatch(/^\d+(-[0-9a-f]{12})?\.mp3$/);
+    expect(names[1]).toMatch(/^\d+(-[0-9a-f]{12})?$/);
+    expect(names[2]).toMatch(/^\d+(-[0-9a-f]{12})?$/);
   });
 });
