@@ -19,6 +19,8 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- As reações que o cliente manda no WhatsApp aparecem embaixo da mensagem original, também ao reabrir a
+  conversa. Cada pessoa mostra só a reação mais recente, e a reação removida some.
 - O painel de notificações e os avisos do navegador respeitam os setores vinculados ao usuário.
   Ao transferir um atendimento, a notificação é retirada da fila de origem.
 - Quando um WhatsApp atende uma única fila, a primeira mensagem recebida já fica registrada nela. Se o atendimento
