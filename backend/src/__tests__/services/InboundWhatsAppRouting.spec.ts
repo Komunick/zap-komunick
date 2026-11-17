@@ -336,7 +336,12 @@ it.each(["open", "closed"])(
     });
     expect(Ticket.create).not.toHaveBeenCalled();
     expect(oldSubscriber.leave).toHaveBeenCalledWith("301");
-    expect(oldSubscriber.emit).not.toHaveBeenCalled();
+    expect(oldSubscriber.emit.mock.calls).toEqual([
+      [
+        `company-${companyId}-ticket`,
+        { action: "removeFromList", ticketId: 301 }
+      ]
+    ]);
     expect(newSubscriber.emit).toHaveBeenCalledWith(
       `company-${companyId}-appMessage`,
       expect.objectContaining({

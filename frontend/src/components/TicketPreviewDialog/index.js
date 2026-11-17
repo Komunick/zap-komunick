@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Button,
   Dialog,
@@ -8,23 +8,60 @@ import {
   Typography,
   makeStyles
 } from "@material-ui/core";
+import { format, isValid, parseISO } from "date-fns";
 import { i18n } from "../../translate/i18n";
 import api from "../../services/api";
 import { formatWhatsappContactName } from "../../helpers/formatWhatsappDisplay";
 
 const useStyles = makeStyles(theme => ({
+  content: {
+    backgroundColor: theme.komunick.chatBackground
+  },
+  conversation: {
+    display: "flex",
+    flexDirection: "column",
+    gap: theme.spacing(1),
+    maxHeight: "min(60vh, 560px)",
+    overflowY: "auto",
+    padding: theme.spacing(0.5, 0.5, 1)
+  },
   message: {
-    backgroundColor: theme.komunick.hover,
+    maxWidth: "85%",
     borderRadius: theme.shape.borderRadius,
     overflowWrap: "anywhere",
-    padding: theme.spacing(2),
-    whiteSpace: "pre-wrap"
+    padding: theme.spacing(1, 1.5),
+    whiteSpace: "pre-wrap",
+    boxShadow: theme.komunick.shadow
+  },
+  received: {
+    alignSelf: "flex-start",
+    backgroundColor: theme.komunick.bubbleTheirs
+  },
+  sent: {
+    alignSelf: "flex-end",
+    backgroundColor: theme.komunick.bubbleMine,
+    border: `1px solid ${theme.komunick.bubbleMineBorder}`
   },
   messageText: {
-    marginTop: theme.spacing(1)
+    marginTop: theme.spacing(0.5)
+  },
+  time: {
+    display: "block",
+    marginTop: theme.spacing(0.5),
+    textAlign: "right"
+  },
+  notice: {
+    marginBottom: theme.spacing(1)
   }
 }));
 
+const time = value => {
+  const date = typeof value === "string" ? parseISO(value) : new Date(value);
+  return isValid(date) ? format(date, "dd/MM HH:mm") : "";
+};
+
+// Zap Komunick: preview of the whole pending conversation. Reading it never
+// accepts the ticket; only "Aceitar e abrir" does (onAccept).
 export default function TicketPreviewDialog({
   ticket,
   onClose,
@@ -32,8 +69,9 @@ export default function TicketPreviewDialog({
   accepting
 }) {
   const classes = useStyles();
-  const [preview, setPreview] = useState(undefined);
+  const [conversation, setConversation] = useState(undefined);
   const [failed, setFailed] = useState(false);
+  const listRef = useRef(null);
   const titleId = `ticket-preview-title-${ticket.id}`;
 
   useEffect(() => {
@@ -41,7 +79,14 @@ export default function TicketPreviewDialog({
     api
       .get(`/messages/${ticket.id}/preview`, { signal: controller.signal })
       .then(({ data }) => {
-        if (!controller.signal.aborted) setPreview(data?.preview ?? null);
+        if (controller.signal.aborted) return;
+        // Older backends answer only with the last received message.
+        const messages = Array.isArray(data?.messages)
+          ? data.messages
+          : data?.preview
+            ? [{ id: "preview", fromMe: false, ...data.preview }]
+            : [];
+        setConversation({ messages, truncated: !!data?.truncated });
       })
       .catch(() => {
         if (!controller.signal.aborted) setFailed(true);
@@ -49,19 +94,26 @@ export default function TicketPreviewDialog({
     return () => controller.abort();
   }, [ticket.id]);
 
-  const waiting = preview === undefined && !failed;
-  const kind = preview && (preview.kind !== "text" || !preview.text);
+  // Open at the newest message; the agent scrolls up for the rest.
+  useEffect(() => {
+    const list = listRef.current;
+    if (list) list.scrollTop = list.scrollHeight;
+  }, [conversation]);
+
+  const waiting = conversation === undefined && !failed;
+  const messages = conversation?.messages || [];
 
   return (
     <Dialog
       open
       fullWidth
-      maxWidth="xs"
+      maxWidth="sm"
+      scroll="paper"
       onClose={onClose}
       aria-labelledby={titleId}
     >
       <DialogTitle id={titleId}>{i18n.t("ticketPreview.title")}</DialogTitle>
-      <DialogContent dividers>
+      <DialogContent dividers className={classes.content}>
         <Typography variant="subtitle2" gutterBottom>
           {formatWhatsappContactName(ticket.contact, ticket)}
         </Typography>
@@ -73,22 +125,62 @@ export default function TicketPreviewDialog({
           <Typography role="status" color="textSecondary">
             {i18n.t("ticketPreview.loading")}
           </Typography>
-        ) : preview ? (
-          <div className={classes.message}>
-            {kind && (
-              <Typography variant="body2" color="textSecondary">
-                {i18n.t(`ticketPreview.kinds.${preview.kind}`)}
-              </Typography>
-            )}
-            {preview.text && (
+        ) : messages.length ? (
+          <>
+            {conversation.truncated && (
               <Typography
-                variant="body2"
-                className={kind ? classes.messageText : undefined}
+                variant="caption"
+                color="textSecondary"
+                component="p"
+                className={classes.notice}
               >
-                {preview.text}
+                {i18n.t("ticketPreview.truncated")}
               </Typography>
             )}
-          </div>
+            <div
+              ref={listRef}
+              className={classes.conversation}
+              role="log"
+              aria-label={i18n.t("ticketPreview.conversation")}
+              tabIndex={0}
+            >
+              {messages.map((message, index) => {
+                const label = message.kind !== "text" || !message.text;
+                return (
+                  <div
+                    key={`${message.id}-${index}`}
+                    className={`${classes.message} ${
+                      message.fromMe ? classes.sent : classes.received
+                    }`}
+                  >
+                    {label && (
+                      <Typography variant="body2" color="textSecondary">
+                        {i18n.t(`ticketPreview.kinds.${message.kind}`)}
+                      </Typography>
+                    )}
+                    {message.text && (
+                      <Typography
+                        variant="body2"
+                        className={label ? classes.messageText : undefined}
+                      >
+                        {message.text}
+                      </Typography>
+                    )}
+                    <Typography
+                      variant="caption"
+                      color="textSecondary"
+                      className={classes.time}
+                    >
+                      {message.fromMe
+                        ? `${i18n.t("ticketPreview.sent")} · `
+                        : ""}
+                      {time(message.createdAt)}
+                    </Typography>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         ) : (
           <Typography variant="body2" color="textSecondary">
             {i18n.t("ticketPreview.empty")}

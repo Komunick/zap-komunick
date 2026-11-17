@@ -52,6 +52,7 @@ import {
   messageListReducer,
   newMessagesForRefresh
 } from "../../helpers/messageListState";
+import { visibleReactions } from "../../helpers/messageReactions";
 
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
@@ -1160,17 +1161,20 @@ const MessagesList = ({
   const renderReplies = replies => {
     const reactions =
       replies &&
-      replies
-        .filter(reply => reply?.mediaType === "reactionMessage")
-        .map(reply => {
-          return reply.contact?.name ? (
-            <Tooltip title={reply.contact?.name} placement="top" arrow>
-              <div key={messageIdentity(reply)}>{reply.body}</div>
-            </Tooltip>
-          ) : (
-            <div key={messageIdentity(reply)}>{reply.body}</div>
-          );
-        });
+      visibleReactions(replies).map(reply => {
+        return reply.contact?.name ? (
+          <Tooltip
+            key={messageIdentity(reply)}
+            title={reply.contact?.name}
+            placement="top"
+            arrow
+          >
+            <div>{reply.body}</div>
+          </Tooltip>
+        ) : (
+          <div key={messageIdentity(reply)}>{reply.body}</div>
+        );
+      });
 
     return (
       reactions?.length > 0 && (

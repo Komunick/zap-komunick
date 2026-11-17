@@ -56,6 +56,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLock, faSignature } from "@fortawesome/free-solid-svg-icons";
 import { isMobile } from "../../helpers/isMobile";
 import { SocketContext } from "../../context/Socket/SocketContext";
+import { toast } from "react-toastify";
+import { selectAttachments } from "../../helpers/attachmentSelection";
 import TicketAssistant from "../TicketAssistant";
 import IntegratedAssistant from "../IntegratedAssistant";
 import useTicketDraft from "../../hooks/useTicketDraft";
@@ -862,11 +864,13 @@ function useCompanyMessageSignature(companyId, userId) {
 }
 
 const MessageInputCustom = props => {
-  const { ticket, showTabGroups } = props;
+  const { ticket, showTabGroups, dropRequest } = props;
   const { status: ticketStatus, id: ticketId } = ticket;
   const classes = useStyles();
 
   const [medias, setMedias] = useState([]);
+  // A drop made before this composer existed is not for it.
+  const handledDrop = useRef(dropRequest?.id);
   const [inputMessage, setInputMessage] = useTicketDraft(ticketId);
   const [showEmoji, setShowEmoji] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -986,18 +990,32 @@ const MessageInputCustom = props => {
     setInputMessage(prevState => prevState + emoji);
   };
 
+  // Zap Komunick: button, paste and drag and drop share selectAttachments.
+  const acceptMedias = fileList => {
+    const { files, skipped } = selectAttachments(fileList);
+    if (skipped.length) {
+      toast.warn(
+        i18n.t("messagesInput.skippedFiles", {
+          names: skipped.map(file => file?.name || "?").join(", ")
+        })
+      );
+    }
+    if (files.length) setMedias(files);
+  };
+
   const handleChangeMedias = e => {
     if (!e.target.files) {
       return;
     }
 
-    const selectedMedias = Array.from(e.target.files);
-    setMedias(selectedMedias);
+    acceptMedias(e.target.files);
+    // The same file can be chosen again after a cancel.
+    e.target.value = "";
   };
 
   const handleInputPaste = e => {
     if (e.clipboardData.files[0]) {
-      setMedias([e.clipboardData.files[0]]);
+      acceptMedias([e.clipboardData.files[0]]);
     }
   };
 
@@ -1192,6 +1210,19 @@ const MessageInputCustom = props => {
     ticketStatus === "closed" ||
     ticketStatus === "paused";
 
+  // Zap Komunick: files dropped on the conversation or on this field follow
+  // the attach button, including when it is disabled.
+  useEffect(() => {
+    if (!dropRequest || dropRequest.id === handledDrop.current) return;
+    handledDrop.current = dropRequest.id;
+    if (disableOption) {
+      toast.warn(i18n.t("messagesInput.dropUnavailable"));
+      return;
+    }
+    acceptMedias(dropRequest.files);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dropRequest]);
+
   const renderReplyingMessage = message => {
     return (
       <div className={classes.replyginMsgWrapper}>
@@ -1258,6 +1289,10 @@ const MessageInputCustom = props => {
         ) : (
           <span>
             {medias[0]?.name}
+            {medias.length > 1 &&
+              ` ${i18n.t("messagesInput.moreFiles", {
+                count: medias.length - 1
+              })}`}
             {/* <img src={media.preview} alt=""></img> */}
           </span>
         )}

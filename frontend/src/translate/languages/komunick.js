@@ -209,6 +209,8 @@ const pt = {
   },
   customerPanel: {
     title: "Painel do cliente",
+    collapse: "Recolher dados do contato",
+    expand: "Mostrar dados do contato",
     wallet: "Carteira",
     noWallet: "Sem responsável",
     queue: "Fila",
@@ -564,7 +566,11 @@ const pt = {
     }
   },
   messagesInput: {
-    placeholderPaused: "Atendimento pausado. Clique em Retomar para responder."
+    placeholderPaused: "Atendimento pausado. Clique em Retomar para responder.",
+    dropFiles: "Solte os arquivos para anexar",
+    dropUnavailable: "Não é possível anexar arquivos neste atendimento agora.",
+    skippedFiles: "Pastas e arquivos vazios não podem ser anexados: {{names}}",
+    moreFiles: "+{{count}} arquivo(s)"
   },
   closeReasons: {
     title: "Motivos de finalização",
@@ -881,6 +887,8 @@ const en = {
   },
   customerPanel: {
     title: "Customer panel",
+    collapse: "Hide contact details",
+    expand: "Show contact details",
     wallet: "Wallet",
     noWallet: "No owner",
     queue: "Queue",
@@ -1234,7 +1242,11 @@ const en = {
     }
   },
   messagesInput: {
-    placeholderPaused: "Ticket paused. Click Resume to reply."
+    placeholderPaused: "Ticket paused. Click Resume to reply.",
+    dropFiles: "Drop the files to attach them",
+    dropUnavailable: "Files cannot be attached to this ticket right now.",
+    skippedFiles: "Folders and empty files cannot be attached: {{names}}",
+    moreFiles: "+{{count}} file(s)"
   },
   closeReasons: {
     title: "Close reasons",
@@ -1554,6 +1566,8 @@ const es = {
   },
   customerPanel: {
     title: "Panel del cliente",
+    collapse: "Ocultar datos del contacto",
+    expand: "Mostrar datos del contacto",
     wallet: "Cartera",
     noWallet: "Sin responsable",
     queue: "Cola",
@@ -1908,7 +1922,13 @@ const es = {
     }
   },
   messagesInput: {
-    placeholderPaused: "Atención pausada. Haga clic en Retomar para responder."
+    placeholderPaused: "Atención pausada. Haga clic en Retomar para responder.",
+    dropFiles: "Suelte los archivos para adjuntarlos",
+    dropUnavailable:
+      "No es posible adjuntar archivos en esta conversación ahora.",
+    skippedFiles:
+      "No se pueden adjuntar carpetas ni archivos vacíos: {{names}}",
+    moreFiles: "+{{count}} archivo(s)"
   },
   closeReasons: {
     title: "Motivos de cierre",
@@ -3759,13 +3779,16 @@ es.backendErrors.ERR_TICKET_NOT_PENDING =
 
 pt.ticketPreview = {
   action: "Ver prévia da mensagem",
-  title: "Prévia da mensagem",
+  title: "Prévia da conversa",
   accept: "Aceitar e abrir",
   loading: "Carregando a prévia…",
   unavailable: "Não foi possível carregar a prévia.",
-  empty: "Ainda não há mensagem recebida neste atendimento.",
+  empty: "Ainda não há mensagens neste atendimento.",
+  conversation: "Mensagens do atendimento",
+  sent: "Enviada",
+  truncated: "Mostrando as 500 mensagens mais recentes deste atendimento.",
   kinds: {
-    text: "Mensagem recebida",
+    text: "Mensagem",
     image: "Imagem",
     video: "Vídeo",
     audio: "Áudio",
@@ -3776,13 +3799,16 @@ pt.ticketPreview = {
 };
 en.ticketPreview = {
   action: "Preview message",
-  title: "Message preview",
+  title: "Conversation preview",
   accept: "Accept and open",
   loading: "Loading preview…",
   unavailable: "Could not load the preview.",
-  empty: "No messages have been received in this ticket yet.",
+  empty: "This ticket has no messages yet.",
+  conversation: "Ticket messages",
+  sent: "Sent",
+  truncated: "Showing the 500 most recent messages of this ticket.",
   kinds: {
-    text: "Incoming message",
+    text: "Message",
     image: "Image",
     video: "Video",
     audio: "Audio",
@@ -3793,13 +3819,16 @@ en.ticketPreview = {
 };
 es.ticketPreview = {
   action: "Ver vista previa del mensaje",
-  title: "Vista previa del mensaje",
+  title: "Vista previa de la conversación",
   accept: "Aceptar y abrir",
   loading: "Cargando vista previa…",
   unavailable: "No se pudo cargar la vista previa.",
-  empty: "Aún no se ha recibido ningún mensaje en esta conversación.",
+  empty: "Aún no hay mensajes en esta conversación.",
+  conversation: "Mensajes de la conversación",
+  sent: "Enviado",
+  truncated: "Se muestran los 500 mensajes más recientes de esta conversación.",
   kinds: {
-    text: "Mensaje recibido",
+    text: "Mensaje",
     image: "Imagen",
     video: "Vídeo",
     audio: "Audio",

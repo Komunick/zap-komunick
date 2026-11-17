@@ -105,9 +105,15 @@ describe("message authorization before side effects", () => {
   });
 
   it("returns an uncached preview without marking read even when requested", async () => {
-    const preview = { kind: "text", text: "Mensagem fictícia" };
+    const messages = [
+      { id: "m1", fromMe: false, kind: "text", text: "Mensagem fictícia" },
+      { id: "m2", fromMe: true, kind: "text", text: "Menu fictício" }
+    ];
     res.set = jest.fn().mockReturnValue(res);
-    (ShowPendingMessagePreviewService as jest.Mock).mockResolvedValue(preview);
+    (ShowPendingMessagePreviewService as jest.Mock).mockResolvedValue({
+      messages,
+      truncated: false
+    });
 
     await MessageController.preview(req, res);
 
@@ -116,7 +122,11 @@ describe("message authorization before side effects", () => {
       companyId: 10
     });
     expect(res.set).toHaveBeenCalledWith("Cache-Control", "private, no-store");
-    expect(res.json).toHaveBeenCalledWith({ preview });
+    expect(res.json).toHaveBeenCalledWith({
+      preview: { kind: "text", text: "Mensagem fictícia" },
+      messages,
+      truncated: false
+    });
     expect(SetTicketMessagesAsRead).not.toHaveBeenCalled();
   });
 
