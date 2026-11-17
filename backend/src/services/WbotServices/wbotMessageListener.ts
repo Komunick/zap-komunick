@@ -74,6 +74,10 @@ import { verifyContact } from "./verifyContact";
 import { decryptMessageEdit } from "./decryptMessageEdit";
 import GetTicketWbot from "../../helpers/GetTicketWbot";
 import IsWhatsAppQueueLinked from "../../helpers/IsWhatsAppQueueLinked";
+import {
+  formatQueueMenu,
+  pickMenuQueue
+} from "../../helpers/WhatsappQueueMenu";
 import { authorizeQueueOption } from "../QueueOptionService/AuthorizeQueueOptionService";
 import saveMediaToFile from "../../helpers/saveMediaFile";
 import { _t } from "../TranslationServices/i18nService";
@@ -1418,18 +1422,15 @@ const verifyQueue = async (
       "disabled"
     )) === "enabled";
 
+  // queues come in the menu order saved for the channel (ShowWhatsAppService)
   const selectedOption = msg ? await getBodyMessage(msg?.message) : null;
-  const choosenQueue = selectedOption ? queues[+selectedOption - 1] : null;
+  const choosenQueue = pickMenuQueue(queues, selectedOption);
 
   const botText = async () => {
-    let options = "";
-
-    queues.forEach((queue, index) => {
-      options += showNumericIcons
-        ? `${emojiNumberOption(index + 1)} - `
-        : `*[ ${index + 1} ]* - `;
-      options += `${queue.name}\n`;
-    });
+    const options = formatQueueMenu(
+      queues,
+      showNumericIcons ? emojiNumberOption : undefined
+    );
 
     const textMessage = {
       text: formatBody(`${greetingMessage}\n\n${options}`, ticket)
