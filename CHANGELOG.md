@@ -16,6 +16,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 - A consulta de um atendimento começa ao abrir a conversa, sem a espera fixa de 500 ms.
 - A abertura do SuperChat ganha fundo mais suave e uma barra de carregamento discreta. A assinatura oficial
   “Powered by Komunick” sai da logo e passa para o rodapé.
+- Em Atendimentos → Aguardando, **Ver prévia da mensagem** mostra a conversa inteira do atendimento, com
+  rolagem, das mensagens do cliente às respostas automáticas. A prévia só lê: o atendimento continua aguardando
+  até alguém clicar em **Aceitar e abrir**.
 
 ### Corrigido
 
