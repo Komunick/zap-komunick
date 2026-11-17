@@ -3732,6 +3732,38 @@ es.integratedAssistant = {
   }
 };
 
+// Order of the queues in the bot menu of a channel (WhatsAppModal).
+pt.whatsappModal = {
+  queueOrder: {
+    title: "Ordem no menu do robô",
+    hint: "O cliente responde com o número da fila. Use as setas para mudar a ordem; ela vale ao salvar.",
+    up: "Subir",
+    down: "Descer",
+    upLabel: "Subir {{name}} no menu",
+    downLabel: "Descer {{name}} no menu"
+  }
+};
+en.whatsappModal = {
+  queueOrder: {
+    title: "Order in the bot menu",
+    hint: "Customers reply with the queue number. Use the arrows to change the order; it applies when you save.",
+    up: "Move up",
+    down: "Move down",
+    upLabel: "Move {{name}} up in the menu",
+    downLabel: "Move {{name}} down in the menu"
+  }
+};
+es.whatsappModal = {
+  queueOrder: {
+    title: "Orden en el menú del bot",
+    hint: "El cliente responde con el número de la fila. Usa las flechas para cambiar el orden; se aplica al guardar.",
+    up: "Subir",
+    down: "Bajar",
+    upLabel: "Subir {{name}} en el menú",
+    downLabel: "Bajar {{name}} en el menú"
+  }
+};
+
 pt.whitelabel = { logoHint: "Preserve a proporção original da marca." };
 en.whitelabel = { logoHint: "Keep the original proportions of the logo." };
 es.whitelabel = {

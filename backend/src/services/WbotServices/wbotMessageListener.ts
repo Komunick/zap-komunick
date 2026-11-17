@@ -79,6 +79,10 @@ import {
   assignGeneralTriageDestination,
   startGeneralTriageWait
 } from "./GeneralTriageRouting";
+import {
+  formatQueueMenu,
+  pickMenuQueue
+} from "../../helpers/WhatsappQueueMenu";
 import { authorizeQueueOption } from "../QueueOptionService/AuthorizeQueueOptionService";
 import saveMediaToFile from "../../helpers/saveMediaFile";
 import { _t } from "../TranslationServices/i18nService";
@@ -1443,21 +1447,15 @@ const verifyQueue = async (
       ? await readGeneralTriageQueueId(ticket.companyId)
       : configuredGeneralQueueId;
   const generalQueue = queues.find(queue => queue.id === generalQueueId);
+  // queues come in the menu order saved for the channel (ShowWhatsAppService)
   const selectedOption = msg ? await getBodyMessage(msg?.message) : null;
-  const chosenQueue =
-    generalQueue && selectedOption?.trim().toLowerCase() === "geral"
-      ? generalQueue
-      : selectedOption && queues[+selectedOption - 1];
+  const chosenQueue = pickMenuQueue(queues, selectedOption, generalQueue);
 
   const botText = async () => {
-    let options = "";
-
-    queues.forEach((queue, index) => {
-      options += showNumericIcons
-        ? `${emojiNumberOption(index + 1)} - `
-        : `*[ ${index + 1} ]* - `;
-      options += `${queue.name}\n`;
-    });
+    const options = formatQueueMenu(
+      queues,
+      showNumericIcons ? emojiNumberOption : undefined
+    );
 
     const textMessage = {
       text: formatBody(`${greetingMessage}\n\n${options}`, ticket)
