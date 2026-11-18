@@ -13,12 +13,23 @@ FROM ghcr.io/ticketz-oss/nginx-alpine
 WORKDIR /usr/share/nginx/html
 
 COPY --from=build-deps /usr/src/app/build /var/www/public
-COPY --from=build-deps /usr/src/app/node_modules/@socket.io/admin-ui/ui/dist /var/www/public/socket-admin
 COPY nginx /etc/nginx
 
-CMD (echo "{" && while IFS='=' read -r name value; do \
-        printf '\t"%s": "%s"\n' "$name" "$value"; \
-    done < <(env) | sed '$!s/$/,/' && echo "}")  > /var/www/public/config.json \
+# /config.json is public. Only the keys the frontend reads are published;
+# every other container variable stays private (secrets, proxy and ACME
+# settings, hostnames of internal services).
+ENV PUBLIC_CONFIG_KEYS="BACKEND_PROTOCOL BACKEND_HOST BACKEND_PORT BACKEND_PATH REACT_APP_BACKEND_URL RECAPTCHA_SITE_KEY WAVOIP_ENABLED"
+
+CMD sep=""; \
+    { printf '{'; \
+      for name in $PUBLIC_CONFIG_KEYS; do \
+        eval "value=\${$name-}"; \
+        [ -n "$value" ] || continue; \
+        value=$(printf '%s' "$value" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'); \
+        printf '%s\n\t"%s": "%s"' "$sep" "$name" "$value"; \
+        sep=","; \
+      done; \
+      printf '\n}\n'; } > /var/www/public/config.json \
     && if [ -n "$BACKEND_SERVICE" ]; then \
         BACKEND_IP=$(getent hosts $BACKEND_SERVICE | awk '{ print $1 }') \
         && echo "$BACKEND_IP backend" >> /etc/hosts; \
