@@ -26,6 +26,14 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- As rotas de registro da instalação no Ticketz (`/ticketz/registry`) passam a exigir superadministrador. Antes,
+  qualquer administrador de empresa passava, porque a rota importava `isAdmin` com o nome `isSuper`.
+- O repositório deixa de guardar certificados e chaves herdados do Ticketz original (`backend/certs`,
+  `backend/certification` e `frontend/certification`). Eram de terceiros ou de desenvolvimento e não eram usados.
+  O `.gitignore` passa a recusar `*.p12`, `*.pfx`, `*.pem` e `*.key`.
+- A imagem do `frontend/Dockerfile` publica em `/config.json` só as chaves que o frontend lê, em vez de todas as
+  variáveis do contêiner, e deixa de copiar a interface do Socket.IO Admin. A publicação da ARM04 já usava uma
+  lista fechada e não muda.
 - O menu de setores do robô sai uma vez por espera. Antes ele era reenviado a cada mensagem que o cliente
   mandava sem escolher o setor, às vezes duas vezes no mesmo segundo. Se o cliente não escolher, o atendimento
   segue para a fila geral no tempo configurado, como antes.
