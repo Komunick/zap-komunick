@@ -1,5 +1,10 @@
 import { Op, Sequelize } from "sequelize";
-import { readGeneralTriageQueueId } from "../../helpers/GeneralTriage";
+import {
+  readGeneralTriageQueueId,
+  readGeneralTriageTimeout
+} from "../../helpers/GeneralTriage";
+import { cacheLayer } from "../../libs/cache";
+import { logger } from "../../utils/logger";
 import IsWhatsAppQueueLinked from "../../helpers/IsWhatsAppQueueLinked";
 import Message from "../../models/Message";
 import Ticket from "../../models/Ticket";
@@ -36,6 +41,34 @@ export const startGeneralTriageWait = async (
     }
   );
   return updated === 1;
+};
+
+// The sector menu goes out once per wait. While the customer has not picked a
+// sector, every new message reaches verifyQueue again; without this claim the
+// menu was repeated on each message (twice in the same second when two
+// messages arrived together). The claim lasts as long as the wait, so a ticket
+// that waits again after the timeout gets the menu again. If Redis fails, the
+// menu is sent as before rather than leaving the customer without options.
+export const generalTriageMenuKey = (ticket: Ticket): string =>
+  `general-triage-menu:${ticket.companyId}:${ticket.id}`;
+
+export const claimGeneralTriageMenu = async (
+  ticket: Ticket
+): Promise<boolean> => {
+  try {
+    const minutes = await readGeneralTriageTimeout(ticket.companyId);
+    return await cacheLayer.setIfAbsent(
+      generalTriageMenuKey(ticket),
+      "1",
+      Math.max(60, minutes * 60)
+    );
+  } catch (err) {
+    logger.warn(
+      { ticketId: ticket.id, message: (err as Error)?.message },
+      "General triage menu claim failed; sending the menu"
+    );
+    return true;
+  }
 };
 
 export const assignGeneralTriageDestination = async (

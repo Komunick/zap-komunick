@@ -26,6 +26,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- O menu de setores do robô sai uma vez por espera. Antes ele era reenviado a cada mensagem que o cliente
+  mandava sem escolher o setor, às vezes duas vezes no mesmo segundo. Se o cliente não escolher, o atendimento
+  segue para a fila geral no tempo configurado, como antes.
 - As reações que o cliente manda no WhatsApp aparecem embaixo da mensagem original, também ao reabrir a
   conversa. Cada pessoa mostra só a reação mais recente, e a reação removida some.
 - O painel de notificações e os avisos do navegador respeitam os setores vinculados ao usuário.

@@ -19,6 +19,7 @@ import UpdateTicketService, {
 import { handleMessage } from "../../services/WbotServices/wbotMessageListener";
 import {
   assignGeneralTriageDestination,
+  claimGeneralTriageMenu,
   startGeneralTriageWait
 } from "../../services/WbotServices/GeneralTriageRouting";
 import { verifyContact } from "../../services/WbotServices/verifyContact";
@@ -80,6 +81,7 @@ jest.mock("../../services/TranslationServices/i18nService", () => ({}));
 jest.mock("../../services/WbotServices/SendWhatsAppMedia", () => ({}));
 jest.mock("../../services/WbotServices/GeneralTriageRouting", () => ({
   assignGeneralTriageDestination: jest.fn(),
+  claimGeneralTriageMenu: jest.fn(),
   startGeneralTriageWait: jest.fn()
 }));
 jest.mock("../../services/WbotServices/SendWhatsAppMessage", () => jest.fn());
@@ -555,6 +557,7 @@ describe("shared general triage", () => {
     });
     (readGeneralTriageQueueId as jest.Mock).mockResolvedValue(generalQueue.id);
     (startGeneralTriageWait as jest.Mock).mockResolvedValue(true);
+    (claimGeneralTriageMenu as jest.Mock).mockResolvedValue(true);
     (assignGeneralTriageDestination as jest.Mock).mockImplementation(
       async (ticket, destination) => {
         await ticket.update({
@@ -575,6 +578,17 @@ describe("shared general triage", () => {
     expect(socket.sendMessage).toHaveBeenCalledWith("000@s.whatsapp.net", {
       text: expect.stringContaining("*[ 2 ]* - Atendimento geral")
     });
+    expect(assignGeneralTriageDestination).not.toHaveBeenCalled();
+  });
+
+  it("does not repeat the menu for more free text while the customer still has not chosen", async () => {
+    (claimGeneralTriageMenu as jest.Mock).mockResolvedValue(false);
+
+    await receive();
+
+    expect(startGeneralTriageWait).toHaveBeenCalledWith(tickets[0], true);
+    expect(claimGeneralTriageMenu).toHaveBeenCalledWith(tickets[0]);
+    expect(socket.sendMessage).not.toHaveBeenCalled();
     expect(assignGeneralTriageDestination).not.toHaveBeenCalled();
   });
 
