@@ -77,6 +77,7 @@ import IsWhatsAppQueueLinked from "../../helpers/IsWhatsAppQueueLinked";
 import { readGeneralTriageQueueId } from "../../helpers/GeneralTriage";
 import {
   assignGeneralTriageDestination,
+  claimGeneralTriageMenu,
   startGeneralTriageWait
 } from "./GeneralTriageRouting";
 import {
@@ -1478,7 +1479,11 @@ const verifyQueue = async (
     if (generalQueue) await ticket.reload({ include: ["queue"] });
   } else if (generalQueue) {
     const compliant = await checkCompanyCompliant(ticket.companyId);
-    if ((await startGeneralTriageWait(ticket, compliant)) && compliant) {
+    if (
+      (await startGeneralTriageWait(ticket, compliant)) &&
+      compliant &&
+      (await claimGeneralTriageMenu(ticket))
+    ) {
       await botText();
     }
     await ticket.reload({ include: ["queue"] });

@@ -11,8 +11,10 @@ import TicketTraking from "../../models/TicketTraking";
 import Whatsapp from "../../models/Whatsapp";
 import ShowTicketService from "../../services/TicketServices/ShowTicketService";
 import { websocketUpdateTicket } from "../../services/TicketServices/UpdateTicketService";
+import { cacheLayer } from "../../libs/cache";
 import {
   assignGeneralTriageDestination,
+  claimGeneralTriageMenu,
   startGeneralTriageWait
 } from "../../services/WbotServices/GeneralTriageRouting";
 import routeExpiredGeneralTriageTickets, {
@@ -25,6 +27,12 @@ jest.mock("../../helpers/GeneralTriage", () => ({
   readGeneralTriageTimeout: jest.fn()
 }));
 jest.mock("../../helpers/IsWhatsAppQueueLinked", () => jest.fn());
+jest.mock("../../libs/cache", () => ({
+  cacheLayer: { setIfAbsent: jest.fn() }
+}));
+jest.mock("../../utils/logger", () => ({
+  logger: { warn: jest.fn(), info: jest.fn(), error: jest.fn() }
+}));
 jest.mock("../../models/Message", () => ({ update: jest.fn() }));
 jest.mock("../../models/Setting", () => ({ findAll: jest.fn() }));
 jest.mock("../../models/Ticket", () => ({
@@ -177,4 +185,38 @@ it("leaves the legacy timeout unrestricted unless a configured channel is linked
       { whatsappId: { [Op.notIn]: [ticket.whatsappId] } }
     ])
   );
+});
+
+describe("sector menu sent once per wait", () => {
+  const setIfAbsent = (cacheLayer as unknown as { setIfAbsent: jest.Mock })
+    .setIfAbsent;
+
+  it("claims the menu per ticket for as long as the configured wait", async () => {
+    setIfAbsent.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+
+    await expect(claimGeneralTriageMenu(ticket)).resolves.toBe(true);
+    await expect(claimGeneralTriageMenu(ticket)).resolves.toBe(false);
+
+    expect(setIfAbsent).toHaveBeenNthCalledWith(
+      1,
+      `general-triage-menu:${ticket.companyId}:${ticket.id}`,
+      "1",
+      15 * 60
+    );
+  });
+
+  it("keeps at least one minute when the wait is shorter", async () => {
+    (readGeneralTriageTimeout as jest.Mock).mockResolvedValueOnce(0);
+    setIfAbsent.mockResolvedValueOnce(true);
+
+    await claimGeneralTriageMenu(ticket);
+
+    expect(setIfAbsent).toHaveBeenLastCalledWith(expect.any(String), "1", 60);
+  });
+
+  it("still sends the menu when the cache is unavailable", async () => {
+    setIfAbsent.mockRejectedValueOnce(new Error("redis down"));
+
+    await expect(claimGeneralTriageMenu(ticket)).resolves.toBe(true);
+  });
 });
