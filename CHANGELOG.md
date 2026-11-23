@@ -30,6 +30,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 - Em Atendimentos → Aguardando, **Ver prévia da mensagem** mostra a conversa inteira do atendimento, com
   rolagem, das mensagens do cliente às respostas automáticas. A prévia só lê: o atendimento continua aguardando
   até alguém clicar em **Aceitar e abrir**.
+- O download de mídia recebida pelo WhatsApp junta os pedaços uma única vez no fim, em vez de copiar o acumulado
+  a cada pedaço. Em um arquivo de 15 MiB, o custo de CPU cai de cerca de 1,9 s para poucos milissegundos, sem
+  mudar o arquivo salvo nem o limite de velocidade.
 
 ### Corrigido
 
