@@ -53,7 +53,8 @@ const CreateTicketService = async ({
 
   if (ticket) {
     // Zap Komunick: the person's own active ticket (pending with their name,
-    // paused or without sector) is opened, not refused (RF-028)
+    // paused or without sector) is opened, not refused (RF-028); a pending
+    // ticket with no person and no sector is taken into the chosen queue
     const actor = { userId: requesterId ?? Number(userId), companyId };
     const viewer = await loadTicketViewer(actor);
     const decision = decideOwnTicketReuse(ticket, {

@@ -56,6 +56,12 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- Mensagens enviadas pelo número da empresa fora do SuperChat (outro aplicativo no mesmo número ou o celular) para um
+  cliente sem atendimento ativo entram no histórico dele e não abrem mais um atendimento aguardando sem fila. Esses
+  atendimentos só apareciam para administradores e travavam o **Novo atendimento** desse cliente. Se o canal tem uma
+  fila só ou o cliente tem dono na carteira, o atendimento continua sendo aberto como antes.
+- Iniciar conversa com um cliente que tem um atendimento aguardando sem fila e sem atendente passa esse atendimento
+  para a fila escolhida e o aceita, em vez de mostrar um aviso que só administradores conseguiam resolver.
 - Iniciar conversa com um cliente cujo atendimento já é da própria pessoa (aguardando com o nome dela, pausado ou sem
   fila) abre esse atendimento, em vez de dizer que o cliente está em atendimento com outra pessoa (RF-028).
 - Com o proxy de saída do WhatsApp configurado, os downloads de estado e de conteúdo (mmg.whatsapp.net) passam

@@ -61,6 +61,43 @@ describe("decideOwnTicketReuse", () => {
     ).toEqual({ reuse: true, steps: [{ status: "open" }] });
   });
 
+  describe("pending ticket without person and without sector", () => {
+    const unclaimed = { userId: null, status: "pending", queueId: null };
+
+    it("goes to the queue the person chose and is accepted by them", () => {
+      expect(decideOwnTicketReuse(unclaimed, { ...agent, queueId: 4 })).toEqual(
+        { reuse: true, steps: [{ queueId: 4 }, { status: "open" }] }
+      );
+    });
+
+    it("is not taken into a queue the person does not have", () => {
+      expect(
+        decideOwnTicketReuse(unclaimed, { ...agent, queueId: 9 }).reuse
+      ).toBe(false);
+    });
+
+    it("needs a chosen queue unless the person is an admin", () => {
+      expect(
+        decideOwnTicketReuse(unclaimed, { ...agent, queueId: null }).reuse
+      ).toBe(false);
+      expect(
+        decideOwnTicketReuse(unclaimed, {
+          ...agent,
+          queueId: null,
+          isAdmin: true,
+          queueIds: []
+        })
+      ).toEqual({ reuse: true, steps: [{ status: "open" }] });
+    });
+
+    it.each(["open", "paused"])("is not taken when it is %s", status => {
+      expect(
+        decideOwnTicketReuse({ ...unclaimed, status }, { ...agent, queueId: 4 })
+          .reuse
+      ).toBe(false);
+    });
+  });
+
   it("never reuses a ticket of someone else or without a person", () => {
     expect(decideOwnTicketReuse({ ...own, userId: 7 }, agent).reuse).toBe(
       false
