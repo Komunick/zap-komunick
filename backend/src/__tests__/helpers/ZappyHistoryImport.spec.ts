@@ -1,0 +1,194 @@
+import {
+  HistoryExport,
+  ImportContext,
+  importedMessageBody,
+  importedMessageId,
+  numberCandidates,
+  planImport
+} from "../../helpers/ZappyHistoryImport";
+
+const context = (overrides: Partial<ImportContext> = {}): ImportContext => ({
+  contactIdByNumber: new Map([["5571999990001", 10]]),
+  queueIdByName: new Map([["fiscal", 4]]),
+  userIdByName: new Map([["yasmin", 7]]),
+  existingMessageIds: new Set(),
+  ...overrides
+});
+
+const exportOf = (tickets: HistoryExport["tickets"]): HistoryExport => ({
+  source: "zapcontabil",
+  exportedAt: "2026-11-23T15:00:00.000Z",
+  tickets
+});
+
+const message = (id: string, minutes: number, extra = {}) => ({
+  externalId: id,
+  fromMe: false,
+  body: `mensagem ${id}`,
+  createdAt: new Date(Date.UTC(2026, 9, 1, 12, minutes)).toISOString(),
+  ...extra
+});
+
+describe("numberCandidates", () => {
+  it("covers the forms with and without the ninth digit", () => {
+    expect(numberCandidates("557199990001@s.whatsapp.net")).toEqual(
+      expect.arrayContaining(["557199990001", "5571999990001"])
+    );
+  });
+
+  it("returns nothing for an empty number", () => {
+    expect(numberCandidates("")).toEqual([]);
+  });
+});
+
+describe("importedMessageId", () => {
+  it("prefers the WhatsApp id, the same SuperChat stores", () => {
+    expect(importedMessageId(message("1", 0, { whatsappId: "3EB0ABC" }))).toBe(
+      "3EB0ABC"
+    );
+  });
+
+  it("falls back to a prefixed id of the previous system", () => {
+    expect(importedMessageId(message("88", 0))).toBe("zappy-88");
+  });
+});
+
+describe("importedMessageBody", () => {
+  it("keeps text", () => {
+    expect(importedMessageBody(message("1", 0))).toBe("mensagem 1");
+  });
+
+  it("turns an attachment into its name, with the caption", () => {
+    expect(
+      importedMessageBody(
+        message("1", 0, {
+          mediaType: "document",
+          fileName: "guia-das.pdf",
+          body: "segue a guia"
+        })
+      )
+    ).toBe("📎 guia-das.pdf\nsegue a guia");
+    expect(
+      importedMessageBody(
+        message("2", 0, { mediaType: "audio", body: "", fileName: "" })
+      )
+    ).toBe("📎 audio");
+  });
+});
+
+describe("planImport", () => {
+  it("creates a closed ticket for a known client, with queue and agent", () => {
+    const plan = planImport(
+      exportOf([
+        {
+          externalId: "t1",
+          contactNumber: "557199990001",
+          queueName: "Fiscal",
+          userName: "Yasmin",
+          createdAt: "2026-10-01T12:00:00.000Z",
+          messages: [message("b", 5), message("a", 1, { fromMe: true })]
+        }
+      ]),
+      context()
+    );
+    expect(plan.totals).toEqual({
+      tickets: 1,
+      messages: 2,
+      alreadyPresent: 0,
+      newContacts: 0
+    });
+    const [ticket] = plan.tickets;
+    expect(ticket.contact).toEqual({ id: 10 });
+    expect(ticket.queueId).toBe(4);
+    expect(ticket.userId).toBe(7);
+    expect(ticket.messages.map(m => m.id)).toEqual(["zappy-a", "zappy-b"]);
+    expect(ticket.updatedAt.toISOString()).toBe("2026-10-01T12:05:00.000Z");
+  });
+
+  it("creates the client once when it is not in SuperChat", () => {
+    const plan = planImport(
+      exportOf([
+        {
+          externalId: "t1",
+          contactNumber: "557188887777",
+          contactName: "Cliente Novo",
+          createdAt: "2026-10-01T12:00:00.000Z",
+          messages: [message("x", 0)]
+        },
+        {
+          externalId: "t2",
+          contactNumber: "5571988887777",
+          createdAt: "2026-10-02T12:00:00.000Z",
+          messages: [message("y", 0)]
+        }
+      ]),
+      context()
+    );
+    expect(plan.totals.newContacts).toBe(1);
+    expect(plan.tickets[0].contact).toEqual({
+      create: { name: "Cliente Novo", number: "5571988887777" }
+    });
+    expect(plan.tickets[0].queueId).toBeNull();
+  });
+
+  it("does not repeat messages SuperChat already has, nor import twice", () => {
+    const data = exportOf([
+      {
+        externalId: "t1",
+        contactNumber: "5571999990001",
+        createdAt: "2026-10-01T12:00:00.000Z",
+        messages: [message("1", 0, { whatsappId: "3EB0SAME" }), message("2", 1)]
+      }
+    ]);
+    const plan = planImport(
+      data,
+      context({ existingMessageIds: new Set(["3EB0SAME", "zappy-2"]) })
+    );
+    expect(plan.tickets).toEqual([]);
+    expect(plan.skipped).toEqual([
+      { externalId: "t1", reason: "already-imported" }
+    ]);
+    expect(plan.totals.alreadyPresent).toBe(2);
+  });
+
+  it("skips groups, tickets without number and empty messages", () => {
+    const plan = planImport(
+      exportOf([
+        {
+          externalId: "g",
+          contactNumber: "120363000000@g.us",
+          isGroup: true,
+          createdAt: "2026-10-01T12:00:00.000Z",
+          messages: [message("1", 0)]
+        },
+        {
+          externalId: "n",
+          contactNumber: "",
+          createdAt: "2026-10-01T12:00:00.000Z",
+          messages: [message("2", 0)]
+        },
+        {
+          externalId: "e",
+          contactNumber: "5571999990001",
+          createdAt: "2026-10-01T12:00:00.000Z",
+          messages: [
+            message("3", 0, { body: " " }),
+            message("4", 0, { createdAt: "x" })
+          ]
+        }
+      ]),
+      context()
+    );
+    expect(plan.skipped.map(s => s.reason)).toEqual([
+      "group",
+      "no-number",
+      "no-messages"
+    ]);
+  });
+
+  it("refuses a file that is not a ZapContábil export", () => {
+    expect(() =>
+      planImport({ source: "other" } as unknown as HistoryExport, context())
+    ).toThrow("ERR_IMPORT_INVALID_EXPORT");
+  });
+});

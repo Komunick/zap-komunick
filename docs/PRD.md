@@ -913,6 +913,31 @@ Dado um atendimento aguardando na fila Fiscal com o nome da Yasmin,
 quando a Yasmin inicia conversa com esse cliente pela fila Fiscal,
 então o atendimento abre em andamento com ela, sem aviso de conversa em aberto.
 
+### RF-029 — Histórico do ZapContábil no SuperChat
+
+**Pedido (23/11/2026):** trazer para o SuperChat as conversas antigas da JB Fraga que estão no ZapContábil (Zappy), para
+a equipe ver o que o cliente falou antes. Primeira etapa: só texto, de todo o histórico.
+
+**Regras importantes:**
+- Cada atendimento do ZapContábil vira um atendimento **fechado** no SuperChat, do mesmo cliente, com as mensagens na
+  data original. Ele aparece no histórico do cliente com o separador de atendimento anterior, sem canal.
+- O cliente é encontrado pelo número (com e sem o nono dígito). Quem não existe no SuperChat é criado com o nome do
+  ZapContábil. Grupos ficam de fora.
+- Fila e atendente são ligados pelo nome quando existem no SuperChat; senão o atendimento fica sem fila ou sem
+  atendente. A regra "Histórico do cliente para atendentes" (RF-027) vale para eles como para os demais.
+- Anexos entram como texto com o nome do arquivo (📎 nome). Os arquivos ficam para uma segunda etapa.
+- Mensagem que o SuperChat já tem (mesmo identificador do WhatsApp, porque os dois sistemas usam o mesmo número) não
+  é repetida. Rodar a importação de novo não duplica nada.
+- A importação roda primeiro em simulação, que só conta: atendimentos, mensagens, clientes novos e o que ficaria de
+  fora. O conteúdo das mensagens não aparece em relatório nem sai do servidor. O arquivo exportado do ZapContábil
+  fica fora do repositório e é apagado depois da importação.
+
+**Cenário de sucesso:**
+
+Dado uma cliente que conversou com a JB pelo ZapContábil em outubro,
+quando a importação roda e a atendente abre o atendimento atual dela no SuperChat,
+então vê as mensagens de outubro acima, no atendimento anterior, na data em que foram trocadas.
+
 ## 4. Restrições e cuidados
 
 **Uso e acesso:** navegador, perfis do Ticketz (admin e usuário). Painel de SLA, carteira, horário de acesso, motivos

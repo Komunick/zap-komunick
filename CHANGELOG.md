@@ -6,6 +6,8 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Adicionado
 
+- Importação do histórico de conversas do ZapContábil como atendimentos fechados (script `importZappyHistory`, com
+  simulação antes de gravar e sem repetir mensagens que o SuperChat já tem). Primeira etapa só com texto (RF-029).
 - Quando o cliente já tem atendimento em andamento, o aviso diz com quem está, em que fila, por qual canal e desde
   quando. Ao iniciar conversa, a janela oferece **Abrir atendimento** e **Assumir** ou **Aceitar**, conforme as
   permissões de cada um (RF-026).
