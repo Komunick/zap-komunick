@@ -30,6 +30,7 @@ jest.mock("../../models/Setting", () => ({ findOne: jest.fn() }));
 jest.mock("../../models/Message", () => ({
   findOne: jest.fn(),
   findAll: jest.fn(),
+  count: jest.fn(),
   update: jest.fn(),
   create: jest.fn(),
   upsert: jest.fn()
@@ -316,11 +317,16 @@ describe("authorized attachment history and descriptor lifecycle", () => {
     ];
     const listHistory = (nextId?: string) =>
       ListMessagesService({ ...actor, ticketId: "301", nextId });
+    // Zap Komunick (RF-027): 5 messages of the client, 2 visible here
+    (Message.count as jest.Mock)
+      .mockResolvedValueOnce(5)
+      .mockResolvedValueOnce(2);
     const history = await listHistory();
     expect(history.messages.map(row => row.id).sort()).toEqual([
       "allowed",
       "current"
     ]);
+    expect(history.hiddenHistory).toBe(3);
     expect(history.messages.find(row => row.id === "current")).toMatchObject({
       quotedMsg: null,
       replies: []

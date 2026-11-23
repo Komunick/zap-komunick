@@ -153,7 +153,8 @@ describe("ticket mutations cannot bypass context authorization", () => {
       userId: 101,
       companyId: 10,
       queueId: 401,
-      routeByQueue: true
+      routeByQueue: true,
+      requesterId: 101
     });
     expect(res.json).not.toHaveBeenCalled();
   });

@@ -21,6 +21,8 @@ import {
 } from "@material-ui/core";
 import { toast } from "react-toastify";
 import { ContactSelect } from "../ContactSelect";
+import OpenTicketConflictDialog from "../OpenTicketConflictDialog";
+import { openTicketFromError } from "../../helpers/openTicketConflict";
 
 const NewTicketModal = ({ modalOpen, onClose, contact }) => {
   const [selectedContact, setSelectedContact] = useState(null);
@@ -29,6 +31,7 @@ const NewTicketModal = ({ modalOpen, onClose, contact }) => {
   const [newContact, setNewContact] = useState({});
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [conflict, setConflict] = useState(null);
   const { user } = useContext(AuthContext);
 
   useEffect(() => {
@@ -64,7 +67,13 @@ const NewTicketModal = ({ modalOpen, onClose, contact }) => {
       });
       onClose(ticket);
     } catch (err) {
-      toastError(err);
+      // Zap Komunick: say who has the open ticket and offer it (RF-026)
+      const openTicket = openTicketFromError(err);
+      if (openTicket) {
+        setConflict(openTicket);
+      } else {
+        toastError(err);
+      }
     }
     setLoading(false);
   };
@@ -92,6 +101,15 @@ const NewTicketModal = ({ modalOpen, onClose, contact }) => {
 
   return (
     <>
+      <OpenTicketConflictDialog
+        openTicket={conflict}
+        onClose={() => setConflict(null)}
+        onOpenTicket={ticket => {
+          setConflict(null);
+          setSelectedContact(null);
+          onClose(ticket);
+        }}
+      />
       <ContactModal
         open={contactModalOpen}
         initialValues={newContact}
