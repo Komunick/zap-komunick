@@ -67,7 +67,12 @@ app.use(async (err: Error, req: Request, res: Response, _: NextFunction) => {
       res.setHeader("Retry-After", "600");
     }
     logger[err.level](err);
-    return res.status(err.statusCode).json({ error: err.message });
+    return res
+      .status(err.statusCode)
+      .json({
+        error: err.message,
+        ...(err.details && { details: err.details })
+      });
   }
 
   logger.error(err);

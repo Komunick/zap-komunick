@@ -6,6 +6,11 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Adicionado
 
+- Quando o cliente já tem atendimento em andamento, o aviso diz com quem está, em que fila, por qual canal e desde
+  quando. Ao iniciar conversa, a janela oferece **Abrir atendimento** e **Assumir** ou **Aceitar**, conforme as
+  permissões de cada um (RF-026).
+- A conversa avisa quantas mensagens anteriores do cliente ficaram escondidas pela regra de setor e quem pode liberar.
+  O separador de cada atendimento anterior mostra data, fila, canal (e se está desconectado) e atendente (RF-027).
 - A empresa pode exigir o nome do atendente nas mensagens manuais de texto do WhatsApp. A configuração
   prevalece sobre a preferência de assinatura do navegador e mantém o acesso por setor.
 - Na tela de atendimento, um botão no cabeçalho, ao lado de Finalizar, recolhe e reabre o painel do cliente.
@@ -16,9 +21,8 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Alterado
 
-- O download de mídia recebida pelo WhatsApp junta os pedaços uma única vez no fim, em vez de copiar o acumulado
-  a cada pedaço. Em um arquivo de 15 MiB, o custo de CPU cai de cerca de 1,9 s para poucos milissegundos, sem
-  mudar o arquivo salvo nem o limite de velocidade.
+- A opção "Visibilidade da mensagem" passa a se chamar **Histórico do cliente para atendentes**, com "Só dos setores
+  do atendente" e "Completo, de todos os setores". O comportamento de cada valor não mudou.
 - O login carrega só o código de que precisa. As telas internas são baixadas conforme o uso.
 - A consulta de um atendimento começa ao abrir a conversa, sem a espera fixa de 500 ms.
 - A abertura do SuperChat ganha fundo mais suave e uma barra de carregamento discreta. A assinatura oficial
@@ -26,6 +30,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 - Em Atendimentos → Aguardando, **Ver prévia da mensagem** mostra a conversa inteira do atendimento, com
   rolagem, das mensagens do cliente às respostas automáticas. A prévia só lê: o atendimento continua aguardando
   até alguém clicar em **Aceitar e abrir**.
+- O download de mídia recebida pelo WhatsApp junta os pedaços uma única vez no fim, em vez de copiar o acumulado
+  a cada pedaço. Em um arquivo de 15 MiB, o custo de CPU cai de cerca de 1,9 s para poucos milissegundos, sem
+  mudar o arquivo salvo nem o limite de velocidade.
 
 ### Corrigido
 

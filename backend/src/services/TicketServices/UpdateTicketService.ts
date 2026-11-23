@@ -219,7 +219,14 @@ const UpdateTicketService = async ({
     }
 
     if (oldStatus === "closed") {
-      await CheckContactOpenTickets(ticket.contactId, ticket.whatsappId);
+      await CheckContactOpenTickets(
+        ticket.contactId,
+        ticket.whatsappId,
+        false,
+        reqUserId
+          ? { userId: reqUserId, companyId: ticket.companyId }
+          : undefined
+      );
       chatbot = null;
       queueOptionId = null;
     }
