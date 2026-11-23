@@ -68,6 +68,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Segurança
 
+- Avisos em tempo real de filas, usuários, campanhas, listas de contatos, respostas rápidas, ajuda e agendamentos
+  chegam só aos usuários conectados da própria empresa. Antes, qualquer usuário autenticado podia escutar os
+  eventos de outra empresa. Os avisos da plataforma continuam para todos.
 - A conversão de áudio gravado chama o ffmpeg sem shell, com cada argumento separado. Um nome de arquivo com aspas,
   `;`, `&` ou `$()` não executa mais comandos no servidor. Os uploads guardam só extensões alfanuméricas simples.
 - Entrar em outra empresa (impersonação) exige conta Super já na rota, antes das checagens do serviço.

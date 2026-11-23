@@ -242,7 +242,10 @@ async function verifyAndFinalizeCampaign(campaign: Campaign) {
   }
 
   const io = getIO();
-  io.emit(`company-${campaign.companyId}-campaign`, data);
+  io.to(`company-${campaign.companyId}-mainchannel`).emit(
+    `company-${campaign.companyId}-campaign`,
+    data
+  );
 }
 
 async function prepareContact(
@@ -441,10 +444,13 @@ async function handleDispatchCampaign(job) {
     await verifyAndFinalizeCampaign(campaign);
 
     const io = getIO();
-    io.emit(`company-${campaign.companyId}-campaign`, {
-      action: "update",
-      record: campaign
-    });
+    io.to(`company-${campaign.companyId}-mainchannel`).emit(
+      `company-${campaign.companyId}-campaign`,
+      {
+        action: "update",
+        record: campaign
+      }
+    );
 
     logger.info(
       `Campanha enviada para: Campanha=${campaignId};Contato=${campaignShipping.contact.name}`
