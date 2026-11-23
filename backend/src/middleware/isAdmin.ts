@@ -6,9 +6,9 @@ const isAdmin = async (
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<any> => {
-  const { profile } = await User.findByPk(req.user.id);
-  if (profile !== "admin") {
+): Promise<void> => {
+  const user = await User.findByPk(req.user.id);
+  if (user?.profile !== "admin" || user.companyId !== req.user.companyId) {
     throw new AppError("Acesso não permitido", 403);
   }
 

@@ -1,12 +1,14 @@
-import { FindOptions } from "sequelize/types";
+import { FindOptions } from "sequelize";
 import { Sequelize } from "sequelize-typescript";
 import Whatsapp from "../../models/Whatsapp";
 import Queue from "../../models/Queue";
 import QueueOption from "../../models/QueueOption";
 import Company from "../../models/Company";
+import { sortWhatsappQueues } from "../../helpers/WhatsappQueueMenu";
 
 type ShowWhatsAppOptions = {
   hideSession?: boolean;
+  companyId?: number;
 };
 
 const ShowWhatsAppService = async (
@@ -18,6 +20,9 @@ const ShowWhatsAppService = async (
       {
         model: Queue,
         as: "queues",
+        ...(options.companyId === undefined
+          ? {}
+          : { where: { companyId: options.companyId }, required: false }),
         attributes: [
           "id",
           "name",
@@ -42,6 +47,8 @@ const ShowWhatsAppService = async (
         attributes: ["id", "name", "language"]
       }
     ],
+    // Alphabetical here only breaks ties: the menu order saved for the channel
+    // (WhatsappQueues.position) is applied below.
     order: [
       ["queues", "name", "ASC"],
       [Sequelize.cast(Sequelize.col("queues.options.option"), "INTEGER"), "ASC"]
@@ -52,7 +59,21 @@ const ShowWhatsAppService = async (
     findOptions.attributes = { exclude: ["session"] };
   }
 
-  return Whatsapp.findByPk(id, findOptions);
+  const whatsapp =
+    options.companyId === undefined
+      ? await Whatsapp.findByPk(id, findOptions)
+      : await Whatsapp.findOne({
+          ...findOptions,
+          where: { id, companyId: options.companyId }
+        });
+
+  // In place, so the instance and its JSON keep the same array.
+  if (whatsapp?.queues?.length > 1) {
+    const ordered = sortWhatsappQueues(whatsapp.queues);
+    whatsapp.queues.splice(0, whatsapp.queues.length, ...ordered);
+  }
+
+  return whatsapp;
 };
 
 export default ShowWhatsAppService;

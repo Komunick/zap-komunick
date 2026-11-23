@@ -13,13 +13,21 @@ import {
   isValidScheduleMediaPath,
   mergeRecipients
 } from "../../helpers/ScheduleTargets";
+import { loadTicketViewer } from "../TicketServices/AuthorizeTicketContextService";
+import {
+  parseScheduleReference,
+  resolveStandaloneScheduleQueue,
+  resolveTicketScheduleRoute
+} from "./AuthorizeScheduleRouteService";
 
 interface Request {
   body: string;
   sendAt: Date;
-  contactId?: number;
+  contactId?: number | string | null;
   companyId: number;
-  userId?: number;
+  userId: number;
+  queueId?: number | string | null;
+  ticketId?: number | string | null;
   saveMessage?: boolean;
   recurrence?: string;
   recurrenceEndAt?: Date | string | null;
@@ -76,7 +84,10 @@ const resolveRecipients = async (
       throw new AppError("ERR_NO_TAG_FOUND", 404);
     }
     tagContactIds = (
-      await ContactTag.findAll({ where: { tagId: tag.id }, attributes: ["contactId"] })
+      await ContactTag.findAll({
+        where: { tagId: tag.id },
+        attributes: ["contactId"]
+      })
     ).map(item => item.contactId);
   }
 
@@ -110,6 +121,8 @@ export const CreateSchedulesService = async ({
   tagId,
   companyId,
   userId,
+  queueId,
+  ticketId,
   saveMessage,
   recurrence = "none",
   recurrenceEndAt = null,
@@ -131,11 +144,48 @@ export const CreateSchedulesService = async ({
   validateRecurrence(recurrence, sendAt, recurrenceEndAt);
   validateScheduleMedia(mediaPath, companyId);
 
-  const recipients = await resolveRecipients(
-    companyId,
-    contactId ? [contactId, ...contactIds] : contactIds,
-    tagId
+  const viewer = await loadTicketViewer({ companyId, userId });
+  const scheduleTicketId = parseScheduleReference(
+    ticketId,
+    "ERR_SCHEDULE_TICKET_CONTEXT"
   );
+  const requestedQueueId = parseScheduleReference(
+    queueId,
+    "ERR_SCHEDULE_QUEUE_REQUIRED"
+  );
+  const requestedContacts =
+    contactId == null || contactId === ""
+      ? contactIds
+      : [contactId, ...contactIds];
+  const ticket =
+    scheduleTicketId === null
+      ? null
+      : await resolveTicketScheduleRoute(viewer, scheduleTicketId);
+  if (
+    ticket &&
+    (tagId ||
+      (requestedQueueId !== null && requestedQueueId !== ticket.queueId) ||
+      requestedContacts.some(
+        id =>
+          parseScheduleReference(id, "ERR_SCHEDULE_TICKET_CONTEXT") !==
+          ticket.contactId
+      ))
+  ) {
+    throw new AppError("ERR_SCHEDULE_TICKET_CONTEXT");
+  }
+  const scheduleQueueId = ticket
+    ? (ticket.queueId ?? null)
+    : await resolveStandaloneScheduleQueue(viewer, requestedQueueId);
+  const routingMode = ticket
+    ? scheduleQueueId === null
+      ? "ticket"
+      : "ticket_queue"
+    : scheduleQueueId === null
+      ? null
+      : "queue";
+  const recipients = ticket
+    ? [ticket.contactId]
+    : await resolveRecipients(companyId, requestedContacts, tagId);
 
   const repeats = recurrence !== "none";
   const requestedAt = new Date(sendAt);
@@ -146,6 +196,9 @@ export const CreateSchedulesService = async ({
         body,
         sendAt: effectiveSendAt(requestedAt, businessDaysOnly),
         contactId: recipientId,
+        ticketId: scheduleTicketId,
+        queueId: scheduleQueueId,
+        routingMode,
         companyId,
         userId,
         saveMessage,

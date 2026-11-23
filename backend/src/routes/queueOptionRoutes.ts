@@ -6,7 +6,7 @@ import {
   authorizeQueueMedia
 } from "../middleware/authorizeQueueMedia";
 import { randomUUID } from "crypto";
-import path from "path";
+import { safeUploadExtension } from "../helpers/SafeUploadExtension";
 
 import * as QueueOptionController from "../controllers/QueueOptionController";
 import uploadConfig from "../config/upload";
@@ -17,7 +17,7 @@ const upload = multer({
     filename: (_req, file, callback) =>
       callback(
         null,
-        `queue-upload-${randomUUID()}${path.extname(file.originalname)}`
+        `queue-upload-${randomUUID()}${safeUploadExtension(file.originalname)}`
       )
   }),
   limits: { files: 1 }

@@ -3,12 +3,15 @@ import fs from "fs";
 import AppError from "../errors/AppError";
 
 import SetTicketMessagesAsRead from "../helpers/SetTicketMessagesAsRead";
+import { sanitizeMessageQuotePayload } from "../helpers/MessageQuotePrivacy";
+import { isMessageSignatureRequired } from "../helpers/MessageSignature";
 import { getIO } from "../libs/socket";
 import Queue from "../models/Queue";
 import User from "../models/User";
 import Whatsapp from "../models/Whatsapp";
 
 import ListMessagesService from "../services/MessageServices/ListMessagesService";
+import ShowPendingMessagePreviewService from "../services/MessageServices/ShowPendingMessagePreviewService";
 import ShowTicketService from "../services/TicketServices/ShowTicketService";
 import DeleteWhatsAppMessage from "../services/WbotServices/DeleteWhatsAppMessage";
 import SendWhatsAppMedia from "../services/WbotServices/SendWhatsAppMedia";
@@ -68,7 +71,15 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     SetTicketMessagesAsRead(ticket);
   }
 
-  return res.json({ count, messages, ticket, hasMore, nextId: responseNextId });
+  return res.json({
+    count,
+    messages: messages.map(message =>
+      sanitizeMessageQuotePayload(message.toJSON())
+    ),
+    ticket,
+    hasMore,
+    nextId: responseNextId
+  });
 };
 
 export const historyByMessageId = async (
@@ -113,12 +124,32 @@ export const historyByMessageId = async (
 
   const oldMessages = await OldMessage.findAll({
     where: {
-      messageId
+      messageId,
+      ticketId: ticket.id
     },
     order: [["createdAt", "ASC"]]
   });
 
   return res.json({ oldMessages });
+};
+
+export const preview = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { messages, truncated } = await ShowPendingMessagePreviewService(
+    req.params.ticketId,
+    { userId: req.user.id, companyId: req.user.companyId }
+  );
+  // `preview` keeps the last received message for older clients.
+  const lastReceived = [...messages].reverse().find(item => !item.fromMe);
+  return res.set("Cache-Control", "private, no-store").json({
+    preview: lastReceived
+      ? { kind: lastReceived.kind, text: lastReceived.text }
+      : null,
+    messages,
+    truncated
+  });
 };
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
@@ -132,13 +163,14 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     userId: req.user.id,
     companyId
   });
-  if (quotedMsg) {
-    await AuthorizeMessageContextService(
-      quotedMsg.id,
-      { userId: req.user.id, companyId },
-      ticketId
-    );
-  }
+  const authorizedQuote = quotedMsg
+    ? await AuthorizeMessageContextService(
+        quotedMsg.id,
+        { userId: req.user.id, companyId },
+        ticketId,
+        quotedMsg.ticketId
+      )
+    : undefined;
   const ticket = await ShowTicketService(ticketId, companyId);
   const { channel } = ticket;
   if (channel === "whatsapp") {
@@ -166,7 +198,13 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
       );
     }
   } else if (channel === "whatsapp") {
-    await SendWhatsAppMessage({ body, ticket, userId, quotedMsg });
+    await SendWhatsAppMessage({
+      body,
+      ticket,
+      userId,
+      quotedMsg: authorizedQuote,
+      forceSignature: await isMessageSignatureRequired(companyId)
+    });
   }
 
   return res.send();

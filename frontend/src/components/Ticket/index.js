@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { useParams, useHistory } from "react-router-dom";
 
 import { toast } from "react-toastify";
 import clsx from "clsx";
 
-import { Paper, makeStyles } from "@material-ui/core";
+import { IconButton, Paper, Tooltip, makeStyles } from "@material-ui/core";
+import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
+import ChevronRightIcon from "@material-ui/icons/ChevronRight";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
 
 import ContactDrawer from "../ContactDrawer";
@@ -25,6 +27,12 @@ import useSettings from "../../hooks/useSettings";
 import AcessoriasPanel from "../AcessoriasPanel";
 import SciPanel from "../SciPanel";
 import AttachmentsPanel from "../AttachmentsPanel";
+import { i18n } from "../../translate/i18n";
+import { dragHasFiles, filesFromDrop } from "../../helpers/attachmentSelection";
+import {
+  readCustomerPanelCollapsed,
+  writeCustomerPanelCollapsed
+} from "../../helpers/customerPanelPreference";
 
 const drawerWidth = 320;
 
@@ -67,6 +75,36 @@ const useStyles = makeStyles(theme => ({
     padding: theme.spacing(0.5, 2),
     minWidth: 0
   },
+  // Zap Komunick: shows or hides the contact panel beside the conversation.
+  panelToggle: {
+    alignSelf: "center",
+    flex: "none",
+    marginRight: theme.spacing(1),
+    color: theme.palette.text.secondary
+  },
+  // Zap Komunick: the conversation and the composer accept dropped files.
+  dropZone: {
+    flex: 1,
+    minHeight: 0,
+    display: "flex",
+    flexDirection: "column",
+    position: "relative"
+  },
+  dropOverlay: {
+    position: "absolute",
+    inset: theme.spacing(1),
+    zIndex: 20,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: theme.shape.borderRadius * 2,
+    border: `2px dashed ${theme.palette.primary.main}`,
+    backgroundColor:
+      theme.komunick?.selectedRow || theme.palette.action.selected,
+    color: theme.palette.text.primary,
+    fontWeight: 600,
+    pointerEvents: "none"
+  },
   drawerShade: {
     display: "none",
     [theme.breakpoints.down(1400)]: {
@@ -98,7 +136,61 @@ const Ticket = () => {
   const [ticket, setTicket] = useState({});
   const [showTabGroups, setShowTabGroups] = useState(false);
   const [tagsMode, setTagsMode] = useState("ticket");
+  const [panelCollapsed, setPanelCollapsed] = useState(() =>
+    readCustomerPanelCollapsed(user?.id)
+  );
+  const [dropRequest, setDropRequest] = useState(null);
+  const [dragging, setDragging] = useState(false);
+  const dragDepth = useRef(0);
   const { getSetting } = useSettings();
+
+  const composerReady =
+    !loading &&
+    Number.isSafeInteger(Number(ticket.id)) &&
+    Number(ticket.id) > 0 &&
+    ticket.uuid === ticketId;
+
+  useEffect(() => {
+    setPanelCollapsed(readCustomerPanelCollapsed(user?.id));
+  }, [user?.id]);
+
+  // A drop belongs to the ticket on screen when it happened.
+  useEffect(() => {
+    setDropRequest(null);
+  }, [ticketId]);
+
+  const changePanelCollapsed = collapsed => {
+    setPanelCollapsed(collapsed);
+    writeCustomerPanelCollapsed(user?.id, collapsed);
+  };
+
+  const handleDragEnter = e => {
+    if (!dragHasFiles(e.dataTransfer)) return;
+    e.preventDefault();
+    dragDepth.current += 1;
+    setDragging(true);
+  };
+
+  const handleDragOver = e => {
+    if (!dragHasFiles(e.dataTransfer)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+  };
+
+  const handleDragLeave = e => {
+    if (!dragHasFiles(e.dataTransfer)) return;
+    dragDepth.current = Math.max(0, dragDepth.current - 1);
+    if (dragDepth.current === 0) setDragging(false);
+  };
+
+  const handleDrop = e => {
+    if (!dragHasFiles(e.dataTransfer)) return;
+    e.preventDefault();
+    dragDepth.current = 0;
+    setDragging(false);
+    if (!composerReady) return;
+    setDropRequest({ id: Date.now(), files: filesFromDrop(e.dataTransfer) });
+  };
 
   const socketManager = useContext(SocketContext);
 
@@ -215,7 +307,13 @@ const Ticket = () => {
         <TicketInfo
           contact={contact}
           ticket={ticket}
-          onClick={wide ? undefined : handleDrawerOpen}
+          onClick={
+            wide
+              ? panelCollapsed
+                ? () => changePanelCollapsed(false)
+                : undefined
+              : handleDrawerOpen
+          }
         />
       );
     }
@@ -241,7 +339,14 @@ const Ticket = () => {
 
   const renderMessagesList = () => {
     return (
-      <>
+      <div
+        className={classes.dropZone}
+        data-testid="ticket-drop-zone"
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         <MessagesList
           ticket={ticket}
           ticketId={ticket.id}
@@ -254,9 +359,18 @@ const Ticket = () => {
           Number.isSafeInteger(Number(ticket.id)) &&
           Number(ticket.id) > 0 &&
           ticket.uuid === ticketId && (
-            <MessageInput ticket={ticket} showTabGroups />
+            <MessageInput
+              ticket={ticket}
+              showTabGroups
+              dropRequest={dropRequest}
+            />
           )}
-      </>
+        {dragging && (
+          <div className={classes.dropOverlay} role="status">
+            {i18n.t("messagesInput.dropFiles")}
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -278,6 +392,28 @@ const Ticket = () => {
         <TicketHeader loading={loading}>
           {renderTicketInfo()}
           <TicketActionButtons ticket={ticket} showTabGroups={showTabGroups} />
+          {wide && (
+            <Tooltip
+              title={i18n.t(
+                panelCollapsed
+                  ? "customerPanel.expand"
+                  : "customerPanel.collapse"
+              )}
+            >
+              <IconButton
+                className={classes.panelToggle}
+                aria-label={i18n.t(
+                  panelCollapsed
+                    ? "customerPanel.expand"
+                    : "customerPanel.collapse"
+                )}
+                aria-expanded={!panelCollapsed}
+                onClick={() => changePanelCollapsed(!panelCollapsed)}
+              >
+                {panelCollapsed ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+              </IconButton>
+            </Tooltip>
+          )}
         </TicketHeader>
         <Paper>
           {attachmentContextReady && (
@@ -319,7 +455,9 @@ const Ticket = () => {
         </ReplyMessageProvider>
       </Paper>
       {wide ? (
-        <CustomerPanel ticket={ticket} contact={contact} loading={loading} />
+        !panelCollapsed && (
+          <CustomerPanel ticket={ticket} contact={contact} loading={loading} />
+        )
       ) : (
         <ContactDrawer
           open={drawerOpen}

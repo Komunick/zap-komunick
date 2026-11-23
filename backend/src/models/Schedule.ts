@@ -12,8 +12,11 @@ import {
 } from "sequelize-typescript";
 import Company from "./Company";
 import Contact from "./Contact";
+import Queue from "./Queue";
 import Ticket from "./Ticket";
 import User from "./User";
+
+export type ScheduleRoutingMode = "queue" | "ticket" | "ticket_queue";
 
 @Table
 class Schedule extends Model<Schedule> {
@@ -38,6 +41,13 @@ class Schedule extends Model<Schedule> {
   @ForeignKey(() => Ticket)
   @Column
   ticketId: number;
+
+  @ForeignKey(() => Queue)
+  @Column(DataType.INTEGER)
+  queueId: number | null;
+
+  @Column(DataType.STRING)
+  routingMode: ScheduleRoutingMode | null;
 
   @ForeignKey(() => User)
   @Column
@@ -84,6 +94,9 @@ class Schedule extends Model<Schedule> {
 
   @BelongsTo(() => Ticket)
   ticket: Ticket;
+
+  @BelongsTo(() => Queue)
+  queue: Queue;
 
   @BelongsTo(() => User)
   user: User;

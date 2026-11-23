@@ -209,6 +209,8 @@ const pt = {
   },
   customerPanel: {
     title: "Painel do cliente",
+    collapse: "Recolher dados do contato",
+    expand: "Mostrar dados do contato",
     wallet: "Carteira",
     noWallet: "Sem responsável",
     queue: "Fila",
@@ -564,7 +566,11 @@ const pt = {
     }
   },
   messagesInput: {
-    placeholderPaused: "Atendimento pausado. Clique em Retomar para responder."
+    placeholderPaused: "Atendimento pausado. Clique em Retomar para responder.",
+    dropFiles: "Solte os arquivos para anexar",
+    dropUnavailable: "Não é possível anexar arquivos neste atendimento agora.",
+    skippedFiles: "Pastas e arquivos vazios não podem ser anexados: {{names}}",
+    moreFiles: "+{{count}} arquivo(s)"
   },
   closeReasons: {
     title: "Motivos de finalização",
@@ -606,6 +612,12 @@ const pt = {
   },
   scheduleExtras: {
     contacts: "Contatos",
+    queueHelper: "Selecione a fila que deve enviar a mensagem.",
+    queueUnavailable: "Fila indisponível",
+    noQueue: "Sem fila",
+    ticketQueue: "Fila do atendimento",
+    ticketRoute: "A fila e o contato vêm do atendimento.",
+    loadFailed: "Não foi possível carregar o formulário de agendamento.",
     tag: "Ou todos os contatos de uma etiqueta",
     noTag: "Nenhuma etiqueta",
     recipientsHelper:
@@ -622,6 +634,15 @@ const pt = {
     businessDaysTooltip: "Só em dia útil"
   },
   backendErrors: {
+    ERR_NO_CONNECTED_WHATSAPP_FOR_QUEUE:
+      "A fila selecionada não tem um canal de WhatsApp conectado.",
+    ERR_QUEUE_NOT_LINKED_TO_WHATSAPP:
+      "O canal de WhatsApp não está vinculado à fila selecionada.",
+    ERR_SCHEDULE_QUEUE_REQUIRED: "Selecione uma fila para agendar a mensagem.",
+    ERR_SCHEDULE_TICKET_CONTEXT:
+      "Não foi possível confirmar o contato ou a fila deste atendimento.",
+    ERR_SCHEDULE_CHANNEL_UNAVAILABLE:
+      "O canal de WhatsApp deste agendamento está indisponível.",
     ERR_CHAT_MEDIA_STORAGE_UNSAFE:
       "Os anexos estão temporariamente indisponíveis. Tente novamente.",
     ERR_CHAT_MEDIA_UNAVAILABLE:
@@ -866,6 +887,8 @@ const en = {
   },
   customerPanel: {
     title: "Customer panel",
+    collapse: "Hide contact details",
+    expand: "Show contact details",
     wallet: "Wallet",
     noWallet: "No owner",
     queue: "Queue",
@@ -1219,7 +1242,11 @@ const en = {
     }
   },
   messagesInput: {
-    placeholderPaused: "Ticket paused. Click Resume to reply."
+    placeholderPaused: "Ticket paused. Click Resume to reply.",
+    dropFiles: "Drop the files to attach them",
+    dropUnavailable: "Files cannot be attached to this ticket right now.",
+    skippedFiles: "Folders and empty files cannot be attached: {{names}}",
+    moreFiles: "+{{count}} file(s)"
   },
   closeReasons: {
     title: "Close reasons",
@@ -1262,6 +1289,12 @@ const en = {
   },
   scheduleExtras: {
     contacts: "Contacts",
+    queueHelper: "Choose the queue that should send the message.",
+    queueUnavailable: "Queue unavailable",
+    noQueue: "No queue",
+    ticketQueue: "Ticket queue",
+    ticketRoute: "The queue and contact come from the ticket.",
+    loadFailed: "The scheduling form could not be loaded.",
     tag: "Or every contact of a tag",
     noTag: "No tag",
     recipientsHelper:
@@ -1278,6 +1311,15 @@ const en = {
     businessDaysTooltip: "Business days only"
   },
   backendErrors: {
+    ERR_NO_CONNECTED_WHATSAPP_FOR_QUEUE:
+      "The selected queue has no connected WhatsApp channel.",
+    ERR_QUEUE_NOT_LINKED_TO_WHATSAPP:
+      "The WhatsApp channel is not linked to the selected queue.",
+    ERR_SCHEDULE_QUEUE_REQUIRED: "Choose a queue to schedule the message.",
+    ERR_SCHEDULE_TICKET_CONTEXT:
+      "The contact or queue for this ticket could not be verified.",
+    ERR_SCHEDULE_CHANNEL_UNAVAILABLE:
+      "The WhatsApp channel for this scheduled message is unavailable.",
     ERR_CHAT_MEDIA_STORAGE_UNSAFE:
       "Attachments are temporarily unavailable. Please try again.",
     ERR_CHAT_MEDIA_UNAVAILABLE:
@@ -1524,6 +1566,8 @@ const es = {
   },
   customerPanel: {
     title: "Panel del cliente",
+    collapse: "Ocultar datos del contacto",
+    expand: "Mostrar datos del contacto",
     wallet: "Cartera",
     noWallet: "Sin responsable",
     queue: "Cola",
@@ -1878,7 +1922,13 @@ const es = {
     }
   },
   messagesInput: {
-    placeholderPaused: "Atención pausada. Haga clic en Retomar para responder."
+    placeholderPaused: "Atención pausada. Haga clic en Retomar para responder.",
+    dropFiles: "Suelte los archivos para adjuntarlos",
+    dropUnavailable:
+      "No es posible adjuntar archivos en esta conversación ahora.",
+    skippedFiles:
+      "No se pueden adjuntar carpetas ni archivos vacíos: {{names}}",
+    moreFiles: "+{{count}} archivo(s)"
   },
   closeReasons: {
     title: "Motivos de cierre",
@@ -1920,6 +1970,12 @@ const es = {
   },
   scheduleExtras: {
     contacts: "Contactos",
+    queueHelper: "Selecciona la cola que debe enviar el mensaje.",
+    queueUnavailable: "Cola no disponible",
+    noQueue: "Sin cola",
+    ticketQueue: "Cola del ticket",
+    ticketRoute: "La cola y el contacto se toman del ticket.",
+    loadFailed: "No se pudo cargar el formulario de programación.",
     tag: "O todos los contactos de una etiqueta",
     noTag: "Ninguna etiqueta",
     recipientsHelper:
@@ -1936,6 +1992,16 @@ const es = {
     businessDaysTooltip: "Solo en día hábil"
   },
   backendErrors: {
+    ERR_NO_CONNECTED_WHATSAPP_FOR_QUEUE:
+      "La cola seleccionada no tiene un canal de WhatsApp conectado.",
+    ERR_QUEUE_NOT_LINKED_TO_WHATSAPP:
+      "El canal de WhatsApp no está vinculado a la cola seleccionada.",
+    ERR_SCHEDULE_QUEUE_REQUIRED:
+      "Selecciona una cola para programar el mensaje.",
+    ERR_SCHEDULE_TICKET_CONTEXT:
+      "No se pudo confirmar el contacto o la cola de este ticket.",
+    ERR_SCHEDULE_CHANNEL_UNAVAILABLE:
+      "El canal de WhatsApp de este mensaje programado no está disponible.",
     ERR_CHAT_MEDIA_STORAGE_UNSAFE:
       "Los adjuntos no están disponibles temporalmente. Inténtalo de nuevo.",
     ERR_CHAT_MEDIA_UNAVAILABLE:
@@ -3666,10 +3732,245 @@ es.integratedAssistant = {
   }
 };
 
+// Order of the queues in the bot menu of a channel (WhatsAppModal).
+pt.whatsappModal = {
+  queueOrder: {
+    title: "Ordem no menu do robô",
+    hint: "O cliente responde com o número da fila. Use as setas para mudar a ordem; ela vale ao salvar.",
+    up: "Subir",
+    down: "Descer",
+    upLabel: "Subir {{name}} no menu",
+    downLabel: "Descer {{name}} no menu"
+  }
+};
+en.whatsappModal = {
+  queueOrder: {
+    title: "Order in the bot menu",
+    hint: "Customers reply with the queue number. Use the arrows to change the order; it applies when you save.",
+    up: "Move up",
+    down: "Move down",
+    upLabel: "Move {{name}} up in the menu",
+    downLabel: "Move {{name}} down in the menu"
+  }
+};
+es.whatsappModal = {
+  queueOrder: {
+    title: "Orden en el menú del bot",
+    hint: "El cliente responde con el número de la fila. Usa las flechas para cambiar el orden; se aplica al guardar.",
+    up: "Subir",
+    down: "Bajar",
+    upLabel: "Subir {{name}} en el menú",
+    downLabel: "Bajar {{name}} en el menú"
+  }
+};
+
 pt.whitelabel = { logoHint: "Preserve a proporção original da marca." };
 en.whitelabel = { logoHint: "Keep the original proportions of the logo." };
 es.whitelabel = {
   logoHint: "Conserva las proporciones originales de la marca."
+};
+
+pt.backendErrors.ERR_TICKET_NOT_PENDING =
+  "Este atendimento não está mais aguardando aceite.";
+en.backendErrors.ERR_TICKET_NOT_PENDING =
+  "This ticket is no longer awaiting acceptance.";
+es.backendErrors.ERR_TICKET_NOT_PENDING =
+  "Esta conversación ya no está pendiente de aceptación.";
+
+pt.ticketPreview = {
+  action: "Ver prévia da mensagem",
+  title: "Prévia da conversa",
+  accept: "Aceitar e abrir",
+  loading: "Carregando a prévia…",
+  unavailable: "Não foi possível carregar a prévia.",
+  empty: "Ainda não há mensagens neste atendimento.",
+  conversation: "Mensagens do atendimento",
+  sent: "Enviada",
+  truncated: "Mostrando as 500 mensagens mais recentes deste atendimento.",
+  kinds: {
+    text: "Mensagem",
+    image: "Imagem",
+    video: "Vídeo",
+    audio: "Áudio",
+    attachment: "Anexo",
+    contact: "Contato",
+    location: "Localização"
+  }
+};
+en.ticketPreview = {
+  action: "Preview message",
+  title: "Conversation preview",
+  accept: "Accept and open",
+  loading: "Loading preview…",
+  unavailable: "Could not load the preview.",
+  empty: "This ticket has no messages yet.",
+  conversation: "Ticket messages",
+  sent: "Sent",
+  truncated: "Showing the 500 most recent messages of this ticket.",
+  kinds: {
+    text: "Message",
+    image: "Image",
+    video: "Video",
+    audio: "Audio",
+    attachment: "Attachment",
+    contact: "Contact",
+    location: "Location"
+  }
+};
+es.ticketPreview = {
+  action: "Ver vista previa del mensaje",
+  title: "Vista previa de la conversación",
+  accept: "Aceptar y abrir",
+  loading: "Cargando vista previa…",
+  unavailable: "No se pudo cargar la vista previa.",
+  empty: "Aún no hay mensajes en esta conversación.",
+  conversation: "Mensajes de la conversación",
+  sent: "Enviado",
+  truncated: "Se muestran los 500 mensajes más recientes de esta conversación.",
+  kinds: {
+    text: "Mensaje",
+    image: "Imagen",
+    video: "Vídeo",
+    audio: "Audio",
+    attachment: "Adjunto",
+    contact: "Contacto",
+    location: "Ubicación"
+  }
+};
+
+pt.generalTriage = {
+  title: "Triagem sem setor",
+  queue: "Fila de atendimento geral",
+  disabled: "Desativada",
+  queueHint: "Vincule a fila ao WhatsApp e aos atendentes que fazem a triagem.",
+  timeout: "Tempo para escolher um setor (minutos)",
+  timeoutHint: "Depois desse prazo, o atendimento vai para a fila geral."
+};
+
+pt.slaNotifications = {
+  title: "Alertas de SLA",
+  settingsTitle: "Avisos após 3 horas sem resposta",
+  settingsHint:
+    "Avise no SuperChat os responsáveis pelo setor e as pessoas que acompanham os atendimentos.",
+  enabled: "Ativar avisos de 3 horas",
+  extraRecipients: "Pessoas que acompanham todos os setores",
+  extraRecipientsHint:
+    "Selecione as contas que devem receber avisos de todos os setores.",
+  queue: "Setor",
+  responsible: "Responsáveis pelo setor",
+  save: "Salvar alertas de SLA",
+  loadError: "Não foi possível carregar os alertas de SLA.",
+  empty: "Nenhum alerta de SLA.",
+  waitingInQueue: "Atendimento sem resposta há pelo menos 3 horas em {{queue}}",
+  waiting: "Há um atendimento sem resposta há pelo menos 3 horas."
+};
+
+Object.assign(pt.backendErrors, {
+  ERR_INVALID_SLA_ALERT_CONFIG: "Confira a configuração dos alertas de SLA.",
+  ERR_INVALID_SLA_ALERT_RECIPIENT:
+    "Selecione destinatários da empresa e responsáveis com acesso ao setor."
+});
+
+en.generalTriage = {
+  title: "Tickets without a department",
+  queue: "General service queue",
+  disabled: "Disabled",
+  queueHint:
+    "Link this queue to the WhatsApp channel and the agents handling triage.",
+  timeout: "Time to select a department (minutes)",
+  timeoutHint: "After this period, the ticket moves to the general queue."
+};
+
+en.slaNotifications = {
+  title: "SLA alerts",
+  settingsTitle: "Alerts after 3 hours without a reply",
+  settingsHint:
+    "Notify queue owners and people overseeing tickets in SuperChat.",
+  enabled: "Enable 3-hour alerts",
+  extraRecipients: "People overseeing all departments",
+  extraRecipientsHint:
+    "Choose the accounts that should receive alerts for all departments.",
+  queue: "Department",
+  responsible: "Department owners",
+  save: "Save SLA alerts",
+  loadError: "Could not load the SLA alerts.",
+  empty: "No SLA alerts.",
+  waitingInQueue: "Ticket in {{queue}} has waited at least 3 hours for a reply",
+  waiting: "A ticket has waited at least 3 hours for a reply."
+};
+
+Object.assign(en.backendErrors, {
+  ERR_INVALID_SLA_ALERT_CONFIG: "Check the SLA alert settings.",
+  ERR_INVALID_SLA_ALERT_RECIPIENT:
+    "Choose recipients from this company and owners with access to the department."
+});
+
+es.generalTriage = {
+  title: "Conversaciones sin sector",
+  queue: "Cola de atención general",
+  disabled: "Desactivada",
+  queueHint:
+    "Vincula la cola al WhatsApp y a los agentes que hacen la clasificación.",
+  timeout: "Tiempo para elegir un sector (minutos)",
+  timeoutHint: "Después de ese plazo, la conversación pasa a la cola general."
+};
+
+es.slaNotifications = {
+  title: "Alertas de SLA",
+  settingsTitle: "Avisos después de 3 horas sin respuesta",
+  settingsHint:
+    "Notifica en SuperChat a los responsables del sector y a quienes supervisan las conversaciones.",
+  enabled: "Activar avisos de 3 horas",
+  extraRecipients: "Personas que supervisan todos los sectores",
+  extraRecipientsHint:
+    "Selecciona las cuentas que deben recibir avisos de todos los sectores.",
+  queue: "Sector",
+  responsible: "Responsables del sector",
+  save: "Guardar alertas de SLA",
+  loadError: "No se pudieron cargar las alertas de SLA.",
+  empty: "No hay alertas de SLA.",
+  waitingInQueue:
+    "Conversación sin respuesta durante al menos 3 horas en {{queue}}",
+  waiting: "Hay una conversación sin respuesta durante al menos 3 horas."
+};
+
+Object.assign(es.backendErrors, {
+  ERR_INVALID_SLA_ALERT_CONFIG:
+    "Revisa la configuración de las alertas de SLA.",
+  ERR_INVALID_SLA_ALERT_RECIPIENT:
+    "Elige destinatarios de la empresa y responsables con acceso al sector."
+});
+
+Object.assign(pt.backendErrors, {
+  ERR_GENERAL_TRIAGE_INVALID_QUEUE: "Escolha uma fila desta empresa.",
+  ERR_GENERAL_TRIAGE_INVALID_TIMEOUT: "Informe um prazo de 1 a 1440 minutos.",
+  ERR_SLA_ALERT_NOT_FOUND: "Este alerta já não está disponível."
+});
+Object.assign(en.backendErrors, {
+  ERR_GENERAL_TRIAGE_INVALID_QUEUE: "Choose a queue from this company.",
+  ERR_GENERAL_TRIAGE_INVALID_TIMEOUT:
+    "Enter a time between 1 and 1440 minutes.",
+  ERR_SLA_ALERT_NOT_FOUND: "This alert is no longer available."
+});
+Object.assign(es.backendErrors, {
+  ERR_GENERAL_TRIAGE_INVALID_QUEUE: "Elige una cola de esta empresa.",
+  ERR_GENERAL_TRIAGE_INVALID_TIMEOUT: "Indica un plazo de 1 a 1440 minutos.",
+  ERR_SLA_ALERT_NOT_FOUND: "Este aviso ya no está disponible."
+});
+
+pt.companyMessageSignature = {
+  required: "Sua empresa exige a assinatura nas mensagens de texto.",
+  loading: "Consultando a regra de assinatura."
+};
+
+en.companyMessageSignature = {
+  required: "Your company requires a signature on text messages.",
+  loading: "Checking the signature setting."
+};
+
+es.companyMessageSignature = {
+  required: "Tu empresa exige la firma en los mensajes de texto.",
+  loading: "Consultando la configuración de firma."
 };
 
 export const komunickMessages = {

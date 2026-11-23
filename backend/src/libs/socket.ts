@@ -161,6 +161,7 @@ export const initIO = (httpServer: Server): SocketIO => {
 
     socket.data.contextActor = { userId: user.id, companyId: user.companyId };
     socket.data.ticketStatuses = [];
+    socket.data.ticketListUpdates = false;
     socket.data.ticketNotifications = false;
     socket.join(`company-${user.companyId}-mainchannel`);
     socket.join(`user-${user.id}`);
@@ -251,7 +252,7 @@ export const initIO = (httpServer: Server): SocketIO => {
     socket.on("joinNotification", async () => {
       const c = counters.incrementCounter("notification");
       if (c === 1) {
-        socket.data.ticketNotifications = true;
+        socket.data.ticketListUpdates = true;
         await refreshSocketContextRooms(socket);
       }
       logger.debug(`joinNotification[${c}]: User: ${user.id}`);
@@ -260,10 +261,24 @@ export const initIO = (httpServer: Server): SocketIO => {
     socket.on("leaveNotification", async () => {
       const c = counters.decrementCounter("notification");
       if (c === 0) {
-        socket.data.ticketNotifications = false;
+        socket.data.ticketListUpdates = false;
         await refreshSocketContextRooms(socket);
       }
       logger.debug(`leaveNotification[${c}]: User: ${user.id}`);
+    });
+
+    socket.on("joinTicketNotifications", async () => {
+      if (counters.incrementCounter("ticket-notifications") === 1) {
+        socket.data.ticketNotifications = true;
+        await refreshSocketContextRooms(socket);
+      }
+    });
+
+    socket.on("leaveTicketNotifications", async () => {
+      if (counters.decrementCounter("ticket-notifications") === 0) {
+        socket.data.ticketNotifications = false;
+        await refreshSocketContextRooms(socket);
+      }
     });
 
     socket.on("joinTickets", async (status: string) => {

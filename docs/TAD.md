@@ -54,9 +54,13 @@ do upstream para facilitar a mesclagem de novas versões.
   do DTO também são limitadas à empresa. Ver [correções de integração](specs/correcoes-integracao-pr29.md).
 - Horário de acesso: `AuthUserService` (login) e `RefreshTokenService` (renovação) recusam com
   `ERR_OUT_OF_ACCESS_HOURS` quando `canAccessNow` é falso; sessões de impersonação não são checadas.
-- Recorrência: `queues.ts` (`handleSendScheduledMessage`) chama `CreateNextOccurrenceService` no `finally`, após o envio
-  ou a falha. A próxima data vem de `nextOccurrence(recurrenceAnchorAt, recurrence, max(agora, sendAt), recurrenceEndAt)`
-  e, com `businessDaysOnly`, passa por `nextBusinessDay`.
+- Recorrência: `SendScheduledMessageService` chama `CreateNextOccurrenceService` após o envio ou a falha. A próxima
+  data vem de `nextOccurrence(recurrenceAnchorAt, recurrence, max(agora, sendAt), recurrenceEndAt)` e, com
+  `businessDaysOnly`, passa por `nextBusinessDay`. A ocorrência copia os campos de roteamento.
+- Roteamento agendado: o job carrega a ocorrência atual pelo ID. `Schedules.queueId` identifica a fila escolhida
+  e `routingMode` conserva a exigência de fila ou atendimento mesmo após a remoção de um vínculo. Antes do
+  envio, o serviço confere a empresa, o contato e o canal conectado. `GetQueueWhatsApp` aplica a mesma seleção
+  de canais do Novo atendimento e restringe ao WhatsApp da conversa quando há `ticketId`.
 - Pausa: `paused` é um status novo de `Tickets.status`. `UpdateTicketService` recusa com `checkStatusTransition` a pausa
   de quem não está `open`. As buscas de "atendimento ativo do contato" (`FindOrCreateTicketService`,
   `FindOrCreateTicketServiceMeta`, `CheckContactOpenTickets`, `MergeContactsService`, `WhatsAppController` e o Kanban)
@@ -395,9 +399,10 @@ exige `workflow_dispatch` com `publish_images=true`, desligado por padrão, no p
 após os dois jobs de validação. Os destinos são `ghcr.io/komunick/zap-komunick-backend` e `...-frontend`, com tags
 do SHA de origem; uma futura implantação deve selecionar o digest resultante. O workflow não faz deploy.
 
-**Histórico do cliente e nota de transferência (RF-017):** `ListMessagesService` busca as mensagens de todos os
-`Tickets` do mesmo `contactId` na empresa (cursor `nextId` e respostas no mesmo conjunto); com `messageVisibility` =
-`message`, o filtro de fila vale só para mensagens de outros atendimentos. `PUT /tickets/:id` aceita `transferNote` e
+**Histórico do cliente e nota de transferência (RF-017):** `ListMessagesService` busca mensagens de `Tickets` do mesmo
+`contactId` na empresa. Com `messageVisibility=message`, atendentes só consultam outros atendimentos em filas às quais
+têm acesso, além do filtro da fila registrada na mensagem. Cursors, anexos e citações seguem a mesma regra.
+`PUT /tickets/:id` aceita `transferNote` e
 `transferMessageIds`: se a fila ou o atendente mudou, `CreateTransferNoteService` grava uma `Message` com
 `mediaType` = `transferNote` (id `ZKNOTE…`, `fromMe`, `read`), texto e cópia das mensagens citadas em `dataJson`
 (só do mesmo cliente, `helpers/TransferNote` limita tamanho e quantidade), e emite o `appMessage` normal. Ela não passa

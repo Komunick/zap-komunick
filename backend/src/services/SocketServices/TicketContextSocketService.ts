@@ -5,10 +5,15 @@ import AuthorizeTicketContextService, {
 } from "../TicketServices/AuthorizeTicketContextService";
 import AuthorizeMessageContextService from "../MessageServices/AuthorizeMessageContextService";
 import { logger } from "../../utils/logger";
+import {
+  MessageQuotePayload,
+  sanitizeMessageQuotePayload
+} from "../../helpers/MessageQuotePrivacy";
 
 interface ContextSocket {
   data: {
     contextActor?: ContextActor;
+    ticketListUpdates?: boolean;
     ticketNotifications?: boolean;
     ticketStatuses?: string[];
   };
@@ -33,13 +38,16 @@ export async function refreshSocketContextRooms(
   try {
     const viewer = await loadTicketViewer(actor);
     if (viewer.isAdmin) await socket.join(`company-${actor.companyId}-admin`);
-    if (socket.data.ticketNotifications) {
-      if (viewer.isAdmin)
-        await socket.join(`company-${actor.companyId}-notification`);
-      else
-        await Promise.all(
-          viewer.queueIds.map(id => socket.join(`queue-${id}-notification`))
-        );
+    if (viewer.isAdmin && socket.data.ticketListUpdates) {
+      await socket.join(`company-${actor.companyId}-notification`);
+    }
+    if (
+      socket.data.ticketNotifications ||
+      (!viewer.isAdmin && socket.data.ticketListUpdates)
+    ) {
+      await Promise.all(
+        viewer.queueIds.map(id => socket.join(`queue-${id}-notification`))
+      );
     }
     await Promise.all(
       (socket.data.ticketStatuses || []).map(async status => {
@@ -82,6 +90,31 @@ export async function revokeTicketContextRooms(
   await Promise.all(sockets.map(socket => canReceive(socket, ticketId)));
 }
 
+// Recipients in the old sector may still have a cached notification after
+// transfer. Invalidate it without delivering the now inaccessible ticket.
+export async function invalidateTicketNotifications(
+  io: Server,
+  ticket: { id: number; companyId: number },
+  previousQueueId: number | null | undefined
+): Promise<void> {
+  if (previousQueueId == null) return;
+  try {
+    const sockets = await io
+      .in(`queue-${previousQueueId}-notification`)
+      .fetchSockets();
+    sockets.forEach(socket => {
+      if (socket.data.contextActor?.companyId === ticket.companyId) {
+        socket.emit(`company-${ticket.companyId}-ticket`, {
+          action: "removeFromList",
+          ticketId: ticket.id
+        });
+      }
+    });
+  } catch {
+    logger.warn("Could not invalidate transferred ticket notifications");
+  }
+}
+
 export async function refreshUserContextSockets(
   io: Server,
   userId: string | number
@@ -99,14 +132,21 @@ export async function refreshUserContextSockets(
   );
 }
 
+interface MessageReference extends MessageQuotePayload {
+  id: string;
+  ticketId?: number;
+}
+
+interface EventMessage extends MessageQuotePayload {
+  companyId?: number;
+  ticketId?: number;
+  quotedMsg?: MessageReference | null;
+  replies?: MessageReference[];
+  toJSON?: () => EventMessage;
+}
+
 interface EventPayload {
-  message?: {
-    companyId?: number;
-    ticketId?: number;
-    quotedMsg?: { id: string } | null;
-    replies?: { id: string }[];
-    toJSON?: () => EventPayload["message"];
-  };
+  message?: EventMessage;
   [key: string]: unknown;
 }
 
@@ -119,31 +159,33 @@ async function visiblePayload(
   const message = payload.message.toJSON
     ? payload.message.toJSON()
     : { ...payload.message };
-  if (message.quotedMsg) {
+  const canReadReference = async (reference: MessageReference) => {
+    const sourceId = reference.ticketId;
+    if (!Number.isSafeInteger(sourceId) || sourceId <= 0) return false;
     try {
       await AuthorizeMessageContextService(
-        message.quotedMsg.id,
+        reference.id,
         actor,
-        ticketId
+        ticketId,
+        sourceId
       );
+      return true;
     } catch {
-      message.quotedMsg = null;
+      return false;
     }
+  };
+  if (message.quotedMsg && !(await canReadReference(message.quotedMsg))) {
+    message.quotedMsg = null;
   }
   if (message.replies) {
     const allowed = await Promise.all(
-      message.replies.map(async reply => {
-        try {
-          await AuthorizeMessageContextService(reply.id, actor, ticketId);
-          return reply;
-        } catch {
-          return null;
-        }
-      })
+      message.replies.map(async reply =>
+        (await canReadReference(reply)) ? reply : null
+      )
     );
     message.replies = allowed.filter(reply => reply !== null);
   }
-  return { ...payload, message };
+  return { ...payload, message: sanitizeMessageQuotePayload(message) };
 }
 
 // Zap Komunick: keep the existing candidate rooms, but authorize actual current

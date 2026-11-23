@@ -1,5 +1,7 @@
 import {
   emitTicketContext,
+  invalidateTicketNotifications,
+  refreshSocketContextRooms,
   refreshUserContextSockets,
   revokeTicketContextRooms
 } from "../../services/SocketServices/TicketContextSocketService";
@@ -113,6 +115,80 @@ describe("context recipients use current authorization", () => {
     expect(socket.join).not.toHaveBeenCalled();
   });
 
+  it("subscribes an admin to only their sector notification rooms", async () => {
+    const socket = recipient(102);
+    socket.rooms.add("company-10-notification");
+    (loadTicketViewer as jest.Mock).mockResolvedValue({
+      companyId: 10,
+      isAdmin: true,
+      queueIds: [402]
+    });
+
+    await refreshSocketContextRooms(socket);
+
+    expect(socket.leave).toHaveBeenCalledWith("company-10-notification");
+    expect(socket.leave).toHaveBeenCalledWith("queue-401-notification");
+    expect(socket.join.mock.calls).toEqual([
+      ["company-10-admin"],
+      ["queue-402-notification"],
+      ["company-10-pending"]
+    ]);
+  });
+
+  it.each([
+    { isAdmin: true, room: "company-10-notification" },
+    { isAdmin: false, room: "queue-402-notification" }
+  ])(
+    "preserves the legacy ticket-list subscription to $room",
+    async ({ isAdmin, room }) => {
+      const recipientSocket = recipient(102);
+      const socket = {
+        ...recipientSocket,
+        data: {
+          ...recipientSocket.data,
+          ticketNotifications: false,
+          ticketListUpdates: true
+        }
+      };
+      (loadTicketViewer as jest.Mock).mockResolvedValue({
+        companyId: 10,
+        isAdmin,
+        queueIds: [402]
+      });
+
+      await refreshSocketContextRooms(socket);
+
+      expect(
+        socket.join.mock.calls.filter(([name]) =>
+          name.endsWith("-notification")
+        )
+      ).toEqual([[room]]);
+    }
+  );
+
+  it("sends only the removed notification ID to sockets in the old sector of the same office", async () => {
+    const oldSector = recipient(101);
+    const foreignAdmin = recipient(104, 20);
+    const io = {
+      in: jest.fn().mockReturnValue({
+        fetchSockets: async () => [oldSector, foreignAdmin]
+      })
+    };
+
+    await invalidateTicketNotifications(
+      io as never,
+      { id: 301, companyId: 10 },
+      401
+    );
+
+    expect(io.in).toHaveBeenCalledWith("queue-401-notification");
+    expect(oldSector.emit).toHaveBeenCalledWith("company-10-ticket", {
+      action: "removeFromList",
+      ticketId: 301
+    });
+    expect(foreignAdmin.emit).not.toHaveBeenCalled();
+  });
+
   it("excludes quoted/reply context denied for this recipient without mutating the shared payload", async () => {
     const socket = recipient(101);
     const io = {
@@ -136,5 +212,47 @@ describe("context recipients use current authorization", () => {
     });
     expect(message.quotedMsg.id).toBe("foreign-quote");
     expect(message.replies).toHaveLength(1);
+  });
+
+  it("authorizes each referenced message by source ticket before emitting it", async () => {
+    const socket = recipient(101);
+    const io = {
+      in: jest.fn().mockReturnValue({ fetchSockets: async () => [socket] })
+    };
+    allowed.add(101);
+    (AuthorizeMessageContextService as jest.Mock).mockImplementation(
+      async (_id, _actor, _ticketId, sourceId) => {
+        if (sourceId === 303) throw new AppError("ERR_NO_PERMISSION", 403);
+        return { id: "duplicate", ticketId: 301 };
+      }
+    );
+    const dataJson = JSON.stringify({
+      message: {
+        extendedTextMessage: {
+          text: "Atual",
+          contextInfo: { quotedMessage: { conversation: "Inacessivel" } }
+        }
+      }
+    });
+    const message = {
+      companyId: 10,
+      ticketId: 301,
+      dataJson,
+      quotedMsg: { id: "duplicate", ticketId: 303, body: "Inacessivel" },
+      replies: [
+        { id: "duplicate", ticketId: 303 },
+        { id: "duplicate", ticketId: 301 }
+      ]
+    };
+    await emitTicketContext(io as never, 301, "fixture-message", { message }, [
+      "301"
+    ]);
+    const emitted = socket.emit.mock.calls[0][1].message;
+    expect(emitted).toMatchObject({
+      quotedMsg: null,
+      replies: [{ id: "duplicate", ticketId: 301 }]
+    });
+    expect(emitted.dataJson).not.toContain("Inacessivel");
+    expect(message.dataJson).toBe(dataJson);
   });
 });

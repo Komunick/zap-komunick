@@ -16,6 +16,7 @@ import RecordAuditService, {
 import { checkSignInIp } from "../../services/SecurityServices/IpAllowlistService";
 import AuthUserService from "../../services/UserServices/AuthUserService";
 import { checkSecondFactor } from "../../services/SecurityServices/TwoFactorService";
+import { beginImpersonation } from "../../services/AuthServices/ImpersonationService";
 
 // Real router, JWT verification, controllers, refresh service, token helpers,
 // serialization and cookie transport. Only persistence/external I/O is doubled.
@@ -300,26 +301,40 @@ beforeEach(() => {
   });
 });
 
+// The route guard (isSuper) answers before the service for non-Super accounts.
+const routeDenied = { error: "Acesso não permitido" };
+
 describe("starting an impersonated session", () => {
   it.each(["userA", "adminA"])(
     "refuses current non-super %s before reading the target",
     async actor => {
       const response = await call("start", pair(actor));
-      expect(response.status).toBe(403);
-      expect(response.body).toEqual({ error: "ERR_NO_PERMISSION" });
+      expect(response.status).toBe(401);
+      expect(response.body).toEqual(routeDenied);
       noIssuance(response);
       noTargetRead();
       expect(RecordAuditService).not.toHaveBeenCalled();
     }
   );
-  it.each(["deleted", "moved", "profile changed", "super revoked"])(
-    "refuses a current Super whose account was %s",
+  it.each(["deleted", "super revoked"])(
+    "refuses at the route a Super whose account was %s",
     async state => {
       const origin = rows.find(row => row.id === fixture.superA.id);
       if (state === "deleted") rows = rows.filter(row => row !== origin);
+      if (state === "super revoked") origin.super = false;
+      const response = await call("start", pair());
+      expect(response.status).toBe(401);
+      expect(response.body).toEqual(routeDenied);
+      noIssuance(response);
+      noTargetRead();
+    }
+  );
+  it.each(["moved", "profile changed"])(
+    "refuses a current Super whose account was %s",
+    async state => {
+      const origin = rows.find(row => row.id === fixture.superA.id);
       if (state === "moved") origin.companyId = 30;
       if (state === "profile changed") origin.profile = "user";
-      if (state === "super revoked") origin.super = false;
       const response = await call("start", pair());
       expect(response.status).toBe(403);
       expect(response.body).toEqual({ error: "ERR_NO_PERMISSION" });
@@ -332,8 +347,8 @@ describe("starting an impersonated session", () => {
       "start",
       pair("adminA", { access: { super: true } })
     );
-    expect(response.status).toBe(403);
-    expect(response.body).toEqual({ error: "ERR_NO_PERMISSION" });
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual(routeDenied);
     noIssuance(response);
     noTargetRead();
   });
@@ -390,8 +405,8 @@ describe("starting an impersonated session", () => {
   });
   it("refuses nested impersonation without issuing another session", async () => {
     const response = await call("start", delegated(), "10");
-    expect(response.status).toBe(400);
-    expect(response.body).toEqual({ error: "ERR_ALREADY_IMPERSONATING" });
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual(routeDenied);
     noIssuance(response);
   });
   it("checks target IP policy before generating session tokens", async () => {
@@ -433,6 +448,54 @@ describe("starting an impersonated session", () => {
     ]);
     expect(to).toHaveBeenCalledWith(`user-${fixture.adminB.id}`);
     expect(emit).toHaveBeenCalledTimes(1);
+  });
+});
+
+// Defence in depth: the service keeps its own Super check even though the
+// route guard now answers first.
+describe("impersonation service without the route guard", () => {
+  const begin = (credentials: Pair, companyId = "20") =>
+    beginImpersonation({
+      authorization: `Bearer ${credentials.access}`,
+      refreshToken: credentials.refresh,
+      companyId,
+      ip: "192.0.2.10"
+    });
+
+  it.each([
+    ["userA", {}],
+    ["adminA", {}],
+    ["adminA", { access: { super: true } }]
+  ])(
+    "refuses %s %p with ERR_NO_PERMISSION before reading the target",
+    async (actor, options) => {
+      await expect(
+        begin(pair(actor as string, options as PairOptions))
+      ).rejects.toMatchObject({
+        message: "ERR_NO_PERMISSION",
+        statusCode: 403
+      });
+      noTargetRead();
+    }
+  );
+  it.each(["deleted", "super revoked"])(
+    "refuses a Super whose account was %s",
+    async state => {
+      const origin = rows.find(row => row.id === fixture.superA.id);
+      if (state === "deleted") rows = rows.filter(row => row !== origin);
+      if (state === "super revoked") origin.super = false;
+      await expect(begin(pair())).rejects.toMatchObject({
+        message: "ERR_NO_PERMISSION",
+        statusCode: 403
+      });
+      noTargetRead();
+    }
+  );
+  it("refuses nested impersonation", async () => {
+    await expect(begin(delegated(), "10")).rejects.toMatchObject({
+      message: "ERR_ALREADY_IMPERSONATING",
+      statusCode: 400
+    });
   });
 });
 
