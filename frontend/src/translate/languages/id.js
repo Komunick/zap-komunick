@@ -20,10 +20,14 @@ const messages = {
         email: "Email",
         phone: "Telepon",
         company: "Perusahaan",
+        user: "Pengguna",
         connection: "Koneksi",
         queue: "Antrian",
         contact: "Kontak",
         status: "Status",
+        active: "Aktif",
+        inactive: "Tidak Aktif",
+        all: "Semua",
         serverTime: "Waktu server:",
         clientTime: "Waktu klien:",
         differenceMinutes: "Selisih: {{count}} menit"
@@ -66,6 +70,15 @@ const messages = {
         }
       },
       companiesManager: {
+        status: {
+          gracePeriod: "Masa Tenggang",
+          almostDue: "Hampir Jatuh Tempo"
+        },
+        section: {
+          info: "Informasi",
+          basicInfo: "Informasi Dasar",
+          subscription: "Langganan"
+        },
         form: {
           campaigns: "Kampanye",
           recurrence: "Berulang",
@@ -79,7 +92,8 @@ const messages = {
           clear: "Bersihkan",
           accessAs: "Akses sebagai",
           incrementDueDate: "+ Jatuh Tempo",
-          user: "Pengguna"
+          user: "Pengguna",
+          users: "Pengguna"
         },
         table: {
           campaigns: "Kampanye",
@@ -97,7 +111,10 @@ const messages = {
           deleteMessage: "Apakah Anda yakin ingin menghapus rekaman ini?",
           impersonateTitle: "Akses sebagai",
           impersonateMessage:
-            "Apakah Anda ingin mengakses sistem sebagai perusahaan ini?"
+            "Apakah Anda ingin mengakses sistem sebagai perusahaan ini?",
+          addPeriodTitle: "Tambah Periode",
+          addPeriodMessage:
+            "Apakah Anda ingin menambahkan satu periode ke tanggal jatuh tempo perusahaan ini?"
         },
         modal: {
           newTitle: "Perusahaan Baru",
@@ -147,7 +164,9 @@ const messages = {
           tryAgain: "Coba Lagi",
           qrcode: "KODE QR",
           newQr: "Kode QR Baru",
-          connecting: "Menghubungkan"
+          connecting: "Menghubungkan",
+          showUnsupported: "Tampilkan Tidak Didukung",
+          hideUnsupported: "Sembunyikan Tidak Didukung"
         },
         toolTips: {
           disconnected: {
@@ -169,24 +188,38 @@ const messages = {
               "Pastikan ponsel Anda terhubung ke internet dan WhatsApp terbuka, atau klik 'Putuskan' untuk mendapatkan Kode QR baru."
           },
           passkey: {
-            title: "Passkey authentication required",
+            title: "Autentikasi passkey diperlukan",
             content:
-              "Click the passkey button and use the browser extension to capture the authenticated WhatsApp Web session."
+              "Klik tombol passkey dan gunakan ekstensi browser untuk menangkap sesi WhatsApp Web yang terautentikasi."
           },
           refresh: "Muat ulang",
           disconnect: "Putuskan",
           scan: "Pindai",
           newQr: "Kode QR Baru",
-          retry: "Coba Lagi"
+          retry: "Coba Lagi",
+          resetPasskey: "Reset sesi passkey",
+          privacy: "Pengaturan Privasi"
         },
         table: {
           name: "Nama",
           status: "Status",
           lastUpdate: "Pembaruan Terakhir",
+          connectedNumber: "Nomor Terhubung",
           default: "Default",
           actions: "Aksi",
           session: "Sesi"
-        }
+        },
+        status: {
+          connected: "Terhubung",
+          disconnected: "Terputus",
+          opening: "Membuka",
+          qrcode: "Menunggu Kode QR",
+          timeout: "Waktu Habis",
+          passkey: "Passkey Diperlukan",
+          pending: "Tertunda",
+          unsupported: "Tidak Didukung"
+        },
+        noConnections: "Tidak ada koneksi ditemukan"
       },
       internalChat: {
         title: "Obrolan Internal"
@@ -951,6 +984,9 @@ const messages = {
             disabled: "Dinonaktifkan"
           }
         },
+        DesktopActionIconZoom: {
+          title: "Ukuran ikon aksi tiket"
+        },
         VoiceAndVideoCalls: {
           title: "Panggilan suara dan video",
           options: {
@@ -985,6 +1021,13 @@ const messages = {
             enabled: "Diaktifkan",
             disabled: "Dinonaktifkan"
           }
+        },
+        RecaptchaSiteKey: {
+          title: "Kunci situs reCAPTCHA",
+          helperText: "Hanya reCAPTCHA tak terlihat yang didukung"
+        },
+        RecaptchaSecretKey: {
+          title: "Kunci rahasia reCAPTCHA"
         },
         MultiThreadedWbot: {
           title: "Worker WhatsApp Multithread",
@@ -1166,6 +1209,10 @@ const messages = {
         }
       },
       confirmationModal: {
+        deleteRecordTitle: "Hapus: {{type}} - {{name}}",
+        deleteRecordMessage: 'Hapus data ini? {{type}}: "{{name}}"',
+        confirmationWord: "kecualikan",
+        typeToConfirm: "Ketik {{word}} untuk mengonfirmasi",
         buttons: {
           confirm: "Oke",
           cancel: "Batal"

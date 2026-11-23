@@ -57,6 +57,9 @@ const messages = {
           invalidPhone: "Número de telefone inválido"
         },
         status: "Estado",
+        active: "Ativo",
+        inactive: "Inativo",
+        all: "Todos",
         serverTime: "Hora do servidor:",
         clientTime: "Hora do cliente:",
         differenceMinutes: "Diferença: {{count}} minuto(s)"
@@ -99,6 +102,15 @@ const messages = {
         }
       },
       companiesManager: {
+        status: {
+          gracePeriod: "Período de Carência",
+          almostDue: "Quase Vencido"
+        },
+        section: {
+          info: "Informações",
+          basicInfo: "Informações Básicas",
+          subscription: "Assinatura"
+        },
         form: {
           campaigns: "Campanhas",
           recurrence: "Recorrência",
@@ -112,7 +124,8 @@ const messages = {
           clear: "Limpar",
           accessAs: "Aceder como",
           incrementDueDate: "+ Vencimento",
-          user: "Utilizador"
+          user: "Utilizador",
+          users: "Utilizadores"
         },
         table: {
           campaigns: "Campanhas",
@@ -129,7 +142,10 @@ const messages = {
           deleteTitle: "Eliminação de Registo",
           deleteMessage: "Deseja realmente eliminar este registo?",
           impersonateTitle: "Aceder como",
-          impersonateMessage: "Deseja aceder ao sistema como esta empresa?"
+          impersonateMessage: "Deseja aceder ao sistema como esta empresa?",
+          addPeriodTitle: "Adicionar Período",
+          addPeriodMessage:
+            "Deseja adicionar um período à data de vencimento desta empresa?"
         },
         modal: {
           newTitle: "Nova Empresa",
@@ -178,7 +194,9 @@ const messages = {
           tryAgain: "Tentar novamente",
           qrcode: "QR CODE",
           newQr: "Novo QR CODE",
-          connecting: "A conectar"
+          connecting: "A conectar",
+          showUnsupported: "Mostrar Não Suportados",
+          hideUnsupported: "Ocultar Não Suportados"
         },
         toolTips: {
           disconnected: {
@@ -204,16 +222,34 @@ const messages = {
             content:
               "Clique no botão de passkey e utilize a extensão do navegador para capturar a sessão autenticada do WhatsApp Web."
           },
-          resetPasskey: "Reiniciar sessão passkey"
+          refresh: "Refazer conexão",
+          disconnect: "Desconectar",
+          scan: "Ler QR Code",
+          newQr: "Gerar novo QR Code",
+          retry: "Tentar novamente",
+          resetPasskey: "Reiniciar sessão passkey",
+          privacy: "Definições de Privacidade"
         },
         table: {
           name: "Nome",
           status: "Estado",
           lastUpdate: "Última atualização",
+          connectedNumber: "Número ligado",
           default: "Padrão",
           actions: "Ações",
           session: "Sessão"
-        }
+        },
+        status: {
+          connected: "Conectado",
+          disconnected: "Desconectado",
+          opening: "A abrir",
+          qrcode: "A aguardar QR Code",
+          timeout: "Tempo esgotado",
+          passkey: "Passkey Necessário",
+          pending: "Pendente",
+          unsupported: "Não Suportado"
+        },
+        noConnections: "Nenhuma conexão encontrada"
       },
       internalChat: {
         title: "Chat Interno"
@@ -983,6 +1019,9 @@ const messages = {
             disabled: "Desativado"
           }
         },
+        DesktopActionIconZoom: {
+          title: "Tamanho do ícone de ação do ticket"
+        },
         VoiceAndVideoCalls: {
           title: "Chamadas de Voz e Vídeo",
           options: {
@@ -1017,6 +1056,13 @@ const messages = {
             enabled: "Ativado",
             disabled: "Desativado"
           }
+        },
+        RecaptchaSiteKey: {
+          title: "Chave do site reCAPTCHA",
+          helperText: "Apenas reCAPTCHA invisível é suportado"
+        },
+        RecaptchaSecretKey: {
+          title: "Chave secreta reCAPTCHA"
         },
         MultiThreadedWbot: {
           title: "Worker Multithread do WhatsApp",
@@ -1196,6 +1242,10 @@ const messages = {
         }
       },
       confirmationModal: {
+        deleteRecordTitle: "Eliminar: {{type}} - {{name}}",
+        deleteRecordMessage: 'Eliminar este registo? {{type}}: "{{name}}"',
+        confirmationWord: "excluir",
+        typeToConfirm: "Escreva {{word}} para confirmar",
         buttons: {
           confirm: "Ok",
           cancel: "Cancelar"

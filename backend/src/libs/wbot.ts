@@ -84,6 +84,13 @@ const sessions: Session[] = [];
 // Zap Komunick: reconnections in a row per connection, for the backoff
 const reconnectAttempts = new Map<number, number>();
 
+// Zap Komunick: from Ticketz v1.0.135 (4f3129c1), the number of the session
+export const getConnectedNumber = (whatsappId: number): string | undefined => {
+  const session = sessions.find(s => s.id === whatsappId);
+  if (!session?.myJid) return undefined;
+  return session.myJid.split("@")[0];
+};
+
 export const getWbot = (whatsappId: number): Session => {
   const sessionIndex = sessions.findIndex(s => s.id === whatsappId);
 
@@ -363,7 +370,7 @@ export const initWASocket = async (
         if (
           !proxy &&
           (await GetCompanySetting(1, "useMultiThreadedWbot", "disabled")) ===
-          "enabled"
+            "enabled"
         ) {
           makeWASocket = makeWASocketMultiThreaded;
         } else {

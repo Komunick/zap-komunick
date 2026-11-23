@@ -112,6 +112,7 @@ export default function Options(props) {
   const [quickMessages, setQuickMessages] = useState("");
   const [defaultLanguage, setDefaultLanguage] = useState("");
   const [allowSignup, setAllowSignup] = useState("disabled");
+  const [recaptchaSiteKey, setRecaptchaSiteKey] = useState("");
   const [chatbotAutoExit, setChatbotAutoExit] = useState("disabled");
   const [showNumericIcons, setShowNumericIcons] = useState("disabled");
   const [CheckMsgIsGroup, setCheckMsgIsGroupType] = useState("enabled");
@@ -156,6 +157,7 @@ export default function Options(props) {
   const [autoReopenTimeout, setAutoReopenTimeout] = useState(false);
   const [gracePeriod, setGracePeriod] = useState(0);
   const [tagsMode, setTagsMode] = useState("ticket");
+  const [allowSilentlyClose, setAllowSilentlyClose] = useState("enabled");
   const [ticketAcceptedMessage, setTicketAcceptedMessage] = useState("");
   const [transferMessage, setTransferMessage] = useState("");
 
@@ -254,6 +256,10 @@ export default function Options(props) {
       if (allowSignup) {
         setAllowSignup(allowSignup.value);
       }
+
+      const recaptchaSiteKey = settings.find(s => s.key === "recaptchaSiteKey");
+      setRecaptchaSiteKey(recaptchaSiteKey?.value || "");
+
       const quickMessages = settings.find(s => s.key === "quickMessages");
       setQuickMessages(quickMessages?.value || "individual");
 
@@ -364,6 +370,11 @@ export default function Options(props) {
 
       const tagsMode = settings.find(s => s.key === "tagsMode");
       setTagsMode(tagsMode?.value || "ticket");
+
+      const allowSilentlyClose = settings.find(
+        s => s.key === "allowSilentlyClose"
+      );
+      setAllowSilentlyClose(allowSilentlyClose?.value || "enabled");
 
       const ticketAcceptedMessage = settings.find(
         s => s.key === "ticketAcceptedMessage"
@@ -693,6 +704,8 @@ export default function Options(props) {
             </Select>
           </FormControl>
         </Grid>
+
+        <Grid item xs={12} />
 
         <Grid xs={12} sm={12} md={6} item>
           <FormControl className={classes.selectContainer}>
@@ -1362,6 +1375,38 @@ export default function Options(props) {
         </Grid>
 
         <Grid item xs={12}>
+          <h2 className={classes.groupTitle}>
+            {i18n.t("settings.group.userpermissions")}
+          </h2>
+        </Grid>
+
+        <Grid xs={12} sm={6} md={4} item>
+          <FormControl className={classes.selectContainer}>
+            <InputLabel id="allow-silentlyclose-label">
+              {i18n.t("settings.AllowSilentlyClose.title")}
+            </InputLabel>
+            <Select
+              labelId="allow-silentlyclose-label"
+              value={allowSilentlyClose || "enabled"}
+              onChange={async e => {
+                setAllowSilentlyClose(e.target.value);
+                await handleSetting(
+                  "allowSilentlyClose",
+                  e.target.value,
+                  setAllowSilentlyClose
+                );
+                i18nToast.success("settings.success");
+              }}
+            >
+              <MenuItem value={"disabled"}>
+                {i18n.t("common.disabled")}
+              </MenuItem>
+              <MenuItem value={"enabled"}>{i18n.t("common.enabled")}</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid item xs={12}>
           <h2 className={classes.groupTitle}>{i18n.t("settings.group.api")}</h2>
         </Grid>
 
@@ -1518,6 +1563,25 @@ export default function Options(props) {
                       {i18n.t("settings.AllowRegistration.options.enabled")}
                     </MenuItem>
                   </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid xs={12} sm={6} md={6} item>
+                <FormControl className={classes.selectContainer}>
+                  <TextField
+                    id="recaptcha-site-key-field"
+                    label={i18n.t("settings.RecaptchaSiteKey.title")}
+                    helperText={i18n.t("settings.RecaptchaSiteKey.helperText")}
+                    variant="standard"
+                    name="recaptchaSiteKey"
+                    value={recaptchaSiteKey}
+                    onChange={e => {
+                      setRecaptchaSiteKey(e.target.value);
+                    }}
+                    onBlur={async _ => {
+                      await handleSetting("recaptchaSiteKey", recaptchaSiteKey);
+                    }}
+                  />
                 </FormControl>
               </Grid>
 

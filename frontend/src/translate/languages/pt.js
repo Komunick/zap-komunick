@@ -60,6 +60,12 @@ const messages = {
           invalidPhone: "Número de telefone inválido"
         },
         status: "Status",
+        active: "Ativo",
+        inactive: "Inativo",
+        all: "Todos",
+        small: "Pequeno",
+        medium: "Médio",
+        large: "Grande",
         serverTime: "Hora do servidor:",
         clientTime: "Hora do cliente:",
         differenceMinutes: "Diferença: {{count}} minuto(s)"
@@ -102,6 +108,15 @@ const messages = {
         }
       },
       companiesManager: {
+        status: {
+          gracePeriod: "Período de Carência",
+          almostDue: "Quase Vencido"
+        },
+        section: {
+          info: "Informações",
+          basicInfo: "Informações Básicas",
+          subscription: "Assinatura"
+        },
         form: {
           campaigns: "Campanhas",
           recurrence: "Recorrência",
@@ -115,7 +130,8 @@ const messages = {
           clear: "Limpar",
           accessAs: "Acessar como",
           incrementDueDate: "+ Vencimento",
-          user: "Usuário"
+          user: "Usuário",
+          users: "Usuários"
         },
         table: {
           campaigns: "Campanhas",
@@ -132,7 +148,10 @@ const messages = {
           deleteTitle: "Exclusão de Registro",
           deleteMessage: "Deseja realmente excluir esse registro?",
           impersonateTitle: "Acessar como",
-          impersonateMessage: "Deseja acessar o sistema como esta empresa?"
+          impersonateMessage: "Deseja acessar o sistema como esta empresa?",
+          addPeriodTitle: "Adicionar Período",
+          addPeriodMessage:
+            "Deseja adicionar um período à data de vencimento desta empresa?"
         },
         modal: {
           newTitle: "Nova Empresa",
@@ -204,7 +223,9 @@ const messages = {
           tryAgain: "Tentar novamente",
           qrcode: "QR CODE",
           newQr: "Novo QR CODE",
-          connecting: "Conectando"
+          connecting: "Conectando",
+          showUnsupported: "Mostrar Não Suportados",
+          hideUnsupported: "Ocultar Não Suportados"
         },
         toolTips: {
           disconnected: {
@@ -235,16 +256,29 @@ const messages = {
           scan: "Ler QR Code",
           newQr: "Gerar novo QR Code",
           retry: "Tentar novamente",
-          resetPasskey: "Reiniciar sessão passkey"
+          resetPasskey: "Reiniciar sessão passkey",
+          privacy: "Configurações de Privacidade"
         },
         table: {
           name: "Nome",
           status: "Status",
           lastUpdate: "Última atualização",
+          connectedNumber: "Número conectado",
           default: "Padrão",
           actions: "Ações",
           session: "Sessão"
-        }
+        },
+        status: {
+          connected: "Conectado",
+          disconnected: "Desconectado",
+          opening: "Abrindo",
+          qrcode: "Aguardando QR Code",
+          timeout: "Tempo esgotado",
+          passkey: "Passkey Necessário",
+          pending: "Pendente",
+          unsupported: "Não Suportado"
+        },
+        noConnections: "Nenhuma conexão encontrada"
       },
       internalChat: {
         title: "Chat Interno"
@@ -954,6 +988,7 @@ const messages = {
           officeHours: "Horário de expediente",
           groups: "Grupos",
           confidenciality: "Confidencialidade",
+          userpermissions: "Permissões de usuário",
           api: "API",
           externalServices: "Serviços externos",
           serveradmin: "Administração do servidor"
@@ -1018,6 +1053,9 @@ const messages = {
             disabled: "Desativado"
           }
         },
+        DesktopActionIconZoom: {
+          title: "Tamanho do ícone de ação do ticket"
+        },
         VoiceAndVideoCalls: {
           title: "Chamadas de Voz e Vídeo",
           options: {
@@ -1052,6 +1090,13 @@ const messages = {
             enabled: "Ativado",
             disabled: "Desativado"
           }
+        },
+        RecaptchaSiteKey: {
+          title: "Chave do site reCAPTCHA",
+          helperText: "Apenas reCAPTCHA invisível é suportado"
+        },
+        RecaptchaSecretKey: {
+          title: "Chave secreta reCAPTCHA"
         },
         MultiThreadedWbot: {
           title: "Worker Multithread do WhatsApp",
@@ -1144,6 +1189,12 @@ const messages = {
             contact: "Contato",
             both: "Ticket e Contacto"
           }
+        },
+        AllowSilentlyClose: {
+          title: "Permitir Fechar Ticket Silenciosamente"
+        },
+        AllowSpy: {
+          title: "Permitir Espiar Tickets"
         },
         docker: {
           title: "Containers Docker",
@@ -1260,6 +1311,10 @@ const messages = {
         }
       },
       confirmationModal: {
+        deleteRecordTitle: "Excluir: {{type}} - {{name}}",
+        deleteRecordMessage: 'Excluir este registro? {{type}}: "{{name}}"',
+        confirmationWord: "excluir",
+        typeToConfirm: "Digite {{word}} para confirmar",
         buttons: {
           confirm: "Ok",
           cancel: "Cancelar"
