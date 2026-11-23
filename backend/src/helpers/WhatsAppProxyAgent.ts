@@ -1,6 +1,8 @@
 import { Agent, AgentOptions } from "https";
+import createHttpsProxyAgent from "https-proxy-agent";
 
 let configuredProxy: { value: string; agent: Agent };
+let configuredHttpAgent: { value: string; agent: Agent };
 
 export function createWhatsAppProxyAgent(
   value = process.env.SUPERCHAT_WHATSAPP_PROXY_URL
@@ -50,12 +52,33 @@ export function getWhatsAppProxyAgent(): Agent | null {
 }
 
 /**
+ * Agent for the library's HTTP requests (axios: media upload and download,
+ * app state blobs). The native proxyEnv agent works for the WebSocket, but
+ * axios requests through it still resolve mmg.whatsapp.net locally and fail
+ * with EAI_AGAIN where only the proxy can reach WhatsApp (production,
+ * 23/11/2026). https-proxy-agent opens the CONNECT tunnel explicitly.
+ */
+export function getWhatsAppHttpAgent(): Agent | null {
+  const value = process.env.SUPERCHAT_WHATSAPP_PROXY_URL;
+  if (!value) return null;
+  if (configuredHttpAgent?.value !== value) {
+    // same validation as the WebSocket agent (origin, no credentials, Node)
+    createWhatsAppProxyAgent(value)?.destroy();
+    configuredHttpAgent = {
+      value,
+      agent: createHttpsProxyAgent(new URL(value).href) as unknown as Agent
+    };
+  }
+  return configuredHttpAgent.agent;
+}
+
+/**
  * Axios request options that honor the configured egress proxy. Used for
  * every HTTP request the WhatsApp library makes outside the WebSocket:
  * app state blobs (mmg.whatsapp.net), media and history downloads.
  */
 export function getWhatsAppHttpOptions() {
-  const httpsAgent = getWhatsAppProxyAgent();
+  const httpsAgent = getWhatsAppHttpAgent();
   if (!httpsAgent) return undefined;
   return {
     httpsAgent,
