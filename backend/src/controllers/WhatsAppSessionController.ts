@@ -7,13 +7,42 @@ import {
 } from "../libs/wbot";
 import ShowWhatsAppService from "../services/WhatsappService/ShowWhatsAppService";
 import { StartWhatsAppSession } from "../services/WbotServices/StartWhatsAppSession";
-import UpdateWhatsAppService from "../services/WhatsappService/UpdateWhatsAppService";
 import ImportWhatsAppSessionService from "../services/WbotServices/ImportWhatsAppSessionService";
 import { startBuildCaptureExtension } from "../services/WbotServices/BuildCaptureExtensionService";
+import { sendWhatsappUpdate } from "../services/WhatsappService/SocketSendWhatsappUpdate";
 import AppError from "../errors/AppError";
+import { getWhatsAppProxyAgent } from "../helpers/WhatsAppProxyAgent";
 import { getIO } from "../libs/socket";
 import { logger } from "../utils/logger";
 import BaileysKeys from "../models/BaileysKeys";
+import Whatsapp from "../models/Whatsapp";
+
+const whatsappChannelScope = (req: Request) => {
+  const id = Number(req.params.whatsappId);
+  if (!Number.isInteger(id) || id <= 0 || id > 2_147_483_647) {
+    throw new AppError("ERR_NO_WAPP_FOUND", 404);
+  }
+
+  return { id, companyId: req.user.companyId, channel: "whatsapp" };
+};
+
+const showQr = async (req: Request, res: Response): Promise<Response> => {
+  res.setHeader("Cache-Control", "private, no-store");
+
+  const whatsapp = await Whatsapp.findOne({
+    attributes: ["status", "qrcode"],
+    where: whatsappChannelScope(req)
+  });
+
+  if (!whatsapp) {
+    throw new AppError("ERR_NO_WAPP_FOUND", 404);
+  }
+
+  return res.status(200).json({
+    status: whatsapp.status,
+    qrcode: whatsapp.status === "qrcode" ? whatsapp.qrcode : null
+  });
+};
 
 const store = async (req: Request, res: Response): Promise<Response> => {
   const { whatsappId } = req.params;
@@ -35,18 +64,51 @@ const store = async (req: Request, res: Response): Promise<Response> => {
 };
 
 const update = async (req: Request, res: Response): Promise<Response> => {
-  const { whatsappId } = req.params;
-  const { companyId } = req.user;
-
-  const { whatsapp } = await UpdateWhatsAppService({
-    whatsappId,
-    companyId,
-    whatsappData: { session: "" }
+  const where = whatsappChannelScope(req);
+  const channel = await Whatsapp.findOne({
+    attributes: ["status"],
+    where
   });
 
-  if (whatsapp.channel === "whatsapp") {
-    await StartWhatsAppSession(whatsapp, companyId);
+  if (!channel) {
+    throw new AppError("ERR_NO_WAPP_FOUND", 404);
   }
+  if (channel.status !== "DISCONNECTED") {
+    throw new AppError("ERR_WAPP_NOT_DISCONNECTED", 409);
+  }
+
+  // Validate the configured route before claiming the connection attempt.
+  try {
+    getWhatsAppProxyAgent();
+  } catch (err) {
+    logger.error(err);
+    throw new AppError("ERR_WAPP_START_FAILED", 503);
+  }
+
+  const [, [whatsapp]] = await Whatsapp.update(
+    { status: "OPENING", session: "", qrcode: "" },
+    { where: { ...where, status: "DISCONNECTED" }, returning: true }
+  );
+  if (!whatsapp) {
+    throw new AppError("ERR_WAPP_NOT_DISCONNECTED", 409);
+  }
+
+  const openedAt = whatsapp.updatedAt;
+  StartWhatsAppSession(whatsapp, where.companyId, false, {
+    propagateErrors: true
+  })
+    .catch(async err => {
+      logger.error(err);
+      const [, [failed]] = await Whatsapp.update(
+        { status: "DISCONNECTED" },
+        {
+          where: { ...where, status: "OPENING", updatedAt: openedAt },
+          returning: true
+        }
+      );
+      if (failed) sendWhatsappUpdate(failed);
+    })
+    .catch(err => logger.error(err));
 
   return res.status(200).json({ message: "Starting session." });
 };
@@ -289,6 +351,7 @@ const buildCaptureExtension = async (
 };
 
 export default {
+  showQr,
   store,
   remove,
   update,

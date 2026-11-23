@@ -29,6 +29,7 @@ import api from "../../services/api";
 import { i18n } from "../../translate/i18n";
 import toastError from "../../errors/toastError";
 import QueueSelect from "../QueueSelect";
+import QueueOrderList from "./QueueOrderList";
 import HelpOutlineOutlinedIcon from "@material-ui/icons/HelpOutlineOutlined";
 
 import { SelectLanguage } from "../SelectLanguage";
@@ -83,6 +84,7 @@ const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
   };
   const [whatsApp, setWhatsApp] = useState(initialState);
   const [selectedQueueIds, setSelectedQueueIds] = useState([]);
+  const [availableQueues, setAvailableQueues] = useState([]);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -303,6 +305,16 @@ const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
                 <QueueSelect
                   selectedQueueIds={selectedQueueIds}
                   onChange={selectedIds => setSelectedQueueIds(selectedIds)}
+                  onQueuesLoaded={setAvailableQueues}
+                />
+                <QueueOrderList
+                  queueIds={selectedQueueIds}
+                  queues={
+                    availableQueues.length
+                      ? availableQueues
+                      : whatsApp.queues || []
+                  }
+                  onChange={setSelectedQueueIds}
                 />
                 <div>
                   <Field

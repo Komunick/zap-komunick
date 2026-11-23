@@ -11,8 +11,7 @@ import {
   AutoIncrement,
   Default,
   BeforeCreate,
-  BelongsToMany,
-  HasOne
+  BelongsToMany
 } from "sequelize-typescript";
 import { v4 as uuidv4 } from "uuid";
 
@@ -90,6 +89,9 @@ class Ticket extends Model<Ticket> {
   // since when the client is waiting for a human reply (SLA panel)
   @Column
   unansweredSince: Date;
+
+  @Column
+  generalTriageStartedAt: Date | null;
 
   @ForeignKey(() => QueueOption)
   @Column

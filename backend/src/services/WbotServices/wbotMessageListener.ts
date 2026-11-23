@@ -38,7 +38,8 @@ import { logger } from "../../utils/logger";
 import FindOrCreateTicketService from "../TicketServices/FindOrCreateTicketService";
 import ShowWhatsAppService from "../WhatsappService/ShowWhatsAppService";
 import UpdateTicketService, {
-  UpdateTicketData
+  UpdateTicketData,
+  websocketUpdateTicket
 } from "../TicketServices/UpdateTicketService";
 import formatBody from "../../helpers/Mustache";
 import TicketTraking from "../../models/TicketTraking";
@@ -61,6 +62,7 @@ import CheckSettings, { GetCompanySetting } from "../../helpers/CheckSettings";
 import Whatsapp from "../../models/Whatsapp";
 import { SimpleObjectCache } from "../../helpers/simpleObjectCache";
 import { getPublicPath } from "../../helpers/GetPublicPath";
+import { getWhatsAppMediaDownloadOptions } from "../../helpers/WhatsAppProxyAgent";
 import { Session } from "../../libs/wbot";
 import { checkCompanyCompliant } from "../../helpers/CheckCompanyCompliant";
 import { transcriber } from "../../helpers/transcriber";
@@ -71,11 +73,27 @@ import { getJidOf } from "./getJidOf";
 import { verifyContact } from "./verifyContact";
 import { decryptMessageEdit } from "./decryptMessageEdit";
 import GetTicketWbot from "../../helpers/GetTicketWbot";
+import IsWhatsAppQueueLinked from "../../helpers/IsWhatsAppQueueLinked";
+import { readGeneralTriageQueueId } from "../../helpers/GeneralTriage";
+import {
+  assignGeneralTriageDestination,
+  claimGeneralTriageMenu,
+  startGeneralTriageWait
+} from "./GeneralTriageRouting";
+import {
+  formatQueueMenu,
+  pickMenuQueue
+} from "../../helpers/WhatsappQueueMenu";
+import { authorizeQueueOption } from "../QueueOptionService/AuthorizeQueueOptionService";
 import saveMediaToFile from "../../helpers/saveMediaFile";
 import { _t } from "../TranslationServices/i18nService";
 import WhatsappLidMap from "../../models/WhatsappLidMap";
 import normalizePhone from "../../helpers/NormalizePhone";
-import { emitTicketContext } from "../SocketServices/TicketContextSocketService";
+import {
+  emitTicketContext,
+  invalidateTicketNotifications,
+  revokeTicketContextRooms
+} from "../SocketServices/TicketContextSocketService";
 
 export interface ImessageUpsert {
   messages: proto.IWebMessageInfo[];
@@ -427,7 +445,8 @@ const downloadThumbnail = async ({
 
   const stream = await downloadContentFromMessage(
     { mediaKey, directPath },
-    mediaType
+    mediaType,
+    getWhatsAppMediaDownloadOptions()
   );
 
   if (!stream) {
@@ -510,6 +529,7 @@ const downloadMedia = async (
 
   let stream: Transform;
   let contDownload = 0;
+  const downloadOptions = getWhatsAppMediaDownloadOptions();
 
   while (contDownload < 10 && !stream) {
     try {
@@ -518,7 +538,11 @@ const downloadMedia = async (
         tmpMessage.url = "";
       }
 
-      stream = await downloadContentFromMessage(tmpMessage, messageType);
+      stream = await downloadContentFromMessage(
+        tmpMessage,
+        messageType,
+        downloadOptions
+      );
     } catch {
       contDownload += 1;
 
@@ -626,23 +650,45 @@ const verifyQuotedMessage = async (
 
   if (!quotedId) return null;
 
-  const quotedTicketId = `${quotedId}-${ticket.id}`;
-
-  // find message for any of quotedId and quotedTicketId
-  const dbQuotedMsg = await Message.findOne({
+  const originals = await Message.findAll({
     where: {
-      id: {
-        [Op.or]: [quotedId, quotedTicketId]
-      },
-      ticketId: ticket?.id
-    }
+      id: quotedId,
+      companyId: ticket.companyId
+    },
+    attributes: ["id", "ticketId"],
+    include: [
+      {
+        model: Ticket,
+        as: "ticket",
+        where: { companyId: ticket.companyId },
+        attributes: ["contactId", "whatsappId"],
+        required: true
+      }
+    ],
+    limit: 2
   });
 
-  if (!dbQuotedMsg) {
-    return storeQuotedMessage(quotedMessage, ticket, wbot);
+  if (originals.length) {
+    const [original] = originals;
+    // quotedMsgId alone cannot identify one of several matching rows.
+    if (
+      originals.length !== 1 ||
+      original.ticket.contactId !== ticket.contactId ||
+      original.ticket.whatsappId !== ticket.whatsappId
+    ) {
+      return null;
+    }
+    return original;
   }
 
-  return dbQuotedMsg;
+  const storedQuote = await Message.findOne({
+    where: {
+      id: `${quotedId}-${ticket.id}`,
+      ticketId: ticket.id,
+      companyId: ticket.companyId
+    }
+  });
+  return storedQuote ?? storeQuotedMessage(quotedMessage, ticket, wbot);
 };
 
 /**
@@ -1175,10 +1221,13 @@ const sendMenu = async (
     currentOption instanceof Queue
       ? (currentOption as Queue).greetingMessage
       : (currentOption as QueueOption).message;
+  const menuOptions = currentOption.options.filter(
+    option => option.queueId == null || option.queueId === ticket.queueId
+  );
 
   const botText = async () => {
     const showNumericIcons =
-      currentOption.options.length <= 10 &&
+      menuOptions.length <= 10 &&
       (await GetCompanySetting(
         ticket.companyId,
         "showNumericIcons",
@@ -1187,7 +1236,7 @@ const sendMenu = async (
 
     let options = "";
 
-    currentOption.options.forEach(option => {
+    menuOptions.forEach(option => {
       options += showNumericIcons
         ? `${emojiNumberOption(Number(option.option))} - `
         : `*[ ${option.option} ]* - `;
@@ -1210,17 +1259,19 @@ const sendMenu = async (
     await verifyMessage(sendMsg, ticket, ticket.contact);
   };
 
-  botText();
+  await botText();
 };
 
 export const startQueue = async (
   wbot: Session,
   ticket: Ticket,
   queue: Queue = null,
-  sendBackToMain = true
+  sendBackToMain = true,
+  assignFromSectorMenu = false
 ) => {
   if (!queue) {
-    queue = await Queue.findByPk(ticket.queueId, {
+    queue = await Queue.findOne({
+      where: { id: ticket.queueId, companyId: ticket.companyId },
       include: [
         {
           model: QueueOption,
@@ -1233,18 +1284,38 @@ export const startQueue = async (
     });
   }
 
-  const { companyId, contact } = ticket;
+  if (
+    !queue ||
+    (ticket.channel === "whatsapp" &&
+      (ticket.whatsappId !== wbot.id ||
+        !(await IsWhatsAppQueueLinked(ticket.companyId, wbot.id, queue.id))))
+  ) {
+    return;
+  }
+
+  const { companyId } = ticket;
   let chatbot = false;
 
   if (queue?.options) {
     chatbot = queue.options.length > 0;
   }
-  await UpdateTicketService({
-    ticketData: { queueId: queue.id, chatbot, status: "pending" },
-    ticketId: ticket.id,
-    companyId: ticket.companyId,
-    dontRunChatbot: true
-  });
+  if (assignFromSectorMenu) {
+    const routed = await assignGeneralTriageDestination(ticket, {
+      id: queue.id,
+      chatbot,
+      isGeneral: false
+    });
+    if (!routed) return;
+    ticket = routed;
+  } else {
+    ({ ticket } = await UpdateTicketService({
+      ticketData: { queueId: queue.id, chatbot, status: "pending" },
+      ticketId: ticket.id,
+      companyId: ticket.companyId,
+      dontRunChatbot: true
+    }));
+  }
+  const { contact } = ticket;
 
   // do not process queue if company is not compliant with payments
   if (!(await checkCompanyCompliant(companyId))) {
@@ -1337,7 +1408,7 @@ export const startQueue = async (
       });
       await verifyMediaMessage(sentMediaMessage, ticket, contact);
     }
-    sendMenu(wbot, ticket, queue, sendBackToMain);
+    await sendMenu(wbot, ticket, queue, sendBackToMain);
   }
 };
 
@@ -1345,14 +1416,18 @@ const verifyQueue = async (
   wbot: Session,
   msg: proto.IWebMessageInfo | null,
   ticket: Ticket,
-  _contact: Contact
+  _contact: Contact,
+  configuredGeneralQueueId?: number | null
 ) => {
-  const whatsapp = await ShowWhatsAppService(wbot.id!);
+  const whatsapp = await ShowWhatsAppService(wbot.id!, {
+    companyId: ticket.companyId
+  });
 
   if (!whatsapp) {
     throw new Error("ERR_NO_WAPP_FOUND");
   }
 
+  if (ticket.status !== "pending" || ticket.queueId || ticket.userId) return;
   const { queues, greetingMessage } = whatsapp;
 
   if (queues.length === 1) {
@@ -1368,18 +1443,20 @@ const verifyQueue = async (
       "disabled"
     )) === "enabled";
 
+  const generalQueueId =
+    configuredGeneralQueueId === undefined
+      ? await readGeneralTriageQueueId(ticket.companyId)
+      : configuredGeneralQueueId;
+  const generalQueue = queues.find(queue => queue.id === generalQueueId);
+  // queues come in the menu order saved for the channel (ShowWhatsAppService)
   const selectedOption = msg ? await getBodyMessage(msg?.message) : null;
-  const choosenQueue = selectedOption ? queues[+selectedOption - 1] : null;
+  const chosenQueue = pickMenuQueue(queues, selectedOption, generalQueue);
 
   const botText = async () => {
-    let options = "";
-
-    queues.forEach((queue, index) => {
-      options += showNumericIcons
-        ? `${emojiNumberOption(index + 1)} - `
-        : `*[ ${index + 1} ]* - `;
-      options += `${queue.name}\n`;
-    });
+    const options = formatQueueMenu(
+      queues,
+      showNumericIcons ? emojiNumberOption : undefined
+    );
 
     const textMessage = {
       text: formatBody(`${greetingMessage}\n\n${options}`, ticket)
@@ -1390,10 +1467,28 @@ const verifyQueue = async (
     await verifyMessage(sendMsg, ticket, ticket.contact);
   };
 
-  if (choosenQueue) {
-    await startQueue(wbot, ticket, choosenQueue);
+  if (generalQueue && chosenQueue?.id === generalQueue.id) {
+    await assignGeneralTriageDestination(ticket, {
+      id: generalQueue.id,
+      chatbot: false,
+      isGeneral: true
+    });
+    await ticket.reload({ include: ["queue"] });
+  } else if (chosenQueue) {
+    await startQueue(wbot, ticket, chosenQueue, true, Boolean(generalQueue));
+    if (generalQueue) await ticket.reload({ include: ["queue"] });
+  } else if (generalQueue) {
+    const compliant = await checkCompanyCompliant(ticket.companyId);
+    if (
+      (await startGeneralTriageWait(ticket, compliant)) &&
+      compliant &&
+      (await claimGeneralTriageMenu(ticket))
+    ) {
+      await botText();
+    }
+    await ticket.reload({ include: ["queue"] });
   } else {
-    botText();
+    await botText();
     await updateTicket(ticket, {
       chatbot: true
     });
@@ -1406,7 +1501,9 @@ const handleRating = async (
   ticketTraking: TicketTraking,
   wbot: Session
 ) => {
-  const whatsapp = await ShowWhatsAppService(ticket.whatsappId);
+  const whatsapp = await ShowWhatsAppService(ticket.whatsappId, {
+    companyId: ticket.companyId
+  });
 
   if (!whatsapp) {
     throw new Error("ERR_NO_WAPP_FOUND");
@@ -1427,6 +1524,15 @@ const handleRating = async (
     userId: ticketTraking.userId,
     rate: finalRate
   });
+
+  if (
+    ticket.whatsappId !== wbot.id ||
+    (ticket.queueId &&
+      !(await IsWhatsAppQueueLinked(ticket.companyId, wbot.id, ticket.queueId)))
+  ) {
+    await ticketTraking.update({ rated: true });
+    return;
+  }
 
   const complationMessage =
     whatsapp.complationMessage.trim() || _t("Service completed", ticket);
@@ -1453,7 +1559,8 @@ const handleChartbot = async (
   wbot: Session,
   dontReadTheFirstQuestion = false
 ) => {
-  const queue = await Queue.findByPk(ticket.queueId, {
+  const queue = await Queue.findOne({
+    where: { id: ticket.queueId, companyId: ticket.companyId },
     include: [
       {
         model: QueueOption,
@@ -1463,6 +1570,22 @@ const handleChartbot = async (
     ],
     order: [["options", "option", "ASC"]]
   });
+
+  if (
+    !queue ||
+    ticket.whatsappId !== wbot.id ||
+    !(await IsWhatsAppQueueLinked(ticket.companyId, wbot.id, queue.id))
+  ) {
+    return;
+  }
+
+  if (
+    ticket.queueOptionId &&
+    (await authorizeQueueOption(ticket.queueOptionId, ticket.companyId)).queue
+      .id !== queue.id
+  ) {
+    return;
+  }
 
   const messageBody = await getBodyMessage(msg?.message);
 
@@ -1484,19 +1607,23 @@ const handleChartbot = async (
 
     // escolheu uma opção
   } else if (!isNil(queue) && !isNil(ticket.queueOptionId)) {
+    const childOptions = {
+      parentId: ticket.queueOptionId,
+      [Op.or]: [{ queueId: null }, { queueId: queue.id }]
+    };
     const count = await QueueOption.count({
-      where: { parentId: ticket.queueOptionId }
+      where: childOptions
     });
     let option: QueueOption = null;
     if (count === 1) {
       option = await QueueOption.findOne({
-        where: { parentId: ticket.queueOptionId }
+        where: childOptions
       });
     } else {
       option = await QueueOption.findOne({
         where: {
-          option: messageBody || "",
-          parentId: ticket.queueOptionId
+          ...childOptions,
+          option: messageBody || ""
         }
       });
     }
@@ -1547,7 +1674,16 @@ const handleChartbot = async (
   /* * /
   if (!isNil(queue) && isNil(ticket.queueOptionId)) {
     sendMenu(wbot, ticket, queue);
-  } else /* */ if (!isNil(queue) && !isNil(ticket.queueOptionId)) {
+  } else /* */ if (
+    ticket.queueId === queue.id &&
+    !isNil(ticket.queueOptionId)
+  ) {
+    const { queue: optionQueue } = await authorizeQueueOption(
+      ticket.queueOptionId,
+      ticket.companyId
+    );
+    if (optionQueue.id !== queue.id) return;
+
     const currentOption = await QueueOption.findByPk(ticket.queueOptionId, {
       include: [
         {
@@ -1579,6 +1715,21 @@ const handleChartbot = async (
         [Sequelize.cast(Sequelize.col("options.option"), "INTEGER"), "ASC"]
       ]
     });
+
+    if (!currentOption) return;
+
+    if (
+      !currentOption.exitChatbot &&
+      currentOption.forwardQueueId &&
+      (!currentOption.forwardQueue ||
+        !(await IsWhatsAppQueueLinked(
+          ticket.companyId,
+          wbot.id,
+          currentOption.forwardQueueId
+        )))
+    ) {
+      return;
+    }
 
     let filePath = null;
     let optionsMsg = null;
@@ -1616,12 +1767,7 @@ const handleChartbot = async (
           queueOptionId: null
         });
       } else if (currentOption.forwardQueueId) {
-        await updateTicket(ticket, {
-          queueOptionId: null,
-          chatbot: false,
-          queueId: currentOption.forwardQueueId
-        });
-        startQueue(wbot, ticket, currentOption.forwardQueue);
+        await startQueue(wbot, ticket, currentOption.forwardQueue);
       }
       return;
     }
@@ -1634,7 +1780,7 @@ const handleChartbot = async (
     }
 
     if (currentOption.options.length > -1) {
-      sendMenu(wbot, ticket, currentOption);
+      await sendMenu(wbot, ticket, currentOption);
     }
   }
 };
@@ -1714,7 +1860,7 @@ const handleMessage = async (
       });
     }
 
-    const whatsapp = await ShowWhatsAppService(wbot.id!);
+    const whatsapp = await ShowWhatsAppService(wbot.id!, { companyId });
 
     if (!whatsapp) {
       throw new Error("ERR_NO_WAPP_FOUND");
@@ -1731,6 +1877,7 @@ const handleMessage = async (
         (await TicketTraking.findOne({
           where: {
             whatsappId: whatsapp.id,
+            companyId,
             rated: false,
             expired: false,
             ratingAt: { [Op.not]: null }
@@ -1740,7 +1887,8 @@ const handleMessage = async (
               model: Ticket,
               where: {
                 status: "closed",
-                contactId: contact.id
+                contactId: contact.id,
+                companyId
               },
               include: [
                 {
@@ -1856,27 +2004,47 @@ const handleMessage = async (
       "protocolMessage"
     ].includes(msgType);
 
-    const { ticket, justCreated } = await FindOrCreateTicketService(
-      contact,
-      wbot.id!,
-      companyId,
-      {
-        groupContact,
-        incrementUnread: !msg.key.fromMe,
-        findOnly,
-        queue: queueId
-          ? (await Queue.findByPk(queueId)) || defaultQueue
-          : defaultQueue
-      }
-    );
+    const {
+      ticket,
+      justCreated,
+      queueRepaired,
+      previousQueueId,
+      startInboundQueue
+    } = await FindOrCreateTicketService(contact, wbot.id!, companyId, {
+      groupContact,
+      incrementUnread: !msg.key.fromMe,
+      findOnly,
+      inboundQueueIds: msg.key.fromMe
+        ? undefined
+        : whatsapp.queues.map(queue => queue.id),
+      queue: whatsapp.queues.find(queue => queue.id === queueId) ?? defaultQueue
+    });
 
     if (!ticket) {
       return;
     }
 
+    if (queueRepaired) {
+      try {
+        await revokeTicketContextRooms(getIO(), ticket.id);
+        await invalidateTicketNotifications(getIO(), ticket, previousQueueId);
+      } catch {
+        logger.warn(
+          { ticketId: ticket.id },
+          "Could not revoke stale ticket rooms"
+        );
+      }
+    }
+
     // voltar para o menu inicial
 
-    if (bodyMessage === "#" && !isGroup) {
+    if (
+      bodyMessage === "#" &&
+      !isGroup &&
+      !msg.key.fromMe &&
+      ticket.status === "pending" &&
+      !ticket.userId
+    ) {
       await updateTicket(ticket, {
         queueOptionId: null,
         chatbot: false,
@@ -1886,6 +2054,22 @@ const handleMessage = async (
       return;
     }
 
+    const mayAwaitSector =
+      !msg.key.fromMe &&
+      !isGroup &&
+      !contact.disableBot &&
+      ticket.status === "pending" &&
+      !ticket.queueId &&
+      !ticket.userId &&
+      whatsapp.queues.length > 1;
+    const generalTriageQueueId = mayAwaitSector
+      ? await readGeneralTriageQueueId(companyId)
+      : null;
+    const awaitingConfiguredMenu = whatsapp.queues.some(
+      queue => queue.id === generalTriageQueueId
+    );
+    const deferMessagePublish =
+      justCreated || queueRepaired || awaitingConfiguredMenu;
     let newMessage: Message;
 
     if (
@@ -1895,7 +2079,7 @@ const handleMessage = async (
       newMessage = await verifyMediaMessage(msg, ticket, contact, {
         wbot,
         messageMedia,
-        skipWebsocket: justCreated
+        skipWebsocket: deferMessagePublish
       });
     } else if (
       msg.message?.editedMessage?.message?.protocolMessage?.editedMessage
@@ -1969,18 +2153,34 @@ const handleMessage = async (
       await verifyDeleteMessage(msg.message.protocolMessage, ticket);
     } else {
       newMessage = await verifyMessage(msg, ticket, contact, {
-        skipWebsocket: justCreated
+        skipWebsocket: deferMessagePublish
       });
     }
+
+    const publishInboundChange = async () => {
+      try {
+        if (queueRepaired) {
+          await ticket.reload();
+          await websocketUpdateTicket(ticket);
+        }
+        if (deferMessagePublish && newMessage) {
+          await newMessage.reload();
+          await websocketCreateMessage(newMessage);
+        }
+      } catch {
+        logger.warn(
+          { ticketId: ticket.id },
+          "Could not publish inbound update"
+        );
+      }
+    };
 
     if (isGroup || contact.disableBot || msg.key.fromMe) {
       if (ticket.chatbot) {
         await updateTicket(ticket, { chatbot: false });
         await ticket.reload();
       }
-      if (justCreated && newMessage) {
-        websocketCreateMessage(newMessage);
-      }
+      await publishInboundChange();
       return;
     }
 
@@ -1988,6 +2188,9 @@ const handleMessage = async (
       if (scheduleType) {
         const isOpenOnline =
           ticket.status === "open" && ticket.user.socketSessions.length > 0;
+        const hasCurrentQueueRoute =
+          !ticket.queueId ||
+          whatsapp.queues.some(queue => queue.id === ticket.queueId);
 
         const avoidResend =
           !isOpenOnline && outOfHoursCache.get(`ticket-${ticket.id}`);
@@ -1997,7 +2200,7 @@ const handleMessage = async (
             !isNil(currentSchedule) &&
             (!currentSchedule || currentSchedule.inActivity === false)
           ) {
-            if (!avoidResend) {
+            if (!avoidResend && hasCurrentQueueRoute) {
               outOfHoursCache.set(`ticket-${ticket.id}`, true);
               const outOfHoursMessage =
                 whatsapp.outOfHoursMessage.trim() ||
@@ -2008,28 +2211,43 @@ const handleMessage = async (
               await verifyMessage(sentMessage, ticket, ticket.contact);
             }
             if (ticket.status !== "open") {
-              await UpdateTicketService({
+              const { ticket: updatedTicket } = await UpdateTicketService({
                 ticketData: { chatbot: false, status: outOfHoursAction },
                 ticketId: ticket.id,
                 companyId: ticket.companyId
               });
+              if (
+                updatedTicket.status === "pending" &&
+                !updatedTicket.queueId &&
+                !updatedTicket.userId &&
+                outOfHoursAction === "pending" &&
+                awaitingConfiguredMenu
+              ) {
+                await startGeneralTriageWait(updatedTicket, false);
+              }
             }
+            await publishInboundChange();
             return;
           }
         }
 
         if (
           scheduleType === "queue" &&
-          ticket.queueId !== null &&
+          !startInboundQueue &&
+          ticket.queueId &&
+          hasCurrentQueueRoute &&
           !isOpenOnline
         ) {
           currentSchedule = await VerifyCurrentSchedule(
             companyId,
             ticket.queueId
           );
-          const queue = await Queue.findByPk(ticket.queueId);
+          const queue = await Queue.findOne({
+            where: { id: ticket.queueId, companyId }
+          });
 
           if (
+            queue &&
             !isNil(currentSchedule) &&
             (!currentSchedule || currentSchedule.inActivity === false)
           ) {
@@ -2050,6 +2268,7 @@ const handleMessage = async (
                 companyId: ticket.companyId
               });
             }
+            await publishInboundChange();
             return;
           }
         }
@@ -2059,27 +2278,33 @@ const handleMessage = async (
       console.log(e);
     }
 
-    if (
-      !ticket.queue &&
+    if (startInboundQueue) {
+      await startQueue(wbot, ticket, whatsapp.queues[0], false);
+    } else if (
+      !ticket.queueId &&
       !isGroup &&
       !ticket.userId &&
+      (!awaitingConfiguredMenu || !findOnly) &&
       whatsapp.queues.length >= 1
     ) {
-      await verifyQueue(wbot, msg, ticket, ticket.contact);
+      await verifyQueue(
+        wbot,
+        msg,
+        ticket,
+        ticket.contact,
+        generalTriageQueueId
+      );
     }
 
-    if (justCreated && newMessage) {
-      await newMessage.reload();
-      websocketCreateMessage(newMessage);
-    }
+    const dontReadTheFirstQuestion = startInboundQueue || ticket.queue === null;
 
-    const dontReadTheFirstQuestion = ticket.queue === null;
-
+    await publishInboundChange();
     await ticket.reload();
 
     if (
       justCreated &&
       !whatsapp?.queues?.length &&
+      !ticket.queueId &&
       !ticket.userId &&
       !isGroup
     ) {

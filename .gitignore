@@ -13,3 +13,10 @@
 /deploy/arm07/.env-backend
 /deploy/arm07/.env-bootstrap
 /deploy/arm07/backups/
+
+# Certificados e chaves privadas nunca entram no repositorio (pix, mTLS, HTTPS local).
+*.p12
+*.pfx
+*.pem
+*.key
+!backend/certs/coloque_seus_certificado_aqui

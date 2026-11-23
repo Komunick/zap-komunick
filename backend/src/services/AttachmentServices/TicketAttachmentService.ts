@@ -68,7 +68,7 @@ const scope = async (ticketId: string, actor: ContextActor) => {
   return {
     ticket,
     viewer,
-    visibility,
+    restrictHistory: !viewer.isAdmin && visibility === "message",
     fingerprint: JSON.stringify([
       ticket.id,
       ticket.contactId,
@@ -95,7 +95,7 @@ const conditions = (state: Scope, companyId: number): WhereOptions[] => {
   ];
   // Same RF-017 fence as ListMessagesService: transfers preserve the current
   // ticket, while historical messages retain their queue visibility.
-  if (!state.viewer.isAdmin && state.visibility === "message")
+  if (state.restrictHistory)
     result.push({
       [Op.or]: [
         { ticketId: state.ticket.id },
@@ -130,7 +130,16 @@ const queryOptions = (
       as: "ticket",
       attributes: [],
       required: true,
-      where: { companyId, contactId: state.ticket.contactId }
+      where: {
+        companyId,
+        contactId: state.ticket.contactId,
+        ...(state.restrictHistory && {
+          [Op.or]: [
+            { id: state.ticket.id },
+            { queueId: { [Op.in]: state.viewer.queueIds } }
+          ]
+        })
+      }
     }
   ],
   logging: false as const

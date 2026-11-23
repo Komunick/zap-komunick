@@ -1,6 +1,10 @@
 import AppError from "../../errors/AppError";
 import Setting from "../../models/Setting";
 import { isCredentialKey } from "../../helpers/CredentialRules";
+import {
+  FORCE_MESSAGE_SIGNATURE,
+  isMessageSignatureRequired
+} from "../../helpers/MessageSignature";
 import { loadTicketViewer } from "../TicketServices/AuthorizeTicketContextService";
 
 interface Request {
@@ -24,7 +28,8 @@ export const safeSettingsKeys = {
   soundGroupNotifications: "disabled",
   tagsMode: "ticket",
   slaMinutes: "0",
-  closeReasonRequired: "disabled"
+  closeReasonRequired: "disabled",
+  [FORCE_MESSAGE_SIGNATURE]: "disabled"
 };
 
 export const GetSettingService = async ({
@@ -36,6 +41,14 @@ export const GetSettingService = async ({
   }
 
   if (isCredentialKey(key)) return "";
+
+  if (key === FORCE_MESSAGE_SIGNATURE) {
+    if (user.id === undefined) throw new AppError("ERR_NO_PERMISSION", 403);
+    await loadTicketViewer({ userId: user.id, companyId: user.companyId });
+    return (await isMessageSignatureRequired(user.companyId))
+      ? "enabled"
+      : "disabled";
+  }
 
   // P3 status is metadata of the current company, never a grant from an old JWT.
   if (["sciEnabled", "integratedAssistantEnabled"].includes(key)) {

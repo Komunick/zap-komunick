@@ -41,11 +41,28 @@ const findWalletAssignment = async (
   const [owner, whatsapp] = await Promise.all([
     User.findByPk(contact.walletUserId, {
       attributes: ["id", "companyId"],
-      include: [{ model: Queue, as: "queues", attributes: ["id"] }]
+      include: [
+        {
+          model: Queue,
+          as: "queues",
+          attributes: ["id"],
+          where: { companyId },
+          required: false
+        }
+      ]
     }),
-    Whatsapp.findByPk(whatsappId, {
+    Whatsapp.findOne({
+      where: { id: whatsappId, companyId, channel: "whatsapp" },
       attributes: ["id"],
-      include: [{ model: Queue, as: "queues", attributes: ["id"] }]
+      include: [
+        {
+          model: Queue,
+          as: "queues",
+          attributes: ["id"],
+          where: { companyId },
+          required: false
+        }
+      ]
     })
   ]);
 
@@ -66,6 +83,58 @@ type FindOrCreateTicketOptions = {
   doNotReopen?: boolean;
   findOnly?: boolean;
   queue?: Queue;
+  inboundQueueIds?: readonly number[];
+};
+
+type TicketResult = {
+  ticket: Ticket;
+  justCreated: boolean;
+  queueRepaired: boolean;
+  previousQueueId?: number | null;
+  startInboundQueue: boolean;
+};
+
+const repairInboundQueue = async (
+  ticket: Ticket,
+  inboundQueueIds: readonly number[] | undefined,
+  singleQueueId: number | null
+): Promise<boolean> => {
+  if (
+    !inboundQueueIds ||
+    inboundQueueIds.includes(ticket.queueId) ||
+    (!ticket.queueId && !singleQueueId)
+  ) {
+    return false;
+  }
+
+  const owner =
+    singleQueueId && ticket.userId
+      ? await User.findOne({
+          where: { id: ticket.userId, companyId: ticket.companyId },
+          attributes: ["id", "profile"],
+          include: [
+            {
+              model: Queue,
+              as: "queues",
+              where: { id: singleQueueId, companyId: ticket.companyId },
+              attributes: ["id"],
+              required: false
+            }
+          ]
+        })
+      : null;
+  const ownerCanServeQueue =
+    owner &&
+    (owner.profile === "admin" ||
+      owner.queues.some(queue => queue.id === singleQueueId));
+
+  await ticket.update({
+    queueId: singleQueueId,
+    chatbot: false,
+    queueOptionId: null,
+    ...(ownerCanServeQueue ? {} : { userId: null, status: "pending" })
+  });
+  return true;
 };
 
 const internalFindOrCreateTicketService = async (
@@ -77,10 +146,13 @@ const internalFindOrCreateTicketService = async (
     incrementUnread,
     doNotReopen,
     findOnly,
-    queue
+    queue,
+    inboundQueueIds
   }: FindOrCreateTicketOptions = {}
-): Promise<{ ticket: Ticket; justCreated: boolean }> => {
+): Promise<TicketResult> => {
   let justCreated = false;
+  const singleInboundQueueId =
+    inboundQueueIds?.length === 1 ? inboundQueueIds[0] : null;
   const result = await sequelize.transaction(async () => {
     // Defense in depth: a group contact must always belong to the same company
     // as the ticket being created. A cross-company group contact would leak
@@ -95,6 +167,7 @@ const internalFindOrCreateTicketService = async (
           [Op.or]: ACTIVE_TICKET_STATUSES
         },
         contactId: groupContact ? groupContact.id : contact.id,
+        companyId,
         whatsappId
       },
       order: [["id", "DESC"]]
@@ -109,6 +182,7 @@ const internalFindOrCreateTicketService = async (
       ticket = await Ticket.findOne({
         where: {
           contactId: groupContact.id,
+          companyId,
           whatsappId
         },
         order: [["updatedAt", "DESC"]]
@@ -148,6 +222,7 @@ const internalFindOrCreateTicketService = async (
               ]
             },
             contactId: contact.id,
+            companyId,
             whatsappId
           },
           order: [["updatedAt", "DESC"]]
@@ -178,11 +253,19 @@ const internalFindOrCreateTicketService = async (
       }
     }
 
-    let queueId = queue?.id || null;
+    let queueId = queue?.id ?? singleInboundQueueId;
 
     if (groupContact) {
-      const whatsapp = await Whatsapp.findByPk(whatsappId, {
-        include: ["queues"]
+      const whatsapp = await Whatsapp.findOne({
+        where: { id: whatsappId, companyId },
+        include: [
+          {
+            model: Queue,
+            as: "queues",
+            where: { companyId },
+            required: false
+          }
+        ]
       });
 
       if (whatsapp?.queues.length === 1) {
@@ -191,8 +274,18 @@ const internalFindOrCreateTicketService = async (
     }
 
     if (findOnly && !ticket) {
-      return { ticket: null, justCreated: false };
+      return {
+        ticket: null,
+        justCreated: false,
+        queueRepaired: false,
+        startInboundQueue: false
+      };
     }
+
+    const previousQueueId = ticket?.queueId;
+    const queueRepaired = ticket
+      ? await repairInboundQueue(ticket, inboundQueueIds, singleInboundQueueId)
+      : false;
 
     if (!ticket) {
       const wallet = await findWalletAssignment(
@@ -225,7 +318,17 @@ const internalFindOrCreateTicketService = async (
 
     ticket = await ShowTicketService(ticket.id, companyId);
 
-    return { ticket, justCreated };
+    return {
+      ticket,
+      justCreated,
+      queueRepaired,
+      ...(queueRepaired ? { previousQueueId } : {}),
+      startInboundQueue:
+        singleInboundQueueId !== null &&
+        ticket.queueId === singleInboundQueueId &&
+        (justCreated || queueRepaired) &&
+        !ticket.userId
+    };
   });
 
   if (result.justCreated) {
@@ -240,7 +343,7 @@ const FindOrCreateTicketService = async (
   whatsappId: number,
   companyId: number,
   options: FindOrCreateTicketOptions = {}
-): Promise<{ ticket: Ticket; justCreated: boolean }> => {
+): Promise<TicketResult> => {
   const release = await createTicketMutex.acquire();
 
   try {

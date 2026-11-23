@@ -4,20 +4,69 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ## Não publicado
 
+### Adicionado
+
+- A empresa pode exigir o nome do atendente nas mensagens manuais de texto do WhatsApp. A configuração
+  prevalece sobre a preferência de assinatura do navegador e mantém o acesso por setor.
+- Na tela de atendimento, um botão no cabeçalho, ao lado de Finalizar, recolhe e reabre o painel do cliente.
+  Recolhido, a conversa ocupa a largura toda. O SuperChat lembra a escolha de cada usuário neste navegador.
+- Arquivos arrastados para a conversa ou para o campo de mensagem entram como anexo, com a mesma validação do botão
+  de anexo. Pastas e arquivos vazios são recusados com aviso, inclusive pelo botão.
+
+
 ### Alterado
 
 - O login carrega só o código de que precisa. As telas internas são baixadas conforme o uso.
 - A consulta de um atendimento começa ao abrir a conversa, sem a espera fixa de 500 ms.
 - A abertura do SuperChat ganha fundo mais suave e uma barra de carregamento discreta. A assinatura oficial
   “Powered by Komunick” sai da logo e passa para o rodapé.
+- Em Atendimentos → Aguardando, **Ver prévia da mensagem** mostra a conversa inteira do atendimento, com
+  rolagem, das mensagens do cliente às respostas automáticas. A prévia só lê: o atendimento continua aguardando
+  até alguém clicar em **Aceitar e abrir**.
 
 ### Corrigido
 
-- O menu lateral do desktop se recolhe quando o mouse sai da barra.
+- As rotas de registro da instalação no Ticketz (`/ticketz/registry`) passam a exigir superadministrador. Antes,
+  qualquer administrador de empresa passava, porque a rota importava `isAdmin` com o nome `isSuper`.
+- O repositório deixa de guardar certificados e chaves herdados do Ticketz original (`backend/certs`,
+  `backend/certification` e `frontend/certification`). Eram de terceiros ou de desenvolvimento e não eram usados.
+  O `.gitignore` passa a recusar `*.p12`, `*.pfx`, `*.pem` e `*.key`.
+- A imagem do `frontend/Dockerfile` publica em `/config.json` só as chaves que o frontend lê, em vez de todas as
+  variáveis do contêiner, e deixa de copiar a interface do Socket.IO Admin. A publicação da ARM04 já usava uma
+  lista fechada e não muda.
+- O menu de setores do robô sai uma vez por espera. Antes ele era reenviado a cada mensagem que o cliente
+  mandava sem escolher o setor, às vezes duas vezes no mesmo segundo. Se o cliente não escolher, o atendimento
+  segue para a fila geral no tempo configurado, como antes.
+- As reações que o cliente manda no WhatsApp aparecem embaixo da mensagem original, também ao reabrir a
+  conversa. Cada pessoa mostra só a reação mais recente, e a reação removida some.
+- O painel de notificações e os avisos do navegador respeitam os setores vinculados ao usuário.
+  Ao transferir um atendimento, a notificação é retirada da fila de origem.
+- Quando um WhatsApp atende uma única fila, a primeira mensagem recebida já fica registrada nela. Se o atendimento
+  existente estiver em uma fila incompatível, a entrada corrige o vínculo antes de registrar a nova mensagem.
+- Agendamentos usam o WhatsApp da fila selecionada ou o canal do atendimento de origem. Se o canal
+  não estiver disponível ou o agendamento antigo tiver origem ambígua, o envio fica com erro.
+- Mensagens automáticas da fila só saem por um WhatsApp vinculado a ela. O sistema recusa
+  transferências para filas que não atendem pelo número da conversa.
+- Em Novo atendimento, a fila escolhida define o WhatsApp de envio. Se ela não tiver um canal conectado,
+  o sistema avisa e bloqueia a abertura.
+- A tela de Conexões acompanha o QR Code do WhatsApp, avisa quando ele expira e permite gerar outro na mesma janela.
 - Miniaturas da galeria do chat interno usam a mesma sessão autenticada da imagem principal. Erros e fechamento
   também liberam essas referências, preservando a galeria dos atendimentos e os downloads existentes.
+- PDF e outros documentos com nome longo voltam a ser enviados e registrados na conversa. A cópia em disco
+  usa um nome encurtado e sem caracteres que quebram caminho ou link; o cliente recebe o nome original. Vários
+  arquivos enviados juntos não se sobrescrevem mais.
+- O menu lateral do desktop se recolhe quando o mouse sai da barra.
 
 ### Segurança
+
+- A conversão de áudio gravado chama o ffmpeg sem shell, com cada argumento separado. Um nome de arquivo com aspas,
+  `;`, `&` ou `$()` não executa mais comandos no servidor. Os uploads guardam só extensões alfanuméricas simples.
+- Entrar em outra empresa (impersonação) exige conta Super já na rota, antes das checagens do serviço.
+
+- Na visibilidade por fila, o histórico de outro atendimento exige acesso à fila desse atendimento, inclusive
+  para mensagens antigas sem fila, anexos e citações. Criar ou excluir usuários exige o perfil administrativo atual.
+
+- A geração de um novo QR Code fica restrita a administradores da empresa dona do canal desconectado.
 
 - A consulta de setores confere o usuário e seus privilégios atuais antes de listar outra empresa. Usuários e
   administradores comuns ficam na própria empresa; a seleção empresarial do superusuário continua disponível.
@@ -38,6 +87,13 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   encontrados.
 
 ### Adicionado
+
+- O atendente pode consultar a última mensagem recebida de um atendimento pendente e depois usar
+  **Aceitar e abrir**. Consultar a prévia preserva o status e a leitura.
+- Uma fila geral configurada no WhatsApp recebe atendimentos que escolhem **Geral** ou passam do prazo de triagem.
+  Os atendentes da fila podem assumir esses atendimentos.
+- Alertas de SLA aparecem no SuperChat após três horas sem resposta. Cada setor pode ter responsáveis
+  e a empresa pode indicar pessoas para acompanhar todos os setores.
 
 - Menu lateral abre ao passar o mouse sobre o trilho recolhido no desktop, sem precisar clicar. Botão, teclado,
   preferência salva e funcionamento por toque no celular continuam disponíveis.

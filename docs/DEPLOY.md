@@ -294,7 +294,8 @@ Após o aceite, execute `sudo /opt/zap-komunick/zapk.sh promote <SHA>` na ARM04.
 exata que está em homologação e faz o backup de produção antes de atualizar. Confira a variante ARM64 do frontend
 para o domínio de produção e repita as verificações.
 Preserve o Traefik, o DNS e os bancos, arquivos e segredos de cada perfil. O backend permanece na rede interna,
-com WhatsApp desconectado e as integrações desligadas. O bootstrap inicial fica reservado a uma instalação nova.
+com as integrações desligadas. Para parear o WhatsApp em produção, use a [saída restrita da ARM04](../deploy/arm04/README.md).
+O bootstrap inicial fica reservado a uma instalação nova.
 
 Os arquivos em [`deploy/arm07/`](../deploy/arm07/README.md) incluem a base de build ARM64 e o roteiro histórico da ARM07.
 As instâncias da ARM07 estão paradas com os volumes preservados. Os comandos de ativação, DNS e Caddy desse
@@ -348,3 +349,15 @@ origem distinta da demonstração P3 para não compartilhar cookie de sessão en
 Validar serviços/API/UI com duas empresas e fixtures rastreadas, IDs repetidos entre fornecedores, modo desligado/
 desconhecido, review após alteração de vínculo/mensagem/perfil/flag, paginação, falhas e respostas antigas. Conferir
 rascunho, leitura/SLA e snapshot de negócio/credenciais, remover somente fixtures. Evidências e limites ficam no PR.
+
+## Assinatura obrigatória de mensagens
+
+A configuração da empresa `forceMessageSignature` pode ser ativada com
+`PUT /settings/forceMessageSignature` e o corpo `{"value":"enabled"}`, usando uma sessão administrativa
+da empresa. Com a regra ativa, o compositor mantém **Assinar** ligado e o backend usa o nome atual do
+usuário autenticado nas mensagens manuais de texto do WhatsApp. Os vínculos de setor seguem as permissões
+do atendimento.
+
+O valor `disabled` ou a ausência da configuração mantém a preferência do navegador para essa empresa.
+Automações, agendamentos, arquivos e encaminhamentos continuam com seus fluxos próprios. Para validar,
+use uma empresa fictícia, um navegador com **Assinar** desativado e um transporte WhatsApp simulado.

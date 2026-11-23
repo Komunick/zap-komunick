@@ -18,7 +18,10 @@ import { SocketContext } from "../../context/Socket/SocketContext";
 const useStyles = makeStyles(theme => ({
   qrcodeFrame: {
     padding: "10px",
-    backgroundColor: "#fff"
+    backgroundColor: "#fff",
+    boxSizing: "border-box",
+    maxWidth: "100%",
+    height: "auto"
   },
   content: {
     display: "flex",
@@ -38,69 +41,133 @@ const QrcodeModal = ({
   onClose,
   whatsAppId,
   onOpenPasskeyModal,
-  connectorReady = false
+  connectorReady = false,
+  generateOnOpen = false
 }) => {
   const [requestingCapture, setRequestingCapture] = useState(false);
+  const [requestingQr, setRequestingQr] = useState(generateOnOpen);
+  const [attempt, setAttempt] = useState(generateOnOpen ? 1 : 0);
+  const [session, setSession] = useState(null);
+  const [readFailed, setReadFailed] = useState(false);
   const classes = useStyles();
-  const [qrCode, setQrCode] = useState("");
-
   const socketManager = useContext(SocketContext);
+  const status = session?.status;
+  const qrCode = status === "qrcode" ? session.qrcode : null;
 
   useEffect(() => {
-    const fetchSession = async () => {
-      if (!whatsAppId) return;
+    if (!open || !whatsAppId) return;
 
-      try {
-        const { data } = await api.get(`/whatsapp/${whatsAppId}`);
-        setQrCode(data.qrcode);
-      } catch (err) {
-        toastError(err);
-      }
-    };
-    fetchSession();
-  }, [whatsAppId]);
-
-  useEffect(() => {
-    if (!whatsAppId) return;
+    const lifetime = new AbortController();
+    const sessionUrl = `/whatsappsession/${whatsAppId}`;
     const companyId = localStorage.getItem("companyId");
     const socket = socketManager.GetSocket(companyId);
+    const eventName = `company-${companyId}-whatsappSession`;
+    let pendingRead;
 
-    const onCompanyWhatsappSession = data => {
-      if (data.action === "update" && data.session.id === whatsAppId) {
-        if (data.session.status === "qrcode") {
-          setQrCode(data.session.qrcode);
-        }
-
-        if (data.session.status === "passkey_required" && onOpenPasskeyModal) {
-          onOpenPasskeyModal();
-        }
-      }
-
-      if (data.action === "update" && data.session.status !== "qrcode") {
-        onClose();
+    const readSession = async (force = false) => {
+      if (lifetime.signal.aborted || (pendingRead && !force)) return;
+      pendingRead?.abort();
+      const request = new AbortController();
+      pendingRead = request;
+      try {
+        const { data } = await api.get(`${sessionUrl}/qr`, {
+          signal: request.signal,
+          timeout: 10000
+        });
+        if (request.signal.aborted) return;
+        setSession(data);
+        setReadFailed(false);
+      } catch {
+        if (request.signal.aborted) return;
+        setSession(null);
+        setReadFailed(true);
+      } finally {
+        if (pendingRead === request) pendingRead = undefined;
       }
     };
 
-    socket.on(`company-${companyId}-whatsappSession`, onCompanyWhatsappSession);
+    const onSessionUpdate = data => {
+      if (data.action === "update" && data.session?.id === whatsAppId) {
+        if (data.session.status !== "qrcode") {
+          setSession({ status: data.session.status });
+        }
+        readSession(true);
+      }
+    };
+
+    const generateQr = async () => {
+      try {
+        await api.put(sessionUrl, undefined, {
+          signal: lifetime.signal,
+          timeout: 10000
+        });
+      } catch (err) {
+        if (!lifetime.signal.aborted && err.response?.status !== 409) {
+          toastError(err);
+        }
+      }
+      await readSession(true);
+      if (!lifetime.signal.aborted) setRequestingQr(false);
+    };
+
+    socket.on(eventName, onSessionUpdate);
+    if (attempt) generateQr();
+    else readSession();
+    const refresh = setInterval(() => readSession(), 3000);
 
     return () => {
+      lifetime.abort();
+      pendingRead?.abort();
+      clearInterval(refresh);
       socket.disconnect();
     };
-  }, [whatsAppId, onClose, socketManager, onOpenPasskeyModal]);
+  }, [open, whatsAppId, socketManager, attempt]);
+
+  useEffect(() => {
+    if (status === "CONNECTED") onClose();
+    if (status === "passkey_required") onOpenPasskeyModal?.();
+  }, [status, onClose, onOpenPasskeyModal]);
+
+  const retry = () => {
+    setRequestingQr(true);
+    setReadFailed(false);
+    setSession(null);
+    setAttempt(previous => previous + 1);
+  };
+
+  let message = i18n.t("qrCode.waiting");
+  if (!requestingQr && readFailed) message = i18n.t("qrCode.unavailable");
+  if (!requestingQr && status === "DISCONNECTED") {
+    message = i18n.t("qrCode.expired");
+  }
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" scroll="paper">
       <DialogContent>
         <Paper elevation={0} className={classes.content}>
-          <Typography color="primary" gutterBottom>
-            {i18n.t("qrCode.message")}
-          </Typography>
           {qrCode ? (
-            <QRCode className={classes.qrcodeFrame} value={qrCode} size={256} />
+            <>
+              <Typography color="primary" gutterBottom>
+                {i18n.t("qrCode.scan")}
+              </Typography>
+              <QRCode
+                className={classes.qrcodeFrame}
+                value={qrCode}
+                size={256}
+                renderAs="svg"
+                role="img"
+                aria-label={i18n.t("qrCode.label")}
+              />
+            </>
           ) : (
-            <Typography component="span" variant="body1">
-              Waiting for QR Code
+            <Typography component="span" variant="body1" role="status">
+              {message}
             </Typography>
+          )}
+          {status === "DISCONNECTED" && !requestingQr && (
+            <Button variant="contained" color="primary" onClick={retry}>
+              {i18n.t("connections.toolTips.newQr")}
+            </Button>
           )}
           {connectorReady && (
             <Button

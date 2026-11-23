@@ -25,8 +25,7 @@ const TicketOptionsMenu = ({
   const isMounted = useRef(true);
   const { user } = useContext(AuthContext);
 
-  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
-  const [contactId, setContactId] = useState(null);
+  const [scheduleTicket, setScheduleTicket] = useState(null);
 
   useEffect(() => {
     return () => {
@@ -60,13 +59,17 @@ const TicketOptionsMenu = ({
 
   const handleOpenScheduleModal = () => {
     handleClose();
-    setContactId(ticket.contact.id);
-    setScheduleModalOpen(true);
+    setScheduleTicket({
+      id: ticket.id,
+      queueId: ticket.queueId,
+      queueName: ticket.queue?.name,
+      contactId: ticket.contact.id,
+      contactName: ticket.contact.name
+    });
   };
 
   const handleCloseScheduleModal = () => {
-    setScheduleModalOpen(false);
-    setContactId(null);
+    setScheduleTicket(null);
   };
 
   return (
@@ -122,10 +125,14 @@ const TicketOptionsMenu = ({
         hideUserSelection={showTabGroups && ticket.isGroup}
       />
       <ScheduleModal
-        open={scheduleModalOpen}
+        open={Boolean(scheduleTicket)}
         onClose={handleCloseScheduleModal}
         aria-labelledby="form-dialog-title"
-        contactId={contactId}
+        contactId={scheduleTicket?.contactId}
+        contactName={scheduleTicket?.contactName}
+        ticketId={scheduleTicket?.id}
+        ticketQueueId={scheduleTicket?.queueId}
+        ticketQueueName={scheduleTicket?.queueName}
       />
     </>
   );

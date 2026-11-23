@@ -5,6 +5,13 @@ import WhatsAppSessionController from "../controllers/WhatsAppSessionController"
 
 const whatsappSessionRoutes = Router();
 
+whatsappSessionRoutes.get(
+  "/whatsappsession/:whatsappId/qr",
+  isAuth,
+  isAdmin,
+  WhatsAppSessionController.showQr
+);
+
 whatsappSessionRoutes.post(
   "/whatsappsession/:whatsappId",
   isAuth,

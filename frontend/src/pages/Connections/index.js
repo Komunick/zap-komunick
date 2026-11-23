@@ -116,7 +116,8 @@ const Connections = () => {
   const { whatsApps, loading } = useContext(WhatsAppsContext);
   const [whatsAppModalOpen, setWhatsAppModalOpen] = useState(false);
   const [privacyModalOpen, setPrivacyModalOpen] = useState(false);
-  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [qrMode, setQrMode] = useState(null);
+  const qrModalOpen = Boolean(qrMode);
   const [selectedWhatsApp, setSelectedWhatsApp] = useState(null);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const confirmationModalInitialState = {
@@ -142,14 +143,6 @@ const Connections = () => {
     }
   };
 
-  const handleRequestNewQrCode = async whatsAppId => {
-    try {
-      await api.put(`/whatsappsession/${whatsAppId}`);
-    } catch (err) {
-      toastError(err);
-    }
-  };
-
   const handleOpenWhatsAppModal = () => {
     setSelectedWhatsApp(null);
     setWhatsAppModalOpen(true);
@@ -160,15 +153,15 @@ const Connections = () => {
     setSelectedWhatsApp(null);
   }, [setSelectedWhatsApp, setWhatsAppModalOpen]);
 
-  const handleOpenQrModal = whatsApp => {
+  const handleOpenQrModal = (whatsApp, mode = "scan") => {
     setSelectedWhatsApp(whatsApp);
-    setQrModalOpen(true);
+    setQrMode(mode);
   };
 
   const handleCloseQrModal = useCallback(() => {
     setSelectedWhatsApp(null);
-    setQrModalOpen(false);
-  }, [setQrModalOpen, setSelectedWhatsApp]);
+    setQrMode(null);
+  }, []);
 
   const handleOpenPasskeyModal = whatsApp => {
     setSelectedWhatsApp(whatsApp);
@@ -191,18 +184,18 @@ const Connections = () => {
 
   const handleTriggerCaptureFromQr = useCallback(
     token => {
-      setQrModalOpen(false);
+      setQrMode(null);
       setPasskeyInitialToken(token);
       setPasskeyModalOpen(true);
     },
-    [setQrModalOpen, setPasskeyInitialToken, setPasskeyModalOpen]
+    [setQrMode, setPasskeyInitialToken, setPasskeyModalOpen]
   );
 
   const handleOpenInstallInstructionsFromQr = useCallback(() => {
-    setQrModalOpen(false);
+    setQrMode(null);
     setPasskeyInitialToken("");
     setPasskeyModalOpen(true);
-  }, [setQrModalOpen, setPasskeyInitialToken, setPasskeyModalOpen]);
+  }, [setQrMode, setPasskeyInitialToken, setPasskeyModalOpen]);
 
   const handleEditWhatsApp = whatsApp => {
     setSelectedWhatsApp(whatsApp);
@@ -289,6 +282,7 @@ const Connections = () => {
           <Tooltip title={i18n.t("connections.toolTips.scan")}>
             <IconButton
               size="small"
+              aria-label={i18n.t("connections.toolTips.scan")}
               onClick={() => handleOpenQrModal(whatsApp)}
             >
               <FontAwesomeIcon icon={faQrcode} />
@@ -326,14 +320,17 @@ const Connections = () => {
               </IconButton>
             </Tooltip>
 
-            <Tooltip title={i18n.t("connections.toolTips.newQr")}>
-              <IconButton
-                size="small"
-                onClick={() => handleRequestNewQrCode(whatsApp.id)}
-              >
-                <FontAwesomeIcon icon={faWandMagicSparkles} />
-              </IconButton>
-            </Tooltip>
+            {whatsApp.channel === "whatsapp" && (
+              <Tooltip title={i18n.t("connections.toolTips.newQr")}>
+                <IconButton
+                  size="small"
+                  aria-label={i18n.t("connections.toolTips.newQr")}
+                  onClick={() => handleOpenQrModal(whatsApp, "generate")}
+                >
+                  <FontAwesomeIcon icon={faWandMagicSparkles} />
+                </IconButton>
+              </Tooltip>
+            )}
           </>
         )}
         {(whatsApp.status === "CONNECTED" ||
@@ -423,15 +420,17 @@ const Connections = () => {
       >
         {confirmModalInfo.message}
       </ConfirmationModal>
-      <QrcodeModal
-        open={qrModalOpen}
-        onClose={handleCloseQrModal}
-        onOpenPasskeyModal={handleOpenInstallInstructionsFromQr}
-        connectorReady={connectorReady}
-        whatsAppId={
-          !whatsAppModalOpen && !privacyModalOpen && selectedWhatsApp?.id
-        }
-      />
+      {qrModalOpen && selectedWhatsApp && (
+        <QrcodeModal
+          key={selectedWhatsApp.id}
+          open
+          generateOnOpen={qrMode === "generate"}
+          onClose={handleCloseQrModal}
+          onOpenPasskeyModal={handleOpenInstallInstructionsFromQr}
+          connectorReady={connectorReady}
+          whatsAppId={selectedWhatsApp.id}
+        />
+      )}
       <PasskeyModal
         open={passkeyModalOpen}
         onClose={handleClosePasskeyModal}

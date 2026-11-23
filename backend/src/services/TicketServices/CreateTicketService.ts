@@ -1,6 +1,7 @@
 import AppError from "../../errors/AppError";
 import CheckContactOpenTickets from "../../helpers/CheckContactOpenTickets";
 import GetDefaultWhatsApp from "../../helpers/GetDefaultWhatsApp";
+import GetQueueWhatsApp from "../../helpers/GetQueueWhatsApp";
 import Ticket from "../../models/Ticket";
 import ShowContactService from "../ContactServices/ShowContactService";
 import { getIO } from "../../libs/socket";
@@ -14,21 +15,22 @@ interface Request {
   userId: number;
   companyId: number;
   queueId?: number;
+  routeByQueue?: boolean;
 }
 
 const CreateTicketService = async ({
   contactId,
   userId,
   queueId,
-  companyId
+  companyId,
+  routeByQueue = false
 }: Request): Promise<Ticket> => {
-  const defaultWhatsapp = await GetDefaultWhatsApp(companyId);
+  const useQueueWhatsapp = routeByQueue && Boolean(queueId);
+  const whatsapp = useQueueWhatsapp
+    ? await GetQueueWhatsApp(companyId, queueId)
+    : await GetDefaultWhatsApp(companyId);
 
-  let ticket = await CheckContactOpenTickets(
-    contactId,
-    defaultWhatsapp.id,
-    true
-  );
+  let ticket = await CheckContactOpenTickets(contactId, whatsapp.id, true);
 
   const include = [
     {
@@ -43,7 +45,11 @@ const CreateTicketService = async ({
   ];
 
   if (ticket) {
-    if (ticket.status === "open" && ticket.userId === userId) {
+    if (
+      ticket.status === "open" &&
+      ticket.userId === userId &&
+      (!useQueueWhatsapp || ticket.queueId === queueId)
+    ) {
       await ticket.reload({
         include
       });
@@ -58,7 +64,7 @@ const CreateTicketService = async ({
     contactId,
     companyId,
     queueId,
-    whatsappId: defaultWhatsapp.id,
+    whatsappId: whatsapp.id,
     status: "open",
     isGroup,
     userId

@@ -6,19 +6,31 @@ import AuthorizeMessageContextService from "../../services/MessageServices/Autho
 import DeleteWhatsAppMessage from "../../services/WbotServices/DeleteWhatsAppMessage";
 import SendWhatsAppMessage from "../../services/WbotServices/SendWhatsAppMessage";
 import ListMessagesService from "../../services/MessageServices/ListMessagesService";
+import ShowPendingMessagePreviewService from "../../services/MessageServices/ShowPendingMessagePreviewService";
 import SetTicketMessagesAsRead from "../../helpers/SetTicketMessagesAsRead";
+import { isMessageSignatureRequired } from "../../helpers/MessageSignature";
+import ShowTicketService from "../../services/TicketServices/ShowTicketService";
+import Message from "../../models/Message";
+import OldMessage from "../../models/OldMessage";
 
 jest.mock("../../helpers/SetTicketMessagesAsRead", () => jest.fn());
+jest.mock("../../helpers/MessageSignature", () => ({
+  isMessageSignatureRequired: jest.fn()
+}));
 jest.mock("../../libs/socket", () => ({ getIO: jest.fn() }));
 jest.mock("../../models/Queue", () => ({}));
 jest.mock("../../models/User", () => ({}));
 jest.mock("../../models/Whatsapp", () => ({}));
-jest.mock("../../models/Message", () => ({}));
+jest.mock("../../models/Message", () => ({ findOne: jest.fn() }));
 jest.mock("../../models/Contact", () => ({}));
 jest.mock("../../models/Ticket", () => ({}));
-jest.mock("../../models/OldMessage", () => ({}));
+jest.mock("../../models/OldMessage", () => ({ findAll: jest.fn() }));
 jest.mock("../../services/MessageServices/ListMessagesService", () =>
   jest.fn()
+);
+jest.mock(
+  "../../services/MessageServices/ShowPendingMessagePreviewService",
+  () => jest.fn()
 );
 jest.mock("../../services/TicketServices/ShowTicketService", () => jest.fn());
 jest.mock("../../services/WbotServices/DeleteWhatsAppMessage", () => jest.fn());
@@ -54,6 +66,7 @@ describe("message authorization before side effects", () => {
   let res: Response;
 
   beforeEach(() => {
+    jest.clearAllMocks();
     req = {
       params: { messageId: "fixture-message-B", ticketId: "301" },
       query: { markAsRead: "true" },
@@ -75,6 +88,7 @@ describe("message authorization before side effects", () => {
     await expect(MessageController.store(req, res)).rejects.toBe(denied);
     expect(SendWhatsAppMessage).not.toHaveBeenCalled();
     expect(SetTicketMessagesAsRead).not.toHaveBeenCalled();
+    expect(isMessageSignatureRequired).not.toHaveBeenCalled();
   });
 
   it("does not mark read when listing context is denied", async () => {
@@ -87,6 +101,149 @@ describe("message authorization before side effects", () => {
         ticketId: "301"
       })
     );
+    expect(SetTicketMessagesAsRead).not.toHaveBeenCalled();
+  });
+
+  it("returns an uncached preview without marking read even when requested", async () => {
+    const messages = [
+      { id: "m1", fromMe: false, kind: "text", text: "Mensagem fictícia" },
+      { id: "m2", fromMe: true, kind: "text", text: "Menu fictício" }
+    ];
+    res.set = jest.fn().mockReturnValue(res);
+    (ShowPendingMessagePreviewService as jest.Mock).mockResolvedValue({
+      messages,
+      truncated: false
+    });
+
+    await MessageController.preview(req, res);
+
+    expect(ShowPendingMessagePreviewService).toHaveBeenCalledWith("301", {
+      userId: "101",
+      companyId: 10
+    });
+    expect(res.set).toHaveBeenCalledWith("Cache-Control", "private, no-store");
+    expect(res.json).toHaveBeenCalledWith({
+      preview: { kind: "text", text: "Mensagem fictícia" },
+      messages,
+      truncated: false
+    });
+    expect(SetTicketMessagesAsRead).not.toHaveBeenCalled();
+  });
+
+  it("returns edits only for the exact authorized ticket when message IDs repeat", async () => {
+    const { messageId } = req.params;
+    const ticket = { id: 301 };
+    const allowed = {
+      messageId,
+      ticketId: 301,
+      body: "Edicao da propria fila"
+    };
+    const forbidden = {
+      messageId,
+      ticketId: 302,
+      body: "Edicao de outra fila"
+    };
+    (Message.findOne as jest.Mock).mockResolvedValue({ id: messageId, ticket });
+    (AuthorizeTicketContextService as jest.Mock).mockResolvedValue({ ticket });
+    (OldMessage.findAll as jest.Mock).mockImplementation(async ({ where }) =>
+      [allowed, forbidden].filter(edit =>
+        Object.entries(where).every(([field, value]) => edit[field] === value)
+      )
+    );
+
+    await MessageController.historyByMessageId(req, res);
+
+    expect(AuthorizeTicketContextService).toHaveBeenCalledWith(301, {
+      userId: "101",
+      companyId: 10
+    });
+    expect(res.json).toHaveBeenCalledWith({ oldMessages: [allowed] });
+  });
+
+  it("uses the authorized composite source for an outgoing quoted message", async () => {
+    const actor = { userId: "101", companyId: 10 };
+    const source = { id: "duplicate", ticketId: 300 };
+    const ticket = { id: 301, channel: "whatsapp", isGroup: true };
+    req.files = undefined;
+    req.body.quotedMsg = { ...source, dataJson: "untrusted request snapshot" };
+    (AuthorizeTicketContextService as jest.Mock).mockResolvedValue({ ticket });
+    (AuthorizeMessageContextService as jest.Mock).mockResolvedValue(source);
+    (ShowTicketService as jest.Mock).mockResolvedValue(ticket);
+
+    await MessageController.store(req, res);
+
+    expect(AuthorizeMessageContextService).toHaveBeenCalledWith(
+      "duplicate",
+      actor,
+      "301",
+      300
+    );
+    expect(SendWhatsAppMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ quotedMsg: source })
+    );
+  });
+
+  it("loads the signature policy only from the authorized company for a manual text", async () => {
+    const ticket = { id: 301, channel: "whatsapp", isGroup: true };
+    req.files = undefined;
+    req.body.companyId = 20;
+    req.body.forceSignature = false;
+    (AuthorizeTicketContextService as jest.Mock).mockResolvedValue({ ticket });
+    (ShowTicketService as jest.Mock).mockResolvedValue(ticket);
+    (isMessageSignatureRequired as jest.Mock).mockResolvedValue(true);
+
+    await MessageController.store(req, res);
+
+    expect(isMessageSignatureRequired).toHaveBeenCalledWith(10);
+    expect(SendWhatsAppMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: "Fixture",
+        forceSignature: true,
+        ticket,
+        userId: 101
+      })
+    );
+  });
+
+  it("omits only unverified inline quote content from the history response", async () => {
+    const quotedMessage = { conversation: "Conteudo de origem" };
+    const dataJson = JSON.stringify({
+      message: {
+        extendedTextMessage: {
+          text: "Texto atual",
+          contextInfo: { isForwarded: true, quotedMessage }
+        }
+      }
+    });
+    const fixture = { id: "current", dataJson, quotedMsg: null };
+    const verified = {
+      ...fixture,
+      id: "with-verified-quote",
+      quotedMsg: {
+        id: "origin",
+        ticketId: 301,
+        body: quotedMessage.conversation,
+        dataJson: JSON.stringify({ message: quotedMessage })
+      }
+    };
+    (ListMessagesService as jest.Mock).mockResolvedValue({
+      messages: [{ toJSON: () => fixture }, { toJSON: () => verified }],
+      ticket: { id: 301, channel: "whatsapp" }
+    });
+    req.query.markAsRead = "false";
+
+    await MessageController.index(req, res);
+
+    const [deniedQuote, allowedQuote] = (res.json as jest.Mock).mock.calls[0][0]
+      .messages;
+    expect(
+      JSON.parse(deniedQuote.dataJson).message.extendedTextMessage
+    ).toEqual({
+      text: "Texto atual",
+      contextInfo: { isForwarded: true }
+    });
+    expect(allowedQuote).toEqual(verified);
+    expect(fixture.dataJson).toBe(dataJson);
     expect(SetTicketMessagesAsRead).not.toHaveBeenCalled();
   });
 });

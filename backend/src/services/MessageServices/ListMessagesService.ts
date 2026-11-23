@@ -43,39 +43,37 @@ const ListMessagesService = async ({
   }
 
   const limit = 100;
+  const restrictHistory =
+    !viewer.isAdmin &&
+    (await GetCompanySetting(companyId, "messageVisibility", "message")) ===
+      "message";
 
   // Zap Komunick: the whole history of the client, not only this ticket
   // (docs/PRD.md, RF-017). A client who writes again after a resolved
   // conversation gets a new ticket; its old messages stay visible here.
   const contactTickets = await Ticket.findAll({
-    where: { contactId: ticket.contactId, companyId },
+    where: {
+      contactId: ticket.contactId,
+      companyId,
+      ...(restrictHistory && { queueId: { [Op.in]: queues } })
+    },
     attributes: ["id"]
   });
   const ticketIds = Array.from(
     new Set([ticket.id, ...contactTickets.map(t => t.id)])
   );
 
-  const conditions: WhereOptions[] = [
+  // Client, office and sector fence shared by the page, its cursor and the
+  // quoted/reply associations.
+  const fence: WhereOptions[] = [
     { ticketId: { [Op.in]: ticketIds } },
-    { companyId },
-    {
-      mediaType: {
-        [Op.or]: {
-          [Op.ne]: "reactionMessage",
-          [Op.is]: null
-        }
-      }
-    }
+    { companyId }
   ];
 
-  if (
-    !viewer.isAdmin &&
-    (await GetCompanySetting(companyId, "messageVisibility", "message")) ===
-      "message"
-  ) {
-    // the queue privacy holds for the client's other tickets; inside this
-    // ticket everything shows, so a transfer keeps its context
-    conditions.push({
+  if (restrictHistory) {
+    // Other tickets must still belong to an allowed queue. Their messages
+    // also retain their original queue restrictions.
+    fence.push({
       [Op.or]: [
         { ticketId: ticket.id },
         {
@@ -90,11 +88,24 @@ const ListMessagesService = async ({
     });
   }
 
+  // Reactions are not rows of the conversation: they come back as `replies`
+  // of the message they react to.
+  const conditions: WhereOptions[] = [
+    ...fence,
+    {
+      mediaType: {
+        [Op.or]: {
+          [Op.ne]: "reactionMessage",
+          [Op.is]: null
+        }
+      }
+    }
+  ];
+
   const options: FindOptions = {
     where: { [Op.and]: conditions }
   };
-  // The same client/office/sector fence applies to cursors and associations.
-  // Keep this copy free of pagination predicates for quoted messages/replies.
+  // Keep this copy free of pagination predicates for the cursor lookup.
   const contextConditions = [...conditions];
 
   if (minUpdatedAt) {
@@ -136,13 +147,15 @@ const ListMessagesService = async ({
             required: false
           }
         ],
-        where: { [Op.and]: contextConditions },
+        where: { [Op.and]: fence },
         required: false
       },
       {
         model: Message,
         as: "replies",
-        where: { [Op.and]: contextConditions },
+        // Zap Komunick: the page excludes reactions; the replies must not, or
+        // the client's reactions never reach the message they belong to.
+        where: { [Op.and]: fence },
         include: [
           {
             model: Contact,
