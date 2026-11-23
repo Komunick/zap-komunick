@@ -10,6 +10,9 @@ import FindOrCreateATicketTrakingService from "./FindOrCreateATicketTrakingServi
 import Contact from "../../models/Contact";
 import { incrementCounter } from "../CounterServices/IncrementCounter";
 import OpenTicketConflictError from "./OpenTicketConflictService";
+import UpdateTicketService from "./UpdateTicketService";
+import { loadTicketViewer } from "./AuthorizeTicketContextService";
+import { decideOwnTicketReuse } from "../../helpers/OwnTicketReuse";
 
 interface Request {
   contactId: number;
@@ -49,11 +52,48 @@ const CreateTicketService = async ({
   ];
 
   if (ticket) {
-    if (
-      ticket.status === "open" &&
-      ticket.userId === userId &&
-      (!useQueueWhatsapp || ticket.queueId === queueId)
-    ) {
+    // Zap Komunick: the person's own active ticket (pending with their name,
+    // paused or without sector) is opened, not refused (RF-028)
+    const actor = { userId: requesterId ?? Number(userId), companyId };
+    const viewer = await loadTicketViewer(actor);
+    const decision = decideOwnTicketReuse(ticket, {
+      userId,
+      queueId: useQueueWhatsapp ? queueId : null,
+      isAdmin: viewer.isAdmin,
+      queueIds: viewer.queueIds
+    });
+    if (decision.reuse) {
+      try {
+        // one after the other: the queue first, then the acceptance
+        await decision.steps.reduce(
+          (previous, step) =>
+            previous.then(() =>
+              UpdateTicketService({
+                ticketData: { ...step, userId: Number(userId) },
+                ticketId: ticket.id,
+                companyId,
+                reqUserId: Number(actor.userId)
+              }).then(() => undefined)
+            ),
+          Promise.resolve()
+        );
+      } catch (err) {
+        // an access rule refused it: say where the ticket is, as before
+        if (
+          err instanceof AppError &&
+          (err.statusCode === 403 ||
+            err.message === "ERR_QUEUE_NOT_LINKED_TO_WHATSAPP")
+        ) {
+          throw await OpenTicketConflictError(ticket.id, actor);
+        }
+        // a failure after saving (e.g. sending a message): open it anyway
+        await ticket.reload();
+        if (!(
+          ticket.status === "open" && Number(ticket.userId) === Number(userId)
+        )) {
+          throw err;
+        }
+      }
       await ticket.reload({
         include
       });

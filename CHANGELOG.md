@@ -56,6 +56,8 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- Iniciar conversa com um cliente cujo atendimento já é da própria pessoa (aguardando com o nome dela, pausado ou sem
+  fila) abre esse atendimento, em vez de dizer que o cliente está em atendimento com outra pessoa (RF-028).
 - Com o proxy de saída do WhatsApp configurado, os downloads de estado e de conteúdo (mmg.whatsapp.net) passam
   pelo mesmo caminho da conexão. Antes saíam direto, falhavam onde só o proxy alcança a internet e derrubavam a
   sincronização depois de reconectar.

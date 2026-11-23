@@ -2,6 +2,8 @@ import Ticket from "../../models/Ticket";
 import Whatsapp from "../../models/Whatsapp";
 import CreateTicketService from "../../services/TicketServices/CreateTicketService";
 import FindOrCreateATicketTrakingService from "../../services/TicketServices/FindOrCreateATicketTrakingService";
+import UpdateTicketService from "../../services/TicketServices/UpdateTicketService";
+import AppError from "../../errors/AppError";
 
 jest.mock("../../models/Whatsapp", () => ({ findOne: jest.fn() }));
 jest.mock("../../models/Queue", () => ({}));
@@ -26,6 +28,16 @@ jest.mock("../../services/SocketServices/TicketContextSocketService", () => ({
   emitTicketContext: jest.fn()
 }));
 jest.mock("../../utils/logger", () => ({ logger: { info: jest.fn() } }));
+jest.mock("../../services/TicketServices/UpdateTicketService", () =>
+  jest.fn().mockResolvedValue({})
+);
+const mockViewer = { companyId: 10, isAdmin: false, queueIds: [42, 41] };
+jest.mock(
+  "../../services/TicketServices/AuthorizeTicketContextService",
+  () => ({
+    loadTicketViewer: jest.fn(async () => mockViewer)
+  })
+);
 
 const casseb = { id: 41, companyId: 10 };
 const cidadela = { id: 42, companyId: 10 };
@@ -66,6 +78,7 @@ describe("WhatsApp for a new ticket", () => {
   let channels: typeof fixtures;
 
   beforeEach(() => {
+    (UpdateTicketService as jest.Mock).mockClear();
     channels = [...fixtures];
     (Whatsapp.findOne as jest.Mock).mockImplementation(
       async ({ where, include = [], order }: Query) => {
@@ -151,37 +164,144 @@ describe("WhatsApp for a new ticket", () => {
     ).resolves.toMatchObject({ whatsappId: 1 });
   });
 
-  it.each([cidadela.id, casseb.id])(
-    "only reuses the user's existing ticket when it belongs to the selected queue (%i)",
-    async existingQueueId => {
+  // Zap Komunick (RF-028): the person's own active ticket is opened, in its
+  // own sector, when it is pending with their name or paused
+  it.each([
+    ["open, same queue", "open", cidadela.id, []],
+    ["open, another queue of theirs", "open", casseb.id, []],
+    ["pending with their name", "pending", cidadela.id, [{ status: "open" }]],
+    ["paused", "paused", cidadela.id, [{ status: "open" }]],
+    [
+      "pending without sector",
+      "pending",
+      null,
+      [{ queueId: cidadela.id }, { status: "open" }]
+    ]
+  ])(
+    "opens the user's own active ticket (%s)",
+    async (_, status, existingQueueId, steps) => {
       const existingTicket = {
         id: 302,
         userId: request.userId,
         whatsappId: 4,
         queueId: existingQueueId,
-        status: "open",
+        status,
         reload: jest.fn()
       };
       (Ticket.findOne as jest.Mock).mockResolvedValue(existingTicket);
 
-      const result = CreateTicketService({
-        ...request,
-        queueId: cidadela.id,
-        ...manualRouting
-      });
+      await expect(
+        CreateTicketService({
+          ...request,
+          queueId: cidadela.id,
+          ...manualRouting
+        })
+      ).resolves.toBe(existingTicket);
 
-      if (existingQueueId === cidadela.id) {
-        await expect(result).resolves.toBe(existingTicket);
-      } else {
-        await expect(result).rejects.toMatchObject({
-          message: "ERR_OTHER_OPEN_TICKET"
-        });
-        expect(existingTicket.reload).not.toHaveBeenCalled();
-      }
+      expect(UpdateTicketService).toHaveBeenCalledTimes(steps.length);
+      steps.forEach((step, index) =>
+        expect(UpdateTicketService).toHaveBeenNthCalledWith(index + 1, {
+          ticketData: { ...step, userId: request.userId },
+          ticketId: 302,
+          companyId: 10,
+          reqUserId: request.userId
+        })
+      );
       expect(Ticket.findOne).toHaveBeenCalledWith({
         where: expect.objectContaining({ whatsappId: 4 })
       });
       expect(Ticket.create).not.toHaveBeenCalled();
     }
   );
+
+  it("does not open the user's ticket in a queue they no longer have", async () => {
+    (Ticket.findOne as jest.Mock).mockResolvedValue({
+      id: 305,
+      userId: request.userId,
+      whatsappId: 4,
+      queueId: 77,
+      status: "open",
+      reload: jest.fn()
+    });
+
+    await expect(
+      CreateTicketService({
+        ...request,
+        queueId: cidadela.id,
+        ...manualRouting
+      })
+    ).rejects.toMatchObject({ message: "ERR_OTHER_OPEN_TICKET" });
+    expect(UpdateTicketService).not.toHaveBeenCalled();
+  });
+
+  it("still refuses a ticket in service with someone else", async () => {
+    const existingTicket = {
+      id: 303,
+      userId: 999,
+      whatsappId: 4,
+      queueId: cidadela.id,
+      status: "open",
+      reload: jest.fn()
+    };
+    (Ticket.findOne as jest.Mock).mockResolvedValue(existingTicket);
+
+    await expect(
+      CreateTicketService({
+        ...request,
+        queueId: cidadela.id,
+        ...manualRouting
+      })
+    ).rejects.toMatchObject({ message: "ERR_OTHER_OPEN_TICKET" });
+    expect(UpdateTicketService).not.toHaveBeenCalled();
+    expect(existingTicket.reload).not.toHaveBeenCalled();
+    expect(Ticket.create).not.toHaveBeenCalled();
+  });
+
+  it("says where the ticket is when an access rule refuses to open it", async () => {
+    const existingTicket = {
+      id: 304,
+      userId: request.userId,
+      whatsappId: 4,
+      queueId: cidadela.id,
+      status: "pending",
+      reload: jest.fn()
+    };
+    (Ticket.findOne as jest.Mock).mockResolvedValue(existingTicket);
+    (UpdateTicketService as jest.Mock).mockRejectedValueOnce(
+      new AppError("ERR_NO_PERMISSION", 403)
+    );
+
+    await expect(
+      CreateTicketService({
+        ...request,
+        queueId: cidadela.id,
+        ...manualRouting
+      })
+    ).rejects.toMatchObject({ message: "ERR_OTHER_OPEN_TICKET" });
+  });
+
+  it("opens the ticket when only a later step (sending) failed", async () => {
+    const existingTicket = {
+      id: 306,
+      userId: request.userId,
+      whatsappId: 4,
+      queueId: cidadela.id,
+      status: "pending",
+      reload: jest.fn(async function (this: { status: string }) {
+        this.status = "open";
+      })
+    };
+    (Ticket.findOne as jest.Mock).mockResolvedValue(existingTicket);
+    (UpdateTicketService as jest.Mock).mockRejectedValueOnce(
+      new Error("ERR_SENDING_WAPP_MSG")
+    );
+
+    await expect(
+      CreateTicketService({
+        ...request,
+        queueId: cidadela.id,
+        ...manualRouting
+      })
+    ).resolves.toBe(existingTicket);
+  });
 });

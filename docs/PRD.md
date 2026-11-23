@@ -891,6 +891,28 @@ então vê no topo da conversa que há 12 mensagens anteriores em setores que el
 administrador escolhe "Completo, de todos os setores", ela vê essas mensagens, com o separador "Atendimento anterior
 #52 · 12/11/2026 · fila JBFraga · canal JBFraga (desconectado)".
 
+### RF-028 — O próprio atendimento não bloqueia a nova conversa
+
+**Problema relatado (23/11/2026, JB Fraga):** uma atendente tenta iniciar conversa com um cliente e o sistema diz que
+ele já está em atendimento com outra pessoa, mas o atendimento é dela. Causa: o atendimento existente só era
+reaproveitado se estivesse em andamento e na mesma fila escolhida. Aguardando com o nome dela (por exemplo, pela
+carteira), pausado ou em outra fila dela, ele bloqueava.
+
+**Regras importantes:**
+- Se o atendimento ativo do cliente no mesmo canal é da própria pessoa, iniciar conversa abre esse atendimento.
+  Aguardando ou pausado, ele passa a "em andamento", como se ela tivesse clicado em Aceitar ou Retomar.
+- O atendimento continua na fila em que está, sem mensagem de transferência ao cliente. Se não tiver fila, vai para a
+  fila escolhida antes de ser aceito.
+- Se o atendimento da pessoa está numa fila que ela não tem mais (e ela não é administradora), ele não é aberto por
+  esse caminho: o aviso diz onde ele está, como em RF-026.
+- Atendimento com outra pessoa continua bloqueando, com o aviso de RF-026.
+
+**Cenário de sucesso:**
+
+Dado um atendimento aguardando na fila Fiscal com o nome da Yasmin,
+quando a Yasmin inicia conversa com esse cliente pela fila Fiscal,
+então o atendimento abre em andamento com ela, sem aviso de conversa em aberto.
+
 ## 4. Restrições e cuidados
 
 **Uso e acesso:** navegador, perfis do Ticketz (admin e usuário). Painel de SLA, carteira, horário de acesso, motivos
