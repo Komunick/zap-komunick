@@ -36,6 +36,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- Com o proxy de saída do WhatsApp configurado, os downloads de estado e de conteúdo (mmg.whatsapp.net) passam
+  pelo mesmo caminho da conexão. Antes saíam direto, falhavam onde só o proxy alcança a internet e derrubavam a
+  sincronização depois de reconectar.
 - As rotas de registro da instalação no Ticketz (`/ticketz/registry`) passam a exigir superadministrador. Antes,
   qualquer administrador de empresa passava, porque a rota importava `isAdmin` com o nome `isSuper`.
 - O repositório deixa de guardar certificados e chaves herdados do Ticketz original (`backend/certs`,

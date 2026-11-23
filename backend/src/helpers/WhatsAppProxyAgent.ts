@@ -49,18 +49,27 @@ export function getWhatsAppProxyAgent(): Agent | null {
   return configuredProxy.agent;
 }
 
-export function getWhatsAppMediaDownloadOptions() {
+/**
+ * Axios request options that honor the configured egress proxy. Used for
+ * every HTTP request the WhatsApp library makes outside the WebSocket:
+ * app state blobs (mmg.whatsapp.net), media and history downloads.
+ */
+export function getWhatsAppHttpOptions() {
   const httpsAgent = getWhatsAppProxyAgent();
   if (!httpsAgent) return undefined;
   return {
-    options: {
-      httpsAgent,
-      proxy: false as const,
-      beforeRedirect: ({ protocol }: { protocol?: string }) => {
-        if (protocol !== "https:") {
-          throw new Error("WhatsApp media redirects must use HTTPS");
-        }
+    httpsAgent,
+    proxy: false as const,
+    beforeRedirect: ({ protocol }: { protocol?: string }) => {
+      if (protocol !== "https:") {
+        throw new Error("WhatsApp media redirects must use HTTPS");
       }
     }
   };
+}
+
+export function getWhatsAppMediaDownloadOptions() {
+  const options = getWhatsAppHttpOptions();
+  if (!options) return undefined;
+  return { options };
 }
