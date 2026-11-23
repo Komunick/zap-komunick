@@ -7,6 +7,7 @@ jest.mock("../../models/Whatsapp", () => ({ findOne: jest.fn() }));
 jest.mock("../../models/Queue", () => ({}));
 jest.mock("../../models/Ticket", () => ({
   findOne: jest.fn(),
+  findByPk: jest.fn().mockResolvedValue(null),
   create: jest.fn()
 }));
 jest.mock("../../models/Contact", () => ({}));

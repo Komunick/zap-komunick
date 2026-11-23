@@ -1,12 +1,14 @@
 import { Op, WhereOptions } from "sequelize";
-import AppError from "../errors/AppError";
+import OpenTicketConflictError from "../services/TicketServices/OpenTicketConflictService";
+import { ContextActor } from "../services/TicketServices/AuthorizeTicketContextService";
 import Ticket from "../models/Ticket";
 import { ACTIVE_TICKET_STATUSES } from "./TicketPauseAndClose";
 
 const CheckContactOpenTickets = async (
   contactId: number,
   whatsappId?: number,
-  returnTicket = false
+  returnTicket = false,
+  actor?: ContextActor
 ): Promise<Ticket> => {
   const where: WhereOptions<Ticket> = {
     contactId,
@@ -22,7 +24,8 @@ const CheckContactOpenTickets = async (
   });
 
   if (ticket && !returnTicket) {
-    throw new AppError("ERR_OTHER_OPEN_TICKET");
+    // Zap Komunick: tell who has it (RF-026)
+    throw await OpenTicketConflictError(ticket.id, actor);
   }
 
   return ticket;
