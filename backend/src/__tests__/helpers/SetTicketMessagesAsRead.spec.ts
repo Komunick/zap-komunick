@@ -17,6 +17,7 @@ const to = jest.fn(() => ({ emit }));
 const fictionalTicket = (queueId: number | null, unreadMessages: number) => ({
   id: 301,
   companyId: 10,
+  whatsappId: 2,
   queueId,
   status: "open",
   unreadMessages,
@@ -77,4 +78,18 @@ it("invalidates notifications when stored unread messages exist despite a zero c
     action: "updateUnread",
     ticketId: 301
   });
+});
+
+// Zap Komunick (RF-029): history imported from the previous system has no
+// channel; opening it must not save the default connection on it
+it("does not touch WhatsApp for a ticket without channel", async () => {
+  const ticket = { ...fictionalTicket(401, 0), whatsappId: null };
+
+  await SetTicketMessagesAsRead(ticket as unknown as Ticket);
+
+  expect(GetTicketWbot).not.toHaveBeenCalled();
+  expect(ticket.update).toHaveBeenCalledWith(
+    { unreadMessages: 0 },
+    { silent: true }
+  );
 });

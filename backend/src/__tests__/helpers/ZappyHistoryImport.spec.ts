@@ -95,7 +95,8 @@ describe("planImport", () => {
       tickets: 1,
       messages: 2,
       alreadyPresent: 0,
-      newContacts: 0
+      newContacts: 0,
+      afterCutoffWithoutWhatsappId: 0
     });
     const [ticket] = plan.tickets;
     expect(ticket.contact).toEqual({ id: 10 });
@@ -126,7 +127,11 @@ describe("planImport", () => {
     );
     expect(plan.totals.newContacts).toBe(1);
     expect(plan.tickets[0].contact).toEqual({
-      create: { name: "Cliente Novo", number: "5571988887777" }
+      create: {
+        name: "Cliente Novo",
+        number: "5571988887777",
+        createdAt: new Date(Date.UTC(2026, 9, 1, 12, 0))
+      }
     });
     expect(plan.tickets[0].queueId).toBeNull();
   });
@@ -181,9 +186,116 @@ describe("planImport", () => {
     );
     expect(plan.skipped.map(s => s.reason)).toEqual([
       "group",
-      "no-number",
+      "invalid-number",
       "no-messages"
     ]);
+  });
+
+  it("skips LID, group ids without the flag and numbers without country code", () => {
+    const plan = planImport(
+      exportOf(
+        ["123456789012345@lid", "120363111111111111@g.us", "71999990001"].map(
+          (contactNumber, i) => ({
+            externalId: `x${i}`,
+            contactNumber,
+            createdAt: "2026-10-01T12:00:00.000Z",
+            messages: [message(`n${i}`, 0)]
+          })
+        )
+      ),
+      context()
+    );
+    expect(plan.skipped.map(s => s.reason)).toEqual([
+      "lid",
+      "group",
+      "invalid-number"
+    ]);
+  });
+
+  it("knows a message by either id, so a later export never duplicates it", () => {
+    const plan = planImport(
+      exportOf([
+        {
+          externalId: "t1",
+          contactNumber: "5571999990001",
+          createdAt: "2026-10-01T12:00:00.000Z",
+          messages: [message(" 123 ", 0, { whatsappId: " 3EB0NEW " })]
+        }
+      ]),
+      context({ existingMessageIds: new Set(["zappy-123"]) })
+    );
+    expect(plan.tickets).toEqual([]);
+    expect(plan.totals.alreadyPresent).toBe(1);
+  });
+
+  it("after the cut-off keeps only messages with the WhatsApp id", () => {
+    const plan = planImport(
+      exportOf([
+        {
+          externalId: "t1",
+          contactNumber: "5571999990001",
+          createdAt: "2026-11-01T12:00:00.000Z",
+          messages: [
+            message("old", 0),
+            {
+              ...message("new-no-id", 0),
+              createdAt: "2026-11-21T12:00:00.000Z"
+            },
+            {
+              ...message("new-with-id", 0, { whatsappId: "3EB0X" }),
+              createdAt: "2026-11-21T12:01:00.000Z"
+            }
+          ]
+        }
+      ]),
+      context({ until: new Date("2026-11-20T00:00:00.000Z") })
+    );
+    expect(plan.tickets[0].messages.map(m => m.id)).toEqual([
+      "zappy-old",
+      "3EB0X"
+    ]);
+    expect(plan.totals.afterCutoffWithoutWhatsappId).toBe(1);
+  });
+
+  it("keeps messages with the same time in export order, 1 ms apart", () => {
+    const plan = planImport(
+      exportOf([
+        {
+          externalId: "t1",
+          contactNumber: "5571999990001",
+          createdAt: "2026-10-01T12:00:00.000Z",
+          messages: [message("a", 0), message("b", 0), message("c", 0)]
+        }
+      ]),
+      context()
+    );
+    const times = plan.tickets[0].messages.map(m => m.createdAt.getTime());
+    expect(plan.tickets[0].messages.map(m => m.id)).toEqual([
+      "zappy-a",
+      "zappy-b",
+      "zappy-c"
+    ]);
+    expect(times[1] - times[0]).toBe(1);
+    expect(times[2] - times[1]).toBe(1);
+  });
+
+  it("uses the default queue and lists names without a match", () => {
+    const plan = planImport(
+      exportOf([
+        {
+          externalId: "t1",
+          contactNumber: "5571999990001",
+          queueName: "Legalização",
+          userName: "Fulana",
+          createdAt: "2026-10-01T12:00:00.000Z",
+          messages: [message("a", 0)]
+        }
+      ]),
+      context({ defaultQueueId: 9 })
+    );
+    expect(plan.tickets[0].queueId).toBe(9);
+    expect(plan.unmatchedQueues).toEqual(["Legalização"]);
+    expect(plan.unmatchedUsers).toEqual(["Fulana"]);
   });
 
   it("refuses a file that is not a ZapContábil export", () => {

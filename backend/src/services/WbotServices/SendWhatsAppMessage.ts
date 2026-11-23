@@ -50,7 +50,8 @@ const SendWhatsAppMessage = async ({
       }
     });
 
-    if (chatMessage) {
+    // Zap Komunick: imported history (RF-029) has no WhatsApp payload to quote
+    if (chatMessage?.dataJson) {
       const msgFound = JSON.parse(chatMessage.dataJson);
 
       options = {

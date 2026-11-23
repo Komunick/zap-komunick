@@ -84,6 +84,11 @@ const ForwardMessageService = async (
     }
   }
 
+  // Zap Komunick: imported history (RF-029) has no WhatsApp payload to forward
+  if (!message.dataJson) {
+    throw new AppError("ERR_FORWARD_IMPORTED_MESSAGE", 400);
+  }
+
   try {
     const wbot = getWbot(whatsapp.id);
     const msg = JSON.parse(message.dataJson);

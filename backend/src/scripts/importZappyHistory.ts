@@ -2,15 +2,20 @@
 // (Zappy) as closed tickets of one company (docs/PRD.md, RF-029).
 //
 //   node dist/scripts/importZappyHistory.js --company=2 --file=/path/export.json
-//   ... --execute    writes; without it, only prints the plan (dry run)
+//     [--queue-map=/path/queues.json]  {"Nome no ZapContábil": <queueId>}
+//     [--default-queue=<queueId>]       queue for names not in the map
+//     [--until=<ISO date>]              SuperChat receives the number since
+//     [--allow-no-queue]                accept tickets without queue
+//     [--execute]                       writes; without it, dry run only
 //
-// Prints counts only, never message content. Safe to run again: messages
-// already in SuperChat (same WhatsApp id or same imported id) are skipped.
+// Prints counts and queue/agent names only, never message content. Safe to
+// run again: messages already in SuperChat are skipped by id.
 import { promises as fs } from "fs";
 import { Op } from "sequelize";
 import {
   HistoryExport,
   ImportContext,
+  messageIdForms,
   numberCandidates,
   PlannedTicket,
   planImport
@@ -28,13 +33,27 @@ async function main(): Promise<void> {
   const companyId = Number(option("company"));
   const file = option("file");
   const execute = args.includes("--execute");
-  if (!Number.isSafeInteger(companyId) || companyId <= 0 || !file) {
+  const allowNoQueue = args.includes("--allow-no-queue");
+  const defaultQueue = option("default-queue");
+  const untilValue = option("until");
+  const until = untilValue ? new Date(untilValue) : null;
+  if (
+    !Number.isSafeInteger(companyId) ||
+    companyId <= 0 ||
+    !file ||
+    (until && Number.isNaN(until.getTime())) ||
+    (defaultQueue !== undefined && !(Number(defaultQueue) > 0))
+  ) {
     throw new Error(
-      "usage: importZappyHistory --company=<id> --file=<export.json> [--execute]"
+      "usage: importZappyHistory --company=<id> --file=<export.json> [--queue-map=<json>] [--default-queue=<id>] [--until=<ISO>] [--allow-no-queue] [--execute]"
     );
   }
 
   const data = JSON.parse(await fs.readFile(file, "utf8")) as HistoryExport;
+  const queueMapFile = option("queue-map");
+  const queueMap: Record<string, number> = queueMapFile
+    ? JSON.parse(await fs.readFile(queueMapFile, "utf8"))
+    : {};
 
   const database = (await import("../database")).default;
   const Contact = (await import("../models/Contact")).default;
@@ -56,11 +75,29 @@ async function main(): Promise<void> {
       User.findAll({ where: { companyId }, attributes: ["id", "name"] })
     ]);
 
-    const ids = data.tickets.flatMap(t =>
-      (t.messages || []).flatMap(m =>
-        [m.whatsappId, `zappy-${m.externalId}`].filter(Boolean)
+    const companyQueueIds = new Set(queues.map(q => q.id));
+    const queueIdByName = new Map(
+      queues.map(q => [q.name.trim().toLowerCase(), q.id])
+    );
+    Object.entries(queueMap).forEach(([name, id]) => {
+      if (!companyQueueIds.has(Number(id))) {
+        throw new Error(
+          `queue-map: queue ${id} is not of company ${companyId}`
+        );
+      }
+      queueIdByName.set(name.trim().toLowerCase(), Number(id));
+    });
+    if (defaultQueue && !companyQueueIds.has(Number(defaultQueue))) {
+      throw new Error(
+        `default-queue ${defaultQueue} is not of company ${companyId}`
+      );
+    }
+
+    const ids = Array.from(
+      new Set(
+        data.tickets.flatMap(t => (t.messages || []).flatMap(messageIdForms))
       )
-    ) as string[];
+    );
     const existing = new Set<string>();
     for (let i = 0; i < ids.length; i += 5000) {
       // eslint-disable-next-line no-await-in-loop
@@ -71,13 +108,28 @@ async function main(): Promise<void> {
       rows.forEach(row => existing.add(row.id));
     }
 
+    // first stored contact wins when the same number is stored twice
+    const contactIdByNumber = new Map<string, number>();
+    contacts
+      .sort((a, b) => a.id - b.id)
+      .forEach(c => {
+        if (!contactIdByNumber.has(c.number)) {
+          contactIdByNumber.set(c.number, c.id);
+        }
+      });
+
     const context: ImportContext = {
-      contactIdByNumber: new Map(contacts.map(c => [c.number, c.id])),
-      queueIdByName: new Map(queues.map(q => [q.name.toLowerCase(), q.id])),
-      userIdByName: new Map(users.map(u => [u.name.toLowerCase(), u.id])),
-      existingMessageIds: existing
+      contactIdByNumber,
+      queueIdByName,
+      defaultQueueId: defaultQueue ? Number(defaultQueue) : null,
+      userIdByName: new Map(
+        users.map(u => [u.name.trim().toLowerCase(), u.id])
+      ),
+      existingMessageIds: existing,
+      until
     };
     const plan = planImport(data, context);
+    const withoutQueue = plan.tickets.filter(t => t.queueId === null).length;
 
     const skippedByReason = plan.skipped.reduce<Record<string, number>>(
       (acc, item) => ({ ...acc, [item.reason]: (acc[item.reason] || 0) + 1 }),
@@ -89,36 +141,52 @@ async function main(): Promise<void> {
           mode: execute ? "execute" : "dry-run",
           companyId,
           exportedAt: data.exportedAt,
+          until: until?.toISOString() ?? null,
           exportTickets: data.tickets.length,
           ...plan.totals,
-          ticketsWithoutQueue: plan.tickets.filter(t => t.queueId === null)
-            .length,
+          ticketsWithoutQueue: withoutQueue,
           ticketsWithoutUser: plan.tickets.filter(t => t.userId === null)
             .length,
-          skipped: skippedByReason
+          skipped: skippedByReason,
+          unmatchedQueues: plan.unmatchedQueues,
+          unmatchedUsers: plan.unmatchedUsers
         },
         null,
         2
       )}\n`
     );
     if (!execute) return;
+    if (withoutQueue > 0 && !allowNoQueue) {
+      throw new Error(
+        `${withoutQueue} tickets without queue would be hidden from agents (RF-027): map them with --queue-map/--default-queue or pass --allow-no-queue`
+      );
+    }
 
     const createdContacts = new Map<string, number>();
     const writeTicket = async (planned: PlannedTicket) =>
       database.transaction(async transaction => {
         let contactId: number;
+        let created: { number: string; id: number } | null = null;
         if ("id" in planned.contact) {
           contactId = planned.contact.id;
         } else {
-          const { name, number } = planned.contact.create;
+          const { name, number, createdAt } = planned.contact.create;
           contactId = createdContacts.get(number);
           if (!contactId) {
-            const contact = await Contact.create(
-              { name, number, companyId, isGroup: false },
-              { transaction }
-            );
+            const [contact] = await Contact.findOrCreate({
+              where: { companyId, number },
+              defaults: {
+                name,
+                number,
+                companyId,
+                isGroup: false,
+                createdAt,
+                updatedAt: createdAt
+              },
+              transaction
+            });
             contactId = contact.id;
-            createdContacts.set(number, contactId);
+            created = { number, id: contactId };
           }
         }
         const last = planned.messages[planned.messages.length - 1];
@@ -156,21 +224,38 @@ async function main(): Promise<void> {
           // bulkCreate keeps the given createdAt/updatedAt
           { transaction }
         );
+        return created;
       });
 
     let done = 0;
+    const failures: Array<{ externalId: string; error: string }> = [];
     for (let i = 0; i < plan.tickets.length; i += 1) {
-      // one transaction per ticket: a failure keeps the others
-      // eslint-disable-next-line no-await-in-loop
-      await writeTicket(plan.tickets[i]);
-      done += 1;
-      if (done % 200 === 0) {
-        process.stdout.write(`imported ${done}/${plan.tickets.length}\n`);
+      const planned = plan.tickets[i];
+      try {
+        // one transaction per ticket: a failure keeps the others
+        // eslint-disable-next-line no-await-in-loop
+        const created = await writeTicket(planned);
+        // only after the commit, so a rollback never leaves a dead id here
+        if (created) createdContacts.set(created.number, created.id);
+        done += 1;
+      } catch (err) {
+        failures.push({
+          externalId: planned.externalId,
+          error: String(err?.name || err?.message || err).slice(0, 120)
+        });
+      }
+      if ((i + 1) % 200 === 0) {
+        process.stdout.write(`progress ${i + 1}/${plan.tickets.length}\n`);
       }
     }
     process.stdout.write(
-      `imported ${done} tickets, ${plan.totals.messages} messages, ${createdContacts.size} new contacts\n`
+      `${JSON.stringify(
+        { imported: done, failed: failures.length, failures },
+        null,
+        2
+      )}\n`
     );
+    if (failures.length) process.exitCode = 1;
   } finally {
     await database.close();
   }

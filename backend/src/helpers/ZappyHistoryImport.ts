@@ -43,12 +43,20 @@ export interface HistoryExport {
 export interface ImportContext {
   /** Contact id by every stored form of the number. */
   contactIdByNumber: Map<string, number>;
-  /** Queue id by lower-case name. */
+  /** Queue id by lower-case name of the previous system (explicit map). */
   queueIdByName: Map<string, number>;
+  /** Queue for tickets whose queue name is not in the map. */
+  defaultQueueId?: number | null;
   /** User id by lower-case name. */
   userIdByName: Map<string, number>;
   /** Message ids that already exist in the company. */
   existingMessageIds: Set<string>;
+  /**
+   * From this moment on SuperChat also receives the number: a message after
+   * it is imported only when it has the WhatsApp id (the only safe way to
+   * know it is not already there).
+   */
+  until?: Date | null;
 }
 
 export interface PlannedMessage {
@@ -60,7 +68,9 @@ export interface PlannedMessage {
 
 export interface PlannedTicket {
   externalId: string;
-  contact: { id: number } | { create: { name: string; number: string } };
+  contact:
+    | { id: number }
+    | { create: { name: string; number: string; createdAt: Date } };
   queueId: number | null;
   userId: number | null;
   createdAt: Date;
@@ -70,25 +80,52 @@ export interface PlannedTicket {
   alreadyPresent: number;
 }
 
+export type SkipReason =
+  "group" | "lid" | "invalid-number" | "no-messages" | "already-imported";
+
 export interface ImportPlan {
   tickets: PlannedTicket[];
-  skipped: Array<{ externalId: string; reason: string }>;
+  skipped: Array<{ externalId: string; reason: SkipReason }>;
+  /** Names without a match, for the operator to map (names only). */
+  unmatchedQueues: string[];
+  unmatchedUsers: string[];
   totals: {
     tickets: number;
     messages: number;
     alreadyPresent: number;
     newContacts: number;
+    /** Messages after `until` without WhatsApp id, left out. */
+    afterCutoffWithoutWhatsappId: number;
   };
 }
 
-/** The forms a Brazilian WhatsApp number may be stored with. */
-export function numberCandidates(raw: string): string[] {
-  const digits = String(raw || "")
+const digitsOf = (raw: string): string =>
+  String(raw || "")
     .split("@")[0]
     .replace(/\D/g, "");
+
+/**
+ * The forms a Brazilian WhatsApp number may be stored with, in the order
+ * SuperChat prefers them (with the ninth digit first).
+ */
+export function numberCandidates(raw: string): string[] {
+  const digits = digitsOf(raw);
   if (!digits) return [];
   const { phone, wphone } = normalizePhone(digits);
-  return Array.from(new Set([digits, phone, wphone]));
+  return Array.from(new Set([phone, digits, wphone]));
+}
+
+/** Why a number cannot become a client, or null when it can. */
+export function numberProblem(raw: string): SkipReason | null {
+  const value = String(raw || "").toLowerCase();
+  if (value.includes("@g.us")) return "group";
+  if (value.includes("@lid")) return "lid";
+  const digits = digitsOf(value);
+  // Brazilian numbers with country code: 12 or 13 digits
+  if (!digits.startsWith("55") || ![12, 13].includes(digits.length)) {
+    return digits.length >= 18 ? "group" : "invalid-number";
+  }
+  return null;
 }
 
 const validDate = (value: string | null | undefined): Date | null => {
@@ -97,15 +134,23 @@ const validDate = (value: string | null | undefined): Date | null => {
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
+/** Every id a message may already have in SuperChat. */
+export function messageIdForms(message: ExportedMessage): string[] {
+  const forms: string[] = [];
+  const whatsappId = String(message.whatsappId || "").trim();
+  if (whatsappId) forms.push(whatsappId);
+  const externalId = String(message.externalId ?? "").trim();
+  if (externalId) forms.push(`zappy-${externalId}`);
+  return forms;
+}
+
 /**
  * Id of the message in SuperChat: the WhatsApp id when the export has it (so
  * a message both systems received is not repeated), otherwise a prefixed id
  * that keeps a second run from importing it again.
  */
 export function importedMessageId(message: ExportedMessage): string {
-  const whatsappId = (message.whatsappId || "").trim();
-  if (whatsappId) return whatsappId;
-  return `zappy-${String(message.externalId).trim()}`;
+  return messageIdForms(message)[0] || "";
 }
 
 /** Text of the message; attachments stay as their name (text-only import). */
@@ -132,35 +177,49 @@ export function planImport(
   const tickets: PlannedTicket[] = [];
   const skipped: ImportPlan["skipped"] = [];
   const seenIds = new Set(context.existingMessageIds);
-  const newNumbers = new Set<string>();
+  const newContacts = new Map<string, Date>();
+  const unmatchedQueues = new Set<string>();
+  const unmatchedUsers = new Set<string>();
   let alreadyPresentTotal = 0;
+  let afterCutoff = 0;
 
   data.tickets.forEach(ticket => {
-    if (ticket.isGroup) {
-      skipped.push({ externalId: ticket.externalId, reason: "group" });
+    const problem = ticket.isGroup
+      ? "group"
+      : numberProblem(ticket.contactNumber);
+    if (problem) {
+      skipped.push({ externalId: ticket.externalId, reason: problem });
       return;
     }
     const candidates = numberCandidates(ticket.contactNumber);
-    if (!candidates.length) {
-      skipped.push({ externalId: ticket.externalId, reason: "no-number" });
-      return;
-    }
 
     let alreadyPresent = 0;
     const messages: PlannedMessage[] = [];
     (ticket.messages || []).forEach(message => {
       const createdAt = validDate(message.createdAt);
       const body = importedMessageBody(message);
-      if (!createdAt || !body) return;
-      const id = importedMessageId(message);
-      if (seenIds.has(id)) {
+      const forms = messageIdForms(message);
+      if (!createdAt || !body || !forms.length) return;
+      if (forms.some(form => seenIds.has(form))) {
         alreadyPresent += 1;
         return;
       }
-      seenIds.add(id);
-      messages.push({ id, body, fromMe: !!message.fromMe, createdAt });
+      if (
+        context.until &&
+        createdAt.getTime() >= context.until.getTime() &&
+        !String(message.whatsappId || "").trim()
+      ) {
+        afterCutoff += 1;
+        return;
+      }
+      forms.forEach(form => seenIds.add(form));
+      messages.push({
+        id: forms[0],
+        body,
+        fromMe: !!message.fromMe,
+        createdAt
+      });
     });
-    messages.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
     alreadyPresentTotal += alreadyPresent;
 
     if (!messages.length) {
@@ -171,15 +230,42 @@ export function planImport(
       return;
     }
 
+    // stable order; equal times get 1 ms apart so pagination never splits
+    // or swaps them
+    messages.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    for (let i = 1; i < messages.length; i += 1) {
+      const previous = messages[i - 1].createdAt.getTime();
+      if (messages[i].createdAt.getTime() <= previous) {
+        messages[i].createdAt = new Date(previous + 1);
+      }
+    }
+
+    const first = messages[0].createdAt;
+    const last = messages[messages.length - 1].createdAt;
     const existingContact = candidates
       .map(number => context.contactIdByNumber.get(number))
       .find(id => id !== undefined);
     // new contacts keep the ninth digit, as SuperChat stores them
-    const number = normalizePhone(candidates[0]).phone;
-    if (existingContact === undefined) newNumbers.add(number);
+    const number = candidates[0];
+    if (existingContact === undefined) {
+      const known = newContacts.get(number);
+      if (!known || first < known) newContacts.set(number, first);
+    }
 
-    const first = messages[0].createdAt;
-    const last = messages[messages.length - 1].createdAt;
+    const queueName = (ticket.queueName || "").trim();
+    let queueId = queueName
+      ? context.queueIdByName.get(queueName.toLowerCase())
+      : undefined;
+    if (queueId === undefined) {
+      if (queueName) unmatchedQueues.add(queueName);
+      queueId = context.defaultQueueId ?? null;
+    }
+    const userName = (ticket.userName || "").trim();
+    const userId = userName
+      ? context.userIdByName.get(userName.toLowerCase())
+      : undefined;
+    if (userName && userId === undefined) unmatchedUsers.add(userName);
+
     tickets.push({
       externalId: ticket.externalId,
       contact:
@@ -188,17 +274,12 @@ export function planImport(
           : {
               create: {
                 name: (ticket.contactName || "").trim() || number,
-                number
+                number,
+                createdAt: first
               }
             },
-      queueId:
-        context.queueIdByName.get(
-          (ticket.queueName || "").trim().toLowerCase()
-        ) ?? null,
-      userId:
-        context.userIdByName.get(
-          (ticket.userName || "").trim().toLowerCase()
-        ) ?? null,
+      queueId,
+      userId: userId ?? null,
       createdAt: validDate(ticket.createdAt) || first,
       updatedAt: last,
       messages,
@@ -206,14 +287,26 @@ export function planImport(
     });
   });
 
+  // a contact created once uses the first message of all its tickets
+  tickets.forEach(ticket => {
+    if ("create" in ticket.contact) {
+      ticket.contact.create.createdAt = newContacts.get(
+        ticket.contact.create.number
+      );
+    }
+  });
+
   return {
     tickets,
     skipped,
+    unmatchedQueues: Array.from(unmatchedQueues).sort(),
+    unmatchedUsers: Array.from(unmatchedUsers).sort(),
     totals: {
       tickets: tickets.length,
       messages: tickets.reduce((sum, t) => sum + t.messages.length, 0),
       alreadyPresent: alreadyPresentTotal,
-      newContacts: newNumbers.size
+      newContacts: newContacts.size,
+      afterCutoffWithoutWhatsappId: afterCutoff
     }
   };
 }

@@ -668,6 +668,8 @@ const pt = {
     businessDaysTooltip: "Só em dia útil"
   },
   backendErrors: {
+    ERR_FORWARD_IMPORTED_MESSAGE:
+      "Esta mensagem veio do histórico do ZapContábil e não pode ser encaminhada pelo WhatsApp.",
     ERR_NO_CONNECTED_WHATSAPP_FOR_QUEUE:
       "A fila selecionada não tem um canal de WhatsApp conectado.",
     ERR_QUEUE_NOT_LINKED_TO_WHATSAPP:
@@ -1379,6 +1381,8 @@ const en = {
     businessDaysTooltip: "Business days only"
   },
   backendErrors: {
+    ERR_FORWARD_IMPORTED_MESSAGE:
+      "This message came from the ZapContábil history and cannot be forwarded through WhatsApp.",
     ERR_NO_CONNECTED_WHATSAPP_FOR_QUEUE:
       "The selected queue has no connected WhatsApp channel.",
     ERR_QUEUE_NOT_LINKED_TO_WHATSAPP:
@@ -2094,6 +2098,8 @@ const es = {
     businessDaysTooltip: "Solo en día hábil"
   },
   backendErrors: {
+    ERR_FORWARD_IMPORTED_MESSAGE:
+      "Este mensaje vino del historial de ZapContábil y no se puede reenviar por WhatsApp.",
     ERR_NO_CONNECTED_WHATSAPP_FOR_QUEUE:
       "La cola seleccionada no tiene un canal de WhatsApp conectado.",
     ERR_QUEUE_NOT_LINKED_TO_WHATSAPP:
