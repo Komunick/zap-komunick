@@ -68,6 +68,7 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 - PDF e outros documentos com nome longo voltam a ser enviados e registrados na conversa. A cópia em disco
   usa um nome encurtado e sem caracteres que quebram caminho ou link; o cliente recebe o nome original. Vários
   arquivos enviados juntos não se sobrescrevem mais.
+- O menu lateral do desktop se recolhe quando o mouse sai da barra.
 
 ### Segurança
 
