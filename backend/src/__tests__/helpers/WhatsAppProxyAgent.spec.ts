@@ -1,6 +1,7 @@
 import { createServer } from "http";
 import { get } from "https";
 import { AddressInfo } from "net";
+import axios from "axios";
 import {
   createWhatsAppProxyAgent,
   getWhatsAppHttpOptions,
@@ -92,6 +93,36 @@ describe("WhatsApp proxy agent", () => {
       expect(() =>
         options.beforeRedirect({ protocol: "https:" })
       ).not.toThrow();
+    });
+
+    // Zap Komunick: production regression of 23/11/2026. With the native
+    // proxyEnv agent, axios resolved mmg.whatsapp.net locally (EAI_AGAIN) and
+    // every media upload failed with "Media upload failed on all hosts".
+    it("tunnels the library's axios requests through the proxy with CONNECT", async () => {
+      const targets: string[] = [];
+      const proxy = createServer();
+      proxy.on("connect", (request, socket) => {
+        targets.push(request.url);
+        socket.end("HTTP/1.1 403 Forbidden\r\nContent-Length: 0\r\n\r\n");
+      });
+      await new Promise<void>((resolve, reject) => {
+        proxy.once("error", reject);
+        proxy.listen(0, "127.0.0.1", resolve);
+      });
+      const { port } = proxy.address() as AddressInfo;
+      process.env.SUPERCHAT_WHATSAPP_PROXY_URL = `http://127.0.0.1:${port}`;
+
+      try {
+        await expect(
+          axios.get("https://mmg-fixture.invalid/upload", {
+            ...getWhatsAppHttpOptions(),
+            timeout: 2000
+          })
+        ).rejects.toBeDefined();
+        expect(targets).toEqual(["mmg-fixture.invalid:443"]);
+      } finally {
+        await new Promise<void>(resolve => proxy.close(() => resolve()));
+      }
     });
 
     it("shares the same agent between socket options and media downloads", () => {
