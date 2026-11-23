@@ -838,6 +838,59 @@ somente dados fictícios, sem acesso externo, arquivos ou envio e preservam os e
 falhas parciais e stale não apresentam confirmação indevida. Troca, cancelamento, revogação ou edição durante awaits
 e antes do aceite recusam respostas antigas. Percurso completo em ambos os temas e desktop/celular, com dados fictícios.
 
+### RF-026 — Com quem está o atendimento aberto
+
+**Problema relatado (23/11/2026, JB Fraga):** ao chamar um cliente, o sistema diz que já existe uma conversa em aberto,
+mas não diz com quem. Sem saber onde está o atendimento, a equipe não consegue puxar a conversa.
+
+**Regras importantes:**
+- O aviso de atendimento já aberto diz o número do atendimento, o atendente (ou "aguardando na fila"), se está
+  pausado, a fila, o canal (marcando quando está desconectado) e a última movimentação. Vale para iniciar conversa,
+  reabrir atendimento e encaminhar mensagem.
+- Ao iniciar conversa, o aviso abre uma janela com **Abrir atendimento** e **Assumir**, ou **Aceitar**, se estiver
+  aguardando. Os botões seguem as regras de acesso que já existem:
+  - abre quem é administrador ou é da fila do atendimento, como na abertura normal;
+  - aceita um atendimento aguardando quem é da fila; aguardando sem fila, só administrador;
+  - assume um atendimento que está com outra pessoa só o administrador. Quem não pode assumir vê o nome do colega,
+    para pedir a transferência.
+- Aceitar não toma o atendimento de quem acabou de aceitá-lo: se alguém aceitou antes, o sistema avisa e não transfere.
+- No reabrir e no encaminhar, o aviso traz o link para abrir o atendimento quando a pessoa pode abri-lo.
+- O aviso mostra o nome do atendente, da fila e do canal a qualquer usuário da empresa que esbarre no atendimento,
+  mesmo de outro setor. A regra de visibilidade por setor esconde mensagens, não esses nomes.
+
+**Cenário de sucesso:**
+
+Dado que a Raiane atende a cliente Maria na fila Pessoal,
+quando a Sirleide, da fila Fiscal, tenta iniciar conversa com a Maria,
+então vê "Este cliente já tem o atendimento #55 em andamento: com Raiane, na fila Pessoal, pelo canal WhatsApp JB
+Fraga" e a orientação de pedir a transferência à Raiane ou falar com um administrador.
+
+### RF-027 — Histórico do cliente escondido por setor
+
+**Problema relatado (23/11/2026, JB Fraga):** a equipe não vê o que o cliente falou antes. As conversas antigas estão
+em atendimentos do canal JBFraga, já desconectado, na fila JBFraga, e a regra de visibilidade por setor esconde de quem
+não é dessa fila os atendimentos e as mensagens de outras filas.
+
+**Regras importantes:**
+- A opção que já existia passa a ter nome claro: Configurações › Opções › **Histórico do cliente para atendentes**,
+  com "Só dos setores do atendente" (padrão, a regra de antes) ou "Completo, de todos os setores". No completo, quem
+  pode ver o atendimento vê todo o histórico do cliente, como o administrador.
+- Quando a regra esconde parte do histórico, a conversa mostra no topo quantas mensagens anteriores do cliente estão
+  em setores que a pessoa não acompanha (ou em atendimentos sem setor) e quem pode liberar. Só a contagem: nada do
+  conteúdo escondido.
+- O separador de cada atendimento no histórico mostra a data, a fila, o canal (marcando quando está desconectado) e o
+  atendente.
+- O SuperChat só tem as mensagens que passaram por ele com o canal conectado. Conversas feitas direto no celular antes
+  do pareamento, ou com o canal fora, não estão no banco: a sincronização do histórico do WhatsApp continua desligada.
+
+**Cenário de sucesso:**
+
+Dado a opção "Só dos setores do atendente" e uma cliente com 12 mensagens antigas na fila JBFraga,
+quando uma atendente da fila Pessoal abre o atendimento novo dessa cliente,
+então vê no topo da conversa que há 12 mensagens anteriores em setores que ela não acompanha. Depois que um
+administrador escolhe "Completo, de todos os setores", ela vê essas mensagens, com o separador "Atendimento anterior
+#52 · 12/11/2026 · fila JBFraga · canal JBFraga (desconectado)".
+
 ## 4. Restrições e cuidados
 
 **Uso e acesso:** navegador, perfis do Ticketz (admin e usuário). Painel de SLA, carteira, horário de acesso, motivos

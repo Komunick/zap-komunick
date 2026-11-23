@@ -12,6 +12,7 @@ import {
 import User from "../../models/User";
 import CheckContactOpenTickets from "../../helpers/CheckContactOpenTickets";
 import CreateTicketService from "../TicketServices/CreateTicketService";
+import OpenTicketConflictError from "../TicketServices/OpenTicketConflictService";
 import { getJidOf } from "../WbotServices/getJidOf";
 import { GetCompanySetting } from "../../helpers/CheckSettings";
 
@@ -61,7 +62,11 @@ const ForwardMessageService = async (
       throw new AppError("ERR_FORBIDDEN", 403);
     }
   } else if (ticket && ticket.userId !== user.id) {
-    throw new AppError("ERR_OTHER_OPEN_TICKET", 400);
+    // Zap Komunick: tell who has it (RF-026)
+    throw await OpenTicketConflictError(ticket.id, {
+      userId: user.id,
+      companyId: contact.companyId
+    });
   }
 
   if (!ticket) {
