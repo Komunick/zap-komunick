@@ -281,23 +281,23 @@ export const update = async (
 ): Promise<Response> => {
   const { ticketId } = req.params;
 
-  await AuthorizeTicketContextService(ticketId, {
-    userId: req.user.id,
-    companyId: req.user.companyId
-  });
+  const { before, ticket } = await updateMutex.runExclusive(async () => {
+    await AuthorizeTicketContextService(ticketId, {
+      userId: req.user.id,
+      companyId: req.user.companyId
+    });
 
-  // Zap Komunick: where the ticket was before, for the transfer note (RF-017)
-  const before = await Ticket.findByPk(ticketId, {
-    attributes: ["id", "queueId", "userId", "companyId"]
-  });
+    // Zap Komunick: where the ticket was before, for the transfer note (RF-017)
+    const before = await Ticket.findByPk(ticketId, {
+      attributes: ["id", "queueId", "userId", "companyId"]
+    });
 
-  const { ticket } = await updateMutex.runExclusive(async () => {
-    const result = await UpdateTicketService({
+    const { ticket } = await UpdateTicketService({
       ticketData: req.body,
       ticketId: Number.parseInt(ticketId, 10),
       reqUserId: Number(req.user.id)
     });
-    return result;
+    return { before, ticket };
   });
 
   const parsedNote = parseTransferNote({

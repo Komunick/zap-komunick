@@ -5,6 +5,7 @@ import { getPublicPath } from "./GetPublicPath";
 import { logger } from "../utils/logger";
 import { makeRandomId } from "./MakeRandomId";
 import Ticket from "../models/Ticket";
+import { storedMediaFileName } from "./MediaFileName";
 
 type SaveMediaOptions = {
   destination: Ticket | number;
@@ -47,11 +48,15 @@ export default async function saveMediaToFile(
     relativePath += `${contactId}/${ticketId}/`;
   }
 
-  relativePath += `${randomId}`;
+  relativePath += `${randomId}/`;
 
   const storage = new FileStorage(new LocalStorageAdapter(getPublicPath()));
 
-  const mediaPath = `${relativePath}/${media.filename}`;
+  const mediaPath = `${relativePath}${storedMediaFileName(
+    media.filename,
+    media.mimetype,
+    relativePath.length
+  )}`;
 
   try {
     await storage.write(mediaPath, media.data);

@@ -26,6 +26,7 @@ import { v4 as uuidv4 } from "uuid";
 import AndroidIcon from "@material-ui/icons/Android";
 import VisibilityIcon from "@material-ui/icons/Visibility";
 import TicketMessagesDialog from "../TicketMessagesDialog";
+import TicketPreviewDialog from "../TicketPreviewDialog";
 import CloseTicketModal from "../CloseTicketModal";
 import DoneIcon from "@material-ui/icons/Done";
 import ClearOutlinedIcon from "@material-ui/icons/ClearOutlined";
@@ -34,6 +35,7 @@ import { getInitials } from "../../helpers/getInitials";
 import { BulkSelectionContext } from "../TicketsBulk";
 import CheckIcon from "@material-ui/icons/Check";
 import LocalOfferOutlinedIcon from "@material-ui/icons/LocalOfferOutlined";
+import SubjectIcon from "@material-ui/icons/Subject";
 import { TagPickerPopover } from "../TagPicker";
 import pastRelativeDate from "../../helpers/pastRelativeDate";
 
@@ -261,6 +263,11 @@ const useStyles = makeStyles(theme => ({
     minWidth: 0,
     fontSize: 13
   },
+  rowMessagePreviewButton: {
+    flexShrink: 0,
+    padding: 5,
+    fontSize: 16
+  },
   rowUnread: {
     flex: "none",
     minWidth: 20,
@@ -376,6 +383,8 @@ const TicketListItemCustom = ({
   const [whatsAppName, setWhatsAppName] = useState(null);
 
   const [openTicketMessageDialog, setOpenTicketMessageDialog] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [accepting, setAccepting] = useState(false);
   const [closeModalOpen, setCloseModalOpen] = useState(false);
   const { ticketId } = useParams();
   const isMounted = useRef(true);
@@ -395,11 +404,14 @@ const TicketListItemCustom = ({
     if (ticket.whatsappId && ticket.whatsapp) {
       setWhatsAppName(ticket.whatsapp.name);
     }
-
-    return () => {
-      isMounted.current = false;
-    };
   }, [ticket]);
+
+  useEffect(
+    () => () => {
+      isMounted.current = false;
+    },
+    []
+  );
 
   const handleCloseTicket = async id => {
     // Zap Komunick: ask for the reason first (docs/PRD.md, RF-007)
@@ -420,13 +432,18 @@ const TicketListItemCustom = ({
   };
 
   const handleAcceptTicket = async id => {
+    setAccepting(true);
     try {
       await api.put(`/tickets/${id}`, {
         status: "open",
+        onlyIfPending: true,
         userId: user?.id
       });
     } catch (err) {
       toastError(err);
+      return;
+    } finally {
+      if (isMounted.current) setAccepting(false);
     }
 
     history.push(`/tickets/${ticket.uuid}`);
@@ -443,7 +460,8 @@ const TicketListItemCustom = ({
   const [tagAnchor, setTagAnchor] = useState(null);
 
   const showActions = groupActionButtons || !ticket.isGroup;
-  const canAccept = ticket.status === "pending" && showActions;
+  const canPreview = ticket.status === "pending" && !selecting;
+  const canAccept = canPreview && showActions;
   const canClose =
     ["open", "pending"].includes(ticket.status) &&
     (showActions || ticket.status === "open");
@@ -462,6 +480,14 @@ const TicketListItemCustom = ({
         handleClose={() => setOpenTicketMessageDialog(false)}
         ticketId={ticket.id}
       ></TicketMessagesDialog>
+      {previewOpen && canPreview && (
+        <TicketPreviewDialog
+          ticket={ticket}
+          onClose={() => setPreviewOpen(false)}
+          onAccept={canAccept ? () => handleAcceptTicket(ticket.id) : undefined}
+          accepting={accepting}
+        />
+      )}
       <CloseTicketModal
         open={closeModalOpen}
         onClose={() => setCloseModalOpen(false)}
@@ -484,11 +510,10 @@ const TicketListItemCustom = ({
             bulk.toggle(ticket.id);
             return;
           }
-          if (
-            (groupActionButtons || !ticket.isGroup) &&
-            ticket.status === "pending"
-          )
+          if (canAccept) {
+            setPreviewOpen(true);
             return;
+          }
           handleSelectTicket(ticket);
         }}
         aria-pressed={selecting ? checked : undefined}
@@ -569,6 +594,21 @@ const TicketListItemCustom = ({
               )}
             </Typography>
             {unread > 0 && <span className={classes.rowUnread}>{unread}</span>}
+            {canPreview && (
+              <Tooltip title={i18n.t("ticketPreview.action")}>
+                <IconButton
+                  size="small"
+                  aria-label={i18n.t("ticketPreview.action")}
+                  className={classes.rowMessagePreviewButton}
+                  onClick={event => {
+                    event.stopPropagation();
+                    setPreviewOpen(true);
+                  }}
+                >
+                  <SubjectIcon fontSize="inherit" />
+                </IconButton>
+              </Tooltip>
+            )}
           </div>
           <div className={classes.rowBottom}>
             <span className={classes.rowQueue}>
@@ -602,11 +642,13 @@ const TicketListItemCustom = ({
               </Tooltip>
             )}
             <span className={classes.rowSpacer} />
-            {canAccept && !selecting && (
+            {canAccept && (
               <Tooltip title="Aceitar Conversa">
                 <IconButton
                   size="small"
                   className={classes.rowAccept}
+                  aria-label={i18n.t("ticketsList.buttons.accept")}
+                  disabled={accepting}
                   onClick={e => {
                     e.stopPropagation();
                     handleAcceptTicket(ticket.id);

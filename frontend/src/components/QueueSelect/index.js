@@ -19,7 +19,7 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-const QueueSelect = ({ selectedQueueIds, onChange }) => {
+const QueueSelect = ({ selectedQueueIds, onChange, onQueuesLoaded }) => {
   const classes = useStyles();
   const [queues, setQueues] = useState([]);
 
@@ -28,10 +28,12 @@ const QueueSelect = ({ selectedQueueIds, onChange }) => {
       try {
         const { data } = await api.get("/queue");
         setQueues(data);
+        if (onQueuesLoaded) onQueuesLoaded(data);
       } catch (err) {
         toastError(err);
       }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleChange = e => {

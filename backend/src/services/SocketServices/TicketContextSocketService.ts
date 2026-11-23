@@ -13,6 +13,7 @@ import {
 interface ContextSocket {
   data: {
     contextActor?: ContextActor;
+    ticketListUpdates?: boolean;
     ticketNotifications?: boolean;
     ticketStatuses?: string[];
   };
@@ -37,13 +38,16 @@ export async function refreshSocketContextRooms(
   try {
     const viewer = await loadTicketViewer(actor);
     if (viewer.isAdmin) await socket.join(`company-${actor.companyId}-admin`);
-    if (socket.data.ticketNotifications) {
-      if (viewer.isAdmin)
-        await socket.join(`company-${actor.companyId}-notification`);
-      else
-        await Promise.all(
-          viewer.queueIds.map(id => socket.join(`queue-${id}-notification`))
-        );
+    if (viewer.isAdmin && socket.data.ticketListUpdates) {
+      await socket.join(`company-${actor.companyId}-notification`);
+    }
+    if (
+      socket.data.ticketNotifications ||
+      (!viewer.isAdmin && socket.data.ticketListUpdates)
+    ) {
+      await Promise.all(
+        viewer.queueIds.map(id => socket.join(`queue-${id}-notification`))
+      );
     }
     await Promise.all(
       (socket.data.ticketStatuses || []).map(async status => {
@@ -84,6 +88,31 @@ export async function revokeTicketContextRooms(
 ): Promise<void> {
   const sockets = await io.in(String(ticketId)).fetchSockets();
   await Promise.all(sockets.map(socket => canReceive(socket, ticketId)));
+}
+
+// Recipients in the old sector may still have a cached notification after
+// transfer. Invalidate it without delivering the now inaccessible ticket.
+export async function invalidateTicketNotifications(
+  io: Server,
+  ticket: { id: number; companyId: number },
+  previousQueueId: number | null | undefined
+): Promise<void> {
+  if (previousQueueId == null) return;
+  try {
+    const sockets = await io
+      .in(`queue-${previousQueueId}-notification`)
+      .fetchSockets();
+    sockets.forEach(socket => {
+      if (socket.data.contextActor?.companyId === ticket.companyId) {
+        socket.emit(`company-${ticket.companyId}-ticket`, {
+          action: "removeFromList",
+          ticketId: ticket.id
+        });
+      }
+    });
+  } catch {
+    logger.warn("Could not invalidate transferred ticket notifications");
+  }
 }
 
 export async function refreshUserContextSockets(

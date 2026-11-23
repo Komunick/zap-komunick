@@ -10,6 +10,7 @@ import { triggerGracefulShutdown } from "../utils/shutdown";
 import { auditRequest } from "../services/AuditServices/RecordAuditService";
 import { IP_ALLOWLIST_KEYS } from "../services/SecurityServices/IpAllowlistService";
 import { loadTicketViewer } from "../services/TicketServices/AuthorizeTicketContextService";
+import { FORCE_MESSAGE_SIGNATURE } from "../helpers/MessageSignature";
 
 type LogoRequest = {
   mode: string;
@@ -49,8 +50,16 @@ export const update = async (
     throw new AppError("ERR_USE_SECURITY_ROUTE", 400);
   }
 
-  // P3: a still-valid JWT from a transferred/demoted administrator grants no flag write.
-  if (["sciEnabled", "integratedAssistantEnabled"].includes(key)) {
+  // A still-valid JWT from a transferred or demoted administrator grants no flag write.
+  if (
+    [
+      "sciEnabled",
+      "integratedAssistantEnabled",
+      "generalTriageQueueId",
+      "generalTriageTimeoutMinutes",
+      FORCE_MESSAGE_SIGNATURE
+    ].includes(key)
+  ) {
     const viewer = await loadTicketViewer({ userId: req.user.id, companyId });
     if (!viewer.isAdmin) throw new AppError("ERR_NO_PERMISSION", 403);
   }
