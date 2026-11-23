@@ -31,9 +31,9 @@ import { openApi } from "../../services/api";
 import toastError from "../../errors/toastError";
 
 import ReCAPTCHA from "react-google-recaptcha";
-import config from "../../services/config";
 import useSettings from "../../hooks/useSettings";
 import { safeValueFormat } from "../../helpers/safeValueFormat";
+import config from "../../services/config";
 import BrandLogo from "../../components/BrandLogo";
 import KomunickEndorsement from "../../components/KomunickEndorsement";
 import { PhoneNumberInput } from "../../components/PhoneNumberInput";
@@ -95,6 +95,7 @@ const SignUp = () => {
   const history = useHistory();
   const { getPublicSetting } = useSettings();
   const [allowSignup, setAllowSignup] = useState(false);
+  const [recaptchaSiteKey, setRecaptchaSiteKey] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   let companyId = null;
@@ -115,7 +116,7 @@ const SignUp = () => {
   const [user] = useState(initialState);
 
   const handleSignUp = async values => {
-    if (config.RECAPTCHA_SITE_KEY) {
+    if (recaptchaSiteKey) {
       Object.assign(values, {
         captchaToken: await captchaRef.current.executeAsync()
       });
@@ -149,6 +150,11 @@ const SignUp = () => {
 
   getPublicSetting("allowSignup").then(data => {
     setAllowSignup(data === "enabled");
+  });
+
+  getPublicSetting("recaptchaSiteKey").then(data => {
+    // Zap Komunick: the site key from the environment still works
+    setRecaptchaSiteKey(data || config.RECAPTCHA_SITE_KEY || "");
   });
 
   return (
@@ -312,10 +318,10 @@ const SignUp = () => {
         </Formik>
       </div>
       <KomunickEndorsement component="footer" className={classes.brandFooter} />
-      {config.RECAPTCHA_SITE_KEY && allowSignup && (
+      {recaptchaSiteKey && allowSignup && (
         <ReCAPTCHA
           size="invisible"
-          sitekey={config.RECAPTCHA_SITE_KEY}
+          sitekey={recaptchaSiteKey}
           ref={captchaRef}
         />
       )}

@@ -15,7 +15,8 @@ const safeSettingsKeys = new Set([
   "soundGroupNotifications",
   "tagsMode",
   "slaMinutes",
-  "closeReasonRequired"
+  "closeReasonRequired",
+  "allowSilentlyClose"
 ]);
 
 const useSettings = () => {
@@ -36,7 +37,6 @@ const useSettings = () => {
 
     return data;
   };
-
   const get = async key => {
     const { data } = await api.request({
       url: `/settings/${key}`,

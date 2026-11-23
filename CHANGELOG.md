@@ -21,6 +21,26 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Alterado
 
+- Atualizado com o Ticketz até a v1.0.141 (46 commits, de 21/10 a 18/11/2026, sem migração de banco). Entram:
+  - dependências do backend e do frontend com correções de segurança;
+  - contato que não existe no WhatsApp deixa de dar erro;
+  - exclusão de empresa, usuário, fila e conexão pede que se digite "EXCLUIR";
+  - tela de Empresas do superadministrador com busca e cartões;
+  - contagem das listas de contatos corrigida;
+  - opção "Fechar em silêncio" para atendentes, ligada por padrão como hoje;
+  - chave pública do reCAPTCHA em Configurações.
+
+  Fica a versão do SuperChat onde as duas colidem:
+  - lista de atendimentos, menu, rotas, tela de Conexões, QR code, histórico de mensagens e áudio;
+  - correção de impersonação e áudio, que o SuperChat já tinha (PR #53);
+  - configurações sem cache. O cache de 10 s do Ticketz fica disponível só para quem o pedir: várias telas gravam
+    configurações direto, como a lista de IPs e as credenciais, e o cache faria a mudança demorar a valer;
+  - chave secreta do reCAPTCHA continua no ambiente (`RECAPTCHA_SECRET_KEY`), e não em texto aberto nas
+    configurações;
+  - a página de relatório de campanhas, que o Ticketz apagou.
+
+  Não entram as opções "Espiar" e "Zoom dos ícones", que a lista de atendimentos do SuperChat não usa, nem os testes
+  do Ticketz da tela de Conexões em cartões.
 - A opção "Visibilidade da mensagem" passa a se chamar **Histórico do cliente para atendentes**, com "Só dos setores
   do atendente" e "Completo, de todos os setores". O comportamento de cada valor não mudou.
 - O login carrega só o código de que precisa. As telas internas são baixadas conforme o uso.

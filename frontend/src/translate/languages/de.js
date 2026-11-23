@@ -20,10 +20,14 @@ const messages = {
         email: "E-Mail",
         phone: "Telefon",
         company: "Firma",
+        user: "Benutzer",
         connection: "Verbindung",
         queue: "Warteschlange",
         contact: "Kontakt",
         status: "Status",
+        active: "Aktiv",
+        inactive: "Inaktiv",
+        all: "Alle",
         serverTime: "Serverzeit:",
         clientTime: "Clientzeit:",
         differenceMinutes: "Unterschied: {{count}} Minute(n)"
@@ -66,6 +70,15 @@ const messages = {
         }
       },
       companiesManager: {
+        status: {
+          gracePeriod: "Kulanzfrist",
+          almostDue: "Fast Faellig"
+        },
+        section: {
+          info: "Information",
+          basicInfo: "Grundinformationen",
+          subscription: "Abonnement"
+        },
         form: {
           campaigns: "Kampagnen",
           recurrence: "Wiederkehrend",
@@ -79,7 +92,8 @@ const messages = {
           clear: "Leeren",
           accessAs: "Zugreifen als",
           incrementDueDate: "+ Faelligkeitsdatum",
-          user: "Benutzer"
+          user: "Benutzer",
+          users: "Benutzer"
         },
         table: {
           campaigns: "Kampagnen",
@@ -97,7 +111,10 @@ const messages = {
           deleteMessage: "Moechten Sie diesen Datensatz wirklich loeschen?",
           impersonateTitle: "Zugreifen als",
           impersonateMessage:
-            "Moechten Sie das System als dieses Unternehmen aufrufen?"
+            "Moechten Sie das System als dieses Unternehmen aufrufen?",
+          addPeriodTitle: "Zeitraum hinzufuegen",
+          addPeriodMessage:
+            "Moechten Sie einen Zeitraum zum Faelligkeitsdatum dieses Unternehmens hinzufuegen?"
         },
         modal: {
           newTitle: "Neues Unternehmen",
@@ -147,7 +164,9 @@ const messages = {
           tryAgain: "Erneut versuchen",
           qrcode: "QR CODE",
           newQr: "Neuer QR CODE",
-          connecting: "Verbinden"
+          connecting: "Verbinden",
+          showUnsupported: "Nicht unterstützte anzeigen",
+          hideUnsupported: "Nicht unterstützte ausblenden"
         },
         toolTips: {
           disconnected: {
@@ -169,20 +188,38 @@ const messages = {
               "Stellen Sie sicher, dass Ihr Telefon mit dem Internet verbunden ist und WhatsApp geöffnet ist, oder klicken Sie auf die Schaltfläche 'Trennen', um einen neuen QR-Code zu erhalten"
           },
           passkey: {
-            title: "Passkey authentication required",
+            title: "Passkey-Authentifizierung erforderlich",
             content:
-              "Click the passkey button and use the browser extension to capture the authenticated WhatsApp Web session."
+              "Klicken Sie auf die Passkey-Schaltfläche und verwenden Sie die Browser-Erweiterung, um die authentifizierte WhatsApp Web-Sitzung zu erfassen."
           },
-          resetPasskey: "Passkey-Sitzung zurücksetzen"
+          refresh: "Verbindung aktualisieren",
+          disconnect: "Trennen",
+          scan: "QR-Code scannen",
+          newQr: "Neuen QR-Code generieren",
+          retry: "Erneut versuchen",
+          resetPasskey: "Passkey-Sitzung zurücksetzen",
+          privacy: "Datenschutzeinstellungen"
         },
         table: {
           name: "Name",
           status: "Status",
           lastUpdate: "Letztes Update",
+          connectedNumber: "Verbundene Nummer",
           default: "Standard",
           actions: "Aktionen",
           session: "Sitzung"
-        }
+        },
+        status: {
+          connected: "Verbunden",
+          disconnected: "Getrennt",
+          opening: "Öffnen",
+          qrcode: "Warte auf QR-Code",
+          timeout: "Zeitüberschreitung",
+          passkey: "Passkey Erforderlich",
+          pending: "Ausstehend",
+          unsupported: "Nicht Unterstützt"
+        },
+        noConnections: "Keine Verbindungen gefunden"
       },
       internalChat: {
         title: "Interner Chat"
@@ -948,6 +985,9 @@ const messages = {
             disabled: "Deaktiviert"
           }
         },
+        DesktopActionIconZoom: {
+          title: "Größe des Ticket-Aktionssymbols"
+        },
         VoiceAndVideoCalls: {
           title: "Sprach- und Videoanrufe",
           options: {
@@ -982,6 +1022,13 @@ const messages = {
             enabled: "Aktiviert",
             disabled: "Deaktiviert"
           }
+        },
+        RecaptchaSiteKey: {
+          title: "reCAPTCHA Website-Schlüssel",
+          helperText: "Nur unsichtbares reCAPTCHA wird unterstützt"
+        },
+        RecaptchaSecretKey: {
+          title: "reCAPTCHA Geheimer Schlüssel"
         },
         MultiThreadedWbot: {
           title: "Multithreaded WhatsApp Worker",
@@ -1149,6 +1196,10 @@ const messages = {
         }
       },
       confirmationModal: {
+        deleteRecordTitle: "Löschen: {{type}} - {{name}}",
+        deleteRecordMessage: 'Diesen Eintrag löschen? {{type}}: "{{name}}"',
+        confirmationWord: "ausschließen",
+        typeToConfirm: "Geben Sie {{word}} zur Bestätigung ein",
         buttons: {
           confirm: "Ok",
           cancel: "Abbrechen"

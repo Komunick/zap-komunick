@@ -75,12 +75,16 @@ export const signup = async (
     return res.status(401).json("🙎🏻‍♂️ Signup disabled");
   }
 
-  if (process.env.RECAPTCHA_SECRET_KEY) {
+  // Zap Komunick: the setting is optional; the environment key still works
+  const recaptchaSecret =
+    (await CheckSettings("recaptchaSecretKey", "")) ||
+    process.env.RECAPTCHA_SECRET_KEY;
+  if (recaptchaSecret) {
     if (!req.body.captchaToken) {
       return res.status(401).json("empty captcha");
     }
     const response = await axios.post(
-      `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${req.body.captchaToken}`
+      `https://www.google.com/recaptcha/api/siteverify?secret=${recaptchaSecret}&response=${req.body.captchaToken}`
     );
 
     if (!response.data.success) {

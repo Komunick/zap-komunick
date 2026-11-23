@@ -60,6 +60,12 @@ const messages = {
           invalidPhone: "Invalid phone number"
         },
         status: "Status",
+        active: "Active",
+        inactive: "Inactive",
+        all: "All",
+        small: "Small",
+        medium: "Medium",
+        large: "Large",
         serverTime: "Server time:",
         clientTime: "Client time:",
         differenceMinutes: "Difference: {{count}} minute(s)"
@@ -102,6 +108,15 @@ const messages = {
         }
       },
       companiesManager: {
+        status: {
+          gracePeriod: "Grace Period",
+          almostDue: "Almost Due"
+        },
+        section: {
+          info: "Information",
+          basicInfo: "Basic Information",
+          subscription: "Subscription"
+        },
         form: {
           campaigns: "Campaigns",
           recurrence: "Recurrence",
@@ -115,7 +130,8 @@ const messages = {
           clear: "Clear",
           accessAs: "Access as",
           incrementDueDate: "+ Due Date",
-          user: "User"
+          user: "User",
+          users: "Users"
         },
         table: {
           campaigns: "Campaigns",
@@ -133,7 +149,10 @@ const messages = {
           deleteMessage: "Do you really want to delete this record?",
           impersonateTitle: "Access as",
           impersonateMessage:
-            "Do you want to access the system as this company?"
+            "Do you want to access the system as this company?",
+          addPeriodTitle: "Add Period",
+          addPeriodMessage:
+            "Do you want to add one period to the due date of this company?"
         },
         modal: {
           newTitle: "New Company",
@@ -205,7 +224,9 @@ const messages = {
           tryAgain: "Try Again",
           qrcode: "QR CODE",
           newQr: "New QR CODE",
-          connecting: "Connecting"
+          connecting: "Connecting",
+          showUnsupported: "Show Unsupported",
+          hideUnsupported: "Hide Unsupported"
         },
         toolTips: {
           disconnected: {
@@ -236,16 +257,29 @@ const messages = {
           scan: "Scan QR Code",
           newQr: "Request new QR Code",
           retry: "Try Again",
-          resetPasskey: "Reset passkey session"
+          resetPasskey: "Reset passkey session",
+          privacy: "Privacy Settings"
         },
         table: {
           name: "Name",
           status: "Status",
           lastUpdate: "Last Update",
+          connectedNumber: "Connected Number",
           default: "Default",
           actions: "Actions",
           session: "Session"
-        }
+        },
+        status: {
+          connected: "Connected",
+          disconnected: "Disconnected",
+          opening: "Opening",
+          qrcode: "Waiting for QR Code",
+          timeout: "Timeout",
+          passkey: "Passkey Required",
+          pending: "Pending",
+          unsupported: "Unsupported"
+        },
+        noConnections: "No connections found"
       },
       internalChat: {
         title: "Internal Chat"
@@ -955,6 +989,7 @@ const messages = {
           officeHours: "Office Hours",
           groups: "Groups",
           confidenciality: "Confidentiality",
+          userpermissions: "User Permissions",
           api: "API",
           externalServices: "External Services",
           serveradmin: "Server Administration"
@@ -1019,6 +1054,9 @@ const messages = {
             disabled: "disabled"
           }
         },
+        DesktopActionIconZoom: {
+          title: "Ticket action icon size"
+        },
         VoiceAndVideoCalls: {
           title: "Voice and video calls",
           options: {
@@ -1053,6 +1091,13 @@ const messages = {
             enabled: "enabled",
             disabled: "disabled"
           }
+        },
+        RecaptchaSiteKey: {
+          title: "reCAPTCHA Site Key",
+          helperText: "Only invisible reCAPTCHA is supported"
+        },
+        RecaptchaSecretKey: {
+          title: "reCAPTCHA Secret Key"
         },
         MultiThreadedWbot: {
           title: "Multithreaded WhatsApp Worker",
@@ -1145,6 +1190,12 @@ const messages = {
             contact: "Contact",
             both: "Ticket and Contact"
           }
+        },
+        AllowSilentlyClose: {
+          title: "Allow Close Ticket Silently"
+        },
+        AllowSpy: {
+          title: "Allow Spy on Tickets"
         },
         docker: {
           title: "Docker Containers",
@@ -1258,6 +1309,10 @@ const messages = {
         }
       },
       confirmationModal: {
+        deleteRecordTitle: "Delete: {{type}} - {{name}}",
+        deleteRecordMessage: 'Delete this record? {{type}}: "{{name}}"',
+        confirmationWord: "exclude",
+        typeToConfirm: "Type {{word}} to confirm",
         buttons: {
           confirm: "Ok",
           cancel: "Cancel"

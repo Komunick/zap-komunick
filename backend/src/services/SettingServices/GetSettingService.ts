@@ -29,7 +29,8 @@ export const safeSettingsKeys = {
   tagsMode: "ticket",
   slaMinutes: "0",
   closeReasonRequired: "disabled",
-  [FORCE_MESSAGE_SIGNATURE]: "disabled"
+  [FORCE_MESSAGE_SIGNATURE]: "disabled",
+  allowSilentlyClose: "enabled"
 };
 
 export const GetSettingService = async ({

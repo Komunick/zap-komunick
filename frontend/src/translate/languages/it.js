@@ -25,6 +25,9 @@ const messages = {
         queue: "Coda",
         contact: "Contatto",
         status: "Stato",
+        active: "Attivo",
+        inactive: "Inattivo",
+        all: "Tutti",
         serverTime: "Ora del server:",
         clientTime: "Ora del client:",
         differenceMinutes: "Differenza: {{count}} minuto(i)"
@@ -67,6 +70,15 @@ const messages = {
         }
       },
       companiesManager: {
+        status: {
+          gracePeriod: "Periodo di Grazia",
+          almostDue: "Quasi Scaduto"
+        },
+        section: {
+          info: "Informazioni",
+          basicInfo: "Informazioni di Base",
+          subscription: "Abbonamento"
+        },
         form: {
           campaigns: "Campagne",
           recurrence: "Ricorrenza",
@@ -80,7 +92,8 @@ const messages = {
           clear: "Cancella",
           accessAs: "Accedi come",
           incrementDueDate: "+ Scadenza",
-          user: "Utente"
+          user: "Utente",
+          users: "Utenti"
         },
         table: {
           campaigns: "Campagne",
@@ -97,7 +110,10 @@ const messages = {
           deleteTitle: "Eliminazione record",
           deleteMessage: "Vuoi eliminare davvero questo record?",
           impersonateTitle: "Accedi come",
-          impersonateMessage: "Vuoi accedere al sistema come questa azienda?"
+          impersonateMessage: "Vuoi accedere al sistema come questa azienda?",
+          addPeriodTitle: "Aggiungi Periodo",
+          addPeriodMessage:
+            "Vuoi aggiungere un periodo alla data di scadenza di questa azienda?"
         },
         modal: {
           newTitle: "Nuova Azienda",
@@ -146,7 +162,9 @@ const messages = {
           tryAgain: "Riprova",
           qrcode: "QR CODE",
           newQr: "Nuovo QR CODE",
-          connecting: "Connessione in corso"
+          connecting: "Connessione in corso",
+          showUnsupported: "Mostra Non Supportati",
+          hideUnsupported: "Nascondi Non Supportati"
         },
         toolTips: {
           disconnected: {
@@ -168,20 +186,38 @@ const messages = {
               "Assicurati che il tuo telefono sia connesso a Internet e che WhatsApp sia aperto, oppure clicca sul pulsante 'Disconnetti' per ottenere un nuovo QR Code"
           },
           passkey: {
-            title: "Passkey authentication required",
+            title: "Autenticazione passkey richiesta",
             content:
-              "Click the passkey button and use the browser extension to capture the authenticated WhatsApp Web session."
+              "Clicca sul pulsante passkey e usa l'estensione del browser per catturare la sessione autenticata di WhatsApp Web."
           },
-          resetPasskey: "Reimposta sessione passkey"
+          refresh: "Aggiorna connessione",
+          disconnect: "Disconnetti",
+          scan: "Scansiona QR Code",
+          newQr: "Genera nuovo QR Code",
+          retry: "Riprova",
+          resetPasskey: "Reimposta sessione passkey",
+          privacy: "Impostazioni Privacy"
         },
         table: {
           name: "Nome",
           status: "Stato",
           lastUpdate: "Ultimo aggiornamento",
+          connectedNumber: "Numero connesso",
           default: "Predefinito",
           actions: "Azioni",
           session: "Sessione"
-        }
+        },
+        status: {
+          connected: "Connesso",
+          disconnected: "Disconnesso",
+          opening: "Apertura",
+          qrcode: "In attesa del QR Code",
+          timeout: "Timeout",
+          passkey: "Passkey Richiesto",
+          pending: "In attesa",
+          unsupported: "Non Supportato"
+        },
+        noConnections: "Nessuna connessione trovata"
       },
       internalChat: {
         title: "Chat Interno"
@@ -940,6 +976,9 @@ const messages = {
             disabled: "Disattivato"
           }
         },
+        DesktopActionIconZoom: {
+          title: "Dimensione dell'icona di azione del ticket"
+        },
         VoiceAndVideoCalls: {
           title: "Chiamate vocali e video",
           options: {
@@ -974,6 +1013,13 @@ const messages = {
             enabled: "Attivato",
             disabled: "Disattivato"
           }
+        },
+        RecaptchaSiteKey: {
+          title: "Chiave del sito reCAPTCHA",
+          helperText: "È supportato solo reCAPTCHA invisibile"
+        },
+        RecaptchaSecretKey: {
+          title: "Chiave segreta reCAPTCHA"
         },
         MultiThreadedWbot: {
           title: "Worker Multithread WhatsApp",
@@ -1141,6 +1187,10 @@ const messages = {
         }
       },
       confirmationModal: {
+        deleteRecordTitle: "Elimina: {{type}} - {{name}}",
+        deleteRecordMessage: 'Eliminare questo elemento? {{type}}: "{{name}}"',
+        confirmationWord: "escludere",
+        typeToConfirm: "Digita {{word}} per confermare",
         buttons: {
           confirm: "Ok",
           cancel: "Annulla"
