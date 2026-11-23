@@ -84,6 +84,12 @@ type FindOrCreateTicketOptions = {
   findOnly?: boolean;
   queue?: Queue;
   inboundQueueIds?: readonly number[];
+  /**
+   * The message was sent from the company number (fromMe) to a single
+   * contact. Without an active ticket it only goes to the history: it never
+   * creates or reopens a ticket waiting for someone.
+   */
+  outgoing?: boolean;
 };
 
 type TicketResult = {
@@ -147,7 +153,8 @@ const internalFindOrCreateTicketService = async (
     doNotReopen,
     findOnly,
     queue,
-    inboundQueueIds
+    inboundQueueIds,
+    outgoing
   }: FindOrCreateTicketOptions = {}
 ): Promise<TicketResult> => {
   let justCreated = false;
@@ -176,6 +183,49 @@ const internalFindOrCreateTicketService = async (
     if (ticket && incrementUnread) {
       await ticket.increment("unreadMessages");
       ticket = await ticket.reload();
+    }
+
+    // Zap Komunick: a message sent from the company number by another app or
+    // the phone (e.g. an automatic "closing this chat" message), to a client
+    // with no active ticket, is kept in that client's history. Before, it
+    // opened a pending ticket without sector that nobody but admins could
+    // see, and it blocked "New ticket" for that client. When the ticket would
+    // get a sector or a person (single-queue channel, client wallet), it is
+    // still opened as before: the team sees it.
+    const outgoingWallet =
+      outgoing && !ticket && !groupContact && !findOnly && !queue?.id
+        ? await findWalletAssignment(contact, whatsappId, companyId, false)
+        : null;
+    if (
+      outgoing &&
+      !ticket &&
+      !groupContact &&
+      !findOnly &&
+      !queue?.id &&
+      !outgoingWallet?.queueId &&
+      !outgoingWallet?.userId
+    ) {
+      const kept =
+        (await Ticket.findOne({
+          where: { contactId: contact.id, companyId, whatsappId },
+          order: [["id", "DESC"]]
+        })) ??
+        (await Ticket.create({
+          contactId: contact.id,
+          status: "closed",
+          isGroup: false,
+          unreadMessages: 0,
+          whatsappId,
+          queueId: null,
+          userId: null,
+          companyId
+        }));
+      return {
+        ticket: await ShowTicketService(kept.id, companyId),
+        justCreated: false,
+        queueRepaired: false,
+        startInboundQueue: false
+      };
     }
 
     if (!ticket && groupContact) {

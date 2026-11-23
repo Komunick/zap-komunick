@@ -30,11 +30,18 @@ export function decideOwnTicketReuse(
   ticket: ActiveTicketFacts,
   request: OwnTicketRequest
 ): OwnTicketDecision {
+  const withoutPerson = ticket.userId === null || ticket.userId === undefined;
+  const withoutSector = ticket.queueId === null || ticket.queueId === undefined;
   const own =
-    ticket.userId !== null &&
-    ticket.userId !== undefined &&
-    Number(ticket.userId) === Number(request.userId);
-  if (!own) return { reuse: false, steps: [] };
+    !withoutPerson && Number(ticket.userId) === Number(request.userId);
+  // Zap Komunick: a pending ticket with no person and no sector (e.g. opened
+  // by a message the other app sent from the same number, which never went
+  // through the sector menu) is nobody's yet. Whoever starts a conversation
+  // with that client takes it into the queue they chose, instead of being
+  // stopped by a ticket that only admins can see.
+  const unclaimed =
+    withoutPerson && withoutSector && ticket.status === "pending";
+  if (!own && !unclaimed) return { reuse: false, steps: [] };
 
   const steps: OwnTicketStep[] = [];
   const chosenQueue =
@@ -42,7 +49,16 @@ export function decideOwnTicketReuse(
       ? null
       : Number(request.queueId);
 
-  if (ticket.queueId === null || ticket.queueId === undefined) {
+  if (
+    unclaimed &&
+    !request.isAdmin &&
+    (chosenQueue === null || !request.queueIds.includes(chosenQueue))
+  ) {
+    // only into one of the person's own queues
+    return { reuse: false, steps: [] };
+  }
+
+  if (withoutSector) {
     // no sector yet: it goes to the queue the person chose, before being
     // accepted (only admins accept a pending ticket without queue)
     if (chosenQueue === null && !request.isAdmin) {

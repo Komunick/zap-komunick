@@ -2010,6 +2010,7 @@ const handleMessage = async (
       inboundQueueIds: msg.key.fromMe
         ? undefined
         : whatsapp.queues.map(queue => queue.id),
+      outgoing: Boolean(msg.key.fromMe) && !groupContact,
       queue: whatsapp.queues.find(queue => queue.id === queueId) ?? defaultQueue
     });
 
