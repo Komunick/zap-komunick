@@ -124,6 +124,13 @@ const pt = {
     badgeTooltip: "SLA estourado: cliente aguardando resposta há {{time}}"
   },
   settings: {
+    messageVisibility: {
+      title: "Histórico do cliente para atendentes",
+      options: {
+        respectMessageQueue: "Só dos setores do atendente",
+        respectTicketQueue: "Completo, de todos os setores"
+      }
+    },
     credentials: {
       aiKey: "Chave de IA",
       loading: "Consultando configuração…",
@@ -479,7 +486,34 @@ const pt = {
     currentTicket: "Atendimento atual #{{id}}",
     transferNote: "Nota de transferência",
     transferFromTo: "{{from}} → {{to}}",
-    internalOnly: "visível só para a equipe"
+    internalOnly: "visível só para a equipe",
+    hiddenNotice:
+      "Há {{count}} mensagem anterior deste cliente em setores que você não acompanha ou em atendimento sem setor. Peça a um administrador para incluir você no setor ou liberar o histórico completo em Configurações › Opções › Histórico do cliente para atendentes.",
+    hiddenNotice_plural:
+      "Há {{count}} mensagens anteriores deste cliente em setores que você não acompanha ou em atendimentos sem setor. Peça a um administrador para incluir você no setor ou liberar o histórico completo em Configurações › Opções › Histórico do cliente para atendentes.",
+    queue: "fila {{queue}}",
+    channel: "canal {{channel}}",
+    disconnectedChannel: "canal {{channel}} (desconectado)",
+    user: "com {{user}}"
+  },
+  openTicketConflict: {
+    title: "Este cliente já está em atendimento",
+    message:
+      "Este cliente já tem o atendimento #{{id}} em andamento: {{details}}. Última movimentação: {{since}}.",
+    withUser: "com {{user}}",
+    withoutUser: "sem atendente",
+    pending: "aguardando na fila, sem atendente",
+    paused: "pausado (na aba Pausados)",
+    alreadyAccepted: "Este atendimento acabou de ser aceito por outra pessoa.",
+    inQueue: "na fila {{queue}}",
+    onChannel: "pelo canal {{channel}}",
+    onDisconnectedChannel: "pelo canal {{channel}} (desconectado)",
+    askColleague:
+      "Para assumir, peça para {{user}} transferir o atendimento ou fale com um administrador.",
+    open: "Abrir atendimento",
+    take: "Assumir atendimento",
+    accept: "Aceitar atendimento",
+    close: "Fechar"
   },
   clients: {
     title: "Clientes",
@@ -804,6 +838,13 @@ const en = {
     badgeTooltip: "SLA breached: client waiting for a reply for {{time}}"
   },
   settings: {
+    messageVisibility: {
+      title: "Client history for agents",
+      options: {
+        respectMessageQueue: "Only from the agent's sectors",
+        respectTicketQueue: "Full, from every sector"
+      }
+    },
     credentials: {
       aiKey: "AI key",
       loading: "Checking configuration…",
@@ -1155,7 +1196,34 @@ const en = {
     currentTicket: "Current ticket #{{id}}",
     transferNote: "Transfer note",
     transferFromTo: "{{from}} → {{to}}",
-    internalOnly: "visible to the team only"
+    internalOnly: "visible to the team only",
+    hiddenNotice:
+      "There is {{count}} earlier message of this client in sectors you do not follow or in a ticket without sector. Ask an administrator to add you to the sector or to open the full history in Settings › Options › Client history for agents.",
+    hiddenNotice_plural:
+      "There are {{count}} earlier messages of this client in sectors you do not follow or in tickets without sector. Ask an administrator to add you to the sector or to open the full history in Settings › Options › Client history for agents.",
+    queue: "queue {{queue}}",
+    channel: "channel {{channel}}",
+    disconnectedChannel: "channel {{channel}} (disconnected)",
+    user: "with {{user}}"
+  },
+  openTicketConflict: {
+    title: "This client is already being served",
+    message:
+      "This client already has ticket #{{id}} in progress: {{details}}. Last activity: {{since}}.",
+    withUser: "with {{user}}",
+    withoutUser: "without an agent",
+    pending: "waiting in the queue, without an agent",
+    paused: "paused (in the Paused tab)",
+    alreadyAccepted: "Someone else has just accepted this ticket.",
+    inQueue: "in queue {{queue}}",
+    onChannel: "on channel {{channel}}",
+    onDisconnectedChannel: "on channel {{channel}} (disconnected)",
+    askColleague:
+      "To take it, ask {{user}} to transfer the ticket or talk to an administrator.",
+    open: "Open ticket",
+    take: "Take ticket",
+    accept: "Accept ticket",
+    close: "Close"
   },
   clients: {
     title: "Clients",
@@ -1481,6 +1549,13 @@ const es = {
     badgeTooltip: "SLA vencido: cliente esperando respuesta hace {{time}}"
   },
   settings: {
+    messageVisibility: {
+      title: "Historial del cliente para agentes",
+      options: {
+        respectMessageQueue: "Solo de los sectores del agente",
+        respectTicketQueue: "Completo, de todos los sectores"
+      }
+    },
     credentials: {
       aiKey: "Clave de IA",
       loading: "Consultando configuración…",
@@ -1834,7 +1909,34 @@ const es = {
     currentTicket: "Atención actual #{{id}}",
     transferNote: "Nota de transferencia",
     transferFromTo: "{{from}} → {{to}}",
-    internalOnly: "visible solo para el equipo"
+    internalOnly: "visible solo para el equipo",
+    hiddenNotice:
+      "Hay {{count}} mensaje anterior de este cliente en sectores que usted no sigue o en una atención sin sector. Pida a un administrador que lo incluya en el sector o que libere el historial completo en Configuración › Opciones › Historial del cliente para agentes.",
+    hiddenNotice_plural:
+      "Hay {{count}} mensajes anteriores de este cliente en sectores que usted no sigue o en atenciones sin sector. Pida a un administrador que lo incluya en el sector o que libere el historial completo en Configuración › Opciones › Historial del cliente para agentes.",
+    queue: "cola {{queue}}",
+    channel: "canal {{channel}}",
+    disconnectedChannel: "canal {{channel}} (desconectado)",
+    user: "con {{user}}"
+  },
+  openTicketConflict: {
+    title: "Este cliente ya está en atención",
+    message:
+      "Este cliente ya tiene la atención #{{id}} en curso: {{details}}. Último movimiento: {{since}}.",
+    withUser: "con {{user}}",
+    withoutUser: "sin agente",
+    pending: "esperando en la cola, sin agente",
+    paused: "en pausa (en la pestaña Pausados)",
+    alreadyAccepted: "Otra persona acaba de aceptar esta atención.",
+    inQueue: "en la cola {{queue}}",
+    onChannel: "por el canal {{channel}}",
+    onDisconnectedChannel: "por el canal {{channel}} (desconectado)",
+    askColleague:
+      "Para asumirla, pida a {{user}} que transfiera la atención o hable con un administrador.",
+    open: "Abrir atención",
+    take: "Asumir atención",
+    accept: "Aceptar atención",
+    close: "Cerrar"
   },
   clients: {
     title: "Clientes",

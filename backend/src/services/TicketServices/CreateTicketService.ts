@@ -9,6 +9,7 @@ import { emitTicketContext } from "../SocketServices/TicketContextSocketService"
 import FindOrCreateATicketTrakingService from "./FindOrCreateATicketTrakingService";
 import Contact from "../../models/Contact";
 import { incrementCounter } from "../CounterServices/IncrementCounter";
+import OpenTicketConflictError from "./OpenTicketConflictService";
 
 interface Request {
   contactId: number;
@@ -16,6 +17,8 @@ interface Request {
   companyId: number;
   queueId?: number;
   routeByQueue?: boolean;
+  // Zap Komunick: who asked, to say if they may open or take the open ticket
+  requesterId?: number;
 }
 
 const CreateTicketService = async ({
@@ -23,7 +26,8 @@ const CreateTicketService = async ({
   userId,
   queueId,
   companyId,
-  routeByQueue = false
+  routeByQueue = false,
+  requesterId
 }: Request): Promise<Ticket> => {
   const useQueueWhatsapp = routeByQueue && Boolean(queueId);
   const whatsapp = useQueueWhatsapp
@@ -55,7 +59,10 @@ const CreateTicketService = async ({
       });
       return ticket;
     }
-    throw new AppError("ERR_OTHER_OPEN_TICKET");
+    throw await OpenTicketConflictError(ticket.id, {
+      userId: requesterId ?? userId,
+      companyId
+    });
   }
 
   const { isGroup } = await ShowContactService(contactId, companyId);

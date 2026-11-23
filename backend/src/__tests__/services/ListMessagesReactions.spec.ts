@@ -7,7 +7,8 @@ import { GetCompanySetting } from "../../helpers/CheckSettings";
 
 jest.mock("../../models/Message", () => ({
   findAll: jest.fn(),
-  findOne: jest.fn()
+  findOne: jest.fn(),
+  count: jest.fn().mockResolvedValue(0)
 }));
 jest.mock("../../models/Ticket", () => ({ findAll: jest.fn() }));
 jest.mock("../../models/Queue", () => ({}));

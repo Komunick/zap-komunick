@@ -383,6 +383,21 @@ const useStyles = makeStyles(theme => ({
       backgroundColor: theme.palette.divider
     }
   },
+  ticketDividerDetails: {
+    fontWeight: 500,
+    whiteSpace: "normal",
+    textAlign: "center"
+  },
+  hiddenHistoryNotice: {
+    flex: "none",
+    padding: "8px 16px",
+    fontSize: 12,
+    lineHeight: 1.4,
+    color: theme.palette.text.primary,
+    backgroundColor:
+      theme.mode === "light" ? "#FFF7E6" : "rgba(217, 138, 0, 0.12)",
+    borderBottom: "1px solid #D98A00"
+  },
   transferNote: {
     alignSelf: "center",
     width: "min(560px, calc(100% - 32px))",
@@ -650,6 +665,42 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
+// Zap Komunick: date, queue and channel of a ticket in the client history
+// (RF-027)
+// React escapes the text; i18next escaping would show "&amp;" in names
+const historyNoEscape = { interpolation: { escapeValue: false } };
+
+const historyTicketDetails = info => {
+  if (!info) return "";
+  const parts = [];
+  try {
+    parts.push(format(parseISO(info.createdAt), "dd/MM/yyyy"));
+  } catch {
+    // keep the other details
+  }
+  if (info.queue?.name) {
+    parts.push(
+      i18n.t("history.queue", { queue: info.queue.name, ...historyNoEscape })
+    );
+  }
+  if (info.whatsapp?.name) {
+    parts.push(
+      i18n.t(
+        info.whatsapp.connected
+          ? "history.channel"
+          : "history.disconnectedChannel",
+        { channel: info.whatsapp.name, ...historyNoEscape }
+      )
+    );
+  }
+  if (info.user?.name) {
+    parts.push(
+      i18n.t("history.user", { user: info.user.name, ...historyNoEscape })
+    );
+  }
+  return parts.join(" · ");
+};
+
 const MessagesList = ({
   ticket,
   ticketId,
@@ -669,6 +720,9 @@ const MessagesList = ({
   const [nextId, setNextId] = useState(null);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(false);
+  // Zap Komunick: context of the client history (RF-027)
+  const [historyTickets, setHistoryTickets] = useState({});
+  const [hiddenHistory, setHiddenHistory] = useState(0);
   const scrollRef = useRef();
   const stickedRef = useRef();
 
@@ -711,6 +765,16 @@ const MessagesList = ({
             dispatch({ type: "LOAD_MESSAGES", payload: data.messages });
             setHasMore(data.hasMore);
             setNextId(data.nextId || null);
+            const pageTickets = {};
+            (data.historyTickets || []).forEach(item => {
+              pageTickets[item.id] = item;
+            });
+            setHistoryTickets(prev =>
+              incrementPage ? { ...prev, ...pageTickets } : pageTickets
+            );
+            if (!incrementPage) {
+              setHiddenHistory(Number(data.hiddenHistory) || 0);
+            }
             setLoading(false);
           }
 
@@ -739,6 +803,8 @@ const MessagesList = ({
   useEffect(async () => {
     dispatch({ type: "RESET" });
     setContactPresence("available");
+    setHistoryTickets({});
+    setHiddenHistory(0);
 
     currentTicketId.current = ticketId;
 
@@ -1034,9 +1100,17 @@ const MessagesList = ({
         className={classes.ticketDivider}
         key={`ticket-${messageIdentity(message)}`}
       >
-        {current
-          ? i18n.t("history.currentTicket", { id: message.ticketId })
-          : i18n.t("history.previousTicket", { id: message.ticketId })}
+        <span>
+          {current
+            ? i18n.t("history.currentTicket", { id: message.ticketId })
+            : i18n.t("history.previousTicket", { id: message.ticketId })}
+          {historyTicketDetails(historyTickets[message.ticketId]) && (
+            <span className={classes.ticketDividerDetails}>
+              {" · "}
+              {historyTicketDetails(historyTickets[message.ticketId])}
+            </span>
+          )}
+        </span>
       </div>
     );
   };
@@ -1886,6 +1960,11 @@ const MessagesList = ({
         menuOpen={messageOptionsMenuOpen}
         handleClose={handleCloseMessageOptionsMenu}
       />
+      {hiddenHistory > 0 && (
+        <div className={classes.hiddenHistoryNotice} role="status">
+          {i18n.t("history.hiddenNotice", { count: hiddenHistory })}
+        </div>
+      )}
       <div
         id="messagesList"
         className={classes.messagesList}
