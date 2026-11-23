@@ -10,6 +10,8 @@ import "@testing-library/jest-dom";
 import { ThemeProvider } from "@material-ui/core/styles";
 import MessageInput from "./index";
 import { createKomunickTheme } from "../../theme/komunick";
+import { AuthContext } from "../../context/Auth/AuthContext";
+import { EditMessageContext } from "../../context/EditingMessage/EditingMessageContext";
 import { ReplyMessageContext } from "../../context/ReplyingMessage/ReplyingMessageContext";
 import api from "../../services/api";
 
@@ -39,7 +41,7 @@ jest.mock("../TicketAssistant", () => props => {
     </button>
   );
 });
-jest.mock("../../services/api", () => ({ post: jest.fn() }));
+jest.mock("../../services/api", () => ({ get: jest.fn(), post: jest.fn() }));
 jest.mock("../../translate/i18n", () => ({ i18n: { t: key => key } }));
 jest.mock("mic-recorder-to-mp3", () =>
   jest.fn().mockImplementation(() => ({}))
@@ -49,9 +51,6 @@ jest.mock("compressorjs", () => jest.fn());
 jest.mock("react-whatsmarked", () => ({ children }) => <span>{children}</span>);
 jest.mock("../../hooks/useQuickMessages", () => () => ({
   list: async () => []
-}));
-jest.mock("../../hooks/useLocalStorage", () => ({
-  useLocalStorage: () => [false, jest.fn()]
 }));
 jest.mock("../../context/Auth/AuthContext", () => ({
   AuthContext: require("react").createContext({
@@ -89,9 +88,21 @@ const viewOf = (id, reply = null) => (
     </ReplyMessageContext.Provider>
   </ThemeProvider>
 );
+const viewForCompany = (user, editingMessage = null) => (
+  <AuthContext.Provider value={{ user }}>
+    <EditMessageContext.Provider
+      value={{ editingMessage, setEditingMessage: jest.fn() }}
+    >
+      {viewOf(301)}
+    </EditMessageContext.Provider>
+  </AuthContext.Provider>
+);
 beforeEach(() => {
   sessionStorage.clear();
+  localStorage.clear();
+  localStorage.setItem("signOption", "false");
   jest.clearAllMocks();
+  api.get.mockResolvedValue({ data: "disabled" });
   api.post.mockResolvedValue({ data: {} });
 });
 
@@ -187,4 +198,116 @@ test("sending with a pending mock request clears only the sent ticket draft", as
     "/messages/301",
     expect.objectContaining({ body: "Human A" })
   );
+});
+
+test("company policy locks the signature without changing the saved browser preference", async () => {
+  api.get.mockResolvedValueOnce({ data: "enabled" });
+  sessionStorage.setItem("messageDraft-301", "Fictitious text");
+  render(viewForCompany({ id: 101, companyId: 2, name: "Camila Oliveira" }));
+
+  const control = await screen.findByRole("button", {
+    name: "companyMessageSignature.required"
+  });
+  expect(api.get).toHaveBeenCalledWith("/settings/forceMessageSignature");
+  expect(control).toBeDisabled();
+  expect(control).toHaveAttribute("aria-pressed", "true");
+  fireEvent.click(control);
+  expect(localStorage.getItem("signOption")).toBe("false");
+  expect(api.post).not.toHaveBeenCalled();
+
+  await waitFor(() => expect(field()).toHaveValue("Fictitious text"));
+  fireEvent.click(screen.getByRole("button", { name: "sendMessage" }));
+  expect(api.post).toHaveBeenCalledWith(
+    "/messages/301",
+    expect.objectContaining({ body: "Fictitious text" })
+  );
+});
+
+test("ignores a previous company's policy response and keeps the voluntary signature", async () => {
+  let resolvePriorPolicy;
+  api.get.mockReturnValueOnce(
+    new Promise(resolve => {
+      resolvePriorPolicy = resolve;
+    })
+  );
+  const first = { id: 101, companyId: 2, name: "Camila Oliveira" };
+  const second = { id: 102, companyId: 3, name: "Rafael Almeida" };
+  const view = render(viewForCompany(first));
+  expect(
+    screen.getByRole("button", { name: "companyMessageSignature.loading" })
+  ).toBeDisabled();
+  view.rerender(viewForCompany(second));
+  const control = await screen.findByRole("button", {
+    name: "messagesInput.signMessage"
+  });
+  expect(control).toBeEnabled();
+  expect(control).toHaveAttribute("aria-pressed", "false");
+  await act(async () => resolvePriorPolicy({ data: "enabled" }));
+  expect(control).toBeEnabled();
+  expect(api.get).toHaveBeenCalledTimes(2);
+
+  fireEvent.click(control);
+  expect(localStorage.getItem("signOption")).toBe("true");
+  fireEvent.change(field(), { target: { value: "Fictitious text" } });
+  fireEvent.click(screen.getByRole("button", { name: "sendMessage" }));
+  expect(api.post).toHaveBeenCalledWith(
+    "/messages/301",
+    expect.objectContaining({ body: "*Rafael Almeida:*\nFictitious text" })
+  );
+});
+
+test.each([
+  ["*Camila Oliveira:*\nExisting text", "Existing text"],
+  ["*Original heading:*\nExisting text", "*Original heading:*\nExisting text"]
+])(
+  "unwraps only the current sender's signature on edit: %s",
+  async (body, expected) => {
+    api.get.mockResolvedValueOnce({ data: "enabled" });
+    render(
+      viewForCompany(
+        { id: 101, companyId: 2, name: "Camila Oliveira" },
+        { id: "fictitious-message", body }
+      )
+    );
+
+    await screen.findByRole("button", {
+      name: "companyMessageSignature.required"
+    });
+    await waitFor(() => expect(field()).toHaveValue(expected));
+    fireEvent.click(screen.getByRole("button", { name: "sendMessage" }));
+    expect(api.post).toHaveBeenCalledWith(
+      "/messages/edit/fictitious-message",
+      expect.objectContaining({ body: expected })
+    );
+  }
+);
+
+test("resolving the signature setting preserves text already written in an edit", async () => {
+  let resolvePolicy;
+  api.get.mockReturnValueOnce(
+    new Promise(resolve => (resolvePolicy = resolve))
+  );
+  render(
+    viewForCompany(
+      { id: 101, companyId: 2, name: "Camila Oliveira" },
+      { id: "fictitious-message", body: "*Camila Oliveira:*\nExisting text" }
+    )
+  );
+  await waitFor(() =>
+    expect(field()).toHaveValue("*Camila Oliveira:*\nExisting text")
+  );
+  fireEvent.change(field(), { target: { value: "New text" } });
+  await act(async () => resolvePolicy({ data: "enabled" }));
+  expect(field()).toHaveValue("New text");
+});
+
+test("a temporary settings failure leaves the normal browser preference available", async () => {
+  api.get.mockRejectedValueOnce(new Error("fictitious settings error"));
+  render(viewForCompany({ id: 101, companyId: 3, name: "Rafael Almeida" }));
+
+  const control = await screen.findByRole("button", {
+    name: "messagesInput.signMessage"
+  });
+  expect(control).toBeEnabled();
+  expect(control).toHaveAttribute("aria-pressed", "false");
 });

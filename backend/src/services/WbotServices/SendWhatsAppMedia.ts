@@ -4,7 +4,7 @@ import {
   AnyMessageContent
 } from "libzapitu-rf";
 import fs from "fs";
-import { exec } from "child_process";
+import { execFile } from "child_process";
 import path from "path";
 import ffmpegPath from "@ffmpeg-installer/ffmpeg";
 import mime from "mime-types";
@@ -39,13 +39,33 @@ const publicFolder = __dirname.endsWith("/dist")
 
 const supportedImages = ["image/png", "image/jpg", "image/jpeg", "image/webp"];
 
+// Zap Komunick: ffmpeg runs without a shell and every argument travels on its
+// own, so a crafted upload name can never become part of a command line.
 const processRecordedAudio = async (audio: string): Promise<Readable> => {
   const outputAudio = `${publicFolder}/${new Date().getTime()}.ogg`;
   return new Promise((resolve, reject) => {
-    exec(
-      `${ffmpegPath.path} -i "${audio}" -vn -ar 16000 -ac 1 -c:a libopus -b:a 0 ${outputAudio}`,
-      (error, _stdout, _stderr) => {
-        if (error) reject(error);
+    execFile(
+      ffmpegPath.path,
+      [
+        "-i",
+        audio,
+        "-vn",
+        "-ar",
+        "16000",
+        "-ac",
+        "1",
+        "-c:a",
+        "libopus",
+        "-b:a",
+        "0",
+        outputAudio
+      ],
+      { shell: false },
+      error => {
+        if (error) {
+          reject(error);
+          return;
+        }
         resolve(fs.createReadStream(outputAudio));
       }
     );

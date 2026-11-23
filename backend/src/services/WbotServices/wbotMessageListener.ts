@@ -74,6 +74,16 @@ import { verifyContact } from "./verifyContact";
 import { decryptMessageEdit } from "./decryptMessageEdit";
 import GetTicketWbot from "../../helpers/GetTicketWbot";
 import IsWhatsAppQueueLinked from "../../helpers/IsWhatsAppQueueLinked";
+import { readGeneralTriageQueueId } from "../../helpers/GeneralTriage";
+import {
+  assignGeneralTriageDestination,
+  claimGeneralTriageMenu,
+  startGeneralTriageWait
+} from "./GeneralTriageRouting";
+import {
+  formatQueueMenu,
+  pickMenuQueue
+} from "../../helpers/WhatsappQueueMenu";
 import { authorizeQueueOption } from "../QueueOptionService/AuthorizeQueueOptionService";
 import saveMediaToFile from "../../helpers/saveMediaFile";
 import { _t } from "../TranslationServices/i18nService";
@@ -81,6 +91,7 @@ import WhatsappLidMap from "../../models/WhatsappLidMap";
 import normalizePhone from "../../helpers/NormalizePhone";
 import {
   emitTicketContext,
+  invalidateTicketNotifications,
   revokeTicketContextRooms
 } from "../SocketServices/TicketContextSocketService";
 
@@ -1255,7 +1266,8 @@ export const startQueue = async (
   wbot: Session,
   ticket: Ticket,
   queue: Queue = null,
-  sendBackToMain = true
+  sendBackToMain = true,
+  assignFromSectorMenu = false
 ) => {
   if (!queue) {
     queue = await Queue.findOne({
@@ -1281,18 +1293,29 @@ export const startQueue = async (
     return;
   }
 
-  const { companyId, contact } = ticket;
+  const { companyId } = ticket;
   let chatbot = false;
 
   if (queue?.options) {
     chatbot = queue.options.length > 0;
   }
-  ({ ticket } = await UpdateTicketService({
-    ticketData: { queueId: queue.id, chatbot, status: "pending" },
-    ticketId: ticket.id,
-    companyId: ticket.companyId,
-    dontRunChatbot: true
-  }));
+  if (assignFromSectorMenu) {
+    const routed = await assignGeneralTriageDestination(ticket, {
+      id: queue.id,
+      chatbot,
+      isGeneral: false
+    });
+    if (!routed) return;
+    ticket = routed;
+  } else {
+    ({ ticket } = await UpdateTicketService({
+      ticketData: { queueId: queue.id, chatbot, status: "pending" },
+      ticketId: ticket.id,
+      companyId: ticket.companyId,
+      dontRunChatbot: true
+    }));
+  }
+  const { contact } = ticket;
 
   // do not process queue if company is not compliant with payments
   if (!(await checkCompanyCompliant(companyId))) {
@@ -1393,7 +1416,8 @@ const verifyQueue = async (
   wbot: Session,
   msg: proto.IWebMessageInfo | null,
   ticket: Ticket,
-  _contact: Contact
+  _contact: Contact,
+  configuredGeneralQueueId?: number | null
 ) => {
   const whatsapp = await ShowWhatsAppService(wbot.id!, {
     companyId: ticket.companyId
@@ -1403,6 +1427,7 @@ const verifyQueue = async (
     throw new Error("ERR_NO_WAPP_FOUND");
   }
 
+  if (ticket.status !== "pending" || ticket.queueId || ticket.userId) return;
   const { queues, greetingMessage } = whatsapp;
 
   if (queues.length === 1) {
@@ -1418,18 +1443,20 @@ const verifyQueue = async (
       "disabled"
     )) === "enabled";
 
+  const generalQueueId =
+    configuredGeneralQueueId === undefined
+      ? await readGeneralTriageQueueId(ticket.companyId)
+      : configuredGeneralQueueId;
+  const generalQueue = queues.find(queue => queue.id === generalQueueId);
+  // queues come in the menu order saved for the channel (ShowWhatsAppService)
   const selectedOption = msg ? await getBodyMessage(msg?.message) : null;
-  const choosenQueue = selectedOption ? queues[+selectedOption - 1] : null;
+  const chosenQueue = pickMenuQueue(queues, selectedOption, generalQueue);
 
   const botText = async () => {
-    let options = "";
-
-    queues.forEach((queue, index) => {
-      options += showNumericIcons
-        ? `${emojiNumberOption(index + 1)} - `
-        : `*[ ${index + 1} ]* - `;
-      options += `${queue.name}\n`;
-    });
+    const options = formatQueueMenu(
+      queues,
+      showNumericIcons ? emojiNumberOption : undefined
+    );
 
     const textMessage = {
       text: formatBody(`${greetingMessage}\n\n${options}`, ticket)
@@ -1440,8 +1467,26 @@ const verifyQueue = async (
     await verifyMessage(sendMsg, ticket, ticket.contact);
   };
 
-  if (choosenQueue) {
-    await startQueue(wbot, ticket, choosenQueue);
+  if (generalQueue && chosenQueue?.id === generalQueue.id) {
+    await assignGeneralTriageDestination(ticket, {
+      id: generalQueue.id,
+      chatbot: false,
+      isGeneral: true
+    });
+    await ticket.reload({ include: ["queue"] });
+  } else if (chosenQueue) {
+    await startQueue(wbot, ticket, chosenQueue, true, Boolean(generalQueue));
+    if (generalQueue) await ticket.reload({ include: ["queue"] });
+  } else if (generalQueue) {
+    const compliant = await checkCompanyCompliant(ticket.companyId);
+    if (
+      (await startGeneralTriageWait(ticket, compliant)) &&
+      compliant &&
+      (await claimGeneralTriageMenu(ticket))
+    ) {
+      await botText();
+    }
+    await ticket.reload({ include: ["queue"] });
   } else {
     await botText();
     await updateTicket(ticket, {
@@ -1959,17 +2004,21 @@ const handleMessage = async (
       "protocolMessage"
     ].includes(msgType);
 
-    const { ticket, justCreated, queueRepaired, startInboundQueue } =
-      await FindOrCreateTicketService(contact, wbot.id!, companyId, {
-        groupContact,
-        incrementUnread: !msg.key.fromMe,
-        findOnly,
-        inboundQueueIds: msg.key.fromMe
-          ? undefined
-          : whatsapp.queues.map(queue => queue.id),
-        queue:
-          whatsapp.queues.find(queue => queue.id === queueId) ?? defaultQueue
-      });
+    const {
+      ticket,
+      justCreated,
+      queueRepaired,
+      previousQueueId,
+      startInboundQueue
+    } = await FindOrCreateTicketService(contact, wbot.id!, companyId, {
+      groupContact,
+      incrementUnread: !msg.key.fromMe,
+      findOnly,
+      inboundQueueIds: msg.key.fromMe
+        ? undefined
+        : whatsapp.queues.map(queue => queue.id),
+      queue: whatsapp.queues.find(queue => queue.id === queueId) ?? defaultQueue
+    });
 
     if (!ticket) {
       return;
@@ -1978,6 +2027,7 @@ const handleMessage = async (
     if (queueRepaired) {
       try {
         await revokeTicketContextRooms(getIO(), ticket.id);
+        await invalidateTicketNotifications(getIO(), ticket, previousQueueId);
       } catch {
         logger.warn(
           { ticketId: ticket.id },
@@ -1988,7 +2038,13 @@ const handleMessage = async (
 
     // voltar para o menu inicial
 
-    if (bodyMessage === "#" && !isGroup) {
+    if (
+      bodyMessage === "#" &&
+      !isGroup &&
+      !msg.key.fromMe &&
+      ticket.status === "pending" &&
+      !ticket.userId
+    ) {
       await updateTicket(ticket, {
         queueOptionId: null,
         chatbot: false,
@@ -1998,8 +2054,23 @@ const handleMessage = async (
       return;
     }
 
+    const mayAwaitSector =
+      !msg.key.fromMe &&
+      !isGroup &&
+      !contact.disableBot &&
+      ticket.status === "pending" &&
+      !ticket.queueId &&
+      !ticket.userId &&
+      whatsapp.queues.length > 1;
+    const generalTriageQueueId = mayAwaitSector
+      ? await readGeneralTriageQueueId(companyId)
+      : null;
+    const awaitingConfiguredMenu = whatsapp.queues.some(
+      queue => queue.id === generalTriageQueueId
+    );
+    const deferMessagePublish =
+      justCreated || queueRepaired || awaitingConfiguredMenu;
     let newMessage: Message;
-    const deferMessagePublish = justCreated || queueRepaired;
 
     if (
       messageMedia ||
@@ -2140,11 +2211,20 @@ const handleMessage = async (
               await verifyMessage(sentMessage, ticket, ticket.contact);
             }
             if (ticket.status !== "open") {
-              await UpdateTicketService({
+              const { ticket: updatedTicket } = await UpdateTicketService({
                 ticketData: { chatbot: false, status: outOfHoursAction },
                 ticketId: ticket.id,
                 companyId: ticket.companyId
               });
+              if (
+                updatedTicket.status === "pending" &&
+                !updatedTicket.queueId &&
+                !updatedTicket.userId &&
+                outOfHoursAction === "pending" &&
+                awaitingConfiguredMenu
+              ) {
+                await startGeneralTriageWait(updatedTicket, false);
+              }
             }
             await publishInboundChange();
             return;
@@ -2204,9 +2284,16 @@ const handleMessage = async (
       !ticket.queueId &&
       !isGroup &&
       !ticket.userId &&
+      (!awaitingConfiguredMenu || !findOnly) &&
       whatsapp.queues.length >= 1
     ) {
-      await verifyQueue(wbot, msg, ticket, ticket.contact);
+      await verifyQueue(
+        wbot,
+        msg,
+        ticket,
+        ticket.contact,
+        generalTriageQueueId
+      );
     }
 
     const dontReadTheFirstQuestion = startInboundQueue || ticket.queue === null;

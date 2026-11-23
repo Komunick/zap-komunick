@@ -3,6 +3,7 @@ import { getIO } from "../../libs/socket";
 import { Session } from "../../libs/wbot";
 import { checkCompanyCompliant } from "../../helpers/CheckCompanyCompliant";
 import { GetCompanySetting } from "../../helpers/CheckSettings";
+import { readGeneralTriageQueueId } from "../../helpers/GeneralTriage";
 import GetTicketWbot from "../../helpers/GetTicketWbot";
 import Contact from "../../models/Contact";
 import Message from "../../models/Message";
@@ -16,6 +17,11 @@ import UpdateTicketService, {
   websocketUpdateTicket
 } from "../../services/TicketServices/UpdateTicketService";
 import { handleMessage } from "../../services/WbotServices/wbotMessageListener";
+import {
+  assignGeneralTriageDestination,
+  claimGeneralTriageMenu,
+  startGeneralTriageWait
+} from "../../services/WbotServices/GeneralTriageRouting";
 import { verifyContact } from "../../services/WbotServices/verifyContact";
 import ShowWhatsAppService from "../../services/WhatsappService/ShowWhatsAppService";
 
@@ -45,6 +51,9 @@ jest.mock("../../models/Whatsapp", () => ({ findOne: jest.fn() }));
 jest.mock("../../helpers/CheckSettings", () => ({
   GetCompanySetting: jest.fn()
 }));
+jest.mock("../../helpers/GeneralTriage", () => ({
+  readGeneralTriageQueueId: jest.fn()
+}));
 jest.mock("../../helpers/CheckCompanyCompliant", () => ({
   checkCompanyCompliant: jest.fn().mockResolvedValue(true)
 }));
@@ -70,6 +79,11 @@ jest.mock("../../services/TicketServices/UpdateTicketService", () => ({
 }));
 jest.mock("../../services/TranslationServices/i18nService", () => ({}));
 jest.mock("../../services/WbotServices/SendWhatsAppMedia", () => ({}));
+jest.mock("../../services/WbotServices/GeneralTriageRouting", () => ({
+  assignGeneralTriageDestination: jest.fn(),
+  claimGeneralTriageMenu: jest.fn(),
+  startGeneralTriageWait: jest.fn()
+}));
 jest.mock("../../services/WbotServices/SendWhatsAppMessage", () => jest.fn());
 jest.mock("../../services/WbotServices/getJidOf", () => ({
   getJidOf: () => "000@s.whatsapp.net"
@@ -134,7 +148,7 @@ const subscriber = (userId: number, queueId: number) => {
   };
 };
 
-const receive = (quotedId?: string) =>
+const receive = (quotedId?: string, text = "Mensagem ficticia") =>
   handleMessage(
     {
       key: { id: "inbound-fixture", remoteJid: "000@s.whatsapp.net" },
@@ -149,7 +163,7 @@ const receive = (quotedId?: string) =>
               }
             }
           }
-        : { conversation: "Mensagem ficticia" }
+        : { conversation: text }
     },
     socket,
     companyId
@@ -189,6 +203,7 @@ const ticketFixture = (fields: Record<string, unknown> = {}) =>
   });
 
 beforeEach(() => {
+  (readGeneralTriageQueueId as jest.Mock).mockResolvedValue(null);
   (checkCompanyCompliant as jest.Mock).mockResolvedValue(true);
   contact = row({ id: contactId, companyId, disableBot: false });
   const otherChannel = ticketFixture({ id: 302, whatsappId: otherWhatsappId });
@@ -323,7 +338,12 @@ it.each(["open", "closed"])(
     });
     expect(Ticket.create).not.toHaveBeenCalled();
     expect(oldSubscriber.leave).toHaveBeenCalledWith("301");
-    expect(oldSubscriber.emit).not.toHaveBeenCalled();
+    expect(oldSubscriber.emit.mock.calls).toEqual([
+      [
+        `company-${companyId}-ticket`,
+        { action: "removeFromList", ticketId: 301 }
+      ]
+    ]);
     expect(newSubscriber.emit).toHaveBeenCalledWith(
       `company-${companyId}-appMessage`,
       expect.objectContaining({
@@ -510,6 +530,95 @@ it("does not hand a routed inbound ticket to a wallet owner without a matching q
   expect(messages.get("inbound-fixture")).toMatchObject({
     ticketId: 303,
     queueId: incomingQueueId
+  });
+});
+
+describe("shared general triage", () => {
+  const generalQueue = {
+    ...queue,
+    id: 43,
+    name: "Atendimento geral"
+  };
+
+  beforeEach(() => {
+    Object.assign(tickets[0], {
+      status: "pending",
+      isGroup: false,
+      queueId: null,
+      userId: null,
+      chatbot: false,
+      queueOptionId: null
+    });
+    (ShowWhatsAppService as jest.Mock).mockResolvedValue({
+      id: whatsappId,
+      companyId,
+      greetingMessage: "Escolha uma fila",
+      queues: [queue, generalQueue]
+    });
+    (readGeneralTriageQueueId as jest.Mock).mockResolvedValue(generalQueue.id);
+    (startGeneralTriageWait as jest.Mock).mockResolvedValue(true);
+    (claimGeneralTriageMenu as jest.Mock).mockResolvedValue(true);
+    (assignGeneralTriageDestination as jest.Mock).mockImplementation(
+      async (ticket, destination) => {
+        await ticket.update({
+          queueId: destination.id,
+          chatbot: destination.chatbot
+        });
+        ticket.queue = { id: destination.id };
+        return ticket;
+      }
+    );
+  });
+
+  it("shows the general queue in the menu and starts the timeout for free text", async () => {
+    await receive();
+
+    expect(startGeneralTriageWait).toHaveBeenCalledWith(tickets[0], true);
+    expect(socket.sendMessage).toHaveBeenCalledTimes(1);
+    expect(socket.sendMessage).toHaveBeenCalledWith("000@s.whatsapp.net", {
+      text: expect.stringContaining("*[ 2 ]* - Atendimento geral")
+    });
+    expect(assignGeneralTriageDestination).not.toHaveBeenCalled();
+  });
+
+  it("does not repeat the menu for more free text while the customer still has not chosen", async () => {
+    (claimGeneralTriageMenu as jest.Mock).mockResolvedValue(false);
+
+    await receive();
+
+    expect(startGeneralTriageWait).toHaveBeenCalledWith(tickets[0], true);
+    expect(claimGeneralTriageMenu).toHaveBeenCalledWith(tickets[0]);
+    expect(socket.sendMessage).not.toHaveBeenCalled();
+    expect(assignGeneralTriageDestination).not.toHaveBeenCalled();
+  });
+
+  it.each(["geral", "2"])(
+    "routes the explicit %s option without another WhatsApp message",
+    async choice => {
+      await receive(undefined, choice);
+
+      expect(assignGeneralTriageDestination).toHaveBeenCalledWith(tickets[0], {
+        id: generalQueue.id,
+        chatbot: false,
+        isGeneral: true
+      });
+      expect(socket.sendMessage).not.toHaveBeenCalled();
+      expect(startGeneralTriageWait).not.toHaveBeenCalled();
+    }
+  );
+
+  it("retains numbered sector selection and the existing sector greeting", async () => {
+    await receive(undefined, "1");
+
+    expect(assignGeneralTriageDestination).toHaveBeenCalledWith(tickets[0], {
+      id: queue.id,
+      chatbot: false,
+      isGeneral: false
+    });
+    expect(socket.sendMessage).toHaveBeenCalledWith("000@s.whatsapp.net", {
+      text: queue.greetingMessage
+    });
+    expect(startGeneralTriageWait).not.toHaveBeenCalled();
   });
 });
 

@@ -34,6 +34,10 @@ import { makeRandomId } from "./helpers/MakeRandomId";
 import { flushPoolMonitor } from "./database/poolMonitor";
 import CheckAllContainersUpdateService from "./services/DockerServices/CheckAllContainersUpdateService";
 import { cacheLayer } from "./libs/cache";
+import processSlaAlerts from "./services/SlaServices/ProcessSlaAlerts";
+import routeExpiredGeneralTriageTickets, {
+  generalTriageLegacyExclusion
+} from "./services/WbotServices/RouteExpiredGeneralTriageTickets";
 
 const connection = process.env.REDIS_URI || "";
 const limiterMax = process.env.REDIS_OPT_LIMITER_MAX || 1;
@@ -50,6 +54,7 @@ export const messageQueue = new Queue("MessageQueue", connection, {
 });
 
 export const scheduleMonitor = new Queue("ScheduleMonitor", connection);
+const ticketMonitor = new Queue("TicketMonitor", connection);
 export const sendScheduledMessages = new Queue(
   "SendSacheduledMessages",
   connection
@@ -307,6 +312,7 @@ async function handleNoQueueTimeout(
     "enabled";
 
   const where: WhereOptions<Ticket> = {
+    ...(await generalTriageLegacyExclusion(company.id)),
     status: "pending",
     companyId: company.id,
     queueId: null,
@@ -390,6 +396,7 @@ async function handleChatbotTicketTimeout(
   }
 
   const where: WhereOptions<Ticket> = {
+    ...(await generalTriageLegacyExclusion(company.id)),
     status: "pending",
     companyId: company.id,
     isGroup: false,
@@ -480,6 +487,7 @@ async function handlePendingTicketTimeout(
   }
 
   const where: WhereOptions<Ticket> = {
+    ...(await generalTriageLegacyExclusion(company.id)),
     status: "pending",
     companyId: company.id,
     updatedAt: {
@@ -731,7 +739,8 @@ export async function startQueueProcess() {
 
   await clearRepeatableJobsFromQueues([
     { name: "UserMonitor", queue: userMonitor },
-    { name: "ScheduleMonitor", queue: scheduleMonitor }
+    { name: "ScheduleMonitor", queue: scheduleMonitor },
+    { name: "TicketMonitor", queue: ticketMonitor }
   ]);
 
   startCampaignQueues().then(() => {
@@ -745,6 +754,10 @@ export async function startQueueProcess() {
   sendScheduledMessages.process("SendMessage", handleSendScheduledMessage);
 
   userMonitor.process("EveryMinute", handleEveryMinute);
+  ticketMonitor.process("SlaAlerts", async () => processSlaAlerts());
+  ticketMonitor.process("GeneralTriage", async () =>
+    routeExpiredGeneralTriageTickets()
+  );
 
   scheduleMonitor.add(
     "Verify",
@@ -765,6 +778,25 @@ export async function startQueueProcess() {
       removeOnFail: 100
     }
   );
+
+  await ticketMonitor.add(
+    "SlaAlerts",
+    {},
+    {
+      repeat: { cron: "* * * * *" },
+      removeOnComplete: true,
+      removeOnFail: 100
+    }
+  );
+  await ticketMonitor.add(
+    "GeneralTriage",
+    {},
+    {
+      repeat: { cron: "* * * * *" },
+      removeOnComplete: true,
+      removeOnFail: 100
+    }
+  );
 }
 
 /**
@@ -776,7 +808,8 @@ export async function closeAllQueues(): Promise<void> {
     userMonitor,
     messageQueue,
     scheduleMonitor,
-    sendScheduledMessages
+    sendScheduledMessages,
+    ticketMonitor
   ];
 
   logger.info(`Closing ${queues.length} queue(s)...`);

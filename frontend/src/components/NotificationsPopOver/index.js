@@ -1,7 +1,14 @@
-import React, { useState, useRef, useEffect, useContext } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from "react";
 import { useTheme } from "@material-ui/core/styles";
 
-import { useHistory } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import { format } from "date-fns";
 import useSound from "use-sound";
 
@@ -25,6 +32,7 @@ import { PRODUCT_ICON } from "../../helpers/productBrand";
 import useSettings from "../../hooks/useSettings";
 
 const defaultLogoFavicon = PRODUCT_ICON;
+const noQueues = [];
 
 const useStyles = makeStyles(theme => ({
   tabContainer: {
@@ -43,17 +51,33 @@ const NotificationsPopOver = props => {
 
   const history = useHistory();
   const { user } = useContext(AuthContext);
-  const ticketIdUrl = +history.location.pathname.split("/")[2];
-  const ticketIdRef = useRef(ticketIdUrl);
+  const { id: userId, companyId, queues = noQueues } = user;
+  const { pathname } = useLocation();
+  const ticketUuid = pathname.startsWith("/tickets/")
+    ? pathname.split("/")[2]
+    : undefined;
+  const ticketUuidRef = useRef(ticketUuid);
   const anchorEl = useRef();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [soundGroupNotifications, setSoundGroupNotifications] = useState(false);
   const [showTabGroups, setShowTabGroups] = useState(false);
-  const { profile, queues } = user;
-  const [queueIds, setQueueIds] = useState(queues.map(q => q.id));
+  const queueIds = useMemo(
+    () => new Set(queues.map(queue => queue.id)),
+    [queues]
+  );
+  const canNotify = useCallback(
+    ticket =>
+      ticket &&
+      ticket.companyId === companyId &&
+      ticket.status !== "closed" &&
+      queueIds.has(ticket.queueId) &&
+      (ticket.userId === userId ||
+        (ticket.userId == null && ticket.status === "pending")),
+    [companyId, queueIds, userId]
+  );
 
-  const [, setDesktopNotifications] = useState([]);
+  const desktopNotifications = useRef(new Map());
 
   const { tickets, refetch: refetchTickets } = useTickets({
     notClosed: "true",
@@ -67,28 +91,64 @@ const NotificationsPopOver = props => {
 
   const socketManager = useContext(SocketContext);
 
-  function clearTicket(ticketId) {
-    setNotifications(prevState => {
-      const ticketIndex = prevState.findIndex(t => t.id === ticketId);
-      if (ticketIndex !== -1) {
-        prevState.splice(ticketIndex, 1);
-        return [...prevState];
-      }
-      return prevState;
-    });
+  const closeDesktopNotification = useCallback(ticketId => {
+    const entry = desktopNotifications.current.get(ticketId);
+    if (entry) {
+      entry.notification.close();
+      desktopNotifications.current.delete(ticketId);
+    }
+  }, []);
 
-    setDesktopNotifications(prevState => {
-      const notfiticationIndex = prevState.findIndex(
-        n => n.tag === String(ticketId)
+  const clearTicket = useCallback(
+    ticketId => {
+      setNotifications(prevState => prevState.filter(t => t.id !== ticketId));
+      closeDesktopNotification(ticketId);
+    },
+    [closeDesktopNotification]
+  );
+
+  const handleNotifications = useCallback(data => {
+    const { message, contact, ticket } = data;
+    const body = message.body.startsWith('{"ticketzvCard"')
+      ? "🪪"
+      : message.body;
+    try {
+      const notification = new Notification(
+        `${i18n.t("tickets.notification.message")} ${contact.name}`,
+        {
+          body: `${format(new Date(), "HH:mm")}\n${body}`,
+          icon: contact.profilePicUrl,
+          tag: String(ticket.id),
+          renotify: true
+        }
       );
-      if (notfiticationIndex !== -1) {
-        prevState[notfiticationIndex].close();
-        prevState.splice(notfiticationIndex, 1);
-        return [...prevState];
-      }
-      return prevState;
+      notification.onclick = event => {
+        event.preventDefault();
+        window.focus();
+        historyRef.current.push(`/tickets/${ticket.uuid}`);
+      };
+      desktopNotifications.current.set(ticket.id, { notification, ticket });
+    } catch (error) {
+      console.error("Failed to push browser notification");
+    }
+
+    soundAlertRef.current();
+  }, []);
+
+  useEffect(() => {
+    const entries = desktopNotifications.current;
+    return () => {
+      entries.forEach(({ notification }) => notification.close());
+      entries.clear();
+    };
+  }, []);
+
+  useEffect(() => {
+    desktopNotifications.current.forEach(({ ticket }, ticketId) => {
+      if (!canNotify(ticket)) closeDesktopNotification(ticketId);
     });
-  }
+    refetchTickets();
+  }, [canNotify, closeDesktopNotification, refetchTickets]);
 
   useEffect(() => {
     getSetting("soundGroupNotifications").then(soundGroupNotifications => {
@@ -119,59 +179,54 @@ const NotificationsPopOver = props => {
   }, [tickets]);
 
   useEffect(() => {
-    ticketIdRef.current = ticketIdUrl;
-  }, [ticketIdUrl]);
+    ticketUuidRef.current = ticketUuid;
+  }, [ticketUuid]);
 
   useEffect(() => {
-    setQueueIds(queues.map(q => q.id));
-  }, [queues]);
-
-  useEffect(() => {
-    const companyId = localStorage.getItem("companyId");
     const socket = socketManager.GetSocket(companyId);
+    let active = true;
 
     const onConnectNotificationsPopover = () => {
-      socket.emit("joinNotification");
+      if (active) socket.emit("joinTicketNotifications");
+    };
+
+    const upsertNotification = ticket => {
+      setNotifications(prevState => [
+        ticket,
+        ...prevState.filter(previous => previous.id !== ticket.id)
+      ]);
     };
 
     const onCompanyTicketNotificationsPopover = data => {
-      if (data.action === "update" || data.ticket?.status === "closed") {
-        clearTicket(data.ticket.id);
+      if (data.action === "update" && data.ticket) {
+        if (canNotify(data.ticket) && data.ticket.unreadMessages > 0) {
+          upsertNotification(data.ticket);
+        } else {
+          clearTicket(data.ticket.id);
+        }
       }
 
-      if (data.action === "updateUnread" || data.action === "delete") {
+      if (["updateUnread", "delete", "removeFromList"].includes(data.action)) {
         clearTicket(data.ticketId);
+        refetchTickets();
       }
     };
 
     const onCompanyAppMessageNotificationsPopover = data => {
+      const { action, ticket, message } = data;
+      if (action !== "create" || !message || message.read || !canNotify(ticket))
+        return;
+
+      upsertNotification(ticket);
       if (
-        data.action === "create" &&
-        !data.message.read &&
-        (data.ticket.userId === user?.id ||
-          (!data.ticket.userId &&
-            (queueIds.includes(data.ticket.queueId) ||
-              (!data.ticket.queueId && profile === "admin"))))
-      ) {
-        setNotifications(prevState => {
-          const ticketIndex = prevState.findIndex(t => t.id === data.ticket.id);
-          if (ticketIndex !== -1) {
-            prevState[ticketIndex] = data.ticket;
-            return [...prevState];
-          }
-          return [data.ticket, ...prevState];
-        });
+        (ticketUuidRef.current === ticket.uuid &&
+          ticket.uuid &&
+          document.visibilityState === "visible") ||
+        (ticket.isGroup && !soundGroupNotifications)
+      )
+        return;
 
-        const shouldNotNotificate =
-          (data.message.ticketId === ticketIdRef.current &&
-            document.visibilityState === "visible") ||
-          (data.ticket.userId && data.ticket.userId !== user?.id) ||
-          (data.ticket.isGroup && !soundGroupNotifications);
-
-        if (shouldNotNotificate) return;
-
-        handleNotifications(data);
-      }
+      handleNotifications(data);
     };
 
     const onCompanyContactNotificationsPopover = data => {
@@ -201,6 +256,17 @@ const NotificationsPopOver = props => {
       `company-${companyId}-contact`,
       onCompanyContactNotificationsPopover
     );
+    socket.on(`company-${companyId}-queue`, ({ action, queueId }) => {
+      if (action !== "delete" || !queueIds.has(queueId)) return;
+
+      setNotifications(previous =>
+        previous.filter(ticket => ticket.queueId !== queueId)
+      );
+      desktopNotifications.current.forEach(({ ticket }, ticketId) => {
+        if (ticket.queueId === queueId) closeDesktopNotification(ticketId);
+      });
+      refetchTickets();
+    });
     socket.on("wsRefreshRequired", refreshRequired => {
       if (refreshRequired) {
         refetchTickets();
@@ -208,60 +274,20 @@ const NotificationsPopOver = props => {
     });
 
     return () => {
+      active = false;
       socket.disconnect();
     };
   }, [
-    user,
-    profile,
-    queues,
+    companyId,
+    canNotify,
+    clearTicket,
+    closeDesktopNotification,
+    handleNotifications,
     queueIds,
     soundGroupNotifications,
     socketManager,
     refetchTickets
   ]);
-
-  const handleNotifications = data => {
-    const { message, contact, ticket } = data;
-
-    const body = message.body.startsWith('{"ticketzvCard"')
-      ? "🪪"
-      : message.body;
-
-    const options = {
-      body: `${format(new Date(), "HH:mm")}\n${body}`,
-      icon: contact.profilePicUrl,
-      tag: ticket.id,
-      renotify: true
-    };
-
-    try {
-      const notification = new Notification(
-        `${i18n.t("tickets.notification.message")} ${contact.name}`,
-        options
-      );
-
-      notification.onclick = e => {
-        e.preventDefault();
-        window.focus();
-        historyRef.current.push(`/tickets/${ticket.uuid}`);
-      };
-
-      setDesktopNotifications(prevState => {
-        const notfiticationIndex = prevState.findIndex(
-          n => n.tag === notification.tag
-        );
-        if (notfiticationIndex !== -1) {
-          prevState[notfiticationIndex] = notification;
-          return [...prevState];
-        }
-        return [notification, ...prevState];
-      });
-    } catch (e) {
-      console.error("Failed to push browser notification");
-    }
-
-    soundAlertRef.current();
-  };
 
   const handleClick = () => {
     setIsOpen(prevState => !prevState);
@@ -275,17 +301,19 @@ const NotificationsPopOver = props => {
     return <div onClick={handleClickAway}>{children}</div>;
   };
 
+  const visibleNotifications = notifications.filter(canNotify);
+
   const browserNotification = () => {
     const numbers = "⓿➊➋➌➍➎➏➐➑➒➓⓫⓬⓭⓮⓯⓰⓱⓲⓳⓴";
-    if (notifications.length > 0) {
-      if (notifications.length < 21) {
+    const count = visibleNotifications.length;
+    if (count > 0) {
+      if (count < 21) {
         document.title =
-          numbers.substring(notifications.length, notifications.length + 1) +
+          numbers.substring(count, count + 1) +
           " - " +
           (theme.appName || "...");
       } else {
-        document.title =
-          "(" + notifications.length + ")" + (theme.appName || "...");
+        document.title = "(" + count + ")" + (theme.appName || "...");
       }
     } else {
       document.title = theme.appName || "...";
@@ -297,7 +325,7 @@ const NotificationsPopOver = props => {
           url={
             theme?.appLogoFavicon ? theme.appLogoFavicon : defaultLogoFavicon
           }
-          alertCount={notifications.length}
+          alertCount={count}
           iconSize={195}
         />
       </>
@@ -314,9 +342,10 @@ const NotificationsPopOver = props => {
         variant="contained"
       >
         <ChatIcon style={{ color: theme.palette.primary.contrastText }} />
-        {notifications.length > 0 ? (
+        {visibleNotifications.length > 0 ? (
           <Badge
             variant="dot"
+            overlap="rectangular"
             color="secondary"
             style={{ marginTop: "-25px" }}
           ></Badge>
@@ -340,12 +369,12 @@ const NotificationsPopOver = props => {
         onClose={handleClickAway}
       >
         <List dense className={classes.tabContainer}>
-          {notifications.length === 0 ? (
+          {visibleNotifications.length === 0 ? (
             <ListItem>
               <ListItemText>{i18n.t("notifications.noTickets")}</ListItemText>
             </ListItem>
           ) : (
-            notifications.map(ticket => (
+            visibleNotifications.map(ticket => (
               <NotificationTicket key={ticket.id}>
                 <TicketListItem
                   ticket={ticket}

@@ -7,8 +7,8 @@ const isSuper = async (
   res: Response,
   next: NextFunction
 ): Promise<any> => {
-  const { super: isSuperUser } = await User.findByPk(req.user.id);
-  if (!isSuperUser) {
+  const user = await User.findByPk(req.user.id);
+  if (!user?.super) {
     throw new AppError("Acesso não permitido", 401);
   }
 

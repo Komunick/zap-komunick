@@ -104,23 +104,33 @@ const ListTicketsService = async ({
 
   const user = await ShowUserService(userId);
   const viewer = await loadTicketViewer({ userId, companyId });
+  // The header notifications use current sector membership, including for admins.
+  const isNotificationList =
+    notClosed === true && withUnreadMessages === "true";
 
   const andedOrs: WhereOptions<Ticket>[] = [
     {
-      [Op.or]: [{ userId }, { status: "pending" }]
+      [Op.or]: [
+        { userId },
+        isNotificationList
+          ? { status: "pending", userId: null }
+          : { status: "pending" }
+      ]
     }
   ];
 
   let whereCondition: Filterable["where"] = {
     [Op.and]: andedOrs,
-    queueId: {
-      [Op.or]: user.profile === "admin" ? [queueIds, null] : [queueIds]
-    }
+    ...(isNotificationList
+      ? {}
+      : {
+          queueId: {
+            [Op.or]: user.profile === "admin" ? [queueIds, null] : [queueIds]
+          }
+        }),
+    ...(groupsTab ? { isGroup: groups === "true" } : {})
   };
 
-  if (groupsTab) {
-    whereCondition.isGroup = groups === "true";
-  }
   let includeCondition: Includeable[];
 
   includeCondition = [
@@ -165,7 +175,7 @@ const ListTicketsService = async ({
     }
   ];
 
-  if (showAll === "true" && user.profile === "admin") {
+  if (!isNotificationList && showAll === "true" && user.profile === "admin") {
     andedOrs.length = 0;
     whereCondition = {
       [Op.and]: andedOrs,
@@ -379,7 +389,9 @@ const ListTicketsService = async ({
     companyId,
     [Op.and]: [
       whereCondition,
-      ...(viewer.isAdmin ? [] : [{ queueId: { [Op.in]: viewer.queueIds } }])
+      ...(isNotificationList || !viewer.isAdmin
+        ? [{ queueId: { [Op.in]: viewer.queueIds } }]
+        : [])
     ]
   };
 

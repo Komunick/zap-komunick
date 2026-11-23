@@ -16,6 +16,7 @@ import formatBody from "../../helpers/Mustache";
 import { logger } from "../../utils/logger";
 import {
   emitTicketContext,
+  invalidateTicketNotifications,
   revokeTicketContextRooms
 } from "../SocketServices/TicketContextSocketService";
 import { incrementCounter } from "../CounterServices/IncrementCounter";
@@ -30,6 +31,7 @@ import { ActiveCloseReasonIds } from "../CloseReasonServices/CloseReasonService"
 
 export interface UpdateTicketData {
   status?: string;
+  onlyIfPending?: boolean;
   userId?: number | null;
   queueId?: number | null;
   chatbot?: boolean;
@@ -134,6 +136,9 @@ const UpdateTicketService = async ({
     );
 
     const ticket = await ShowTicketService(ticketId, companyId);
+    if (ticketData.onlyIfPending === true && ticket.status !== "pending") {
+      throw new AppError("ERR_TICKET_NOT_PENDING", 409);
+    }
     const isGroup = ticket.contact?.isGroup || ticket.isGroup;
 
     if (queueId && Number(queueId) !== ticket.queueId) {
@@ -295,7 +300,8 @@ const UpdateTicketService = async ({
           chatbot: null,
           queueOptionId: null,
           status: "closed",
-          unansweredSince: null
+          unansweredSince: null,
+          generalTriageStartedAt: null
         });
 
         await ticket.reload();
@@ -321,6 +327,7 @@ const UpdateTicketService = async ({
           [
             `company-${ticket.companyId}-closed`,
             `queue-${ticket.queueId}-closed`,
+            `queue-${ticket.queueId}-notification`,
             ticket.id.toString()
           ]
         );
@@ -365,9 +372,22 @@ const UpdateTicketService = async ({
       whatsappId: ticket.whatsappId,
       chatbot,
       queueOptionId,
+      ...(queueId != null ||
+      userId != null ||
+      (status && status !== "pending") ||
+      !chatbot
+        ? { generalTriageStartedAt: null }
+        : {}),
       ...(status === "closed" ? { unansweredSince: null } : {})
     });
     await revokeTicketContextRooms(io, ticket.id);
+    if (
+      ticket.status !== "pending" &&
+      ticket.status !== "open" &&
+      (ticket.queueId !== oldQueueId || ticket.userId !== (oldUserId ?? null))
+    ) {
+      await invalidateTicketNotifications(io, ticket, oldQueueId);
+    }
 
     if (oldStatus !== status) {
       if (oldStatus === "closed" && status === "open") {
