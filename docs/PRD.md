@@ -929,7 +929,8 @@ Brazil TMS. Nada é enviado por e-mail.
 - Qualquer usuário abre chamado, numerado `CH-000123`: título (obrigatório), categoria (Erro numa tela, Dado
   incorreto, Dúvida de uso, Permissão de acesso, Sugestão de melhoria, Outro), prioridade (Baixa, Média, Alta; "Parou
   meu trabalho" vira Crítica), tela onde aconteceu e descrição. Aceita até 5 anexos e 15 MB por envio, só imagem (PNG,
-  JPEG, GIF, WebP), vídeo (MP4, WebM, MOV) ou PDF, escolhidos, arrastados ou colados com `Ctrl+V`.
+  JPEG, GIF, WebP), vídeo (MP4, WebM, MOV) ou PDF, escolhidos, colados com `Ctrl+V` ou arrastados para qualquer
+  ponto do chamado.
 - O servidor confere o tipo do anexo pelo conteúdo do arquivo, e não pelo nome. Os anexos ficam no volume privado e só
   saem pela rota autenticada do chamado a que pertencem; abrem dentro do sistema.
 - Cada usuário vê só os próprios chamados. Chamado de outra pessoa responde como inexistente. Quem atende é o

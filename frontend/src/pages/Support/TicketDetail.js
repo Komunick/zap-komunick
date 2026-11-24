@@ -33,10 +33,13 @@ import DraftFiles from "./DraftFiles";
 import MessageAttachments from "./MessageAttachments";
 import { requestError } from "./NewTicketDialog";
 import useAttachmentDraft from "./useAttachmentDraft";
+import useFileDrop from "../../hooks/useFileDrop";
+import { selectAttachments } from "../../helpers/attachmentSelection";
 
 // Zap Komunick: one support ticket with its live conversation (RF-030).
 const useStyles = makeStyles(theme => ({
   root: {
+    position: "relative",
     display: "flex",
     flexDirection: "column",
     height: "100%",
@@ -120,7 +123,21 @@ const useStyles = makeStyles(theme => ({
     flexDirection: "column",
     gap: theme.spacing(0.75)
   },
-  dropping: { outline: `2px dashed ${theme.palette.primary.main}` },
+  dropOverlay: {
+    position: "absolute",
+    inset: theme.spacing(1),
+    zIndex: 20,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: theme.shape.borderRadius * 2,
+    border: `2px dashed ${theme.palette.primary.main}`,
+    backgroundColor:
+      theme.komunick?.selectedRow || theme.palette.action.selected,
+    color: theme.palette.text.primary,
+    fontWeight: 600,
+    pointerEvents: "none"
+  },
   composerRow: {
     display: "flex",
     alignItems: "flex-end",
@@ -222,11 +239,25 @@ const TicketDetail = ({ ticketId, isSuper, liveEvent, onBack, onChanged }) => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [pendingAction, setPendingAction] = useState(null);
-  const [dropping, setDropping] = useState(false);
   // Closed by default: the conversation needs the room more than the data.
   const [showContext, setShowContext] = useState(false);
   const draft = useAttachmentDraft();
   const busyRef = useRef(false);
+  const [dropNotice, setDropNotice] = useState("");
+  const addDraft = draft.add;
+  // Files can be dropped anywhere on the ticket, not only on the text field.
+  const { dragging, dropHandlers } = useFileDrop(dropped => {
+    if (busyRef.current) return;
+    const { files, skipped } = selectAttachments(dropped);
+    setDropNotice(
+      skipped.length
+        ? tr("messagesInput.skippedFiles", {
+            names: skipped.map(file => file?.name).join(", ")
+          })
+        : ""
+    );
+    addDraft(files);
+  });
   const mounted = useRef(true);
   const scrollRef = useRef(null);
   const atBottom = useRef(true);
@@ -319,6 +350,7 @@ const TicketDetail = ({ ticketId, isSuper, liveEvent, onBack, onChanged }) => {
     if (sent && mounted.current) {
       setBody("");
       draft.clear();
+      setDropNotice("");
     }
   };
 
@@ -369,7 +401,16 @@ const TicketDetail = ({ ticketId, isSuper, liveEvent, onBack, onChanged }) => {
     notice = i18n.t("support.detail.waitingYou");
 
   return (
-    <div className={classes.root}>
+    <div
+      className={classes.root}
+      data-testid="support-drop-zone"
+      {...dropHandlers}
+    >
+      {dragging && (
+        <div className={classes.dropOverlay} role="status">
+          {i18n.t("messagesInput.dropFiles")}
+        </div>
+      )}
       <div className={classes.header}>
         <div className={classes.headerTop}>
           {onBack && (
@@ -524,28 +565,18 @@ const TicketDetail = ({ ticketId, isSuper, liveEvent, onBack, onChanged }) => {
           )
         )}
       </div>
-      <div
-        className={`${classes.composer} ${dropping ? classes.dropping : ""}`}
-        data-testid="support-composer"
-        onDragOver={event => {
-          event.preventDefault();
-          setDropping(true);
-        }}
-        onDragLeave={() => setDropping(false)}
-        onDrop={event => {
-          event.preventDefault();
-          setDropping(false);
-          draft.add(Array.from(event.dataTransfer?.files || []));
-        }}
-      >
+      <div className={classes.composer} data-testid="support-composer">
         <DraftFiles
           files={draft.files}
           onRemove={draft.remove}
           disabled={busy}
         />
-        {(error || draft.error) && !pendingAction && (
-          <Alert severity="error" role="alert">
-            {error || draft.error}
+        {(error || draft.error || dropNotice) && !pendingAction && (
+          <Alert
+            severity={error || draft.error ? "error" : "warning"}
+            role="alert"
+          >
+            {error || draft.error || dropNotice}
           </Alert>
         )}
         <div className={classes.composerRow}>

@@ -13,6 +13,7 @@ import { AuthContext } from "../../context/Auth/AuthContext";
 import { createKomunickTheme } from "../../theme/komunick";
 import api from "../../services/api";
 import MicRecorder from "mic-recorder-to-mp3";
+import { toast } from "react-toastify";
 
 jest.mock("../../services/api", () => ({ post: jest.fn(), head: jest.fn() }));
 jest.mock("../../services/config", () => ({
@@ -20,6 +21,7 @@ jest.mock("../../services/config", () => ({
 }));
 jest.mock("../../translate/i18n", () => ({ i18n: { t: key => key } }));
 jest.mock("../../errors/toastError", () => jest.fn());
+jest.mock("react-toastify", () => ({ toast: { warn: jest.fn() } }));
 jest.mock("mic-recorder-to-mp3", () => jest.fn(() => ({})));
 jest.mock(
   "../../components/MessageInputCustom/RecordingTimer",
@@ -616,5 +618,83 @@ test("preview HEAD survives unrelated incoming text while the same attachment re
   );
   expect(
     screen.getByText("Texto novo sem alterar o anexo")
+  ).toBeInTheDocument();
+});
+
+// Zap Komunick: files dragged onto the internal chat.
+const dropData = files => ({
+  dataTransfer: { types: ["Files"], files, items: [], dropEffect: "none" }
+});
+const pdf = (name = "contrato.pdf", size = 2048) => {
+  const file = new File(["x"], name, { type: "application/pdf" });
+  Object.defineProperty(file, "size", { value: size });
+  return file;
+};
+
+test("files dragged over the conversation show where to drop and become the selection", async () => {
+  api.post.mockResolvedValue({});
+  mount();
+  const zone = screen.getByTestId("internal-chat-drop-zone");
+
+  fireEvent.dragEnter(zone, dropData([]));
+  expect(screen.getByRole("status")).toHaveTextContent(
+    "messagesInput.dropFiles"
+  );
+  fireEvent.drop(zone, dropData([pdf(), pdf("planilha.xlsx")]));
+
+  expect(screen.queryByText("messagesInput.dropFiles")).not.toBeInTheDocument();
+  expect(screen.getByText("contrato.pdf")).toBeInTheDocument();
+  expect(screen.getByText("planilha.xlsx")).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "chatPage.sendFiles" }));
+  await waitFor(() => expect(api.post).toHaveBeenCalledTimes(1));
+  const [url, form] = api.post.mock.calls[0];
+  expect(url).toBe("/chats/101/messages");
+  expect(form.getAll("medias").map(file => file.name)).toEqual([
+    "contrato.pdf",
+    "planilha.xlsx"
+  ]);
+});
+
+test("a second drop adds to the files already chosen", () => {
+  mount();
+  const zone = screen.getByTestId("internal-chat-drop-zone");
+
+  fireEvent.drop(zone, dropData([pdf("a.pdf")]));
+  fireEvent.drop(zone, dropData([pdf("b.pdf")]));
+
+  expect(screen.getByText("a.pdf")).toBeInTheDocument();
+  expect(screen.getByText("b.pdf")).toBeInTheDocument();
+});
+
+test("dragged text is left to the browser and empty files are refused with a notice", () => {
+  mount();
+  const zone = screen.getByTestId("internal-chat-drop-zone");
+
+  fireEvent.dragEnter(zone, {
+    dataTransfer: { types: ["text/plain"], files: [], items: [] }
+  });
+  expect(screen.queryByRole("status")).not.toBeInTheDocument();
+
+  fireEvent.drop(zone, dropData([pdf("vazio.pdf", 0)]));
+  expect(toast.warn).toHaveBeenCalledWith("messagesInput.skippedFiles");
+  expect(screen.queryByText("vazio.pdf")).not.toBeInTheDocument();
+  expect(screen.getByRole("textbox")).toBeInTheDocument();
+});
+
+test("files dropped during a recording are refused and the recording goes on", async () => {
+  mount();
+  fireEvent.click(screen.getByRole("button", { name: "chatPage.recordAudio" }));
+  await screen.findByRole("button", { name: "chatPage.cancelRecording" });
+
+  fireEvent.drop(
+    screen.getByTestId("internal-chat-drop-zone"),
+    dropData([pdf()])
+  );
+
+  expect(toast.warn).toHaveBeenCalledWith("chatPage.dropUnavailable");
+  expect(screen.queryByText("contrato.pdf")).not.toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "chatPage.cancelRecording" })
   ).toBeInTheDocument();
 });
