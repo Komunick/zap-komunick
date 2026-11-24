@@ -6,6 +6,7 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Adicionado
 
+- Pacote para instalar o SuperChat em qualquer VM ARM64 e migrar os dados entre VMs, com ensaio (`deploy/vm`).
 - Antes de enviar imagens, a conversa mostra a prévia de cada uma. Com vários arquivos, miniaturas escolhem qual ver.
 - Quando o cliente já tem atendimento em andamento, o aviso diz com quem está, em que fila, por qual canal e desde
   quando. Ao iniciar conversa, a janela oferece **Abrir atendimento** e **Assumir** ou **Aceitar**, conforme as
