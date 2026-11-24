@@ -1,5 +1,6 @@
 import { Agent, AgentOptions } from "https";
 import createHttpsProxyAgent from "https-proxy-agent";
+import { getStreamGuardOptions } from "./HttpStreamGuard";
 
 let configuredProxy: { value: string; agent: Agent };
 let configuredHttpAgent: { value: string; agent: Agent };
@@ -81,6 +82,7 @@ export function getWhatsAppHttpOptions() {
   const httpsAgent = getWhatsAppHttpAgent();
   if (!httpsAgent) return undefined;
   return {
+    ...getStreamGuardOptions(),
     httpsAgent,
     proxy: false as const,
     beforeRedirect: ({ protocol }: { protocol?: string }) => {

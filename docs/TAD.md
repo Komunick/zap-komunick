@@ -424,6 +424,25 @@ desconhecido) reconecta com espera crescente de 2 s até 5 min, com até 20% de 
 Cada queda fica no log como `Socket <nome> closed: <motivo> -> <ação>`. Antes, toda queda que não fosse 401
 reconectava em 2 s fixos, inclusive 440, e o 403 apagava a sessão e ainda tentava reconectar.
 
+**WhatsApp mudo:** a biblioteca processa mensagens, confirmações e avisos em uma fila única (`processingMutex`), sem
+limite de tempo. Um item que não termina prende os seguintes, mas o socket continua aberto e respondendo ao
+keepalive; por isso o status segue `CONNECTED` e o envio funciona, com a mensagem no relógio por falta de confirmação.
+Há três proteções:
+
+- `helpers/HttpStreamGuard`: a biblioteca decifra downloads com `pipe()`, que não repassa erro da origem. A guarda
+  entra por `transformResponse` nas opções do axios e faz o destino falhar quando a origem falha, fecha antes do fim
+  ou fica 60 s sem dados. Vale para estado do aplicativo, histórico e mídia.
+- `helpers/WhatsAppQueueGuard`: mede cada item da fila. Acima de 2 min, o socket fecha com 408 e o
+  `ReconnectPolicy` reconecta com as mesmas credenciais. O limite dobra a cada travamento na mesma hora, até 10 min,
+  para um item ruim não reiniciar a conexão sem parar. O que esperava na fila antiga não roda: decifrá-lo ali gastaria
+  as chaves sem entregar a mensagem, e sem confirmação o WhatsApp o entrega de novo. O log registra
+  `Socket <nome>: incoming queue stalled`. Vale para o socket no processo principal; o modo multithread não expõe a
+  fila.
+- `CB:status`: a estrofe `<status>` de topo, que a biblioteca não conhece, recebe confirmação simples
+  (WhiskeySockets/Baileys#2858). O conteúdo continua ignorado.
+
+`WhatsAppQueueGuardLibrary.spec` usa a biblioteca real e falha se uma atualização mudar a fila exposta.
+
 **Saída pelo proxy (RNF):** quando `SUPERCHAT_WHATSAPP_PROXY_URL` está definida, `helpers/WhatsAppProxyAgent`
 entrega o mesmo agente HTTPS para três caminhos: o WebSocket (`agent`), o upload de mídia (`fetchAgent`) e as
 requisições HTTP da biblioteca via axios (`options` do socket e `getWhatsAppMediaDownloadOptions`) — downloads de

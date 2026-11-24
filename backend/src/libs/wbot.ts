@@ -37,6 +37,13 @@ import {
   getWhatsAppHttpAgent,
   getWhatsAppHttpOptions
 } from "../helpers/WhatsAppProxyAgent";
+import { getStreamGuardOptions } from "../helpers/HttpStreamGuard";
+import {
+  forgetQueueStalls,
+  guardQueue,
+  queueStallLimit,
+  registerQueueStall
+} from "../helpers/WhatsAppQueueGuard";
 import Message from "../models/Message";
 import OutOfTicketMessage from "../models/OutOfTicketMessages";
 import BaileysKeys from "../models/BaileysKeys";
@@ -405,7 +412,12 @@ export const initWASocket = async (
           // Axios options for the library's HTTP requests (app state blobs,
           // media). Without them these requests bypass the egress proxy and
           // fail with EAI_AGAIN where only the proxy can reach WhatsApp.
-          options: getWhatsAppHttpOptions() ?? {},
+          // The stream guard has functions, which a worker thread cannot receive.
+          options:
+            getWhatsAppHttpOptions() ??
+            (makeWASocket === makeWASocketSingleProcess
+              ? getStreamGuardOptions()
+              : {}),
           cachedGroupMetadata: async jid => groupCache.get(jid),
           shouldIgnoreJid: jid =>
             isJidBroadcast(jid) || jid?.endsWith("@newsletter"),
@@ -419,6 +431,35 @@ export const initWASocket = async (
         wsocket.ws.on("CB:call", async (node: BinaryNode) => {
           logger.trace({ node }, "Received raw call node");
         });
+
+        // Zap Komunick: WhatsApp may send statuses (stories) as top-level
+        // <status> stanzas, which the library does not know. Without an ack the
+        // server closes the stream or holds the messages behind them
+        // (WhiskeySockets/Baileys#2858).
+        wsocket.ws.on("CB:status", async (node: BinaryNode) => {
+          try {
+            await wsocket.sendMessageAck(node);
+          } catch (error) {
+            logger.warn({ error }, `Socket ${name}: status not acknowledged`);
+          }
+        });
+
+        // Zap Komunick: a stalled queue of incoming messages reconnects with
+        // the same credentials (helpers/WhatsAppQueueGuard)
+        if (makeWASocket === makeWASocketSingleProcess) {
+          const stallLimit = queueStallLimit(id);
+          guardQueue(wsocket.processingMutex, stallLimit, () => {
+            if (!wsocket.ws.isOpen) return;
+            registerQueueStall(id);
+            const message = `Socket ${name}: incoming queue stalled for ${
+              stallLimit / 1000
+            } s, reconnecting`;
+            logger.error(message);
+            Sentry.captureMessage(message);
+            // 408: helpers/ReconnectPolicy reconnects without a new QR code
+            wsocket.end(new Boom(message, { statusCode: 408 }));
+          });
+        }
 
         wsocket.isRefreshing = isRefresh;
 
@@ -467,6 +508,7 @@ export const initWASocket = async (
 
               if (decision.action === "logout") {
                 reconnectAttempts.delete(id);
+                forgetQueueStalls(id);
                 await removeWbot(id);
                 await whatsapp.update({
                   status: "DISCONNECTED",

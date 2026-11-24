@@ -56,6 +56,12 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- Conexão de WhatsApp que parece aberta e não recebe mais nada:
+  - um download interno cortado ou parado por 60 s agora dá erro. Antes ele esperava para sempre e prendia a fila
+    de mensagens, confirmações e avisos;
+  - se um item da fila passa de 2 minutos, a conexão é refeita sozinha com as mesmas credenciais, sem QR code novo.
+    O WhatsApp entrega de novo o que não foi confirmado;
+  - as publicações de Status dos contatos enviadas no formato novo do WhatsApp passam a ser confirmadas.
 - Mensagens enviadas pelo número da empresa fora do SuperChat (outro aplicativo no mesmo número ou o celular) para um
   cliente sem atendimento ativo entram no histórico dele e não abrem mais um atendimento aguardando sem fila. Esses
   atendimentos só apareciam para administradores e travavam o **Novo atendimento** desse cliente. Se o canal tem uma
