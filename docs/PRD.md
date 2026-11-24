@@ -921,9 +921,12 @@ conversa ao vivo com o superadministrador, que vê e responde todos os chamados.
 Brazil TMS. Nada é enviado por e-mail.
 
 **Regras importantes:**
-- Depois do login, cada usuário vê uma vez a mensagem de boas-vindas: o sistema está em beta, podem ocorrer erros, bugs
-  e falhas, e os problemas devem ser enviados pela aba **Suporte**. A resposta fica guardada no navegador, por usuário;
-  em outro navegador ou computador a mensagem aparece de novo.
+- Depois do login, cada usuário vê uma vez a mensagem de boas-vindas: o sistema está em beta e podem ocorrer erros,
+  bugs e falhas. O centro da mensagem é o convite a abrir chamado: um bloco em destaque "Encontrou uma falha? Abra um
+  chamado.", o passo a passo (Suporte, contar o que aconteceu, acompanhar a resposta), o incentivo a relatar mesmo as
+  falhas pequenas e **Abrir um chamado** como botão principal. A resposta fica guardada no navegador, por usuário; em
+  outro navegador ou computador a mensagem aparece de novo. Quando o texto muda de forma relevante, a versão da
+  mensagem sobe e todos a veem mais uma vez.
 - **Suporte** fica no menu de todos os perfis, na aba "Mais" do layout Foco e no `Ctrl K`. O menu mostra quantos
   chamados têm novidade para quem está logado.
 - Qualquer usuário abre chamado, numerado `CH-000123`: título (obrigatório), categoria (Erro numa tela, Dado
@@ -948,6 +951,11 @@ Brazil TMS. Nada é enviado por e-mail.
 - A conversa é ao vivo: o servidor avisa, pelo canal de tempo real, qual chamado mudou, e cada tela busca de novo só o
   que aquele usuário pode ver. As mudanças de situação aparecem na conversa, com quem fez e quando.
 - Limites: 10 chamados e 120 mensagens por usuário por hora.
+- Alerta no Windows de quem atende (`deploy/alerta-suporte-windows`): um programa na conta do usuário consulta a
+  fila a cada 30 segundos e, a cada chamado novo ou mensagem nova de solicitante, mostra um aviso do Windows e apita,
+  mesmo com o navegador fechado. Ele usa a chave do alerta, criada por um superadministrador, que abre uma rota só de
+  leitura com número, título, empresa, solicitante, prioridade e horário dos chamados que esperam o suporte. A chave
+  não lê conversa nem anexo, não é login, e o servidor guarda só o SHA-256 dela.
 - Os reportes de erro gravados pela primeira versão desta função viram chamados, com o mesmo número.
 
 **Cenário de sucesso:**

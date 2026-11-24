@@ -8,6 +8,7 @@ import AppError from "../../errors/AppError";
 import { supportDirectory } from "../../config/supportUpload";
 import supportRoutes from "../../routes/supportRoutes";
 import * as service from "../../services/SupportServices/SupportTicketService";
+import * as alertService from "../../services/SupportServices/SupportAlertService";
 
 jest.mock("../../config/privateFiles", () => {
   const actualFs = jest.requireActual("fs");
@@ -43,11 +44,17 @@ jest.mock("../../services/SupportServices/SupportTicketService", () => ({
   supportAttachmentFile: jest.fn(),
   supportSummary: jest.fn()
 }));
+jest.mock("../../services/SupportServices/SupportAlertService", () => ({
+  rotateSupportAlertToken: jest.fn(),
+  revokeSupportAlertToken: jest.fn(),
+  supportAlertFeed: jest.fn()
+}));
 jest.mock("../../utils/logger", () => ({
   logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
 }));
 
 const mocked = service as jest.Mocked<typeof service>;
+const mockedAlert = alertService as jest.Mocked<typeof alertService>;
 const root = path.dirname(supportDirectory);
 const PNG = Buffer.from([
   0x89,
@@ -334,4 +341,68 @@ it("answers 404 when the service refuses the attachment or the file is gone", as
     request(app).get("/support/tickets/5/attachments/x")
   );
   expect(gone.status).toBe(404);
+});
+
+describe("Windows alert of the support desk", () => {
+  const KEY = `sca_${"a".repeat(43)}`;
+
+  it("reads the feed with the alert key, without a session", async () => {
+    mockedAlert.supportAlertFeed.mockResolvedValue({ unread: 0, tickets: [] });
+
+    const reply = await request(app)
+      .get("/support/alerts")
+      .set("Authorization", `Bearer ${KEY}`);
+
+    expect(reply.status).toBe(200);
+    expect(reply.body).toEqual({ unread: 0, tickets: [] });
+    expect(reply.headers["cache-control"]).toBe("no-store");
+    expect(mockedAlert.supportAlertFeed).toHaveBeenCalledWith(KEY);
+  });
+
+  it.each([
+    ["no header", undefined],
+    ["a session token", "Bearer eyJhbGciOiJIUzI1NiJ9.e30.abc"],
+    ["a malformed key", "Bearer sca_curta"]
+  ])("hands %s to the service as no key at all", async (_name, header) => {
+    mockedAlert.supportAlertFeed.mockRejectedValue(
+      new AppError("ERR_SUPPORT_ALERT_UNAUTHORIZED", 401)
+    );
+    const call = request(app).get("/support/alerts");
+    const reply = await (header ? call.set("Authorization", header) : call);
+
+    expect(reply.status).toBe(401);
+    expect(reply.body).toEqual({ error: "ERR_SUPPORT_ALERT_UNAUTHORIZED" });
+    expect(mockedAlert.supportAlertFeed).toHaveBeenCalledWith(null);
+  });
+
+  it("lets only a super administrator create or revoke the key", async () => {
+    mockedAlert.rotateSupportAlertToken.mockResolvedValue(KEY);
+
+    const anonymous = await request(app).post("/support/alert-token");
+    expect(anonymous.status).toBe(401);
+    const user = await as("user", request(app).post("/support/alert-token"));
+    expect(user.status).toBe(403);
+    const userRevoke = await as(
+      "user",
+      request(app).delete("/support/alert-token")
+    );
+    expect(userRevoke.status).toBe(403);
+    expect(mockedAlert.rotateSupportAlertToken).not.toHaveBeenCalled();
+    expect(mockedAlert.revokeSupportAlertToken).not.toHaveBeenCalled();
+
+    const created = await as(
+      "super",
+      request(app).post("/support/alert-token")
+    );
+    expect(created.status).toBe(201);
+    expect(created.body).toEqual({ token: KEY });
+    expect(created.headers["cache-control"]).toBe("no-store");
+
+    const revoked = await as(
+      "super",
+      request(app).delete("/support/alert-token")
+    );
+    expect(revoked.status).toBe(204);
+    expect(mockedAlert.revokeSupportAlertToken).toHaveBeenCalledTimes(1);
+  });
 });

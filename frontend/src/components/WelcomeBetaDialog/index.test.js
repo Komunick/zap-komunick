@@ -11,9 +11,14 @@ jest.mock("../../translate/i18n", () => ({
         "welcomeBeta.title": "Boas-vindas ao SuperChat",
         "welcomeBeta.badge": "Versão beta",
         "welcomeBeta.intro": "O SuperChat está em versão beta.",
-        "welcomeBeta.report": "Abra um chamado na aba Suporte.",
+        "welcomeBeta.highlightTitle": "Encontrou uma falha? Abra um chamado.",
+        "welcomeBeta.report": "Qualquer erro pode virar um chamado.",
+        "welcomeBeta.stepOpen": "Clique em Suporte.",
+        "welcomeBeta.stepDescribe": "Conte o que aconteceu.",
+        "welcomeBeta.stepFollow": "Acompanhe a resposta.",
+        "welcomeBeta.encourage": "Na dúvida, abra o chamado.",
         "welcomeBeta.thanks": "Obrigado.",
-        "welcomeBeta.confirm": "Entendi",
+        "welcomeBeta.confirm": "Agora não",
         "welcomeBeta.openReport": "Abrir um chamado"
       })[key] || key
   }
@@ -40,11 +45,21 @@ it("welcomes a user who has not seen the notice and remembers the answer", async
     "Boas-vindas ao SuperChat"
   );
   expect(screen.getByRole("dialog")).toHaveTextContent("Versão beta");
+  // The call to open a ticket stands out, with the steps and the push to do it.
+  const highlight = screen.getByRole("note");
+  expect(highlight).toHaveTextContent("Encontrou uma falha? Abra um chamado.");
+  expect(highlight).toHaveTextContent("Clique em Suporte.");
+  expect(highlight).toHaveTextContent("Conte o que aconteceu.");
+  expect(highlight).toHaveTextContent("Acompanhe a resposta.");
   expect(screen.getByRole("dialog")).toHaveTextContent(
-    "Abra um chamado na aba Suporte."
+    "Na dúvida, abra o chamado."
+  );
+  // Opening a ticket is the main button of the notice.
+  expect(screen.getByRole("button", { name: "Abrir um chamado" })).toHaveClass(
+    "MuiButton-contained"
   );
 
-  fireEvent.click(screen.getByRole("button", { name: "Entendi" }));
+  fireEvent.click(screen.getByRole("button", { name: "Agora não" }));
 
   await waitFor(() =>
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
@@ -77,4 +92,16 @@ it("opens the support screen from the notice", async () => {
 
   expect(await screen.findByText("Tela de suporte")).toBeInTheDocument();
   expect(localStorage.getItem(welcomeBetaKey(7))).not.toBeNull();
+});
+
+it("shows the new notice to who had only seen the first version", () => {
+  localStorage.setItem(
+    "superchat:welcomeBeta:v1:7",
+    "2026-11-24T00:00:00.000Z"
+  );
+
+  renderDialog(7);
+
+  expect(screen.getByRole("dialog")).toBeInTheDocument();
+  expect(welcomeBetaKey(7)).toBe("superchat:welcomeBeta:v2:7");
 });
