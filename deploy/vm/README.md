@@ -54,7 +54,7 @@ sudo /opt/zap-komunick/bin/importar.sh production /root/superchat-pacote-ensaio 
 ```
 
 O ensaio é um projeto separado (`superchatensaio`), sem domínio, sem saída para a internet, sem sessão de WhatsApp e
-sem a fila de agendamentos. Responde em `127.0.0.1:5490`. Divergências pequenas nas contagens são normais, porque a
+sem a fila de agendamentos. Responde em `127.0.0.1:5495`. Divergências pequenas nas contagens são normais, porque a
 origem continuou gravando. Anote o tempo: ele dá o tamanho da parada. Depois remova e apague o pacote:
 
 ```sh

@@ -61,7 +61,7 @@ chmod 600 "$dir/.env" "$dir/.env-backend"
 
 if [ "$modo" = --ensaio ]; then
   : > "$dir/ENSAIO"
-  n=240; porta=5490; [ "$ambiente" = development ] && { n=242; porta=5491; }
+  n=240; porta=5495; [ "$ambiente" = development ] && { n=242; porta=5496; }
   definir "$dir/.env" ZK_PERFIL_TRUST_PROXY "$(valor "$dir/.env" ZK_FRONTEND_INTERNAL_IP)/32"
   definir "$dir/.env" COMPOSE_PROJECT_NAME "$proj"
   definir "$dir/.env" ZK_HTTP_PORT "$porta"

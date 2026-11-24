@@ -18,7 +18,7 @@ livre=$(df -Pk /var/lib/docker 2>/dev/null | awk 'NR==2{print int($4/1048576)}')
 mem=$(awk '/MemAvailable/{print int($2/1024)}' /proc/meminfo); [ "$mem" -ge 4096 ] && ok "memoria ${mem} MB livres" || aviso "memoria ${mem} MB livres: o build usa perto de 4 GB"
 timedatectl show -p NTPSynchronized --value 2>/dev/null | grep -q yes && ok "relogio sincronizado" || aviso "relogio sem NTP: o WhatsApp recusa relogio errado"
 
-for p in 5480 5481; do ss -ltnH "sport = :$p" 2>/dev/null | grep -q . && erro "porta $p ocupada" || ok "porta $p livre"; done
+for p in 5480 5481 5495 5496; do ss -ltnH "sport = :$p" 2>/dev/null | grep -q . && erro "porta $p ocupada" || ok "porta $p livre"; done
 redes=$(docker network ls -q 2>/dev/null | xargs -r docker network inspect -f '{{.Name}} {{range .IPAM.Config}}{{.Subnet}} {{end}}' 2>/dev/null)
 for n in 240 241 242 243 249 250 251 252; do
   grep -qE " 172\.29\.$n\." <<<"$redes" && erro "rede 172.29.$n.0/28 em uso: $(grep -E " 172\.29\.$n\." <<<"$redes" | head -1)"
