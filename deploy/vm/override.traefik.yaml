@@ -8,7 +8,9 @@ services:
       - "traefik.docker.network=${ZK_INGRESS_NETWORK:?}"
       - "traefik.http.routers.http-${COMPOSE_PROJECT_NAME:?}.entryPoints=http"
       - "traefik.http.routers.http-${COMPOSE_PROJECT_NAME:?}.rule=Host(`${ZK_PUBLIC_HOST:?}`)"
-      - "traefik.http.routers.http-${COMPOSE_PROJECT_NAME:?}.middlewares=redirect-to-https"
+      # middleware proprio: nem todo Traefik tem o redirect-to-https do Coolify
+      - "traefik.http.middlewares.https-${COMPOSE_PROJECT_NAME:?}.redirectscheme.scheme=https"
+      - "traefik.http.routers.http-${COMPOSE_PROJECT_NAME:?}.middlewares=https-${COMPOSE_PROJECT_NAME:?}"
       - "traefik.http.routers.https-${COMPOSE_PROJECT_NAME:?}.entryPoints=https"
       - "traefik.http.routers.https-${COMPOSE_PROJECT_NAME:?}.rule=Host(`${ZK_PUBLIC_HOST:?}`)"
       - "traefik.http.routers.https-${COMPOSE_PROJECT_NAME:?}.tls=true"

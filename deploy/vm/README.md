@@ -32,7 +32,7 @@ sudo bash deploy/vm/instalar.sh
 ```
 
 - Com **Traefik** (o do Coolify, por exemplo), informe a rede Docker e a faixa IPv4 dela. O Traefik precisa ter o
-  resolvedor `letsencrypt`, os pontos de entrada `http` e `https` e o middleware `redirect-to-https`.
+  resolvedor `letsencrypt` e os pontos de entrada `http` e `https`.
 - Com **Caddy** no host, use os fragmentos `deploy/arm07/Caddyfile.*`. O sistema responde em `127.0.0.1:5480`
   (produção) e `127.0.0.1:5481` (homologação).
 - Libere 80 e 443 no firewall da VM e na rede da nuvem.
