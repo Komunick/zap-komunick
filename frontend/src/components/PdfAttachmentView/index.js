@@ -74,6 +74,10 @@ function PdfAttachmentView({ blob, fileName }) {
   const classes = useStyles();
   const viewportRef = useRef(null);
   const canvasRef = useRef(null);
+  // Zap Komunick: last width taken from the view, and whether a page is being
+  // drawn (the view is then at its minimum height). See the measure below.
+  const measuredRef = useRef(null);
+  const drawingRef = useRef(true);
   const [documentState, setDocumentState] = useState(null);
   const [loadState, setLoadState] = useState(null);
   const [renderState, setRenderState] = useState(null);
@@ -88,20 +92,38 @@ function PdfAttachmentView({ blob, fileName }) {
 
   useEffect(() => {
     const viewport = viewportRef.current;
-    const measure = () => {
+    const measure = fromWindow => {
       const measured = viewport?.getBoundingClientRect().width;
-      if (Number.isFinite(measured) && measured > 0) {
-        setWidth(Math.max(1, Math.floor(measured) - 32));
+      if (!Number.isFinite(measured) || measured <= 0) return;
+      const next = Math.max(1, Math.floor(measured) - 32);
+      // Zap Komunick: on a short screen the drawn page makes the dialog
+      // scroll, and its scrollbar narrows this view. Drawing again empties
+      // the view, the scrollbar leaves and the old width comes back: following
+      // it draws again, for ever. A wider view seen while a page is being
+      // drawn is that echo, so it waits; the window being resized is not.
+      if (
+        !fromWindow &&
+        drawingRef.current &&
+        measuredRef.current !== null &&
+        next > measuredRef.current
+      ) {
+        return;
       }
+      measuredRef.current = next;
+      setWidth(next);
     };
-    measure();
+    const onObserved = () => measure(false);
+    const onWindowResize = () => measure(true);
+    measure(true);
     const observer =
-      typeof ResizeObserver === "function" ? new ResizeObserver(measure) : null;
+      typeof ResizeObserver === "function"
+        ? new ResizeObserver(onObserved)
+        : null;
     if (observer && viewport) observer.observe(viewport);
-    window.addEventListener("resize", measure);
+    window.addEventListener("resize", onWindowResize);
     return () => {
       observer?.disconnect();
-      window.removeEventListener("resize", measure);
+      window.removeEventListener("resize", onWindowResize);
     };
   }, []);
 
@@ -193,6 +215,7 @@ function PdfAttachmentView({ blob, fileName }) {
       canvas.width = 0;
       canvas.height = 0;
     }
+    drawingRef.current = true;
     if (!pdf) return undefined;
     setRenderState({ pdf, page, status: "loading" });
 
@@ -242,7 +265,10 @@ function PdfAttachmentView({ blob, fileName }) {
           annotationMode: 0
         });
         await rendering.promise;
-        if (!cancelled) setRenderState({ pdf, page, status: "ready" });
+        if (!cancelled) {
+          drawingRef.current = false;
+          setRenderState({ pdf, page, status: "ready" });
+        }
       } catch {
         if (!cancelled) {
           canvas.width = 0;

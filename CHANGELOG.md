@@ -56,6 +56,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- O leitor de PDF não fica mais alternando entre a página e "Carregando PDF…" em telas de pouca altura (notebook,
+  janela pequena ou zoom alto). A barra de rolagem da janela do anexo mudava a largura medida e fazia o leitor
+  redesenhar sem parar.
 - Mensagens enviadas pelo número da empresa fora do SuperChat (outro aplicativo no mesmo número ou o celular) para um
   cliente sem atendimento ativo entram no histórico dele e não abrem mais um atendimento aguardando sem fila. Esses
   atendimentos só apareciam para administradores e travavam o **Novo atendimento** desse cliente. Se o canal tem uma

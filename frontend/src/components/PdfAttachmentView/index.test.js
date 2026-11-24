@@ -197,6 +197,55 @@ test("fits changing container width and bounds zoom at three", async () => {
   await waitFor(() => expect(parseFloat(canvas.style.width)).toBe(304));
 });
 
+// Zap Komunick: on a short screen the drawn page makes the attachment dialog
+// scroll. Its scrollbar narrows the view; drawing again empties the view, the
+// scrollbar leaves and the old width comes back. Following that width back
+// kept the reader between the page and "loading" for ever (24/11/2026).
+test("does not follow the width that comes back while the page is drawn again", async () => {
+  render(<PdfAttachmentView blob={fixtureBlob()} fileName="Fixture.pdf" />);
+  await visiblePage(1);
+  expect(pdfFixture.pdf.getPage).toHaveBeenCalledTimes(1);
+
+  measuredWidth = 623;
+  act(() => observer.callback());
+  measuredWidth = 640;
+  act(() => observer.callback());
+  await visiblePage(1);
+
+  expect(pdfFixture.pdf.getPage).toHaveBeenCalledTimes(2);
+  expect(pdfFixture.pages[0].getViewport).toHaveBeenLastCalledWith({
+    scale: (623 - 32) / 600
+  });
+  // the page is back on screen, and so is the scrollbar: nothing left to do
+  measuredWidth = 623;
+  act(() => observer.callback());
+  expect(pdfFixture.pdf.getPage).toHaveBeenCalledTimes(2);
+});
+
+test("still follows a wider view once the page is on screen, and a window resize at any time", async () => {
+  render(<PdfAttachmentView blob={fixtureBlob()} fileName="Fixture.pdf" />);
+  await visiblePage(1);
+
+  measuredWidth = 832;
+  act(() => observer.callback());
+  await visiblePage(1);
+  expect(pdfFixture.pages[0].getViewport).toHaveBeenLastCalledWith({
+    scale: (832 - 32) / 600
+  });
+
+  // a page being drawn, and the person makes the window larger
+  measuredWidth = 632;
+  act(() => observer.callback());
+  measuredWidth = 932;
+  act(() => {
+    window.dispatchEvent(new Event("resize"));
+  });
+  await visiblePage(1);
+  expect(pdfFixture.pages[0].getViewport).toHaveBeenLastCalledWith({
+    scale: (932 - 32) / 600
+  });
+});
+
 test("limits pathological page dimensions and high DPR to eight million backing pixels", async () => {
   pdfFixture = fixturePdf({ width: 20000, height: 10000 });
   getDocument.mockReturnValue(pdfFixture.task);
