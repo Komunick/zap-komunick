@@ -2,6 +2,7 @@ import { Sequelize, Op } from "sequelize";
 import sequelize from "../../database";
 import Contact from "../../models/Contact";
 import User from "../../models/User";
+import nameMatches from "../../helpers/NameSearch";
 
 interface Request {
   searchParam?: string;
@@ -45,6 +46,7 @@ const ListContactsService = async ({
           }
         )
       },
+      nameMatches("Contact.name", normalizedSearchParam),
       { number: { [Op.like]: `%${normalizedSearchParam}%` } }
     ],
     companyId: {

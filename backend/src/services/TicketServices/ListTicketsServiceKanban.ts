@@ -12,6 +12,7 @@ import TicketTag from "../../models/TicketTag";
 import { intersection } from "lodash";
 import Whatsapp from "../../models/Whatsapp";
 import { loadTicketViewer } from "./AuthorizeTicketContextService";
+import nameMatches from "../../helpers/NameSearch";
 
 interface Request {
   searchParam?: string;
@@ -133,6 +134,7 @@ const ListTicketsServiceKanban = async ({
             `%${sanitizedSearchParam}%`
           )
         },
+        nameMatches("contact.name", sanitizedSearchParam),
         { "$contact.number$": { [Op.like]: `%${sanitizedSearchParam}%` } },
         {
           "$message.body$": where(

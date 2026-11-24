@@ -58,6 +58,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- A busca acha o cliente mesmo quando o nome tem pontuação. Digitar `jb fraga` encontra `J.B. Fraga`, e `davila`
+  encontra `D'Ávila`: pontos, traços, apóstrofos, parênteses e espaços deixam de contar, em Contatos, na busca de
+  Atendimentos, no Kanban e no `Ctrl K`. A busca de Atendimentos também passa a ignorar acentos no nome.
 - A barra de envio de anexos segue o tema. No modo escuro ela era quase branca e o nome do arquivo não aparecia.
 - Conexão de WhatsApp que parece aberta e não recebe mais nada:
   - um download interno cortado ou parado por 60 s agora dá erro. Antes ele esperava para sempre e prendia a fila

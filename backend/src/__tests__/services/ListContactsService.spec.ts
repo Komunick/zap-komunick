@@ -45,4 +45,15 @@ describe("ListContactsService search", () => {
     expect(sql).toContain(`LOWER(UNACCENT("Contact"."name")) LIKE`);
     expect(sql).toContain(`UNACCENT('joão')`);
   });
+
+  it("also finds the name when punctuation and spacing differ", async () => {
+    const sql = await whereClauseFor("J.B. Fraga");
+
+    expect(sql).toContain(
+      `OR STRPOS(REGEXP_REPLACE(LOWER(UNACCENT("Contact"."name")),`
+    );
+    expect(sql).toContain(
+      `NULLIF(REGEXP_REPLACE(LOWER(UNACCENT('j.b. fraga')),`
+    );
+  });
 });
