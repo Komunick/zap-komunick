@@ -21,6 +21,12 @@ import {
   supportAttachmentFile,
   supportSummary
 } from "../services/SupportServices/SupportTicketService";
+import {
+  revokeSupportAlertToken,
+  rotateSupportAlertToken,
+  supportAlertFeed
+} from "../services/SupportServices/SupportAlertService";
+import { supportAlertTokenOf } from "../helpers/SupportAlert";
 import { logger } from "../utils/logger";
 
 // Zap Komunick: support tickets (docs/PRD.md, RF-030).
@@ -182,4 +188,38 @@ export const attachment = async (
       error ? reject(error) : resolve()
     );
   });
+};
+
+// Zap Komunick: Windows alert of the support desk. The feed is read with the
+// alert key, without a session; the key is managed by super administrators.
+const requireSuper = (req: Request): void => {
+  if (req.user.isSuper !== true) throw new AppError("ERR_NO_PERMISSION", 403);
+};
+
+export const alerts = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  res.setHeader("Cache-Control", "no-store");
+  return res.json(
+    await supportAlertFeed(supportAlertTokenOf(req.headers.authorization))
+  );
+};
+
+export const rotateAlertToken = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  requireSuper(req);
+  res.setHeader("Cache-Control", "no-store");
+  return res.status(201).json({ token: await rotateSupportAlertToken() });
+};
+
+export const revokeAlertToken = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  requireSuper(req);
+  await revokeSupportAlertToken();
+  return res.status(204).send();
 };

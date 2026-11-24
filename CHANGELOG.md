@@ -24,6 +24,12 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   prevalece sobre a preferência de assinatura do navegador e mantém o acesso por setor.
 - Na tela de atendimento, um botão no cabeçalho, ao lado de Finalizar, recolhe e reabre o painel do cliente.
   Recolhido, a conversa ocupa a largura toda. O SuperChat lembra a escolha de cada usuário neste navegador.
+- A mensagem de boas-vindas passa a destacar a abertura de chamado: um bloco "Encontrou uma falha? Abra um chamado."
+  com o passo a passo, um incentivo a relatar mesmo as falhas pequenas, e **Abrir um chamado** como botão principal.
+  Quem já tinha fechado a mensagem anterior vê a nova uma vez (RF-030).
+- Alerta de chamados no Windows de quem atende: um programa que roda escondido, consulta a fila a cada 30 segundos e,
+  quando chega chamado novo ou mensagem nova de um solicitante, mostra um aviso do Windows e apita, mesmo com o
+  navegador fechado. Usa uma chave própria, que só lê essa lista (`deploy/alerta-suporte-windows`, RF-030).
 - Arrastar arquivos para anexar passa a valer em todas as conversas. No Chat interno, soltar um ou mais arquivos em
   qualquer ponto da conversa os deixa prontos para enviar, somados aos já escolhidos. No Suporte, o arquivo pode ser
   solto em qualquer ponto do chamado, e não só no campo de texto. As duas telas mostram "Solte os arquivos para

@@ -30,6 +30,18 @@ const upload = (req: Request, res: Response, next: NextFunction): void => {
   });
 };
 
+// Read with the alert key, not with a session (helpers/SupportAlert.ts).
+supportRoutes.get("/support/alerts", SupportController.alerts);
+supportRoutes.post(
+  "/support/alert-token",
+  isAuth,
+  SupportController.rotateAlertToken
+);
+supportRoutes.delete(
+  "/support/alert-token",
+  isAuth,
+  SupportController.revokeAlertToken
+);
 supportRoutes.get("/support/summary", isAuth, SupportController.summary);
 supportRoutes.get("/support/tickets", isAuth, SupportController.index);
 supportRoutes.post("/support/tickets", isAuth, upload, SupportController.store);

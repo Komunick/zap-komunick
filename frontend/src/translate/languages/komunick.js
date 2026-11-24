@@ -4085,11 +4085,19 @@ pt.welcomeBeta = {
   badge: "Versão beta",
   intro:
     "O SuperChat está em versão beta. O sistema ainda está em desenvolvimento, então podem aparecer erros, bugs e falhas durante o uso.",
+  highlightTitle: "Encontrou uma falha? Abra um chamado.",
   report:
-    "Encontrou algum problema? Abra um chamado na aba Suporte, no menu. Você pode anexar imagens, vídeos ou PDF e conversar com a equipe por lá.",
+    "Qualquer erro, travamento ou comportamento estranho pode e deve virar um chamado de suporte. Leva menos de um minuto:",
+  stepOpen: "Clique em Suporte, no menu, e em Abrir chamado.",
+  stepDescribe:
+    "Conte o que aconteceu e anexe um print, um vídeo ou um PDF, se tiver.",
+  stepFollow:
+    "Acompanhe a resposta da equipe ali mesmo, na conversa do chamado.",
+  encourage:
+    "Não espere a falha se repetir nem ache que ela é pequena demais para relatar. Na dúvida, abra o chamado: é pelo seu relato que a equipe fica sabendo do problema.",
   thanks:
-    "Cada chamado ajuda a corrigir o sistema mais rápido. Obrigado por participar desta fase.",
-  confirm: "Entendi",
+    "Cada chamado ajuda a corrigir o sistema mais rápido, para você e para todos os colegas. Obrigado por participar desta fase.",
+  confirm: "Agora não",
   openReport: "Abrir um chamado"
 };
 en.welcomeBeta = {
@@ -4097,11 +4105,19 @@ en.welcomeBeta = {
   badge: "Beta version",
   intro:
     "SuperChat is in beta. The system is still being developed, so errors, bugs and failures may show up while you use it.",
+  highlightTitle: "Found a problem? Open a ticket.",
   report:
-    "Found a problem? Open a ticket in the Support tab in the menu. You can attach images, videos or PDFs and talk to the team there.",
+    "Any error, freeze or odd behaviour can and should become a support ticket. It takes less than a minute:",
+  stepOpen: "Click Support in the menu, then Open ticket.",
+  stepDescribe:
+    "Say what happened and attach a screenshot, a video or a PDF if you have one.",
+  stepFollow:
+    "Follow the answer of the team right there, in the ticket conversation.",
+  encourage:
+    "Do not wait for the problem to happen again, and do not think it is too small to report. When in doubt, open the ticket: your report is how the team learns about the problem.",
   thanks:
-    "Every ticket helps us fix the system faster. Thank you for taking part in this phase.",
-  confirm: "Got it",
+    "Every ticket helps us fix the system faster, for you and for all your colleagues. Thank you for taking part in this phase.",
+  confirm: "Not now",
   openReport: "Open a ticket"
 };
 es.welcomeBeta = {
@@ -4109,11 +4125,19 @@ es.welcomeBeta = {
   badge: "Versión beta",
   intro:
     "SuperChat está en versión beta. El sistema todavía está en desarrollo, así que pueden aparecer errores, bugs y fallos durante el uso.",
+  highlightTitle: "¿Encontraste un fallo? Abre un ticket.",
   report:
-    "¿Encontraste algún problema? Abre un ticket en la pestaña Soporte, en el menú. Puedes adjuntar imágenes, videos o PDF y conversar con el equipo allí.",
+    "Cualquier error, bloqueo o comportamiento extraño puede y debe convertirse en un ticket de soporte. Lleva menos de un minuto:",
+  stepOpen: "Haz clic en Soporte, en el menú, y en Abrir ticket.",
+  stepDescribe:
+    "Cuenta lo que pasó y adjunta una captura, un video o un PDF, si tienes.",
+  stepFollow:
+    "Sigue la respuesta del equipo allí mismo, en la conversación del ticket.",
+  encourage:
+    "No esperes a que el fallo se repita ni pienses que es demasiado pequeño para reportarlo. Ante la duda, abre el ticket: por tu reporte el equipo se entera del problema.",
   thanks:
-    "Cada ticket ayuda a corregir el sistema más rápido. Gracias por participar en esta etapa.",
-  confirm: "Entendido",
+    "Cada ticket ayuda a corregir el sistema más rápido, para ti y para todos tus compañeros. Gracias por participar en esta etapa.",
+  confirm: "Ahora no",
   openReport: "Abrir un ticket"
 };
 
