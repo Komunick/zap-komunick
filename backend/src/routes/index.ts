@@ -45,7 +45,7 @@ import metricsRoutes from "./metricsRoutes";
 import securityRoutes from "./securityRoutes";
 import kanbanRoutes from "./kanbanRoutes";
 import closeReasonRoutes from "./closeReasonRoutes";
-import errorReportRoutes from "./errorReportRoutes";
+import supportRoutes from "./supportRoutes";
 
 const routes = Router();
 
@@ -89,7 +89,7 @@ routes.use(metricsRoutes);
 routes.use(securityRoutes);
 routes.use(kanbanRoutes);
 routes.use(closeReasonRoutes);
-routes.use(errorReportRoutes);
+routes.use(supportRoutes);
 routes.use(credentialRoutes);
 routes.use(assistantRoutes);
 routes.use(integratedAssistantRoutes);

@@ -913,42 +913,58 @@ Dado um atendimento aguardando na fila Fiscal com o nome da Yasmin,
 quando a Yasmin inicia conversa com esse cliente pela fila Fiscal,
 então o atendimento abre em andamento com ela, sem aviso de conversa em aberto.
 
-### RF-030 — Aviso de versão beta e reporte de erros
+### RF-030 — Aviso de versão beta e chamados de suporte
 
 **Pedido (24/11/2026):** avisar quem entra no SuperChat de que o sistema está em versão beta e pode apresentar erros,
-e dar um lugar para reportar esses erros, com imagens, vídeos ou PDF, que chegue por e-mail à Komunick.
+e dar um lugar para pedir suporte dentro do próprio sistema: o usuário abre um chamado, anexa imagens, vídeos ou PDF, e
+conversa ao vivo com o superadministrador, que vê e responde todos os chamados. O modelo é a central de chamados do
+Brazil TMS. Nada é enviado por e-mail.
 
 **Regras importantes:**
 - Depois do login, cada usuário vê uma vez a mensagem de boas-vindas: o sistema está em beta, podem ocorrer erros, bugs
-  e falhas, e os erros devem ser enviados pela aba **Reportar erro**. A resposta fica guardada no navegador, por
-  usuário; em outro navegador ou computador a mensagem aparece de novo.
-- **Reportar erro** fica no menu de todos os perfis, na aba "Mais" do layout Foco e no `Ctrl K`.
-- O reporte pede um resumo e a descrição do que aconteceu; a tela onde aconteceu é opcional. Aceita até 5 anexos e
-  15 MB no total, só imagem (PNG, JPEG, GIF, WebP), vídeo (MP4, WebM, MOV) ou PDF. Os anexos podem ser escolhidos,
-  arrastados ou colados (`Ctrl+V` de um print).
-- O servidor confere o tipo pelo conteúdo do arquivo, e não pelo nome. Arquivo de outro tipo recusa o reporte inteiro.
-- Cada reporte é gravado antes de qualquer e-mail, com quem enviou, a empresa, o navegador e o tamanho da tela. O
-  e-mail vai para o endereço de `ERROR_REPORT_EMAIL`, com os anexos e com resposta direta para quem reportou.
-- Sem servidor de e-mail configurado, ou se o envio falhar, o reporte fica guardado e o sistema tenta de novo a cada
-  10 minutos (depois de 6 falhas seguidas, a cada 6 horas). Os anexos são apagados do servidor quando o e-mail sai.
-- Cada usuário envia no máximo 10 reportes por hora.
+  e falhas, e os problemas devem ser enviados pela aba **Suporte**. A resposta fica guardada no navegador, por usuário;
+  em outro navegador ou computador a mensagem aparece de novo.
+- **Suporte** fica no menu de todos os perfis, na aba "Mais" do layout Foco e no `Ctrl K`. O menu mostra quantos
+  chamados têm novidade para quem está logado.
+- Qualquer usuário abre chamado, numerado `CH-000123`: título (obrigatório), categoria (Erro numa tela, Dado
+  incorreto, Dúvida de uso, Permissão de acesso, Sugestão de melhoria, Outro), prioridade (Baixa, Média, Alta; "Parou
+  meu trabalho" vira Crítica), tela onde aconteceu e descrição. Aceita até 5 anexos e 15 MB por envio, só imagem (PNG,
+  JPEG, GIF, WebP), vídeo (MP4, WebM, MOV) ou PDF, escolhidos, arrastados ou colados com `Ctrl+V`.
+- O servidor confere o tipo do anexo pelo conteúdo do arquivo, e não pelo nome. Os anexos ficam no volume privado e só
+  saem pela rota autenticada do chamado a que pertencem; abrem dentro do sistema.
+- Cada usuário vê só os próprios chamados. Chamado de outra pessoa responde como inexistente. Quem atende é o
+  superadministrador da instalação, que vê a fila com os chamados de todas as empresas, o e-mail do solicitante e os
+  dados técnicos (navegador, tamanho da tela, endereço).
+- Situações: **Aberto**, **Em atendimento**, **Aguardando o solicitante** (para o dono do chamado, "Aguardando você"),
+  **Concluído** e **Cancelado**.
+  - O suporte assume (vira responsável), pede informação, retoma, conclui e reabre. Pedir informação, concluir e
+    cancelar exigem um texto, que entra na conversa.
+  - A primeira resposta do suporte num chamado aberto já assume o chamado.
+  - O solicitante só cancela enquanto o chamado está Aberto. Quando ele responde um pedido de informação, o chamado
+    volta a Em atendimento.
+  - Escrever num chamado concluído ou cancelado reabre o chamado, sem prazo. Com responsável, ele volta a Em
+    atendimento; sem responsável, volta para a fila.
+- A conversa é ao vivo: o servidor avisa, pelo canal de tempo real, qual chamado mudou, e cada tela busca de novo só o
+  que aquele usuário pode ver. As mudanças de situação aparecem na conversa, com quem fez e quando.
+- Limites: 10 chamados e 120 mensagens por usuário por hora.
+- Os reportes de erro gravados pela primeira versão desta função viram chamados, com o mesmo número.
 
 **Cenário de sucesso:**
 
-Dado uma atendente que entra no SuperChat pela primeira vez depois desta versão,
-quando ela fecha a mensagem de boas-vindas, abre **Reportar erro**, descreve o problema e anexa um print,
-então vê "Reporte enviado" com o número do reporte, e a Komunick recebe o e-mail com a descrição, os dados dela e o
-print anexado.
+Dado uma atendente que abriu o chamado CH-000012 com um print,
+quando o superadministrador responde na fila de chamados,
+então o chamado passa a Em atendimento com ele como responsável, a resposta aparece na conversa dela sem recarregar a
+página e o menu Suporte mostra a novidade. Depois de concluído, se ela escrever "voltou a acontecer", o chamado é
+reaberto com o mesmo responsável.
 
 ## 4. Restrições e cuidados
 
 **Uso e acesso:** navegador, perfis do Ticketz (admin e usuário). Painel de SLA, carteira, horário de acesso, motivos
 de finalização e a exigência de motivo são geridos só por administradores.
 
-**Dados e integrações:** dados de contatos e mensagens dos clientes das empresas usuárias. A única saída nova é o
-e-mail do reporte de erro (RF-030): o texto que o usuário escreveu, os anexos que ele escolheu, seu nome, e-mail e
-empresa vão para o endereço de suporte configurado pelo operador, pelo servidor SMTP que ele indicar. Um print pode
-mostrar dados de clientes; por isso o destino é só a equipe que dá suporte ao sistema.
+**Dados e integrações:** dados de contatos e mensagens dos clientes das empresas usuárias. Nenhum dado novo sai do
+sistema; nenhuma integração externa nova. Os chamados de suporte (RF-030) ficam dentro do SuperChat: um print anexado
+pode mostrar dados de clientes, e por isso só o dono do chamado e o superadministrador da instalação o veem.
 
 **Privacidade:** o sistema não pede a localização do navegador e não envia IP, coordenadas nem dados de uso a terceiros por
 conta própria. O país do campo de telefone vem do idioma do navegador. Saem de cena a geolocalização e o

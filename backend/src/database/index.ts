@@ -42,7 +42,8 @@ import OutOfTicketMessage from "../models/OutOfTicketMessages";
 import Translation from "../models/Translation";
 import Wavoip from "../models/Wavoip";
 import CloseReason from "../models/CloseReason";
-import ErrorReport from "../models/ErrorReport";
+import SupportTicket from "../models/SupportTicket";
+import SupportMessage from "../models/SupportMessage";
 import AuditLog from "../models/AuditLog";
 import CompanyCredential from "../models/CompanyCredential";
 import ContactExternalClientLink from "../models/ContactExternalClientLink";
@@ -103,7 +104,8 @@ const models = [
   Translation,
   Wavoip,
   CloseReason,
-  ErrorReport,
+  SupportTicket,
+  SupportMessage,
   AuditLog,
   CompanyCredential,
   ContactExternalClientLink,
