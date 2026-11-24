@@ -4075,6 +4075,181 @@ es.companyMessageSignature = {
   loading: "Consultando la configuración de firma."
 };
 
+// Zap Komunick: beta welcome and error report (RF-030).
+pt.mainDrawer.listItems.errorReport = "Reportar erro";
+en.mainDrawer.listItems.errorReport = "Report a problem";
+es.mainDrawer.listItems.errorReport = "Reportar error";
+
+pt.welcomeBeta = {
+  title: "Boas-vindas ao SuperChat",
+  badge: "Versão beta",
+  intro:
+    "O SuperChat está em versão beta. O sistema ainda está em desenvolvimento, então podem aparecer erros, bugs e falhas durante o uso.",
+  report:
+    "Encontrou algum problema? Envie pela aba Reportar erro, no menu. Você pode anexar imagens, vídeos ou PDF que mostrem o que aconteceu.",
+  thanks:
+    "Cada reporte ajuda a corrigir o sistema mais rápido. Obrigado por participar desta fase.",
+  confirm: "Entendi",
+  openReport: "Reportar um erro"
+};
+en.welcomeBeta = {
+  title: "Welcome to SuperChat",
+  badge: "Beta version",
+  intro:
+    "SuperChat is in beta. The system is still being developed, so errors, bugs and failures may show up while you use it.",
+  report:
+    "Found a problem? Send it through the Report a problem tab in the menu. You can attach images, videos or PDFs that show what happened.",
+  thanks:
+    "Every report helps us fix the system faster. Thank you for taking part in this phase.",
+  confirm: "Got it",
+  openReport: "Report a problem"
+};
+es.welcomeBeta = {
+  title: "Te damos la bienvenida a SuperChat",
+  badge: "Versión beta",
+  intro:
+    "SuperChat está en versión beta. El sistema todavía está en desarrollo, así que pueden aparecer errores, bugs y fallos durante el uso.",
+  report:
+    "¿Encontraste algún problema? Envíalo desde la pestaña Reportar error, en el menú. Puedes adjuntar imágenes, videos o PDF que muestren lo que pasó.",
+  thanks:
+    "Cada reporte ayuda a corregir el sistema más rápido. Gracias por participar en esta etapa.",
+  confirm: "Entendido",
+  openReport: "Reportar un error"
+};
+
+pt.errorReport = {
+  title: "Reportar erro",
+  intro:
+    "O SuperChat está em versão beta. Conte o que aconteceu e, se puder, anexe um print, um vídeo ou um PDF. O reporte vai direto para a equipe da Komunick.",
+  fields: {
+    title: "Resumo do problema",
+    titleHelp: "Ex.: a conversa não abre quando clico no cliente",
+    location: "Em qual tela aconteceu? (opcional)",
+    locationHelp: "Ex.: Atendimentos, Contatos, Kanban",
+    description: "O que aconteceu?",
+    descriptionHelp:
+      "Diga o que você estava fazendo, o que esperava e o que apareceu."
+  },
+  attachments: {
+    title: "Anexos (opcional)",
+    drop: "Arraste os arquivos para cá ou cole um print com Ctrl+V",
+    choose: "Escolher arquivos",
+    limits:
+      "Imagens, vídeos ou PDF. Até {{count}} arquivos e {{size}} MB no total.",
+    remove: "Remover {{name}}",
+    total: "{{used}} de {{size}} MB"
+  },
+  errors: {
+    required: "Preencha o resumo e conte o que aconteceu.",
+    type: "{{name}} não é imagem, vídeo nem PDF.",
+    tooMany: "São no máximo {{count}} arquivos por reporte.",
+    tooLarge: "Os anexos passam de {{size}} MB no total.",
+    request: "Não foi possível enviar o reporte. Tente de novo em instantes."
+  },
+  submit: "Enviar reporte",
+  sending: "Enviando…",
+  sentTitle: "Reporte enviado",
+  sent: "Recebemos o reporte nº {{id}}. Obrigado por ajudar a melhorar o SuperChat.",
+  another: "Enviar outro reporte"
+};
+en.errorReport = {
+  title: "Report a problem",
+  intro:
+    "SuperChat is in beta. Tell us what happened and, if you can, attach a screenshot, a video or a PDF. The report goes straight to the Komunick team.",
+  fields: {
+    title: "Summary of the problem",
+    titleHelp: "E.g. the conversation does not open when I click the customer",
+    location: "On which screen did it happen? (optional)",
+    locationHelp: "E.g. Tickets, Contacts, Kanban",
+    description: "What happened?",
+    descriptionHelp:
+      "Say what you were doing, what you expected and what showed up."
+  },
+  attachments: {
+    title: "Attachments (optional)",
+    drop: "Drag files here or paste a screenshot with Ctrl+V",
+    choose: "Choose files",
+    limits:
+      "Images, videos or PDF. Up to {{count}} files and {{size}} MB in total.",
+    remove: "Remove {{name}}",
+    total: "{{used}} of {{size}} MB"
+  },
+  errors: {
+    required: "Fill in the summary and tell us what happened.",
+    type: "{{name}} is not an image, a video or a PDF.",
+    tooMany: "A report takes at most {{count}} files.",
+    tooLarge: "The attachments exceed {{size}} MB in total.",
+    request: "The report could not be sent. Try again in a moment."
+  },
+  submit: "Send report",
+  sending: "Sending…",
+  sentTitle: "Report sent",
+  sent: "We received report no. {{id}}. Thank you for helping improve SuperChat.",
+  another: "Send another report"
+};
+es.errorReport = {
+  title: "Reportar error",
+  intro:
+    "SuperChat está en versión beta. Cuenta lo que pasó y, si puedes, adjunta una captura, un video o un PDF. El reporte llega directo al equipo de Komunick.",
+  fields: {
+    title: "Resumen del problema",
+    titleHelp: "Ej.: la conversación no abre cuando hago clic en el cliente",
+    location: "¿En qué pantalla pasó? (opcional)",
+    locationHelp: "Ej.: Atenciones, Contactos, Kanban",
+    description: "¿Qué pasó?",
+    descriptionHelp: "Di qué estabas haciendo, qué esperabas y qué apareció."
+  },
+  attachments: {
+    title: "Adjuntos (opcional)",
+    drop: "Arrastra los archivos aquí o pega una captura con Ctrl+V",
+    choose: "Elegir archivos",
+    limits:
+      "Imágenes, videos o PDF. Hasta {{count}} archivos y {{size}} MB en total.",
+    remove: "Quitar {{name}}",
+    total: "{{used}} de {{size}} MB"
+  },
+  errors: {
+    required: "Completa el resumen y cuenta lo que pasó.",
+    type: "{{name}} no es imagen, video ni PDF.",
+    tooMany: "Son como máximo {{count}} archivos por reporte.",
+    tooLarge: "Los adjuntos superan {{size}} MB en total.",
+    request: "No se pudo enviar el reporte. Inténtalo de nuevo en un momento."
+  },
+  submit: "Enviar reporte",
+  sending: "Enviando…",
+  sentTitle: "Reporte enviado",
+  sent: "Recibimos el reporte n.º {{id}}. Gracias por ayudar a mejorar SuperChat.",
+  another: "Enviar otro reporte"
+};
+
+Object.assign(pt.backendErrors, {
+  ERR_ERROR_REPORT_INVALID: "Revise o resumo e a descrição do reporte.",
+  ERR_ERROR_REPORT_FILE_TYPE:
+    "Um dos anexos não é imagem, vídeo nem PDF. Remova o arquivo e envie de novo.",
+  ERR_ERROR_REPORT_FILES_TOO_LARGE: "Os anexos passam de 15 MB no total.",
+  ERR_ERROR_REPORT_TOO_MANY_FILES: "São no máximo 5 arquivos por reporte.",
+  ERR_ERROR_REPORT_RATE_LIMIT:
+    "Você enviou muitos reportes em pouco tempo. Tente de novo mais tarde."
+});
+Object.assign(en.backendErrors, {
+  ERR_ERROR_REPORT_INVALID: "Check the summary and the description.",
+  ERR_ERROR_REPORT_FILE_TYPE:
+    "One of the attachments is not an image, a video or a PDF. Remove it and send again.",
+  ERR_ERROR_REPORT_FILES_TOO_LARGE: "The attachments exceed 15 MB in total.",
+  ERR_ERROR_REPORT_TOO_MANY_FILES: "A report takes at most 5 files.",
+  ERR_ERROR_REPORT_RATE_LIMIT:
+    "You sent too many reports in a short time. Try again later."
+});
+Object.assign(es.backendErrors, {
+  ERR_ERROR_REPORT_INVALID: "Revisa el resumen y la descripción del reporte.",
+  ERR_ERROR_REPORT_FILE_TYPE:
+    "Uno de los adjuntos no es imagen, video ni PDF. Quítalo y envía de nuevo.",
+  ERR_ERROR_REPORT_FILES_TOO_LARGE: "Los adjuntos superan 15 MB en total.",
+  ERR_ERROR_REPORT_TOO_MANY_FILES: "Son como máximo 5 archivos por reporte.",
+  ERR_ERROR_REPORT_RATE_LIMIT:
+    "Enviaste muchos reportes en poco tiempo. Inténtalo más tarde."
+});
+
 export const komunickMessages = {
   pt: { translations: pt },
   pt_PT: { translations: pt },

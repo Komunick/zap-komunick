@@ -15,6 +15,7 @@ import { cacheLayer } from "./libs/cache";
 import { registerShutdownTrigger } from "./utils/shutdown";
 import CleanupReplacedContainerService from "./services/DockerServices/CleanupReplacedContainerService";
 import { assertChatMediaReady } from "./services/ChatService/ChatMediaMigrationService";
+import { startErrorReportMailer } from "./services/ErrorReportServices/SendPendingErrorReportsService";
 
 // Hard-exit safety timer for graceful shutdown. Set in preShutdown and cleared
 // in finally so the process can never hang during a restart.
@@ -46,6 +47,7 @@ async function startServer() {
     await Promise.all(sessionPromises);
 
     startQueueProcess();
+    startErrorReportMailer();
     logger.info(`Server started on port: ${process.env.PORT}`);
 
     try {

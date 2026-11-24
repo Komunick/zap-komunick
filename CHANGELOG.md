@@ -6,6 +6,13 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Adicionado
 
+- Mensagem de boas-vindas, uma vez por usuário, avisando que o SuperChat está em versão beta e que erros devem ser
+  enviados pela nova aba **Reportar erro** (RF-030).
+- **Reportar erro**, no menu de todos os perfis: resumo, descrição e até 5 anexos (imagem, vídeo ou PDF, 15 MB no
+  total), que podem ser escolhidos, arrastados ou colados com `Ctrl+V`. Cada reporte é gravado e enviado por e-mail,
+  com os anexos, para o endereço de `ERROR_REPORT_EMAIL`. O envio depende das variáveis `SMTP_*` do backend
+  (`deploy/env-backend.example`); enquanto elas estiverem vazias os reportes ficam guardados e saem sozinhos depois
+  (RF-030).
 - Pacote para instalar o SuperChat em qualquer VM ARM64 e migrar os dados entre VMs, com ensaio (`deploy/vm`).
 - Antes de enviar imagens, a conversa mostra a prévia de cada uma. Com vários arquivos, miniaturas escolhem qual ver.
 - Quando o cliente já tem atendimento em andamento, o aviso diz com quem está, em que fila, por qual canal e desde

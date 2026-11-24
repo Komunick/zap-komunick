@@ -38,6 +38,7 @@ import { PhoneCall } from "../components/PhoneCall";
 import NotificationsVolume from "../components/NotificationsVolume";
 import UserModal from "../components/UserModal";
 import AboutModal from "../components/AboutModal";
+import WelcomeBetaDialog from "../components/WelcomeBetaDialog";
 import BrandLogo from "../components/BrandLogo";
 import KomunickEndorsement from "../components/KomunickEndorsement";
 import { AuthContext } from "../context/Auth/AuthContext";
@@ -1075,6 +1076,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
         open={aboutModalOpen}
         onClose={() => setAboutModalOpen(false)}
       />
+      <WelcomeBetaDialog userId={user?.id} />
       <CommandPalette
         open={paletteOpen}
         onClose={() => setPaletteOpen(false)}

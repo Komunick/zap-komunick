@@ -63,7 +63,10 @@ Edite os três arquivos:
 
 - `.env`: `POSTGRES_PASSWORD` (obrigatório) e, se a porta 5480 estiver ocupada, `ZK_HTTP_PORT`.
 - `.env-backend-komunick`: `FRONTEND_HOST` já vem `superchat.komunick.com`; preencher `EMAIL_ADDRESS` (login do
-  primeiro administrador) e `ADMIN_PASSWORD`.
+  primeiro administrador) e `ADMIN_PASSWORD`. Para os reportes de erro chegarem por e-mail (RF-030), preencher
+  também `ERROR_REPORT_EMAIL` (quem recebe) e `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` e `MAIL_FROM` (a
+  conta que envia). Sem isso os reportes ficam guardados no banco e saem quando as variáveis forem preenchidas e o
+  backend reiniciado.
 - `.env-frontend-komunick`: `FRONTEND_HOST` já vem `superchat.komunick.com`; no modo B, confira `LETSENCRYPT_EMAIL`.
   Tudo o que está neste arquivo fica público em `/config.json`: nada de senha aqui.
 
