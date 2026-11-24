@@ -59,6 +59,7 @@ import { SocketContext } from "../../context/Socket/SocketContext";
 import { toast } from "react-toastify";
 import { selectAttachments } from "../../helpers/attachmentSelection";
 import TicketAssistant from "../TicketAssistant";
+import MediaSendPreview from "../MediaSendPreview";
 import IntegratedAssistant from "../IntegratedAssistant";
 import useTicketDraft from "../../hooks/useTicketDraft";
 
@@ -116,13 +117,27 @@ const useStyles = makeStyles(theme => ({
   },
 
   viewMediaInputWrapper: {
+    position: "relative",
+    backgroundColor: theme.komunick.composer,
+    color: theme.komunick.text,
+    borderTop: `1px solid ${theme.komunick.composerBorder}`
+  },
+
+  viewMediaBar: {
     display: "flex",
     padding: "10px 13px",
-    position: "relative",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#eee",
-    borderTop: "1px solid rgba(0, 0, 0, 0.12)"
+    gap: 8
+  },
+
+  viewMediaName: {
+    minWidth: 0,
+    overflowWrap: "anywhere"
+  },
+
+  viewMediaIcons: {
+    color: theme.komunick.textSecondary
   },
 
   emojiBox: {
@@ -870,6 +885,7 @@ const MessageInputCustom = props => {
   const classes = useStyles();
 
   const [medias, setMedias] = useState([]);
+  const [selectedMedia, setSelectedMedia] = useState(0);
   // A drop made before this composer existed is not for it.
   const handledDrop = useRef(dropRequest?.id);
   const [inputMessage, setInputMessage] = useTicketDraft(ticketId);
@@ -1001,7 +1017,10 @@ const MessageInputCustom = props => {
         })
       );
     }
-    if (files.length) setMedias(files);
+    if (files.length) {
+      setSelectedMedia(0);
+      setMedias(files);
+    }
   };
 
   const handleChangeMedias = e => {
@@ -1273,38 +1292,44 @@ const MessageInputCustom = props => {
   if (medias.length > 0)
     return (
       <Paper elevation={0} square className={classes.viewMediaInputWrapper}>
-        <IconButton
-          aria-label="cancel-upload"
-          component="span"
-          disabled={disableOption}
-          onClick={e => setMedias([])}
-        >
-          <CancelIcon className={classes.sendMessageIcons} />
-        </IconButton>
+        <MediaSendPreview
+          files={medias}
+          selected={selectedMedia}
+          onSelect={setSelectedMedia}
+        />
+        <div className={classes.viewMediaBar}>
+          <IconButton
+            aria-label="cancel-upload"
+            component="span"
+            disabled={disableOption}
+            onClick={e => setMedias([])}
+          >
+            <CancelIcon className={classes.viewMediaIcons} />
+          </IconButton>
 
-        {loading ? (
-          <div>
-            {/*<CircularProgress className={classes.circleLoading} />*/}
-            <LinearWithValueLabel progress={percentLoading} />
-          </div>
-        ) : (
-          <span>
-            {medias[0]?.name}
-            {medias.length > 1 &&
-              ` ${i18n.t("messagesInput.moreFiles", {
-                count: medias.length - 1
-              })}`}
-            {/* <img src={media.preview} alt=""></img> */}
-          </span>
-        )}
-        <IconButton
-          aria-label="send-upload"
-          component="span"
-          onClick={handleUploadMedia}
-          disabled={disableOption}
-        >
-          <SendIcon className={classes.sendMessageIcons} />
-        </IconButton>
+          {loading ? (
+            <div>
+              {/*<CircularProgress className={classes.circleLoading} />*/}
+              <LinearWithValueLabel progress={percentLoading} />
+            </div>
+          ) : (
+            <span className={classes.viewMediaName}>
+              {medias[selectedMedia]?.name}
+              {medias.length > 1 &&
+                ` ${i18n.t("messagesInput.moreFiles", {
+                  count: medias.length - 1
+                })}`}
+            </span>
+          )}
+          <IconButton
+            aria-label="send-upload"
+            component="span"
+            onClick={handleUploadMedia}
+            disabled={disableOption}
+          >
+            <SendIcon className={classes.viewMediaIcons} />
+          </IconButton>
+        </div>
       </Paper>
     );
   else {
