@@ -924,13 +924,21 @@ a equipe ver o que o cliente falou antes. Primeira etapa: só texto, de todo o h
 - O cliente é encontrado pelo número (com e sem o nono dígito). Quem não existe no SuperChat é criado com o nome do
   ZapContábil. Grupos ficam de fora.
 - Fila e atendente são ligados pelo nome quando existem no SuperChat; senão o atendimento fica sem fila ou sem
-  atendente. A regra "Histórico do cliente para atendentes" (RF-027) vale para eles como para os demais.
-- Anexos entram como texto com o nome do arquivo (📎 nome). Os arquivos ficam para uma segunda etapa.
+  atendente. A regra "Histórico do cliente para atendentes" (RF-027) vale para eles como para os demais. Nome que duas
+  filas ou dois usuários do SuperChat compartilham não é escolhido ao acaso: aparece na simulação como ambíguo, para
+  ser resolvido com um mapa de nomes.
+- Anexos entram como texto com o nome do arquivo (📎 nome). Os arquivos ficam para uma segunda etapa. Respostas e
+  mensagens com link continuam como texto comum.
+- Mensagem importada é só para consulta: não dá para responder citando, encaminhar, editar, apagar nem reagir. O menu
+  da mensagem avisa, e abrir ou tentar uma dessas ações não muda o atendimento importado. Reabrir um atendimento
+  importado, ou responder por ele, usa a conexão padrão, como já acontece com atendimento que ficou sem conexão.
 - Mensagem que o SuperChat já tem (mesmo identificador do WhatsApp, porque os dois sistemas usam o mesmo número) não
   é repetida. Rodar a importação de novo não duplica nada.
 - A importação roda primeiro em simulação, que só conta: atendimentos, mensagens, clientes novos e o que ficaria de
-  fora. O conteúdo das mensagens não aparece em relatório nem sai do servidor. O arquivo exportado do ZapContábil
-  fica fora do repositório e é apagado depois da importação.
+  fora, com o motivo (sem data válida, vazia ou sem identificador). O conteúdo das mensagens não aparece em relatório
+  nem sai do servidor. O arquivo exportado do ZapContábil fica fora do repositório e é apagado depois da importação.
+- Para gravar, é obrigatório informar a data em que o SuperChat passou a receber o número (ou declarar que os dois
+  sistemas nunca receberam ao mesmo tempo). Opção digitada errado interrompe a execução em vez de ser ignorada.
 
 **Cenário de sucesso:**
 

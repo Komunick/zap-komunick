@@ -95,6 +95,9 @@ const MessageOptionsMenu = ({
   };
 
   const isSticker = data?.message && "stickerMessage" in data.message;
+  // Zap Komunick: history imported from the previous system (RF-029) has no
+  // WhatsApp payload, so no action applies to it
+  const isImported = !!message.id && !message.dataJson && !message.remoteJid;
 
   return (
     <>
@@ -139,7 +142,12 @@ const MessageOptionsMenu = ({
         open={menuOpen}
         onClose={closeMenu}
       >
-        <div>
+        {isImported && (
+          <MenuItem disabled>
+            {i18n.t("messageOptionsMenu.importedReadOnly")}
+          </MenuItem>
+        )}
+        <div hidden={isImported}>
           <div className={classes.flexContainer}>
             {mostUsedEmojis.map((emoji, index) => (
               <div

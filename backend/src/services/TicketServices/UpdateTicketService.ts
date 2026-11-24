@@ -7,6 +7,7 @@ import ShowTicketService from "./ShowTicketService";
 import SendWhatsAppMessage from "../WbotServices/SendWhatsAppMessage";
 import FindOrCreateATicketTrakingService from "./FindOrCreateATicketTrakingService";
 import GetTicketWbot from "../../helpers/GetTicketWbot";
+import BindDefaultWhatsapp from "../../helpers/BindDefaultWhatsapp";
 import IsWhatsAppQueueLinked from "../../helpers/IsWhatsAppQueueLinked";
 import { startQueue, verifyMessage } from "../WbotServices/wbotMessageListener";
 import AppError from "../../errors/AppError";
@@ -201,6 +202,14 @@ const UpdateTicketService = async ({
 
     if (ticket.channel === "whatsapp" && status === "open") {
       try {
+        // Zap Komunick: a ticket without connection takes the default one
+        // when it is accepted or reopened (reading it no longer does, RF-029)
+        await BindDefaultWhatsapp(ticket).catch(err =>
+          logger.warn(
+            { ticketId, message: err?.message },
+            "Could not bind the default connection."
+          )
+        );
         await SetTicketMessagesAsRead(ticket);
       } catch (err) {
         logger.error(

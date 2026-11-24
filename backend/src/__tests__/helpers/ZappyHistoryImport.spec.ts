@@ -3,6 +3,7 @@ import {
   ImportContext,
   importedMessageBody,
   importedMessageId,
+  indexByName,
   numberCandidates,
   planImport
 } from "../../helpers/ZappyHistoryImport";
@@ -74,6 +75,42 @@ describe("importedMessageBody", () => {
       )
     ).toBe("📎 audio");
   });
+
+  it("keeps replies, links and other text types as text", () => {
+    ["extendedTextMessage", "conversation", "chat", "vcard", "text"].forEach(
+      mediaType =>
+        expect(
+          importedMessageBody(message("1", 0, { mediaType, body: "segue" }))
+        ).toBe("segue")
+    );
+  });
+
+  it("knows the attachment types of the previous system", () => {
+    ["imageMessage", "application/pdf", "ptt", "documentWithCaptionMessage"]
+      .map(mediaType =>
+        importedMessageBody(message("1", 0, { mediaType, body: "" }))
+      )
+      .forEach(body => expect(body.startsWith("📎 ")).toBe(true));
+    // a file name alone is enough
+    expect(
+      importedMessageBody(
+        message("1", 0, { mediaType: "", fileName: "nota.xml", body: "" })
+      )
+    ).toBe("📎 nota.xml");
+  });
+});
+
+describe("indexByName", () => {
+  it("leaves out a name two rows share, instead of picking one", () => {
+    const { idByName, ambiguous } = indexByName([
+      { id: 12, name: "Carol" },
+      { id: 31, name: " carol " },
+      { id: 7, name: "Yasmin" }
+    ]);
+    expect(idByName.get("carol")).toBeUndefined();
+    expect(idByName.get("yasmin")).toBe(7);
+    expect(Array.from(ambiguous)).toEqual(["carol"]);
+  });
 });
 
 describe("planImport", () => {
@@ -96,7 +133,8 @@ describe("planImport", () => {
       messages: 2,
       alreadyPresent: 0,
       newContacts: 0,
-      afterCutoffWithoutWhatsappId: 0
+      afterCutoffWithoutWhatsappId: 0,
+      dropped: { invalidDate: 0, empty: 0, noId: 0 }
     });
     const [ticket] = plan.tickets;
     expect(ticket.contact).toEqual({ id: 10 });
@@ -189,6 +227,24 @@ describe("planImport", () => {
       "invalid-number",
       "no-messages"
     ]);
+    // what the export has and is not imported is counted, never silent
+    expect(plan.totals.dropped).toEqual({ invalidDate: 1, empty: 1, noId: 0 });
+  });
+
+  it("counts messages without any id", () => {
+    const plan = planImport(
+      exportOf([
+        {
+          externalId: "t1",
+          contactNumber: "5571999990001",
+          createdAt: "2026-10-01T12:00:00.000Z",
+          messages: [message("ok", 0), message(" ", 1)]
+        }
+      ]),
+      context()
+    );
+    expect(plan.totals.messages).toBe(1);
+    expect(plan.totals.dropped).toEqual({ invalidDate: 0, empty: 0, noId: 1 });
   });
 
   it("skips LID, group ids without the flag and numbers without country code", () => {
@@ -299,8 +355,15 @@ describe("planImport", () => {
   });
 
   it("refuses a file that is not a ZapContábil export", () => {
-    expect(() =>
-      planImport({ source: "other" } as unknown as HistoryExport, context())
-    ).toThrow("ERR_IMPORT_INVALID_EXPORT");
+    [
+      { source: "other" },
+      { Fiscal: 4 },
+      { source: "zapcontabil" },
+      null
+    ].forEach(data =>
+      expect(() =>
+        planImport(data as unknown as HistoryExport, context())
+      ).toThrow("ERR_IMPORT_INVALID_EXPORT")
+    );
   });
 });

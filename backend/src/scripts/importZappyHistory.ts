@@ -3,23 +3,43 @@
 //
 //   node dist/scripts/importZappyHistory.js --company=2 --file=/path/export.json
 //     [--queue-map=/path/queues.json]  {"Nome no ZapContábil": <queueId>}
+//     [--user-map=/path/users.json]    {"Nome no ZapContábil": <userId>}
 //     [--default-queue=<queueId>]       queue for names not in the map
 //     [--until=<ISO date>]              SuperChat receives the number since
+//     [--no-until]                      the two systems never overlapped
 //     [--allow-no-queue]                accept tickets without queue
 //     [--execute]                       writes; without it, dry run only
+//
+// --execute needs --until or --no-until: without the cut-off, messages both
+// systems received would be imported twice. Unknown arguments are refused, so
+// a mistyped option never runs with its default.
 //
 // Prints counts and queue/agent names only, never message content. Safe to
 // run again: messages already in SuperChat are skipped by id.
 import { promises as fs } from "fs";
 import { Op } from "sequelize";
 import {
-  HistoryExport,
+  assertHistoryExport,
   ImportContext,
+  indexByName,
   messageIdForms,
+  nameKey,
   numberCandidates,
   PlannedTicket,
   planImport
 } from "../helpers/ZappyHistoryImport";
+
+const USAGE =
+  "usage: importZappyHistory --company=<id> --file=<export.json> [--queue-map=<json>] [--user-map=<json>] [--default-queue=<id>] [--until=<ISO> | --no-until] [--allow-no-queue] [--execute]";
+const VALUE_OPTIONS = [
+  "company",
+  "file",
+  "queue-map",
+  "user-map",
+  "default-queue",
+  "until"
+];
+const FLAGS = ["execute", "allow-no-queue", "no-until"];
 
 const args = process.argv.slice(2);
 const option = (name: string): string | undefined =>
@@ -29,11 +49,31 @@ const option = (name: string): string | undefined =>
     .slice(1)
     .join("=");
 
+const readNameMap = async (name: string): Promise<Array<[string, number]>> => {
+  const path = option(name);
+  if (!path) return [];
+  const map = JSON.parse(await fs.readFile(path, "utf8"));
+  if (!map || typeof map !== "object" || Array.isArray(map)) {
+    throw new Error(`${name}: expected {"name": id}`);
+  }
+  return Object.entries(map).map(([key, id]) => [key, Number(id)]);
+};
+
 async function main(): Promise<void> {
+  const unknown = args.filter(
+    arg =>
+      !FLAGS.some(flag => arg === `--${flag}`) &&
+      !VALUE_OPTIONS.some(name => arg.startsWith(`--${name}=`))
+  );
+  if (unknown.length) {
+    throw new Error(`unknown argument: ${unknown.join(" ")}\n${USAGE}`);
+  }
+
   const companyId = Number(option("company"));
   const file = option("file");
   const execute = args.includes("--execute");
   const allowNoQueue = args.includes("--allow-no-queue");
+  const noUntil = args.includes("--no-until");
   const defaultQueue = option("default-queue");
   const untilValue = option("until");
   const until = untilValue ? new Date(untilValue) : null;
@@ -41,19 +81,22 @@ async function main(): Promise<void> {
     !Number.isSafeInteger(companyId) ||
     companyId <= 0 ||
     !file ||
-    (until && Number.isNaN(until.getTime())) ||
+    (untilValue !== undefined && (!until || Number.isNaN(until.getTime()))) ||
+    (until && noUntil) ||
     (defaultQueue !== undefined && !(Number(defaultQueue) > 0))
   ) {
+    throw new Error(USAGE);
+  }
+  if (execute && !until && !noUntil) {
     throw new Error(
-      "usage: importZappyHistory --company=<id> --file=<export.json> [--queue-map=<json>] [--default-queue=<id>] [--until=<ISO>] [--allow-no-queue] [--execute]"
+      "--execute needs --until=<ISO date SuperChat started receiving the number> or --no-until"
     );
   }
 
-  const data = JSON.parse(await fs.readFile(file, "utf8")) as HistoryExport;
-  const queueMapFile = option("queue-map");
-  const queueMap: Record<string, number> = queueMapFile
-    ? JSON.parse(await fs.readFile(queueMapFile, "utf8"))
-    : {};
+  const data: unknown = JSON.parse(await fs.readFile(file, "utf8"));
+  assertHistoryExport(data);
+  const queueMap = await readNameMap("queue-map");
+  const userMap = await readNameMap("user-map");
 
   const database = (await import("../database")).default;
   const Contact = (await import("../models/Contact")).default;
@@ -75,17 +118,29 @@ async function main(): Promise<void> {
       User.findAll({ where: { companyId }, attributes: ["id", "name"] })
     ]);
 
+    // a name two queues or two agents share stays out, and is reported;
+    // the explicit maps settle it
     const companyQueueIds = new Set(queues.map(q => q.id));
-    const queueIdByName = new Map(
-      queues.map(q => [q.name.trim().toLowerCase(), q.id])
-    );
-    Object.entries(queueMap).forEach(([name, id]) => {
-      if (!companyQueueIds.has(Number(id))) {
+    const companyUserIds = new Set(users.map(u => u.id));
+    const queueIndex = indexByName(queues);
+    const userIndex = indexByName(users);
+    const queueIdByName = queueIndex.idByName;
+    const userIdByName = userIndex.idByName;
+    queueMap.forEach(([name, id]) => {
+      if (!companyQueueIds.has(id)) {
         throw new Error(
           `queue-map: queue ${id} is not of company ${companyId}`
         );
       }
-      queueIdByName.set(name.trim().toLowerCase(), Number(id));
+      queueIdByName.set(nameKey(name), id);
+      queueIndex.ambiguous.delete(nameKey(name));
+    });
+    userMap.forEach(([name, id]) => {
+      if (!companyUserIds.has(id)) {
+        throw new Error(`user-map: user ${id} is not of company ${companyId}`);
+      }
+      userIdByName.set(nameKey(name), id);
+      userIndex.ambiguous.delete(nameKey(name));
     });
     if (defaultQueue && !companyQueueIds.has(Number(defaultQueue))) {
       throw new Error(
@@ -100,7 +155,6 @@ async function main(): Promise<void> {
     );
     const existing = new Set<string>();
     for (let i = 0; i < ids.length; i += 5000) {
-      // eslint-disable-next-line no-await-in-loop
       const rows = await Message.findAll({
         where: { companyId, id: { [Op.in]: ids.slice(i, i + 5000) } },
         attributes: ["id"]
@@ -122,9 +176,7 @@ async function main(): Promise<void> {
       contactIdByNumber,
       queueIdByName,
       defaultQueueId: defaultQueue ? Number(defaultQueue) : null,
-      userIdByName: new Map(
-        users.map(u => [u.name.trim().toLowerCase(), u.id])
-      ),
+      userIdByName,
       existingMessageIds: existing,
       until
     };
@@ -149,7 +201,19 @@ async function main(): Promise<void> {
             .length,
           skipped: skippedByReason,
           unmatchedQueues: plan.unmatchedQueues,
-          unmatchedUsers: plan.unmatchedUsers
+          unmatchedUsers: plan.unmatchedUsers,
+          // unmatched because two rows of the company share the name
+          ambiguousQueues: plan.unmatchedQueues.filter(name =>
+            queueIndex.ambiguous.has(nameKey(name))
+          ),
+          ambiguousUsers: plan.unmatchedUsers.filter(name =>
+            userIndex.ambiguous.has(nameKey(name))
+          ),
+          warnings: until
+            ? []
+            : [
+                "no --until: messages both systems received and that the export has without WhatsApp id would be imported twice"
+              ]
         },
         null,
         2
@@ -233,15 +297,20 @@ async function main(): Promise<void> {
       const planned = plan.tickets[i];
       try {
         // one transaction per ticket: a failure keeps the others
-        // eslint-disable-next-line no-await-in-loop
         const created = await writeTicket(planned);
         // only after the commit, so a rollback never leaves a dead id here
         if (created) createdContacts.set(created.number, created.id);
         done += 1;
       } catch (err) {
+        // class, database code and constraint only: the message of the error
+        // may carry content of the conversation
+        const original = err?.original || err?.parent;
         failures.push({
           externalId: planned.externalId,
-          error: String(err?.name || err?.message || err).slice(0, 120)
+          error: [err?.name || "Error", original?.code, original?.constraint]
+            .filter(Boolean)
+            .join(" ")
+            .slice(0, 160)
         });
       }
       if ((i + 1) % 200 === 0) {

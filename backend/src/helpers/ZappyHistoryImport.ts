@@ -96,7 +96,52 @@ export interface ImportPlan {
     newContacts: number;
     /** Messages after `until` without WhatsApp id, left out. */
     afterCutoffWithoutWhatsappId: number;
+    /** Messages the export has but that cannot be imported, by reason. */
+    dropped: { invalidDate: number; empty: number; noId: number };
   };
+}
+
+/** How queue and agent names are compared. */
+export const nameKey = (name: string): string =>
+  String(name || "")
+    .trim()
+    .toLowerCase();
+
+/**
+ * Id by name. A name two rows share is ambiguous: it stays out of the map, so
+ * the ticket is never given to the wrong queue or agent without a warning.
+ */
+export function indexByName(rows: Array<{ id: number; name: string }>): {
+  idByName: Map<string, number>;
+  ambiguous: Set<string>;
+} {
+  const idByName = new Map<string, number>();
+  const ambiguous = new Set<string>();
+  rows.forEach(row => {
+    const key = nameKey(row.name);
+    if (!key || ambiguous.has(key)) return;
+    if (idByName.has(key) && idByName.get(key) !== row.id) {
+      idByName.delete(key);
+      ambiguous.add(key);
+      return;
+    }
+    idByName.set(key, row.id);
+  });
+  return { idByName, ambiguous };
+}
+
+/** Refuses a file that is not an export, before anything else reads it. */
+export function assertHistoryExport(
+  data: unknown
+): asserts data is HistoryExport {
+  const candidate = data as HistoryExport;
+  if (
+    candidate?.source !== "zapcontabil" ||
+    !Array.isArray(candidate.tickets) ||
+    candidate.tickets.some(ticket => !ticket || typeof ticket !== "object")
+  ) {
+    throw new Error("ERR_IMPORT_INVALID_EXPORT");
+  }
 }
 
 const digitsOf = (raw: string): string =>
@@ -153,12 +198,18 @@ export function importedMessageId(message: ExportedMessage): string {
   return messageIdForms(message)[0] || "";
 }
 
+// Types the previous system uses for attachments ("image", "imageMessage",
+// "application/pdf"...). Any other type is text: "chat", "conversation",
+// "extendedTextMessage" (replies and links), "vcard", "location".
+const ATTACHMENT_TYPE =
+  /^(image|audio|ptt|ptv|voice|video|document|sticker|gif|file|application)/i;
+
 /** Text of the message; attachments stay as their name (text-only import). */
 export function importedMessageBody(message: ExportedMessage): string {
   const text = (message.body || "").trim();
   const fileName = (message.fileName || "").trim();
   const media = (message.mediaType || "").trim();
-  if (media && media !== "chat" && media !== "conversation") {
+  if (fileName || ATTACHMENT_TYPE.test(media)) {
     const label = fileName || media;
     if (text && text !== fileName) return `📎 ${label}\n${text}`;
     return `📎 ${label}`;
@@ -170,9 +221,7 @@ export function planImport(
   data: HistoryExport,
   context: ImportContext
 ): ImportPlan {
-  if (data?.source !== "zapcontabil" || !Array.isArray(data.tickets)) {
-    throw new Error("ERR_IMPORT_INVALID_EXPORT");
-  }
+  assertHistoryExport(data);
 
   const tickets: PlannedTicket[] = [];
   const skipped: ImportPlan["skipped"] = [];
@@ -182,6 +231,7 @@ export function planImport(
   const unmatchedUsers = new Set<string>();
   let alreadyPresentTotal = 0;
   let afterCutoff = 0;
+  const dropped = { invalidDate: 0, empty: 0, noId: 0 };
 
   data.tickets.forEach(ticket => {
     const problem = ticket.isGroup
@@ -199,7 +249,12 @@ export function planImport(
       const createdAt = validDate(message.createdAt);
       const body = importedMessageBody(message);
       const forms = messageIdForms(message);
-      if (!createdAt || !body || !forms.length) return;
+      if (!createdAt || !body || !forms.length) {
+        if (!forms.length) dropped.noId += 1;
+        else if (!createdAt) dropped.invalidDate += 1;
+        else dropped.empty += 1;
+        return;
+      }
       if (forms.some(form => seenIds.has(form))) {
         alreadyPresent += 1;
         return;
@@ -306,7 +361,8 @@ export function planImport(
       messages: tickets.reduce((sum, t) => sum + t.messages.length, 0),
       alreadyPresent: alreadyPresentTotal,
       newContacts: newContacts.size,
-      afterCutoffWithoutWhatsappId: afterCutoff
+      afterCutoffWithoutWhatsappId: afterCutoff,
+      dropped
     }
   };
 }

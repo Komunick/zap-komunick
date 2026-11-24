@@ -7,6 +7,7 @@ import DeleteWhatsAppMessage from "../../services/WbotServices/DeleteWhatsAppMes
 import SendWhatsAppMessage from "../../services/WbotServices/SendWhatsAppMessage";
 import ListMessagesService from "../../services/MessageServices/ListMessagesService";
 import ShowPendingMessagePreviewService from "../../services/MessageServices/ShowPendingMessagePreviewService";
+import BindDefaultWhatsapp from "../../helpers/BindDefaultWhatsapp";
 import SetTicketMessagesAsRead from "../../helpers/SetTicketMessagesAsRead";
 import { isMessageSignatureRequired } from "../../helpers/MessageSignature";
 import ShowTicketService from "../../services/TicketServices/ShowTicketService";
@@ -14,6 +15,7 @@ import Message from "../../models/Message";
 import OldMessage from "../../models/OldMessage";
 
 jest.mock("../../helpers/SetTicketMessagesAsRead", () => jest.fn());
+jest.mock("../../helpers/BindDefaultWhatsapp", () => jest.fn());
 jest.mock("../../helpers/MessageSignature", () => ({
   isMessageSignatureRequired: jest.fn()
 }));
@@ -194,6 +196,9 @@ describe("message authorization before side effects", () => {
 
     await MessageController.store(req, res);
 
+    // Zap Komunick: a ticket without connection takes the default one when
+    // it is answered (RF-029)
+    expect(BindDefaultWhatsapp).toHaveBeenCalledWith(ticket);
     expect(isMessageSignatureRequired).toHaveBeenCalledWith(10);
     expect(SendWhatsAppMessage).toHaveBeenCalledWith(
       expect.objectContaining({

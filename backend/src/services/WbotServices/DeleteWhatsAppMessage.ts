@@ -2,6 +2,7 @@ import { WASocket } from "libzapitu-rf";
 import AppError from "../../errors/AppError";
 import GetTicketWbot from "../../helpers/GetTicketWbot";
 import GetWbotMessage from "../../helpers/GetWbotMessage";
+import { assertNotImportedMessage } from "../../helpers/ImportedMessage";
 import Message from "../../models/Message";
 import Ticket from "../../models/Ticket";
 
@@ -19,6 +20,8 @@ const DeleteWhatsAppMessage = async (messageId: string): Promise<Message> => {
   if (!message) {
     throw new AppError("No message found with this ID.");
   }
+
+  assertNotImportedMessage(message);
 
   const { ticket } = message;
 
