@@ -913,13 +913,42 @@ Dado um atendimento aguardando na fila Fiscal com o nome da Yasmin,
 quando a Yasmin inicia conversa com esse cliente pela fila Fiscal,
 então o atendimento abre em andamento com ela, sem aviso de conversa em aberto.
 
+### RF-030 — Aviso de versão beta e reporte de erros
+
+**Pedido (24/11/2026):** avisar quem entra no SuperChat de que o sistema está em versão beta e pode apresentar erros,
+e dar um lugar para reportar esses erros, com imagens, vídeos ou PDF, que chegue por e-mail à Komunick.
+
+**Regras importantes:**
+- Depois do login, cada usuário vê uma vez a mensagem de boas-vindas: o sistema está em beta, podem ocorrer erros, bugs
+  e falhas, e os erros devem ser enviados pela aba **Reportar erro**. A resposta fica guardada no navegador, por
+  usuário; em outro navegador ou computador a mensagem aparece de novo.
+- **Reportar erro** fica no menu de todos os perfis, na aba "Mais" do layout Foco e no `Ctrl K`.
+- O reporte pede um resumo e a descrição do que aconteceu; a tela onde aconteceu é opcional. Aceita até 5 anexos e
+  15 MB no total, só imagem (PNG, JPEG, GIF, WebP), vídeo (MP4, WebM, MOV) ou PDF. Os anexos podem ser escolhidos,
+  arrastados ou colados (`Ctrl+V` de um print).
+- O servidor confere o tipo pelo conteúdo do arquivo, e não pelo nome. Arquivo de outro tipo recusa o reporte inteiro.
+- Cada reporte é gravado antes de qualquer e-mail, com quem enviou, a empresa, o navegador e o tamanho da tela. O
+  e-mail vai para o endereço de `ERROR_REPORT_EMAIL`, com os anexos e com resposta direta para quem reportou.
+- Sem servidor de e-mail configurado, ou se o envio falhar, o reporte fica guardado e o sistema tenta de novo a cada
+  10 minutos (depois de 6 falhas seguidas, a cada 6 horas). Os anexos são apagados do servidor quando o e-mail sai.
+- Cada usuário envia no máximo 10 reportes por hora.
+
+**Cenário de sucesso:**
+
+Dado uma atendente que entra no SuperChat pela primeira vez depois desta versão,
+quando ela fecha a mensagem de boas-vindas, abre **Reportar erro**, descreve o problema e anexa um print,
+então vê "Reporte enviado" com o número do reporte, e a Komunick recebe o e-mail com a descrição, os dados dela e o
+print anexado.
+
 ## 4. Restrições e cuidados
 
 **Uso e acesso:** navegador, perfis do Ticketz (admin e usuário). Painel de SLA, carteira, horário de acesso, motivos
 de finalização e a exigência de motivo são geridos só por administradores.
 
-**Dados e integrações:** dados de contatos e mensagens dos clientes das empresas usuárias. Nenhum dado novo sai do
-sistema; nenhuma integração externa nova.
+**Dados e integrações:** dados de contatos e mensagens dos clientes das empresas usuárias. A única saída nova é o
+e-mail do reporte de erro (RF-030): o texto que o usuário escreveu, os anexos que ele escolheu, seu nome, e-mail e
+empresa vão para o endereço de suporte configurado pelo operador, pelo servidor SMTP que ele indicar. Um print pode
+mostrar dados de clientes; por isso o destino é só a equipe que dá suporte ao sistema.
 
 **Privacidade:** o sistema não pede a localização do navegador e não envia IP, coordenadas nem dados de uso a terceiros por
 conta própria. O país do campo de telefone vem do idioma do navegador. Saem de cena a geolocalização e o
