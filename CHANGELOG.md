@@ -6,6 +6,7 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Adicionado
 
+- Antes de enviar imagens, a conversa mostra a prévia de cada uma. Com vários arquivos, miniaturas escolhem qual ver.
 - Quando o cliente já tem atendimento em andamento, o aviso diz com quem está, em que fila, por qual canal e desde
   quando. Ao iniciar conversa, a janela oferece **Abrir atendimento** e **Assumir** ou **Aceitar**, conforme as
   permissões de cada um (RF-026).
@@ -56,6 +57,7 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- A barra de envio de anexos segue o tema. No modo escuro ela era quase branca e o nome do arquivo não aparecia.
 - Conexão de WhatsApp que parece aberta e não recebe mais nada:
   - um download interno cortado ou parado por 60 s agora dá erro. Antes ele esperava para sempre e prendia a fila
     de mensagens, confirmações e avisos;
