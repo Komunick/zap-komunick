@@ -108,3 +108,20 @@ it("preserves the admin ticket list when opening the normal all view", async () 
   expect(listWhere()).toContain('"queueId" IN (402) OR "queueId" IS NULL');
   expect(listWhere()).not.toContain('"queueId" IN (401)');
 });
+
+it("finds the customer name whatever its punctuation and spacing", async () => {
+  viewer("admin", [401]);
+  await ListTicketsService({
+    ...baseRequest,
+    queueIds: [401],
+    isSearch: true,
+    searchParam: "J.B. Fraga"
+  });
+
+  expect(listWhere()).toContain(
+    'OR STRPOS(REGEXP_REPLACE(LOWER(UNACCENT("contact"."name")),'
+  );
+  expect(listWhere()).toContain(
+    "NULLIF(REGEXP_REPLACE(LOWER(UNACCENT('j.b. fraga')),"
+  );
+});

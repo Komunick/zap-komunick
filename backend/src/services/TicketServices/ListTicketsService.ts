@@ -27,6 +27,7 @@ import {
   TicketFilters
 } from "../../helpers/TicketFilters";
 import { loadTicketViewer } from "./AuthorizeTicketContextService";
+import nameMatches from "../../helpers/NameSearch";
 
 interface Request {
   isSearch?: boolean;
@@ -224,6 +225,7 @@ const ListTicketsService = async ({
             `%${sanitizedSearchParam}%`
           )
         },
+        nameMatches("contact.name", sanitizedSearchParam),
         { "$contact.number$": { [Op.like]: `%${sanitizedSearchParam}%` } },
         {
           "$message.body$": where(
