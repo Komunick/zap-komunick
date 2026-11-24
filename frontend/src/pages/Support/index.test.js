@@ -55,8 +55,10 @@ jest.mock("../../components/PdfAttachmentView", () => ({ fileName }) => (
 // Texts are the translation keys, followed by the values they would receive.
 jest.mock("../../translate/i18n", () => ({
   i18n: {
-    t: (key, values) =>
-      values ? `${key} ${Object.values(values).join("|")}` : key,
+    t: (key, { interpolation, ...values } = {}) =>
+      Object.keys(values).length
+        ? `${key} ${Object.values(values).join("|")}`
+        : key,
     exists: key => key === "backendErrors.ERR_SUPPORT_RATE_LIMIT"
   }
 }));
@@ -468,6 +470,21 @@ describe("Support page for a user", () => {
     );
   });
 
+  it("does not escape names and dates a second time", () => {
+    const real = jest.requireActual("../../translate/i18n").i18n;
+    const options = {
+      name: "D'Ávila & Filhos",
+      date: "24/11/2026 17:01",
+      interpolation: { escapeValue: false }
+    };
+    real.addResourceBundle("pt", "translations", {
+      zkSupportTest: "Aberto por {{name}} em {{date}}"
+    });
+    expect(real.t("zkSupportTest", { ...options, lng: "pt" })).toBe(
+      "Aberto por D'Ávila & Filhos em 24/11/2026 17:01"
+    );
+  });
+
   it("opens a PDF attachment inside the system", async () => {
     global.URL.createObjectURL = jest.fn(() => "blob:test");
     global.URL.revokeObjectURL = jest.fn();
@@ -572,9 +589,13 @@ describe("Support page for the super administrator", () => {
     });
     renderPage(superAdmin, "/support/5");
 
-    expect(
-      await screen.findByText("Ana · ana@example.invalid")
-    ).toBeInTheDocument();
+    // The requester's data stays folded until support asks for it.
+    const toggle = await screen.findByRole("button", {
+      name: "support.detail.context · Ana · Empresa Modelo"
+    });
+    expect(screen.queryByText("1366x768")).not.toBeInTheDocument();
+    fireEvent.click(toggle);
+    expect(screen.getByText("Ana · ana@example.invalid")).toBeInTheDocument();
     expect(screen.getByText("1366x768")).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", { name: "support.actions.take" })

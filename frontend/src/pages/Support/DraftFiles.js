@@ -5,8 +5,7 @@ import CancelIcon from "@material-ui/icons/Cancel";
 import ImageOutlinedIcon from "@material-ui/icons/ImageOutlined";
 import MovieOutlinedIcon from "@material-ui/icons/MovieOutlined";
 import PictureAsPdfOutlinedIcon from "@material-ui/icons/PictureAsPdfOutlined";
-import { i18n } from "../../translate/i18n";
-import { attachmentKind, megabytes } from "../../helpers/supportTickets";
+import { attachmentKind, megabytes, tr } from "../../helpers/supportTickets";
 
 const useStyles = makeStyles(theme => ({
   files: { display: "flex", flexWrap: "wrap", gap: theme.spacing(0.75) },
@@ -39,7 +38,7 @@ const DraftFiles = ({ files, onRemove, disabled }) => {
           deleteIcon={
             <CancelIcon
               role="button"
-              aria-label={i18n.t("support.attachments.remove", {
+              aria-label={tr("support.attachments.remove", {
                 name: file.name
               })}
             />

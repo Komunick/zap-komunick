@@ -16,7 +16,8 @@ import PdfAttachmentView from "../../components/PdfAttachmentView";
 import {
   attachmentKind,
   attachmentUrl,
-  megabytes
+  megabytes,
+  tr
 } from "../../helpers/supportTickets";
 import { kindIcon } from "./DraftFiles";
 
@@ -139,7 +140,7 @@ const Viewer = ({ ticketId, attachment, onClose }) => {
 const Thumbnail = ({ ticketId, attachment, onOpen }) => {
   const classes = useStyles();
   const { url, error } = useAttachmentBlob(ticketId, attachment, true);
-  const label = i18n.t("support.attachments.open", { name: attachment.name });
+  const label = tr("support.attachments.open", { name: attachment.name });
 
   if (error)
     return (
@@ -194,7 +195,7 @@ const MessageAttachments = ({ ticketId, attachments }) => {
             variant="outlined"
             icon={kindIcon(attachment.mimeType)}
             label={`${attachment.name} · ${megabytes(attachment.size)} MB`}
-            aria-label={i18n.t("support.attachments.open", {
+            aria-label={tr("support.attachments.open", {
               name: attachment.name
             })}
             onClick={() => setOpen(attachment)}

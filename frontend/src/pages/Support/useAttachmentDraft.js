@@ -1,9 +1,9 @@
 import { useCallback, useRef, useState } from "react";
-import { i18n } from "../../translate/i18n";
 import {
   SUPPORT_MAX_FILES,
   SUPPORT_MAX_TOTAL_MB,
-  addSupportFiles
+  addSupportFiles,
+  tr
 } from "../../helpers/supportTickets";
 
 // Zap Komunick: files chosen for a ticket or a message, before they are sent.
@@ -23,7 +23,7 @@ const useAttachmentDraft = () => {
     setFiles(next);
     setError(
       rejected
-        ? i18n.t(`support.attachments.${rejected.code}`, {
+        ? tr(`support.attachments.${rejected.code}`, {
             name: rejected.name,
             count: SUPPORT_MAX_FILES,
             size: SUPPORT_MAX_TOTAL_MB
