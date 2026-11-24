@@ -61,7 +61,12 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
     de mensagens, confirmações e avisos;
   - se um item da fila passa de 2 minutos, a conexão é refeita sozinha com as mesmas credenciais, sem QR code novo.
     O WhatsApp entrega de novo o que não foi confirmado;
-  - as publicações de Status dos contatos enviadas no formato novo do WhatsApp passam a ser confirmadas.
+  - as publicações de Status dos contatos enviadas no formato novo do WhatsApp passam a ser confirmadas;
+  - se a própria tentativa de reconectar falhar (banco ou rede fora do ar naquele instante), o SuperChat tenta de
+    novo. Antes o canal ficava parado até alguém reiniciar.
+- O leitor de PDF não fica mais alternando entre a página e "Carregando PDF…" em telas de pouca altura (notebook,
+  janela pequena ou zoom alto). A barra de rolagem da janela do anexo mudava a largura medida e fazia o leitor
+  redesenhar sem parar.
 - Mensagens enviadas pelo número da empresa fora do SuperChat (outro aplicativo no mesmo número ou o celular) para um
   cliente sem atendimento ativo entram no histórico dele e não abrem mais um atendimento aguardando sem fila. Esses
   atendimentos só apareciam para administradores e travavam o **Novo atendimento** desse cliente. Se o canal tem uma

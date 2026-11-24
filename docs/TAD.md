@@ -422,7 +422,9 @@ como outro servidor ou um backend duplicado) para a conexão sem apagar as crede
 vez de reconectar e brigar pela sessão; 515 reconecta em 0,5 s (normal depois de parear); o resto (408, 428, 503,
 desconhecido) reconecta com espera crescente de 2 s até 5 min, com até 20% de variação, zerada quando a conexão abre.
 Cada queda fica no log como `Socket <nome> closed: <motivo> -> <ação>`. Antes, toda queda que não fosse 401
-reconectava em 2 s fixos, inclusive 440, e o 403 apagava a sessão e ainda tentava reconectar.
+reconectava em 2 s fixos, inclusive 440, e o 403 apagava a sessão e ainda tentava reconectar. Se a tentativa em si
+falha (banco fora do ar, por exemplo), `helpers/ReconnectRetry` tenta de novo com espera crescente, até a conexão
+existir de novo ou ser excluída do cadastro.
 
 **WhatsApp mudo:** a biblioteca processa mensagens, confirmações e avisos em uma fila única (`processingMutex`), sem
 limite de tempo. Um item que não termina prende os seguintes, mas o socket continua aberto e respondendo ao

@@ -33,6 +33,7 @@ import GetPublicSettingService from "../services/SettingServices/GetPublicSettin
 import { resolveProductName } from "../helpers/ProductBrand";
 import waVersion from "../waversion.json";
 import { decideReconnect } from "../helpers/ReconnectPolicy";
+import { reconnectWithRetry } from "../helpers/ReconnectRetry";
 import {
   getWhatsAppHttpAgent,
   getWhatsAppHttpOptions
@@ -445,8 +446,12 @@ export const initWASocket = async (
         });
 
         // Zap Komunick: a stalled queue of incoming messages reconnects with
-        // the same credentials (helpers/WhatsAppQueueGuard)
-        if (makeWASocket === makeWASocketSingleProcess) {
+        // the same credentials (helpers/WhatsAppQueueGuard). Without an exposed
+        // queue the connection works, only without this protection.
+        if (
+          makeWASocket === makeWASocketSingleProcess &&
+          wsocket.processingMutex
+        ) {
           const stallLimit = queueStallLimit(id);
           guardQueue(wsocket.processingMutex, stallLimit, () => {
             if (!wsocket.ws.isOpen) return;
@@ -530,7 +535,10 @@ export const initWASocket = async (
                   });
               } else {
                 reconnectAttempts.set(id, attempt + 1);
-                await whatsapp.update({ status: "PENDING" });
+                // a database failure here must not cancel the reconnection
+                await whatsapp
+                  .update({ status: "PENDING" })
+                  .catch(err => logger.error(err));
                 notifySession();
                 removeWbot(id, false).then(() => {
                   logger.info(
@@ -538,14 +546,23 @@ export const initWASocket = async (
                       attempt + 1
                     })`
                   );
-                  setTimeout(async () => {
-                    await whatsapp.reload();
-                    await StartWhatsAppSession(
-                      whatsapp,
-                      whatsapp.companyId,
-                      true
-                    );
-                  }, decision.delayMs);
+                  reconnectWithRetry(
+                    name,
+                    async () => {
+                      await whatsapp.reload();
+                      await StartWhatsAppSession(
+                        whatsapp,
+                        whatsapp.companyId,
+                        true,
+                        { propagateErrors: true }
+                      );
+                    },
+                    // stop if deleted or if another session took its place
+                    async () =>
+                      !sessions.some(s => s.id === id && s !== wsocket) &&
+                      !!(await Whatsapp.findByPk(id)),
+                    decision.delayMs
+                  );
                 });
               }
             }
