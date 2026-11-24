@@ -301,6 +301,9 @@ Os arquivos em [`deploy/arm07/`](../deploy/arm07/README.md) incluem a base de bu
 As instâncias da ARM07 estão paradas com os volumes preservados. Os comandos de ativação, DNS e Caddy desse
 roteiro pertencem à instalação antiga.
 
+Para levar o SuperChat a outra VM ARM64, use o pacote de [`deploy/vm/`](../deploy/vm/README.md). A ARM04 segue com o
+`zapk.sh` instalado nela até a virada.
+
 ## 14. Painel SCI simulado — RF-024
 
 O P3 está definido em [specs/p3-sci-consultas.md](specs/p3-sci-consultas.md). Usa somente catálogo/publicações fictícios;
