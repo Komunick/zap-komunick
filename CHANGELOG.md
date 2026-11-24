@@ -10,6 +10,7 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   simulação antes de gravar e sem repetir mensagens que o SuperChat já tem). Primeira etapa só com texto (RF-029).
   Mensagem importada é só para consulta: o menu avisa, e responder citando, encaminhar, editar, apagar ou reagir é
   recusado com explicação. Gravar exige a data de corte (`--until` ou `--no-until`), e opção desconhecida interrompe.
+- Antes de enviar imagens, a conversa mostra a prévia de cada uma. Com vários arquivos, miniaturas escolhem qual ver.
 - Quando o cliente já tem atendimento em andamento, o aviso diz com quem está, em que fila, por qual canal e desde
   quando. Ao iniciar conversa, a janela oferece **Abrir atendimento** e **Assumir** ou **Aceitar**, conforme as
   permissões de cada um (RF-026).
@@ -60,6 +61,18 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- A barra de envio de anexos segue o tema. No modo escuro ela era quase branca e o nome do arquivo não aparecia.
+- Conexão de WhatsApp que parece aberta e não recebe mais nada:
+  - um download interno cortado ou parado por 60 s agora dá erro. Antes ele esperava para sempre e prendia a fila
+    de mensagens, confirmações e avisos;
+  - se um item da fila passa de 2 minutos, a conexão é refeita sozinha com as mesmas credenciais, sem QR code novo.
+    O WhatsApp entrega de novo o que não foi confirmado;
+  - as publicações de Status dos contatos enviadas no formato novo do WhatsApp passam a ser confirmadas;
+  - se a própria tentativa de reconectar falhar (banco ou rede fora do ar naquele instante), o SuperChat tenta de
+    novo. Antes o canal ficava parado até alguém reiniciar.
+- O leitor de PDF não fica mais alternando entre a página e "Carregando PDF…" em telas de pouca altura (notebook,
+  janela pequena ou zoom alto). A barra de rolagem da janela do anexo mudava a largura medida e fazia o leitor
+  redesenhar sem parar.
 - Mensagens enviadas pelo número da empresa fora do SuperChat (outro aplicativo no mesmo número ou o celular) para um
   cliente sem atendimento ativo entram no histórico dele e não abrem mais um atendimento aguardando sem fila. Esses
   atendimentos só apareciam para administradores e travavam o **Novo atendimento** desse cliente. Se o canal tem uma
