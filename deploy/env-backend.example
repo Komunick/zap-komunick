@@ -56,16 +56,3 @@ ACESSORIAS_MODE=disabled
 # P3 SCI and P4 integrated queries are simulations with independent company flags.
 SCI_MODE=disabled
 INTEGRATED_ASSISTANT_MODE=disabled
-
-# Error reports of the beta (docs/PRD.md, RF-030). Each report a user sends is
-# stored and mailed, with its attachments, to ERROR_REPORT_EMAIL. While any of
-# SMTP_HOST, the sender or ERROR_REPORT_EMAIL is empty the reports are only
-# stored; they go out by themselves once the three are filled in.
-ERROR_REPORT_EMAIL=
-SMTP_HOST=
-# 587 (STARTTLS) by default; 465 turns on TLS from the start
-SMTP_PORT=587
-SMTP_USER=
-SMTP_PASS=
-# Sender shown in the mail. Empty: SMTP_USER
-MAIL_FROM=

@@ -57,7 +57,7 @@ const WelcomeBetaDialog = ({ userId }) => {
 
   const openReport = () => {
     dismiss();
-    history.push("/error-report");
+    history.push("/support");
   };
 
   return (

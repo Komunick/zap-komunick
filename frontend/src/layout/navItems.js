@@ -57,8 +57,8 @@ export const buildNavItems = isAdmin => {
     },
     // Zap Komunick: "Tarefas" hidden (27/10/2026); /todolist still works
     { id: "helps", to: "/helps", label: t("helps") },
-    // Zap Komunick: error report of the beta (RF-030)
-    { id: "errorReport", to: "/error-report", label: t("errorReport") }
+    // Zap Komunick: support tickets (RF-030)
+    { id: "support", to: "/support", label: t("support") }
   ];
 
   return { main, more };

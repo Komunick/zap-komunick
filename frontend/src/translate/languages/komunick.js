@@ -4075,10 +4075,10 @@ es.companyMessageSignature = {
   loading: "Consultando la configuración de firma."
 };
 
-// Zap Komunick: beta welcome and error report (RF-030).
-pt.mainDrawer.listItems.errorReport = "Reportar erro";
-en.mainDrawer.listItems.errorReport = "Report a problem";
-es.mainDrawer.listItems.errorReport = "Reportar error";
+// Zap Komunick: beta welcome and support tickets (RF-030).
+pt.mainDrawer.listItems.support = "Suporte";
+en.mainDrawer.listItems.support = "Support";
+es.mainDrawer.listItems.support = "Soporte";
 
 pt.welcomeBeta = {
   title: "Boas-vindas ao SuperChat",
@@ -4086,11 +4086,11 @@ pt.welcomeBeta = {
   intro:
     "O SuperChat está em versão beta. O sistema ainda está em desenvolvimento, então podem aparecer erros, bugs e falhas durante o uso.",
   report:
-    "Encontrou algum problema? Envie pela aba Reportar erro, no menu. Você pode anexar imagens, vídeos ou PDF que mostrem o que aconteceu.",
+    "Encontrou algum problema? Abra um chamado na aba Suporte, no menu. Você pode anexar imagens, vídeos ou PDF e conversar com a equipe por lá.",
   thanks:
-    "Cada reporte ajuda a corrigir o sistema mais rápido. Obrigado por participar desta fase.",
+    "Cada chamado ajuda a corrigir o sistema mais rápido. Obrigado por participar desta fase.",
   confirm: "Entendi",
-  openReport: "Reportar um erro"
+  openReport: "Abrir um chamado"
 };
 en.welcomeBeta = {
   title: "Welcome to SuperChat",
@@ -4098,11 +4098,11 @@ en.welcomeBeta = {
   intro:
     "SuperChat is in beta. The system is still being developed, so errors, bugs and failures may show up while you use it.",
   report:
-    "Found a problem? Send it through the Report a problem tab in the menu. You can attach images, videos or PDFs that show what happened.",
+    "Found a problem? Open a ticket in the Support tab in the menu. You can attach images, videos or PDFs and talk to the team there.",
   thanks:
-    "Every report helps us fix the system faster. Thank you for taking part in this phase.",
+    "Every ticket helps us fix the system faster. Thank you for taking part in this phase.",
   confirm: "Got it",
-  openReport: "Report a problem"
+  openReport: "Open a ticket"
 };
 es.welcomeBeta = {
   title: "Te damos la bienvenida a SuperChat",
@@ -4110,144 +4110,425 @@ es.welcomeBeta = {
   intro:
     "SuperChat está en versión beta. El sistema todavía está en desarrollo, así que pueden aparecer errores, bugs y fallos durante el uso.",
   report:
-    "¿Encontraste algún problema? Envíalo desde la pestaña Reportar error, en el menú. Puedes adjuntar imágenes, videos o PDF que muestren lo que pasó.",
+    "¿Encontraste algún problema? Abre un ticket en la pestaña Soporte, en el menú. Puedes adjuntar imágenes, videos o PDF y conversar con el equipo allí.",
   thanks:
-    "Cada reporte ayuda a corregir el sistema más rápido. Gracias por participar en esta etapa.",
+    "Cada ticket ayuda a corregir el sistema más rápido. Gracias por participar en esta etapa.",
   confirm: "Entendido",
-  openReport: "Reportar un error"
+  openReport: "Abrir un ticket"
 };
 
-pt.errorReport = {
-  title: "Reportar erro",
-  intro:
-    "O SuperChat está em versão beta. Conte o que aconteceu e, se puder, anexe um print, um vídeo ou um PDF. O reporte vai direto para a equipe da Komunick.",
-  fields: {
-    title: "Resumo do problema",
+pt.support = {
+  title: "Suporte",
+  open: "Abrir chamado",
+  search: "Buscar por número, título ou pessoa",
+  loadError: "Não foi possível carregar os chamados.",
+  requestError: "Não foi possível concluir. Tente de novo em instantes.",
+  tabs: { queue: "Fila de chamados", mine: "Meus chamados" },
+  groups: { active: "Em andamento", finished: "Concluídos" },
+  summary: {
+    open: "Na fila",
+    unassigned: "Sem responsável",
+    inProgress: "Em atendimento",
+    waiting: "Aguardando o solicitante"
+  },
+  empty: {
+    list: "Nenhum chamado por aqui.",
+    mine: "Você ainda não abriu nenhum chamado.",
+    detail: "Escolha um chamado na lista ou abra um novo.",
+    conversation: "Nenhuma mensagem ainda."
+  },
+  status: {
+    open: "Aberto",
+    in_progress: "Em atendimento",
+    waiting: "Aguardando o solicitante",
+    waitingYou: "Aguardando você",
+    done: "Concluído",
+    cancelled: "Cancelado"
+  },
+  priority: {
+    label: "Prioridade",
+    low: "Baixa",
+    medium: "Média",
+    high: "Alta",
+    critical: "Crítica"
+  },
+  category: {
+    label: "Categoria",
+    error: "Erro numa tela",
+    wrong_data: "Dado incorreto",
+    question: "Dúvida de uso",
+    access: "Permissão de acesso",
+    suggestion: "Sugestão de melhoria",
+    other: "Outro"
+  },
+  form: {
+    heading: "Abrir chamado",
+    intro:
+      "Conte o que aconteceu. A equipe de suporte responde aqui mesmo, na conversa do chamado.",
+    title: "Título",
     titleHelp: "Ex.: a conversa não abre quando clico no cliente",
     location: "Em qual tela aconteceu? (opcional)",
-    locationHelp: "Ex.: Atendimentos, Contatos, Kanban",
-    description: "O que aconteceu?",
+    description: "Descrição",
     descriptionHelp:
-      "Diga o que você estava fazendo, o que esperava e o que apareceu."
+      "Diga o que você estava fazendo, o que esperava e o que apareceu.",
+    blocking: "Parou meu trabalho — preciso agora",
+    submit: "Abrir chamado",
+    sending: "Enviando…",
+    cancel: "Cancelar",
+    required: "Informe o título do chamado."
   },
   attachments: {
-    title: "Anexos (opcional)",
-    drop: "Arraste os arquivos para cá ou cole um print com Ctrl+V",
-    choose: "Escolher arquivos",
+    add: "Anexar arquivos",
     limits:
-      "Imagens, vídeos ou PDF. Até {{count}} arquivos e {{size}} MB no total.",
+      "Imagens, vídeos ou PDF. Até {{count}} arquivos e {{size}} MB por envio. Também dá para arrastar ou colar com Ctrl+V.",
     remove: "Remover {{name}}",
-    total: "{{used}} de {{size}} MB"
-  },
-  errors: {
-    required: "Preencha o resumo e conte o que aconteceu.",
+    open: "Abrir {{name}}",
+    download: "Baixar",
+    close: "Fechar",
+    loadError: "Não foi possível abrir o anexo.",
     type: "{{name}} não é imagem, vídeo nem PDF.",
-    tooMany: "São no máximo {{count}} arquivos por reporte.",
-    tooLarge: "Os anexos passam de {{size}} MB no total.",
-    request: "Não foi possível enviar o reporte. Tente de novo em instantes."
+    tooMany: "São no máximo {{count}} arquivos por envio.",
+    tooLarge: "Os anexos passam de {{size}} MB no total."
   },
-  submit: "Enviar reporte",
-  sending: "Enviando…",
-  sentTitle: "Reporte enviado",
-  sent: "Recebemos o reporte nº {{id}}. Obrigado por ajudar a melhorar o SuperChat.",
-  another: "Enviar outro reporte"
+  detail: {
+    back: "Voltar para a lista",
+    openedBy: "Aberto por {{name}} em {{date}}",
+    company: "Empresa",
+    requester: "Solicitante",
+    profile: "Perfil",
+    assignee: "Responsável",
+    noAssignee: "Sem responsável",
+    location: "Tela",
+    screen: "Tamanho da tela",
+    browser: "Navegador",
+    address: "Endereço",
+    context: "Dados do chamado",
+    finished:
+      "Este chamado foi concluído. Se o problema voltou, escreva na conversa: o chamado é reaberto.",
+    cancelled:
+      "Este chamado foi cancelado. Escrever na conversa reabre o chamado.",
+    waitingYou:
+      "O suporte pediu uma informação. Responda na conversa para o atendimento continuar."
+  },
+  composer: {
+    placeholder: "Escreva sua mensagem",
+    reopen: "Escrever aqui reabre o chamado",
+    send: "Enviar",
+    hint: "Enter envia · Shift+Enter quebra a linha"
+  },
+  who: { support: "Suporte", you: "Você" },
+  events: {
+    taken: "{{name}} assumiu o chamado",
+    waiting: "{{name}} pediu uma informação",
+    resumed: "Atendimento retomado",
+    done: "{{name}} concluiu o chamado",
+    reopened: "Chamado reaberto por {{name}}",
+    cancelled: "{{name}} cancelou o chamado"
+  },
+  actions: {
+    take: "Assumir",
+    request_info: "Pedir informação",
+    resume: "Retomar atendimento",
+    conclude: "Concluir",
+    reopen: "Reabrir",
+    cancel: "Cancelar chamado",
+    confirm: "Confirmar",
+    back: "Voltar",
+    textRequired: "Escreva o texto antes de confirmar.",
+    prompt: {
+      request_info: "O que você precisa saber do solicitante?",
+      conclude: "Como o chamado foi resolvido?",
+      cancel: "Por que o chamado está sendo cancelado?"
+    }
+  }
 };
-en.errorReport = {
-  title: "Report a problem",
-  intro:
-    "SuperChat is in beta. Tell us what happened and, if you can, attach a screenshot, a video or a PDF. The report goes straight to the Komunick team.",
-  fields: {
-    title: "Summary of the problem",
+en.support = {
+  title: "Support",
+  open: "Open ticket",
+  search: "Search by number, title or person",
+  loadError: "The tickets could not be loaded.",
+  requestError: "It could not be done. Try again in a moment.",
+  tabs: { queue: "Ticket queue", mine: "My tickets" },
+  groups: { active: "In progress", finished: "Finished" },
+  summary: {
+    open: "In the queue",
+    unassigned: "Unassigned",
+    inProgress: "Being handled",
+    waiting: "Waiting for the requester"
+  },
+  empty: {
+    list: "No tickets here.",
+    mine: "You have not opened any ticket yet.",
+    detail: "Pick a ticket from the list or open a new one.",
+    conversation: "No messages yet."
+  },
+  status: {
+    open: "Open",
+    in_progress: "Being handled",
+    waiting: "Waiting for the requester",
+    waitingYou: "Waiting for you",
+    done: "Done",
+    cancelled: "Cancelled"
+  },
+  priority: {
+    label: "Priority",
+    low: "Low",
+    medium: "Medium",
+    high: "High",
+    critical: "Critical"
+  },
+  category: {
+    label: "Category",
+    error: "Error on a screen",
+    wrong_data: "Wrong data",
+    question: "How-to question",
+    access: "Access permission",
+    suggestion: "Suggestion",
+    other: "Other"
+  },
+  form: {
+    heading: "Open ticket",
+    intro:
+      "Tell us what happened. The support team answers right here, in the ticket conversation.",
+    title: "Title",
     titleHelp: "E.g. the conversation does not open when I click the customer",
     location: "On which screen did it happen? (optional)",
-    locationHelp: "E.g. Tickets, Contacts, Kanban",
-    description: "What happened?",
+    description: "Description",
     descriptionHelp:
-      "Say what you were doing, what you expected and what showed up."
+      "Say what you were doing, what you expected and what showed up.",
+    blocking: "It stopped my work — I need it now",
+    submit: "Open ticket",
+    sending: "Sending…",
+    cancel: "Cancel",
+    required: "Enter the ticket title."
   },
   attachments: {
-    title: "Attachments (optional)",
-    drop: "Drag files here or paste a screenshot with Ctrl+V",
-    choose: "Choose files",
+    add: "Attach files",
     limits:
-      "Images, videos or PDF. Up to {{count}} files and {{size}} MB in total.",
+      "Images, videos or PDF. Up to {{count}} files and {{size}} MB per message. You can also drag them or paste with Ctrl+V.",
     remove: "Remove {{name}}",
-    total: "{{used}} of {{size}} MB"
-  },
-  errors: {
-    required: "Fill in the summary and tell us what happened.",
+    open: "Open {{name}}",
+    download: "Download",
+    close: "Close",
+    loadError: "The attachment could not be opened.",
     type: "{{name}} is not an image, a video or a PDF.",
-    tooMany: "A report takes at most {{count}} files.",
-    tooLarge: "The attachments exceed {{size}} MB in total.",
-    request: "The report could not be sent. Try again in a moment."
+    tooMany: "A message takes at most {{count}} files.",
+    tooLarge: "The attachments exceed {{size}} MB in total."
   },
-  submit: "Send report",
-  sending: "Sending…",
-  sentTitle: "Report sent",
-  sent: "We received report no. {{id}}. Thank you for helping improve SuperChat.",
-  another: "Send another report"
+  detail: {
+    back: "Back to the list",
+    openedBy: "Opened by {{name}} on {{date}}",
+    company: "Company",
+    requester: "Requester",
+    profile: "Profile",
+    assignee: "In charge",
+    noAssignee: "Unassigned",
+    location: "Screen",
+    screen: "Screen size",
+    browser: "Browser",
+    address: "Address",
+    context: "Ticket data",
+    finished:
+      "This ticket is done. If the problem came back, write in the conversation: the ticket is reopened.",
+    cancelled:
+      "This ticket was cancelled. Writing in the conversation reopens it.",
+    waitingYou:
+      "Support asked for information. Answer in the conversation so the work can go on."
+  },
+  composer: {
+    placeholder: "Write your message",
+    reopen: "Writing here reopens the ticket",
+    send: "Send",
+    hint: "Enter sends · Shift+Enter breaks the line"
+  },
+  who: { support: "Support", you: "You" },
+  events: {
+    taken: "{{name}} took the ticket",
+    waiting: "{{name}} asked for information",
+    resumed: "Work resumed",
+    done: "{{name}} concluded the ticket",
+    reopened: "Ticket reopened by {{name}}",
+    cancelled: "{{name}} cancelled the ticket"
+  },
+  actions: {
+    take: "Take",
+    request_info: "Ask for information",
+    resume: "Resume",
+    conclude: "Conclude",
+    reopen: "Reopen",
+    cancel: "Cancel ticket",
+    confirm: "Confirm",
+    back: "Back",
+    textRequired: "Write the text before confirming.",
+    prompt: {
+      request_info: "What do you need to know from the requester?",
+      conclude: "How was the ticket solved?",
+      cancel: "Why is the ticket being cancelled?"
+    }
+  }
 };
-es.errorReport = {
-  title: "Reportar error",
-  intro:
-    "SuperChat está en versión beta. Cuenta lo que pasó y, si puedes, adjunta una captura, un video o un PDF. El reporte llega directo al equipo de Komunick.",
-  fields: {
-    title: "Resumen del problema",
+es.support = {
+  title: "Soporte",
+  open: "Abrir ticket",
+  search: "Buscar por número, título o persona",
+  loadError: "No se pudieron cargar los tickets.",
+  requestError: "No se pudo completar. Inténtalo de nuevo en un momento.",
+  tabs: { queue: "Cola de tickets", mine: "Mis tickets" },
+  groups: { active: "En curso", finished: "Finalizados" },
+  summary: {
+    open: "En la cola",
+    unassigned: "Sin responsable",
+    inProgress: "En atención",
+    waiting: "Esperando al solicitante"
+  },
+  empty: {
+    list: "No hay tickets por aquí.",
+    mine: "Todavía no abriste ningún ticket.",
+    detail: "Elige un ticket de la lista o abre uno nuevo.",
+    conversation: "Todavía no hay mensajes."
+  },
+  status: {
+    open: "Abierto",
+    in_progress: "En atención",
+    waiting: "Esperando al solicitante",
+    waitingYou: "Esperándote",
+    done: "Finalizado",
+    cancelled: "Cancelado"
+  },
+  priority: {
+    label: "Prioridad",
+    low: "Baja",
+    medium: "Media",
+    high: "Alta",
+    critical: "Crítica"
+  },
+  category: {
+    label: "Categoría",
+    error: "Error en una pantalla",
+    wrong_data: "Dato incorrecto",
+    question: "Duda de uso",
+    access: "Permiso de acceso",
+    suggestion: "Sugerencia de mejora",
+    other: "Otro"
+  },
+  form: {
+    heading: "Abrir ticket",
+    intro:
+      "Cuenta lo que pasó. El equipo de soporte responde aquí mismo, en la conversación del ticket.",
+    title: "Título",
     titleHelp: "Ej.: la conversación no abre cuando hago clic en el cliente",
     location: "¿En qué pantalla pasó? (opcional)",
-    locationHelp: "Ej.: Atenciones, Contactos, Kanban",
-    description: "¿Qué pasó?",
-    descriptionHelp: "Di qué estabas haciendo, qué esperabas y qué apareció."
+    description: "Descripción",
+    descriptionHelp: "Di qué estabas haciendo, qué esperabas y qué apareció.",
+    blocking: "Detuvo mi trabajo — lo necesito ahora",
+    submit: "Abrir ticket",
+    sending: "Enviando…",
+    cancel: "Cancelar",
+    required: "Indica el título del ticket."
   },
   attachments: {
-    title: "Adjuntos (opcional)",
-    drop: "Arrastra los archivos aquí o pega una captura con Ctrl+V",
-    choose: "Elegir archivos",
+    add: "Adjuntar archivos",
     limits:
-      "Imágenes, videos o PDF. Hasta {{count}} archivos y {{size}} MB en total.",
+      "Imágenes, videos o PDF. Hasta {{count}} archivos y {{size}} MB por envío. También puedes arrastrarlos o pegarlos con Ctrl+V.",
     remove: "Quitar {{name}}",
-    total: "{{used}} de {{size}} MB"
-  },
-  errors: {
-    required: "Completa el resumen y cuenta lo que pasó.",
+    open: "Abrir {{name}}",
+    download: "Descargar",
+    close: "Cerrar",
+    loadError: "No se pudo abrir el adjunto.",
     type: "{{name}} no es imagen, video ni PDF.",
-    tooMany: "Son como máximo {{count}} archivos por reporte.",
-    tooLarge: "Los adjuntos superan {{size}} MB en total.",
-    request: "No se pudo enviar el reporte. Inténtalo de nuevo en un momento."
+    tooMany: "Son como máximo {{count}} archivos por envío.",
+    tooLarge: "Los adjuntos superan {{size}} MB en total."
   },
-  submit: "Enviar reporte",
-  sending: "Enviando…",
-  sentTitle: "Reporte enviado",
-  sent: "Recibimos el reporte n.º {{id}}. Gracias por ayudar a mejorar SuperChat.",
-  another: "Enviar otro reporte"
+  detail: {
+    back: "Volver a la lista",
+    openedBy: "Abierto por {{name}} el {{date}}",
+    company: "Empresa",
+    requester: "Solicitante",
+    profile: "Perfil",
+    assignee: "Responsable",
+    noAssignee: "Sin responsable",
+    location: "Pantalla",
+    screen: "Tamaño de pantalla",
+    browser: "Navegador",
+    address: "Dirección",
+    context: "Datos del ticket",
+    finished:
+      "Este ticket fue finalizado. Si el problema volvió, escribe en la conversación: el ticket se reabre.",
+    cancelled:
+      "Este ticket fue cancelado. Escribir en la conversación lo reabre.",
+    waitingYou:
+      "Soporte pidió una información. Responde en la conversación para que la atención continúe."
+  },
+  composer: {
+    placeholder: "Escribe tu mensaje",
+    reopen: "Escribir aquí reabre el ticket",
+    send: "Enviar",
+    hint: "Enter envía · Shift+Enter salta de línea"
+  },
+  who: { support: "Soporte", you: "Tú" },
+  events: {
+    taken: "{{name}} tomó el ticket",
+    waiting: "{{name}} pidió una información",
+    resumed: "Atención retomada",
+    done: "{{name}} finalizó el ticket",
+    reopened: "Ticket reabierto por {{name}}",
+    cancelled: "{{name}} canceló el ticket"
+  },
+  actions: {
+    take: "Tomar",
+    request_info: "Pedir información",
+    resume: "Retomar atención",
+    conclude: "Finalizar",
+    reopen: "Reabrir",
+    cancel: "Cancelar ticket",
+    confirm: "Confirmar",
+    back: "Volver",
+    textRequired: "Escribe el texto antes de confirmar.",
+    prompt: {
+      request_info: "¿Qué necesitas saber del solicitante?",
+      conclude: "¿Cómo se resolvió el ticket?",
+      cancel: "¿Por qué se cancela el ticket?"
+    }
+  }
 };
 
 Object.assign(pt.backendErrors, {
-  ERR_ERROR_REPORT_INVALID: "Revise o resumo e a descrição do reporte.",
-  ERR_ERROR_REPORT_FILE_TYPE:
+  ERR_SUPPORT_INVALID: "Revise os dados do chamado.",
+  ERR_SUPPORT_FILE_TYPE:
     "Um dos anexos não é imagem, vídeo nem PDF. Remova o arquivo e envie de novo.",
-  ERR_ERROR_REPORT_FILES_TOO_LARGE: "Os anexos passam de 15 MB no total.",
-  ERR_ERROR_REPORT_TOO_MANY_FILES: "São no máximo 5 arquivos por reporte.",
-  ERR_ERROR_REPORT_RATE_LIMIT:
-    "Você enviou muitos reportes em pouco tempo. Tente de novo mais tarde."
+  ERR_SUPPORT_FILES_TOO_LARGE: "Os anexos passam de 15 MB no total.",
+  ERR_SUPPORT_TOO_MANY_FILES: "São no máximo 5 arquivos por envio.",
+  ERR_SUPPORT_RATE_LIMIT:
+    "Você enviou muita coisa em pouco tempo. Tente de novo mais tarde.",
+  ERR_SUPPORT_TICKET_NOT_FOUND: "Chamado não encontrado.",
+  ERR_SUPPORT_TEXT_REQUIRED: "Escreva o texto antes de confirmar.",
+  ERR_SUPPORT_ACTION_NOT_ALLOWED:
+    "O chamado mudou de situação. Atualize e tente de novo."
 });
 Object.assign(en.backendErrors, {
-  ERR_ERROR_REPORT_INVALID: "Check the summary and the description.",
-  ERR_ERROR_REPORT_FILE_TYPE:
+  ERR_SUPPORT_INVALID: "Check the ticket data.",
+  ERR_SUPPORT_FILE_TYPE:
     "One of the attachments is not an image, a video or a PDF. Remove it and send again.",
-  ERR_ERROR_REPORT_FILES_TOO_LARGE: "The attachments exceed 15 MB in total.",
-  ERR_ERROR_REPORT_TOO_MANY_FILES: "A report takes at most 5 files.",
-  ERR_ERROR_REPORT_RATE_LIMIT:
-    "You sent too many reports in a short time. Try again later."
+  ERR_SUPPORT_FILES_TOO_LARGE: "The attachments exceed 15 MB in total.",
+  ERR_SUPPORT_TOO_MANY_FILES: "A message takes at most 5 files.",
+  ERR_SUPPORT_RATE_LIMIT: "You sent too much in a short time. Try again later.",
+  ERR_SUPPORT_TICKET_NOT_FOUND: "Ticket not found.",
+  ERR_SUPPORT_TEXT_REQUIRED: "Write the text before confirming.",
+  ERR_SUPPORT_ACTION_NOT_ALLOWED:
+    "The ticket changed status. Refresh and try again."
 });
 Object.assign(es.backendErrors, {
-  ERR_ERROR_REPORT_INVALID: "Revisa el resumen y la descripción del reporte.",
-  ERR_ERROR_REPORT_FILE_TYPE:
+  ERR_SUPPORT_INVALID: "Revisa los datos del ticket.",
+  ERR_SUPPORT_FILE_TYPE:
     "Uno de los adjuntos no es imagen, video ni PDF. Quítalo y envía de nuevo.",
-  ERR_ERROR_REPORT_FILES_TOO_LARGE: "Los adjuntos superan 15 MB en total.",
-  ERR_ERROR_REPORT_TOO_MANY_FILES: "Son como máximo 5 archivos por reporte.",
-  ERR_ERROR_REPORT_RATE_LIMIT:
-    "Enviaste muchos reportes en poco tiempo. Inténtalo más tarde."
+  ERR_SUPPORT_FILES_TOO_LARGE: "Los adjuntos superan 15 MB en total.",
+  ERR_SUPPORT_TOO_MANY_FILES: "Son como máximo 5 archivos por envío.",
+  ERR_SUPPORT_RATE_LIMIT:
+    "Enviaste demasiado en poco tiempo. Inténtalo más tarde.",
+  ERR_SUPPORT_TICKET_NOT_FOUND: "Ticket no encontrado.",
+  ERR_SUPPORT_TEXT_REQUIRED: "Escribe el texto antes de confirmar.",
+  ERR_SUPPORT_ACTION_NOT_ALLOWED:
+    "El ticket cambió de estado. Actualiza e inténtalo de nuevo."
 });
 
 export const komunickMessages = {
