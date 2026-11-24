@@ -4531,6 +4531,14 @@ Object.assign(es.backendErrors, {
     "El ticket cambió de estado. Actualiza e inténtalo de nuevo."
 });
 
+// Zap Komunick: files dropped on the internal chat while it cannot take them.
+pt.chatPage.dropUnavailable =
+  "Não é possível anexar agora. Termine o envio ou a gravação em andamento.";
+en.chatPage.dropUnavailable =
+  "Files cannot be attached now. Finish the send or the recording first.";
+es.chatPage.dropUnavailable =
+  "No se puede adjuntar ahora. Termina el envío o la grabación en curso.";
+
 export const komunickMessages = {
   pt: { translations: pt },
   pt_PT: { translations: pt },

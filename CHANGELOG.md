@@ -24,6 +24,11 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   prevalece sobre a preferência de assinatura do navegador e mantém o acesso por setor.
 - Na tela de atendimento, um botão no cabeçalho, ao lado de Finalizar, recolhe e reabre o painel do cliente.
   Recolhido, a conversa ocupa a largura toda. O SuperChat lembra a escolha de cada usuário neste navegador.
+- Arrastar arquivos para anexar passa a valer em todas as conversas. No Chat interno, soltar um ou mais arquivos em
+  qualquer ponto da conversa os deixa prontos para enviar, somados aos já escolhidos. No Suporte, o arquivo pode ser
+  solto em qualquer ponto do chamado, e não só no campo de texto. As duas telas mostram "Solte os arquivos para
+  anexar", deixam de fora pastas e arquivos vazios com um aviso e ignoram texto ou link arrastado. Nos atendimentos
+  isso já existia.
 - Arquivos arrastados para a conversa ou para o campo de mensagem entram como anexo, com a mesma validação do botão
   de anexo. Pastas e arquivos vazios são recusados com aviso, inclusive pelo botão.
 

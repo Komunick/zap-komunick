@@ -30,6 +30,9 @@ import CancelIcon from "@material-ui/icons/Cancel";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { GetApp } from "@material-ui/icons";
 import toastError from "../../errors/toastError";
+import { toast } from "react-toastify";
+import useFileDrop from "../../hooks/useFileDrop";
+import { selectAttachments } from "../../helpers/attachmentSelection";
 import MicRecorder from "mic-recorder-to-mp3";
 import MicIcon from "@material-ui/icons/Mic";
 import PlayArrowIcon from "@material-ui/icons/PlayArrow";
@@ -63,6 +66,22 @@ const useStyles = makeStyles(theme => ({
     borderRadius: 0,
     height: "100%",
     boxShadow: "none"
+  },
+  // Zap Komunick: shown while files are dragged over the conversation
+  dropOverlay: {
+    position: "absolute",
+    inset: theme.spacing(1),
+    zIndex: 20,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: theme.shape.borderRadius * 2,
+    border: `2px dashed ${theme.palette.primary.main}`,
+    backgroundColor:
+      theme.komunick?.selectedRow || theme.palette.action.selected,
+    color: theme.palette.text.primary,
+    fontWeight: 600,
+    pointerEvents: "none"
   },
   messageList: {
     position: "relative",
@@ -420,6 +439,27 @@ export default function ChatMessages({
     setSendError(false);
     e.target.value = "";
   };
+
+  // Zap Komunick: files dragged onto the conversation join the ones already
+  // chosen, as if they had come from the attach button. Folders and empty
+  // files are left out, with the same notice the tickets give.
+  const { dragging, dropHandlers } = useFileDrop(dropped => {
+    if (sendingRef.current || recordingRef.current) {
+      toast.warn(i18n.t("chatPage.dropUnavailable"));
+      return;
+    }
+    const { files, skipped } = selectAttachments(dropped);
+    if (skipped.length)
+      toast.warn(
+        i18n.t("messagesInput.skippedFiles", {
+          names: skipped.map(file => file?.name).join(", "),
+          interpolation: { escapeValue: false }
+        })
+      );
+    if (!files.length) return;
+    setMedias(current => [...current, ...files]);
+    setSendError(false);
+  });
 
   // Zap Komunick: only a confirmed send clears the draft; one in-flight
   // operation owns this composer until it finishes or its chat unmounts.
@@ -791,7 +831,16 @@ export default function ChatMessages({
   };
 
   return (
-    <Paper className={classes.mainContainer}>
+    <Paper
+      className={classes.mainContainer}
+      data-testid="internal-chat-drop-zone"
+      {...dropHandlers}
+    >
+      {dragging && (
+        <div className={classes.dropOverlay} role="status">
+          {i18n.t("messagesInput.dropFiles")}
+        </div>
+      )}
       <div
         onScroll={handleScroll}
         className={classes.messageList}

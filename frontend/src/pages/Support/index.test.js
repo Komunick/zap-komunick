@@ -470,6 +470,62 @@ describe("Support page for a user", () => {
     );
   });
 
+  it("takes files dropped anywhere on the conversation and sends them with the message", async () => {
+    const open = ticket({ status: "in_progress" });
+    setServer({
+      "/support/tickets": [open],
+      "/support/tickets/5": { ticket: open, messages: [message()] }
+    });
+    api.post.mockResolvedValue({
+      data: { ticket: open, messages: [message()] }
+    });
+    renderPage(requester, "/support/5");
+    await screen.findByText("Ao clicar no cliente.");
+    const zone = screen.getByTestId("support-drop-zone");
+    const drop = files => ({
+      dataTransfer: { types: ["Files"], files, items: [], dropEffect: "none" }
+    });
+
+    fireEvent.dragEnter(zone, drop([]));
+    expect(screen.getByText("messagesInput.dropFiles")).toBeInTheDocument();
+    fireEvent.drop(
+      zone,
+      drop([
+        file("print.png", "image/png"),
+        file("vazio.pdf", "application/pdf", 0)
+      ])
+    );
+
+    expect(
+      screen.queryByText("messagesInput.dropFiles")
+    ).not.toBeInTheDocument();
+    expect(screen.getByText(/print\.png/)).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "messagesInput.skippedFiles vazio.pdf"
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "support.composer.send" })
+    );
+    await waitFor(() =>
+      expect(
+        api.post.mock.calls.some(([url]) => url.endsWith("/messages"))
+      ).toBe(true)
+    );
+    const [, form] = api.post.mock.calls.find(([url]) =>
+      url.endsWith("/messages")
+    );
+    expect(form.getAll("files").map(item => item.name)).toEqual(["print.png"]);
+
+    // Text dragged over the conversation is not a file: nothing lights up.
+    fireEvent.dragEnter(zone, {
+      dataTransfer: { types: ["text/plain"], files: [], items: [] }
+    });
+    expect(
+      screen.queryByText("messagesInput.dropFiles")
+    ).not.toBeInTheDocument();
+  });
+
   it("does not escape names and dates a second time", () => {
     const real = jest.requireActual("../../translate/i18n").i18n;
     const options = {
