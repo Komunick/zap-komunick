@@ -82,6 +82,8 @@ restaurar() { # VOLUME(S) montados em /d, tar do stdin
   docker run --rm -i --network none --user 0:0 "$@" --entrypoint tar "$imagem" xzf - -C /d --numeric-owner
 }
 log "criando $proj em ${rev:0:8}"
+# imagens fixadas por digest; a VM nova ainda nao as tem
+compose "$proj" pull -q --policy missing postgres redis >>"$LOG" 2>&1 || fail "baixar postgres/redis"
 compose "$proj" create --pull never postgres redis >>"$LOG" 2>&1 || fail "criar postgres/redis"
 # O ensaio nao recebe a fila: agendamentos e campanhas nao devem rodar nele.
 [ "$modo" = --ensaio ] || restaurar -v "${proj}_redis_data:/d" < "$pacote/redis.tar.gz"
