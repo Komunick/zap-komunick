@@ -14,6 +14,8 @@ import { makeStyles } from "@material-ui/core/styles";
 import { Alert } from "@material-ui/lab";
 import ArrowBackIcon from "@material-ui/icons/ArrowBack";
 import AttachFileIcon from "@material-ui/icons/AttachFile";
+import ExpandLessIcon from "@material-ui/icons/ExpandLess";
+import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import SendIcon from "@material-ui/icons/Send";
 import { format, parseISO } from "date-fns";
 import api from "../../services/api";
@@ -23,7 +25,8 @@ import {
   SUPPORT_ACCEPT,
   SUPPORT_BODY_MAX,
   isFinished,
-  supportActions
+  supportActions,
+  tr
 } from "../../helpers/supportTickets";
 import { PriorityBadge, StatusBadge } from "./Badges";
 import DraftFiles from "./DraftFiles";
@@ -69,6 +72,7 @@ const useStyles = makeStyles(theme => ({
     fontSize: 12,
     overflowWrap: "anywhere"
   },
+  contextToggle: { textTransform: "none", marginLeft: theme.spacing(-0.5) },
   actions: { display: "flex", flexWrap: "wrap", gap: theme.spacing(1) },
   notice: { margin: theme.spacing(1, 2, 0) },
   messages: {
@@ -141,7 +145,7 @@ const authorOf = message => {
 };
 
 const eventText = message =>
-  i18n.t(`support.events.${message.event}`, {
+  tr(`support.events.${message.event}`, {
     name: message.mine
       ? i18n.t("support.who.you")
       : message.userName || i18n.t("support.who.support")
@@ -219,6 +223,8 @@ const TicketDetail = ({ ticketId, isSuper, liveEvent, onBack, onChanged }) => {
   const [error, setError] = useState("");
   const [pendingAction, setPendingAction] = useState(null);
   const [dropping, setDropping] = useState(false);
+  // Closed by default: the conversation needs the room more than the data.
+  const [showContext, setShowContext] = useState(false);
   const draft = useAttachmentDraft();
   const busyRef = useRef(false);
   const mounted = useRef(true);
@@ -387,7 +393,7 @@ const TicketDetail = ({ ticketId, isSuper, liveEvent, onBack, onChanged }) => {
               {ticket.title}
             </Typography>
             <Typography variant="caption" color="textSecondary">
-              {i18n.t("support.detail.openedBy", {
+              {tr("support.detail.openedBy", {
                 name: ticket.mine
                   ? i18n.t("support.who.you")
                   : ticket.userName || "-",
@@ -406,18 +412,34 @@ const TicketDetail = ({ ticketId, isSuper, liveEvent, onBack, onChanged }) => {
           <PriorityBadge priority={ticket.priority} always />
         </div>
         {context.length > 0 && (
-          <div
-            className={classes.context}
-            aria-label={i18n.t("support.detail.context")}
-          >
-            {context.map(([label, value]) => (
-              <React.Fragment key={label}>
-                <Typography variant="caption" color="textSecondary">
-                  {label}
-                </Typography>
-                <Typography variant="caption">{value}</Typography>
-              </React.Fragment>
-            ))}
+          <div>
+            <Button
+              size="small"
+              className={classes.contextToggle}
+              onClick={() => setShowContext(shown => !shown)}
+              aria-expanded={showContext}
+              endIcon={showContext ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            >
+              {[
+                i18n.t("support.detail.context"),
+                ticket.userName,
+                ticket.companyName
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </Button>
+            {showContext && (
+              <div className={classes.context}>
+                {context.map(([label, value]) => (
+                  <React.Fragment key={label}>
+                    <Typography variant="caption" color="textSecondary">
+                      {label}
+                    </Typography>
+                    <Typography variant="caption">{value}</Typography>
+                  </React.Fragment>
+                ))}
+              </div>
+            )}
           </div>
         )}
         {actions.length > 0 && (

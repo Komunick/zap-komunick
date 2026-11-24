@@ -1,5 +1,16 @@
+import { i18n } from "../translate/i18n";
+
 // Zap Komunick: support tickets (RF-030). The backend checks the same limits
 // again and reads the real type of each attachment from the file content.
+
+/**
+ * Translation with values written by people (names, file names, dates). React
+ * already escapes what it renders; escaping here as well would show "&#x2F;"
+ * in place of "/" on the screen.
+ */
+export const tr = (key, values) =>
+  i18n.t(key, { ...values, interpolation: { escapeValue: false } });
+
 export const SUPPORT_MAX_FILES = 5;
 export const SUPPORT_MAX_TOTAL_MB = 15;
 export const SUPPORT_MAX_TOTAL_BYTES = SUPPORT_MAX_TOTAL_MB * 1024 * 1024;
