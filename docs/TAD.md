@@ -705,6 +705,29 @@ Runners usam somente fixtures rastreadas e não enviam mensagens. Resultados exe
 **Recuperação:** voltar o código preserva todos os arquivos e registros; não há DDL nem migração/remoção de mídia.
 Configuração e limites estão em DEPLOY, seção 12. Nenhuma mudança de credencial, IA ou fornecedor faz parte do percurso.
 
+### Envio de vários anexos no atendimento
+
+O campo de mensagem do atendimento (`components/MessageInputCustom`) envia os arquivos escolhidos por
+`helpers/mediaUpload.js`: um `POST /messages/:ticketId` por arquivo, em sequência e na ordem escolhida. A imagem é
+reduzida (`compressorjs`, qualidade 0,7) logo antes do seu pedido; se a redução falhar, vai o arquivo original. A
+primeira falha interrompe a lista, e o arquivo que falhou e os seguintes continuam selecionados. O código herdado
+montava um único pedido e o enviava depois de 2 segundos fixos, sem esperar a redução das imagens, que é assíncrona:
+o que não estivesse pronto ficava de fora, e o servidor respondia sucesso a um pedido sem arquivos.
+
+Um pedido por arquivo também mantém cada envio dentro dos limites do proxy (65 MB e 120 s por pedido, em
+`deploy/arm07/nginx.conf`) e dá o resultado de cada arquivo em separado.
+
+No servidor, `MessageController.store` usa `helpers/UploadsInOrder.ts`. Os arquivos de um pedido (telas antigas ainda
+abertas e clientes da API mandam vários) saem um por vez, na ordem; antes saíam juntos por `Promise.all`, o que não
+garantia a ordem de chegada e punha na pasta temporária, ao mesmo tempo, a cópia cifrada de todos (128 MB de `/tmp` na
+publicação). A cópia gravada pelo Multer é removida depois da vez de cada arquivo, inclusive em falha. Pedido multipart
+sem arquivo e sem texto responde `ERR_NO_MEDIA_RECEIVED` (400) antes de tocar no atendimento.
+
+**Verificação:** `mediaUpload.test.js` e `MessageInputCustom/mediaSend.test.js` (redução mais lenta que 2 s, ordem,
+falha no meio, segundo clique, troca de atendimento durante o envio, colar vários); `UploadsInOrder.spec.ts` e
+`MessageControllerAuthorization.spec.ts` (ordem, um por vez, limpeza, pedido vazio). O envio real pelo WhatsApp não é
+exercitado pelos testes; fica para a homologação, com número de teste.
+
 ### Publicações SCI simuladas — RF-024
 
 O P3 de `docs/specs/p3-sci-consultas.md` segue autorização P0 e usa exclusivamente provedor local com contrato

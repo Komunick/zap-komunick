@@ -49,7 +49,6 @@ import { EditMessageContext } from "../../context/EditingMessage/EditingMessageC
 
 import useQuickMessages from "../../hooks/useQuickMessages";
 
-import Compressor from "compressorjs";
 import LinearWithValueLabel from "./ProgressBarCustom";
 import WhatsMarked from "react-whatsmarked";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -58,6 +57,7 @@ import { isMobile } from "../../helpers/isMobile";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import { toast } from "react-toastify";
 import { selectAttachments } from "../../helpers/attachmentSelection";
+import { sendMediasInOrder } from "../../helpers/mediaUpload";
 import TicketAssistant from "../TicketAssistant";
 import MediaSendPreview from "../MediaSendPreview";
 import IntegratedAssistant from "../IntegratedAssistant";
@@ -893,6 +893,16 @@ const MessageInputCustom = props => {
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(false);
   const [percentLoading, setPercentLoading] = useState(0);
+  // Zap Komunick: one send of files at a time, and no state change after the
+  // composer is gone.
+  const sendingMedias = useRef(false);
+  const composerMounted = useRef(true);
+  useEffect(
+    () => () => {
+      composerMounted.current = false;
+    },
+    []
+  );
   const assistantComposer = useRef(null);
   const prefilledEdit = useRef(null);
 
@@ -1034,72 +1044,54 @@ const MessageInputCustom = props => {
   };
 
   const handleInputPaste = e => {
+    // Zap Komunick: every pasted file, not only the first one.
     if (e.clipboardData.files[0]) {
-      acceptMedias([e.clipboardData.files[0]]);
+      acceptMedias(e.clipboardData.files);
     }
   };
 
+  // Zap Komunick: one file at a time, in the order chosen, each one after its
+  // own compression (helpers/mediaUpload.js). It used to post everything
+  // after a fixed 2 seconds, leaving out the images still being compressed.
   const handleUploadMedia = async e => {
-    setLoading(true);
     e.preventDefault();
+    if (sendingMedias.current) return;
+    sendingMedias.current = true;
+    setLoading(true);
 
-    const formData = new FormData();
-    formData.append("fromMe", true);
+    const total = medias.length;
+    const { sent, pending, error } = await sendMediasInOrder(
+      medias,
+      (formData, onProgress) =>
+        api.post(`/messages/${ticketId}`, formData, {
+          onUploadProgress: event =>
+            onProgress(event.total ? event.loaded / event.total : 0)
+        }),
+      fraction => setPercentLoading(Math.round(fraction * 100))
+    );
 
-    medias.forEach(async (media, idx) => {
-      const file = media;
-
-      if (!file) {
-        return;
-      }
-
-      if (media?.type.split("/")[0] == "image") {
-        new Compressor(file, {
-          quality: 0.7,
-
-          async success(media) {
-            //const formData = new FormData();
-            // The third parameter is required for server
-            //formData.append('file', result, result.name);
-
-            formData.append("medias", media, media.name);
-            formData.append("body", media.name);
-          },
-          error(err) {
-            alert("erro");
-            console.log(err.message);
-          }
-        });
-      } else {
-        formData.append("medias", media);
-        formData.append("body", media.name);
-      }
-    });
-
-    setTimeout(async () => {
-      try {
-        await api
-          .post(`/messages/${ticketId}`, formData, {
-            onUploadProgress: event => {
-              let progress = Math.round((event.loaded * 100) / event.total);
-              setPercentLoading(progress);
-            }
+    sendingMedias.current = false;
+    if (error) {
+      toastError(error);
+      if (total > 1) {
+        toast.warn(
+          i18n.t("messagesInput.sendStopped", {
+            sent,
+            total,
+            name: pending[0]?.name
           })
-          .then(response => {
-            setLoading(false);
-            setMedias([]);
-            setPercentLoading(0);
-          })
-          .catch(err => {
-            setLoading(false);
-            setMedias([]);
-            setPercentLoading(0);
-            toastError(err);
-          });
-      } catch (err) {
-        toastError(err);
+        );
       }
-    }, 2000);
+    }
+    if (!composerMounted.current) return;
+    setLoading(false);
+    setPercentLoading(0);
+    // Files chosen for one ticket never show up in the composer of another.
+    if (Number(assistantComposer.current.ticketId) !== Number(ticketId)) {
+      return;
+    }
+    setSelectedMedia(0);
+    setMedias(pending);
   };
 
   const handlePresenceUpdate = presence => {
@@ -1301,7 +1293,7 @@ const MessageInputCustom = props => {
           <IconButton
             aria-label="cancel-upload"
             component="span"
-            disabled={disableOption}
+            disabled={disableOption || loading}
             onClick={e => setMedias([])}
           >
             <CancelIcon className={classes.viewMediaIcons} />
@@ -1325,7 +1317,7 @@ const MessageInputCustom = props => {
             aria-label="send-upload"
             component="span"
             onClick={handleUploadMedia}
-            disabled={disableOption}
+            disabled={disableOption || loading}
           >
             <SendIcon className={classes.viewMediaIcons} />
           </IconButton>

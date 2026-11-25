@@ -1,9 +1,13 @@
+import fs from "fs";
+import os from "os";
+import path from "path";
 import { Request, Response } from "express";
 import * as MessageController from "../../controllers/MessageController";
 import AppError from "../../errors/AppError";
 import AuthorizeTicketContextService from "../../services/TicketServices/AuthorizeTicketContextService";
 import AuthorizeMessageContextService from "../../services/MessageServices/AuthorizeMessageContextService";
 import DeleteWhatsAppMessage from "../../services/WbotServices/DeleteWhatsAppMessage";
+import SendWhatsAppMedia from "../../services/WbotServices/SendWhatsAppMedia";
 import SendWhatsAppMessage from "../../services/WbotServices/SendWhatsAppMessage";
 import ListMessagesService from "../../services/MessageServices/ListMessagesService";
 import ShowPendingMessagePreviewService from "../../services/MessageServices/ShowPendingMessagePreviewService";
@@ -250,5 +254,103 @@ describe("message authorization before side effects", () => {
     expect(allowedQuote).toEqual(verified);
     expect(fixture.dataJson).toBe(dataJson);
     expect(SetTicketMessagesAsRead).not.toHaveBeenCalled();
+  });
+});
+
+// Zap Komunick: several files sent at once from the ticket screen.
+describe("files sent from the ticket screen", () => {
+  const ticket = { id: 301, channel: "whatsapp", isGroup: true };
+  const folder = fs.mkdtempSync(path.join(os.tmpdir(), "zapk-store-"));
+  let req: Request;
+  let res: Response;
+
+  const upload = (name: string): Express.Multer.File => {
+    const stored = path.join(folder, name);
+    fs.writeFileSync(stored, "ficticio");
+    return { originalname: name, path: stored } as Express.Multer.File;
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    req = {
+      params: { ticketId: "301" },
+      body: {},
+      files: [upload("a.pdf"), upload("b.jpg"), upload("c.pdf")],
+      user: { id: "101", companyId: 10, profile: "user" }
+    } as unknown as Request;
+    res = { send: jest.fn() } as unknown as Response;
+    (AuthorizeTicketContextService as jest.Mock).mockResolvedValue({ ticket });
+    (ShowTicketService as jest.Mock).mockResolvedValue(ticket);
+  });
+
+  afterAll(() => fs.rmSync(folder, { recursive: true, force: true }));
+
+  it("go to WhatsApp one at a time, in the order chosen, and leave no uploaded copy", async () => {
+    const events: string[] = [];
+    (SendWhatsAppMedia as jest.Mock).mockImplementation(async ({ media }) => {
+      events.push(`envia ${media.originalname}`);
+      await new Promise(resolve => {
+        setTimeout(resolve, 15);
+      });
+      events.push(`enviado ${media.originalname}`);
+    });
+
+    await MessageController.store(req, res);
+
+    expect(events).toEqual([
+      "envia a.pdf",
+      "enviado a.pdf",
+      "envia b.jpg",
+      "enviado b.jpg",
+      "envia c.pdf",
+      "enviado c.pdf"
+    ]);
+    expect(SendWhatsAppMedia).toHaveBeenCalledWith(
+      expect.objectContaining({ ticket })
+    );
+    expect(SendWhatsAppMessage).not.toHaveBeenCalled();
+    expect(fs.readdirSync(folder)).toEqual([]);
+    expect(res.send).toHaveBeenCalled();
+  });
+
+  it("stop at the file that fails, answer with its error and leave no uploaded copy", async () => {
+    const failure = new AppError("ERR_SENDING_WAPP_MSG");
+    (SendWhatsAppMedia as jest.Mock)
+      .mockResolvedValueOnce({})
+      .mockRejectedValueOnce(failure);
+
+    await expect(MessageController.store(req, res)).rejects.toBe(failure);
+
+    expect(SendWhatsAppMedia).toHaveBeenCalledTimes(2);
+    expect(fs.readdirSync(folder)).toEqual([]);
+    expect(res.send).not.toHaveBeenCalled();
+  });
+
+  it("refuse a send of files that arrives without any file, before touching the ticket", async () => {
+    req.files = [];
+
+    await expect(MessageController.store(req, res)).rejects.toMatchObject({
+      message: "ERR_NO_MEDIA_RECEIVED",
+      statusCode: 400
+    });
+
+    expect(AuthorizeTicketContextService).toHaveBeenCalled();
+    expect(BindDefaultWhatsapp).not.toHaveBeenCalled();
+    expect(SetTicketMessagesAsRead).not.toHaveBeenCalled();
+    expect(SendWhatsAppMedia).not.toHaveBeenCalled();
+    expect(SendWhatsAppMessage).not.toHaveBeenCalled();
+    expect(res.send).not.toHaveBeenCalled();
+  });
+
+  it("send the text when the multipart request brings text and no file", async () => {
+    req.files = [];
+    req.body = { body: "Segue o texto" };
+
+    await MessageController.store(req, res);
+
+    expect(SendWhatsAppMedia).not.toHaveBeenCalled();
+    expect(SendWhatsAppMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ body: "Segue o texto", ticket })
+    );
   });
 });
