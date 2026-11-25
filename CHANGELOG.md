@@ -49,6 +49,10 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Alterado
 
+- A conversa de quem ainda não escolheu o setor aparece na hora em **Aguardando**, com o rótulo **Sem setor**, para
+  quem é da fila de atendimento geral, em vez de só depois do tempo de espera da triagem (15 minutos por padrão).
+  Aceitar leva a conversa para a fila geral. Quem não é dessa fila continua sem vê-la, e as demais conversas sem
+  fila continuam só com os administradores (RF-033).
 - Atualizado com o Ticketz até a v1.0.141 (46 commits, de 21/10 a 18/11/2026, sem migração de banco). Entram:
   - dependências do backend e do frontend com correções de segurança;
   - contato que não existe no WhatsApp deixa de dar erro;

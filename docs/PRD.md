@@ -913,6 +913,42 @@ Dado um atendimento aguardando na fila Fiscal com o nome da Yasmin,
 quando a Yasmin inicia conversa com esse cliente pela fila Fiscal,
 então o atendimento abre em andamento com ela, sem aviso de conversa em aberto.
 
+### RF-033 — Conversa sem setor visível na hora para a fila geral
+
+**Relato (25/11/2026):** "quando o cliente não escolhe o setor, não está mostrando as mensagens no Aguardando; a gente
+tem que ficar olhando no celular para ver os clientes que mandam mensagem e não escolhem o setor".
+
+**Como era:** com a **Triagem sem setor** ligada, o cliente que não escolhe um setor no menu fica sem fila durante o
+"tempo para escolher um setor" (15 minutos por padrão) e só depois vai para a fila de atendimento geral. Atendimento
+sem fila só aparece para administrador, então nesse intervalo a equipe não via o cliente.
+
+**Regras importantes:**
+- A conversa que está esperando o cliente escolher o setor conta como se já estivesse na fila de atendimento geral
+  para quem pertence a essa fila. São as mesmas pessoas que a receberiam ao fim da espera; muda só o atraso.
+- Para essas pessoas ela aparece em **Aguardando** na hora, com o rótulo **Sem setor**, entra no contador da aba, chega
+  ao vivo, toca a notificação e pode ser aberta e lida. Como qualquer conversa da fila geral, some da lista quando o
+  filtro dessa fila está desligado.
+- Enquanto ninguém aceita, o menu continua valendo: se o cliente escolher um setor, a conversa vai para ele e sai da
+  lista de quem não é desse setor.
+- Aceitar leva a conversa para a fila de atendimento geral, do mesmo jeito que o fim da espera levaria, e a deixa com
+  quem aceitou. Finalizar sem aceitar faz o mesmo antes de fechar, para a conversa não terminar sem setor nas mãos de
+  quem não enxerga conversas sem setor.
+- Se o cliente escolher um setor no instante em que alguém aceita, vale o setor do cliente: o aceite é recusado para
+  quem não é desse setor.
+- As anotações feitas na conversa em espera aparecem para quem pode abri-la.
+- Quem não é da fila de atendimento geral continua sem ver nem poder aceitar essas conversas.
+- Nada muda para as outras conversas sem fila (as iniciadas pelo celular e as anteriores à triagem): continuam só com
+  os administradores. Para o administrador nada muda.
+- Vale só onde a Triagem sem setor está configurada, e só nas conexões de WhatsApp ligadas à fila geral.
+
+**Cenário de sucesso:**
+
+Dado que a JB Fraga tem a Triagem sem setor com a fila "Atendimento geral" e 15 minutos de espera,
+quando um cliente manda "Posso enviar o código?" e não responde ao menu de setores,
+então, no mesmo instante, a conversa aparece em Aguardando para quem é da fila Atendimento geral, com o rótulo
+"Sem setor"; ao aceitar, ela passa para a fila Atendimento geral com quem aceitou, e a equipe não precisa mais olhar
+o celular.
+
 ### RF-030 — Aviso de versão beta e chamados de suporte
 
 **Pedido (24/11/2026):** avisar quem entra no SuperChat de que o sistema está em versão beta e pode apresentar erros,

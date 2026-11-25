@@ -44,6 +44,7 @@ import {
   isSlaBreached,
   slaWaitingMinutes
 } from "../../helpers/sla";
+import { isWaitingForSector } from "../../helpers/generalTriage";
 
 const useStyles = makeStyles(theme => ({
   ticket: {
@@ -468,7 +469,10 @@ const TicketListItemCustom = ({
   const unread = Number(ticket.unreadMessages) || 0;
   const rowTags = (ticket.tags || []).slice(0, 2);
   const extraTags = Math.max(0, (ticket.tags || []).length - rowTags.length);
-  const queueName = ticket.queue?.name || "Sem fila";
+  // Zap Komunick (RF-033): the customer has not picked a sector yet.
+  const queueName =
+    ticket.queue?.name ||
+    (isWaitingForSector(ticket) ? i18n.t("generalTriage.waiting") : "Sem fila");
 
   // Zap Komunick: lean row. Name and time on top, last message and unread
   // count in the middle, queue, tags and attendant at the bottom. The extra

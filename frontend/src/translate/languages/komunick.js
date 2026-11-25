@@ -3946,7 +3946,9 @@ pt.generalTriage = {
   disabled: "Desativada",
   queueHint: "Vincule a fila ao WhatsApp e aos atendentes que fazem a triagem.",
   timeout: "Tempo para escolher um setor (minutos)",
-  timeoutHint: "Depois desse prazo, o atendimento vai para a fila geral."
+  timeoutHint: "Depois desse prazo, o atendimento vai para a fila geral.",
+  // the label of a conversation whose customer has not picked a sector yet
+  waiting: "Sem setor"
 };
 
 pt.slaNotifications = {
@@ -3980,7 +3982,8 @@ en.generalTriage = {
   queueHint:
     "Link this queue to the WhatsApp channel and the agents handling triage.",
   timeout: "Time to select a department (minutes)",
-  timeoutHint: "After this period, the ticket moves to the general queue."
+  timeoutHint: "After this period, the ticket moves to the general queue.",
+  waiting: "No department"
 };
 
 en.slaNotifications = {
@@ -4014,7 +4017,8 @@ es.generalTriage = {
   queueHint:
     "Vincula la cola al WhatsApp y a los agentes que hacen la clasificación.",
   timeout: "Tiempo para elegir un sector (minutos)",
-  timeoutHint: "Después de ese plazo, la conversación pasa a la cola general."
+  timeoutHint: "Después de ese plazo, la conversación pasa a la cola general.",
+  waiting: "Sin sector"
 };
 
 es.slaNotifications = {

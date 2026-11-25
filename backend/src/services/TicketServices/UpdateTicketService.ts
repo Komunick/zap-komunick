@@ -17,6 +17,7 @@ import { logger } from "../../utils/logger";
 import {
   emitTicketContext,
   invalidateTicketNotifications,
+  removeTicketFromQueueLists,
   revokeTicketContextRooms
 } from "../SocketServices/TicketContextSocketService";
 import { incrementCounter } from "../CounterServices/IncrementCounter";
@@ -28,6 +29,13 @@ import {
   checkStatusTransition
 } from "../../helpers/TicketPauseAndClose";
 import { ActiveCloseReasonIds } from "../CloseReasonServices/CloseReasonService";
+import {
+  isWaitingInGeneralTriage,
+  loadGeneralTriageScope,
+  loadMemberGeneralTriageScope
+} from "../../helpers/GeneralTriage";
+import { loadTicketViewer } from "./AuthorizeTicketContextService";
+import { assignGeneralTriageDestination } from "../WbotServices/GeneralTriageRouting";
 
 export interface UpdateTicketData {
   status?: string;
@@ -72,6 +80,39 @@ const sendFormattedMessage = async (
     text: messageText
   });
   await verifyMessage(queueChangedMessage, ticket, ticket.contact);
+};
+
+// Zap Komunick (RF-033): an attendant of the general queue takes (or closes) a
+// ticket that is still waiting for the customer to pick a sector. The ticket
+// goes to the general queue first, exactly as it would at the end of the wait
+// (same bookkeeping of messages and of the waiting time), and is then accepted
+// or closed like any other ticket of that queue, so it never ends up without a
+// sector in the hands of someone who cannot see tickets without a sector.
+// Administrators keep acting as before.
+const takeIntoGeneralQueue = async (
+  ticket: Ticket,
+  userId: number | string
+): Promise<boolean> => {
+  try {
+    const viewer = await loadTicketViewer({
+      userId,
+      companyId: ticket.companyId
+    });
+    if (viewer.isAdmin) return false;
+    const scope = await loadMemberGeneralTriageScope(
+      ticket.companyId,
+      viewer.queueIds
+    );
+    if (!scope || !isWaitingInGeneralTriage(ticket, scope)) return false;
+    const routed = await assignGeneralTriageDestination(ticket, {
+      id: scope.queueId,
+      chatbot: false,
+      isGeneral: true
+    });
+    return !!routed;
+  } catch {
+    return false;
+  }
 };
 
 export async function websocketUpdateTicket(
@@ -155,6 +196,53 @@ const UpdateTicketService = async ({
       throw new AppError("ERR_TICKET_NOT_PENDING", 409);
     }
     const isGroup = ticket.contact?.isGroup || ticket.isGroup;
+
+    // Zap Komunick (RF-033): see takeIntoGeneralQueue. An accept is decided by
+    // who the ticket goes to; a close, by who is closing.
+    const requesterIsAttendant = !!user && user.profile !== "admin";
+    const acceptsPending = ticket.status === "pending" && status === "open";
+    const taker =
+      acceptsPending && userId
+        ? userId
+        : ticket.status === "pending" &&
+            status === "closed" &&
+            requesterIsAttendant
+          ? user.id
+          : null;
+    if (
+      taker &&
+      !ticket.queueId &&
+      ticket.generalTriageStartedAt &&
+      (await takeIntoGeneralQueue(ticket, taker))
+    ) {
+      await ticket.reload();
+    }
+    // The customer may pick a sector between the access check of the request
+    // and this point: the ticket read here is the one that counts. An
+    // attendant never ends up with a ticket of a sector they are not in (they
+    // would lose it at once, and so would the sector, which only sees its
+    // pending tickets).
+    if (
+      requesterIsAttendant &&
+      acceptsPending &&
+      queueId === undefined &&
+      ticket.queueId != null
+    ) {
+      const requester = await loadTicketViewer({
+        userId: user.id,
+        companyId: ticket.companyId
+      });
+      if (!requester.queueIds.includes(ticket.queueId)) {
+        throw new AppError("ERR_NO_PERMISSION", 403);
+      }
+    }
+    // A ticket that stops waiting for a sector leaves the lists of the general
+    // queue (see after the update below).
+    const waitScope =
+      !ticket.queueId && ticket.generalTriageStartedAt
+        ? await loadGeneralTriageScope(ticket.companyId)
+        : null;
+    const wasWaitingForSector = isWaitingInGeneralTriage(ticket, waitScope);
 
     if (queueId && Number(queueId) !== ticket.queueId) {
       const newQueue = await Queue.findByPk(queueId);
@@ -403,6 +491,14 @@ const UpdateTicketService = async ({
       ...(status === "closed" ? { unansweredSince: null } : {})
     });
     await revokeTicketContextRooms(io, ticket.id);
+    if (
+      wasWaitingForSector &&
+      waitScope &&
+      ticket.queueId !== waitScope.queueId &&
+      !isWaitingInGeneralTriage(ticket, waitScope)
+    ) {
+      await removeTicketFromQueueLists(io, ticket, waitScope.queueId);
+    }
     if (
       ticket.status !== "pending" &&
       ticket.status !== "open" &&
