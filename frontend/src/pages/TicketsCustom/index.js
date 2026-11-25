@@ -66,7 +66,12 @@ const TicketsCustom = () => {
           <Grid item md className={classes.contactsWrapper}>
             <TicketsManager />
           </Grid>
-          <Grid item md className={classes.messagesWrapper}>
+          <Grid
+            item
+            md
+            className={classes.messagesWrapper}
+            data-tour="tickets:chat"
+          >
             {ticketId ? (
               <>
                 <Ticket />

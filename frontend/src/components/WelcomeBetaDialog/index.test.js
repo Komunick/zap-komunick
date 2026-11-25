@@ -105,3 +105,51 @@ it("shows the new notice to who had only seen the first version", () => {
   expect(screen.getByRole("dialog")).toBeInTheDocument();
   expect(welcomeBetaKey(7)).toBe("superchat:welcomeBeta:v2:7");
 });
+
+// The feature tour waits for this notice to be out of the way (RF-031).
+describe("onSettled", () => {
+  const renderWith = (userId, onSettled) =>
+    render(
+      <MemoryRouter initialEntries={["/tickets"]}>
+        <WelcomeBetaDialog userId={userId} onSettled={onSettled} />
+      </MemoryRouter>
+    );
+
+  it("stays silent while the notice is on screen", () => {
+    const onSettled = jest.fn();
+    renderWith(7, onSettled);
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(onSettled).not.toHaveBeenCalled();
+  });
+
+  it('tells "dismissed" when the person closes the notice', () => {
+    const onSettled = jest.fn();
+    renderWith(7, onSettled);
+    fireEvent.click(screen.getByRole("button", { name: "Agora não" }));
+    expect(onSettled).toHaveBeenCalledTimes(1);
+    expect(onSettled).toHaveBeenCalledWith("dismissed");
+  });
+
+  it('tells "support" when the person goes to open a ticket', () => {
+    const onSettled = jest.fn();
+    renderWith(7, onSettled);
+    fireEvent.click(screen.getByRole("button", { name: "Abrir um chamado" }));
+    expect(onSettled).toHaveBeenCalledTimes(1);
+    expect(onSettled).toHaveBeenCalledWith("support");
+    expect(localStorage.getItem(welcomeBetaKey(7))).not.toBeNull();
+  });
+
+  it('tells "seen" when the notice was answered on an earlier visit', () => {
+    localStorage.setItem(welcomeBetaKey(7), "2026-11-24T12:00:00.000Z");
+    const onSettled = jest.fn();
+    renderWith(7, onSettled);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(onSettled).toHaveBeenCalledWith("seen");
+  });
+
+  it("says nothing before the user is known", () => {
+    const onSettled = jest.fn();
+    renderWith(undefined, onSettled);
+    expect(onSettled).not.toHaveBeenCalled();
+  });
+});

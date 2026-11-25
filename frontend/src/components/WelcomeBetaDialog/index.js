@@ -58,16 +58,26 @@ const alreadySeen = userId => {
   }
 };
 
-const WelcomeBetaDialog = ({ userId }) => {
+// `onSettled` tells the layout that this notice is out of the way, and how:
+// "seen" (answered on an earlier visit), "dismissed" or "support" (the person
+// went to open a ticket). The feature tour waits for it before offering itself.
+const WelcomeBetaDialog = ({ userId, onSettled }) => {
   const classes = useStyles();
   const history = useHistory();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    setOpen(!!userId && !alreadySeen(userId));
+    if (!userId) {
+      setOpen(false);
+      return;
+    }
+    const seen = alreadySeen(userId);
+    setOpen(!seen);
+    if (seen) onSettled?.("seen");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
-  const dismiss = () => {
+  const remember = () => {
     try {
       localStorage.setItem(welcomeBetaKey(userId), new Date().toISOString());
     } catch {
@@ -76,8 +86,14 @@ const WelcomeBetaDialog = ({ userId }) => {
     setOpen(false);
   };
 
+  const dismiss = () => {
+    remember();
+    onSettled?.("dismissed");
+  };
+
   const openReport = () => {
-    dismiss();
+    remember();
+    onSettled?.("support");
     history.push("/support");
   };
 

@@ -173,6 +173,7 @@ function ListItemLink(props) {
           className={clsx(classes.menuLink, active && classes.menuLinkActive)}
           aria-current={active ? "page" : undefined}
           aria-label={typeof primary === "string" ? primary : undefined}
+          data-tour={`nav:${to}`}
         >
           {icon ? (
             <ListItemIcon className={classes.menuIcon}>{icon}</ListItemIcon>
