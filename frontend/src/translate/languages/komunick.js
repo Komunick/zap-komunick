@@ -4563,6 +4563,586 @@ en.chatPage.dropUnavailable =
 es.chatPage.dropUnavailable =
   "No se puede adjuntar ahora. Termina el envío o la grabación en curso.";
 
+// Feature tour (RF-031): the script is in helpers/featureTour.js. Each step has
+// a title, one sentence saying what the feature is and the points that tell
+// how it works. Button and tab names are quoted exactly as they are on screen.
+pt.featureTour = {
+  menu: "Tour pelo sistema",
+  title: "Tour pelo sistema",
+  stepOf: "Tour · passo {{n}} de {{total}}",
+  stepShort: "Passo {{n}} de {{total}}",
+  leave: "Sair do tour",
+  back: "Voltar",
+  next: "Continuar",
+  finish: "Finalizar",
+  offerTitle: "Conheça o SuperChat",
+  offerText:
+    "Um tour rápido, de {{total}} passos, mostra onde fica cada funcionalidade e como ela funciona. Nada é enviado nem alterado, e você pode sair quando quiser.",
+  offerLater:
+    'Para fazer depois: clique no seu nome, no canto de cima, e em "Tour pelo sistema".',
+  notNow: "Agora não",
+  start: "Fazer tour",
+  endTitle: "Você chegou ao fim do tour",
+  endText:
+    'Para rever, clique no seu nome, no canto de cima, e em "Tour pelo sistema". Se algo não funcionar como esperado, abra um chamado em Suporte.',
+  conclude: "Concluir",
+  repeat: "Repetir tour",
+  groups: {
+    service: "Menu · Atendimento",
+    management: "Menu · Gerência",
+    administration: "Menu · Administração",
+    topBar: "Barra de cima"
+  },
+  steps: {
+    tickets: {
+      title: "Atendimentos",
+      text: "Toda conversa do WhatsApp vira um atendimento. É a tela em que você trabalha o dia inteiro.",
+      points: [
+        'A conversa nova chega em "Aguardando".',
+        "Quem aceita passa a ser o responsável por ela.",
+        'Ao terminar, você finaliza e ela vai para "Resolvidos".'
+      ]
+    },
+    ticketsList: {
+      title: "A lista de atendimentos",
+      text: "As abas separam as conversas pela situação. Os botões logo abaixo abrem, filtram e agem em várias de uma vez.",
+      points: [
+        'A primeira aba traz os atendimentos em andamento; depois vêm "Aguardando", "Pausados" e "Resolvidos". A lupa busca atendimentos e mensagens.',
+        '"Novo" abre uma conversa com um contato, sem esperar ele escrever.',
+        '"Filtros" restringe a lista por conexão, etiquetas, período, carteira, não lidas e SLA estourado.',
+        '"Selecionar" marca vários atendimentos para aceitar, transferir, etiquetar ou finalizar juntos.'
+      ]
+    },
+    ticketsChat: {
+      title: "A conversa",
+      text: "Ao clicar em um atendimento, a conversa abre aqui, com o histórico do cliente.",
+      points: [
+        '"Aceitar" assume a conversa. Escreva a mensagem e aperte Enter para enviar.',
+        'Digite "/" no começo da mensagem para escolher uma resposta rápida.',
+        "Arraste arquivos para cima da conversa para anexar; imagens mostram a prévia antes do envio.",
+        'No topo ficam "Transferir", "Pausar atendimento" e "Finalizar".'
+      ]
+    },
+    kanban: {
+      title: "Kanban",
+      text: "Os atendimentos em aberto organizados em colunas.",
+      points: [
+        'Há a coluna "Em aberto" e uma coluna para cada tag marcada com "Usar como coluna do Kanban".',
+        "Arraste o cartão para outra coluna para trocar a etiqueta do atendimento.",
+        'O menu do cartão tem "Mover para" e "Abrir atendimento".'
+      ]
+    },
+    quickMessages: {
+      title: "Respostas Rápidas",
+      text: "Textos prontos para as mensagens que você repete todo dia.",
+      points: [
+        'Clique em "Nova Resposta" e preencha o "Atalho" e a "Resposta".',
+        'Na conversa, digite "/" e o atalho para inserir o texto.'
+      ]
+    },
+    contacts: {
+      title: "Contatos",
+      text: "A agenda de clientes da empresa.",
+      points: [
+        'Pesquise pelo nome ou pelo número e filtre por "Carteira" ou "Etiquetas".',
+        '"Adicionar Contato" cadastra um novo; o ícone do WhatsApp inicia a conversa com ele.',
+        'A coluna "Carteira" mostra quem é o responsável por cada cliente.'
+      ]
+    },
+    schedules: {
+      title: "Agendamentos",
+      text: "Mensagens programadas para sair sozinhas no dia e na hora que você escolher.",
+      points: [
+        '"Novo Agendamento": escolha um ou vários contatos (ou todos de uma etiqueta), a data e a mensagem.',
+        '"Repetir" refaz o envio todo dia, toda semana, todo mês ou todo ano.',
+        'Dá para anexar um arquivo e marcar "Enviar só em dia útil".'
+      ]
+    },
+    tags: {
+      title: "Tags",
+      text: "Etiquetas coloridas para classificar os atendimentos e os contatos.",
+      points: [
+        '"Nova Tag": dê um nome, uma cor e, se quiser, os setores que podem usá-la.',
+        'Ligue "Usar como coluna do Kanban" para ela virar uma coluna do Kanban.',
+        "Depois de aplicada, a etiqueta serve de filtro em Atendimentos e em Contatos."
+      ]
+    },
+    chats: {
+      title: "Chat Interno",
+      text: "Conversa entre os colegas da empresa, sem passar pelo WhatsApp.",
+      points: [
+        "Busque uma pessoa e clique nela para abrir a conversa.",
+        '"Novo grupo" reúne várias pessoas numa conversa só.',
+        "Aceita anexos e áudio; arrastar arquivos também funciona aqui."
+      ]
+    },
+    support: {
+      title: "Ajuda e Suporte",
+      text: "Onde tirar dúvidas e avisar de qualquer falha no sistema.",
+      points: [
+        '"Ajuda" mostra os materiais e vídeos de orientação, quando houver algum publicado.',
+        'Em "Suporte", clique em "Abrir chamado", conte o que aconteceu e anexe print, vídeo ou PDF.',
+        "A resposta chega na conversa do próprio chamado. Escrever num chamado concluído o reabre."
+      ]
+    },
+    indicators: {
+      title: "Dashboard, SLA, Métricas e Usuários online",
+      text: "Os números da operação, para acompanhar a equipe.",
+      points: [
+        '"Dashboard": equipe online, quantos aguardam e os indicadores do período escolhido.',
+        '"Painel de SLA": atendimentos em aberto por fila e por atendente, no prazo ou estourados.',
+        '"Métricas": atendimentos por dia, fila, atendente e motivo de finalização, com "Exportar CSV".',
+        '"Usuários online": um cartão por pessoa da equipe, atualizado a cada minuto.'
+      ]
+    },
+    security: {
+      title: "IPs permitidos e Auditoria",
+      text: "Os controles de segurança da empresa.",
+      points: [
+        '"IPs permitidos": ligue a restrição e liste os endereços de onde a equipe pode acessar. Use "Adicionar meu IP" antes de salvar.',
+        '"Auditoria": o registro das ações feitas no sistema, com filtro por data, usuário e ação.'
+      ]
+    },
+    connections: {
+      title: "Conexões",
+      text: "Os números de WhatsApp ligados ao SuperChat.",
+      points: [
+        '"Adicionar WhatsApp" cria a conexão; "QR CODE" mostra o código para ler com o celular.',
+        "A situação aparece na lista: conectado, desconectado ou aguardando o QR Code.",
+        'Um "!" neste item do menu avisa que alguma conexão está fora do ar.'
+      ]
+    },
+    queues: {
+      title: "Filas & Chatbot e Motivos de finalização",
+      text: "Como as conversas são distribuídas entre os setores e como são encerradas.",
+      points: [
+        'Cada fila é um setor: "Adicionar fila" define o nome, a cor, a saudação e as opções do chatbot.',
+        "Cada atendente trabalha com as filas em que foi colocado.",
+        '"Motivos de finalização": cadastre os motivos que o atendente escolhe ao finalizar, quando a exigência está ligada em Configurações.'
+      ]
+    },
+    users: {
+      title: "Usuários",
+      text: "Quem acessa o sistema e o que cada pessoa pode fazer.",
+      points: [
+        '"Adicionar usuário": nome, e-mail, senha, perfil (Administrador ou Usuário) e as filas da pessoa.',
+        '"Restringir horário de acesso" limita os dias e o horário em que ela entra.',
+        "A coluna da verificação em duas etapas mostra quem ativou e permite redefinir."
+      ]
+    },
+    settings: {
+      title: "API e Configurações",
+      text: "As regras gerais da empresa.",
+      points: [
+        'Em Configurações, a aba "Opções" reúne, entre outras, os prazos de SLA, a carteira de clientes, a exigência de motivo ao finalizar e o horário de expediente.',
+        '"API" traz a documentação e um teste de envio de mensagens por token.'
+      ]
+    },
+    search: {
+      title: "Busca rápida",
+      text: "Um atalho para chegar a qualquer lugar sem passar pelo menu.",
+      points: [
+        "Clique aqui ou aperte Ctrl K.",
+        "Digite o nome de uma tela, de um atendimento ou de um cliente e escolha na lista.",
+        "Escolher um cliente abre uma conversa com ele."
+      ]
+    },
+    account: {
+      title: "Seu menu",
+      text: "Clique no seu nome para ajustar a conta e a aparência.",
+      points: [
+        '"Perfil" e "Segurança da conta", onde se ativa a verificação em duas etapas.',
+        "Modo claro ou escuro e três layouts: Workspace, Foco e Painel.",
+        '"Tour pelo sistema" repete este tour quando você quiser.'
+      ]
+    }
+  }
+};
+en.featureTour = {
+  menu: "System tour",
+  title: "System tour",
+  stepOf: "Tour · step {{n}} of {{total}}",
+  stepShort: "Step {{n}} of {{total}}",
+  leave: "Leave tour",
+  back: "Back",
+  next: "Continue",
+  finish: "Finish",
+  offerTitle: "Get to know SuperChat",
+  offerText:
+    "A quick tour of {{total}} steps shows where each feature is and how it works. Nothing is sent or changed, and you can leave at any time.",
+  offerLater:
+    'To take it later: click your name, at the top corner, then "System tour".',
+  notNow: "Not now",
+  start: "Take the tour",
+  endTitle: "You have reached the end of the tour",
+  endText:
+    'To see it again, click your name, at the top corner, then "System tour". If something does not work as expected, open a ticket in Support.',
+  conclude: "Done",
+  repeat: "Repeat tour",
+  groups: {
+    service: "Menu · Service",
+    management: "Menu · Management",
+    administration: "Menu · Administration",
+    topBar: "Top bar"
+  },
+  steps: {
+    tickets: {
+      title: "Tickets",
+      text: "Every WhatsApp conversation becomes a ticket. This is the screen you work on all day.",
+      points: [
+        "A new conversation arrives in the waiting tab.",
+        "Whoever accepts it becomes responsible for it.",
+        "When you are done, you close it and it moves to the resolved tab."
+      ]
+    },
+    ticketsList: {
+      title: "The ticket list",
+      text: "The tabs split the conversations by status. The buttons right below open, filter and act on several at once.",
+      points: [
+        "The first tab has the tickets in progress; then come waiting, paused and resolved. The magnifier searches tickets and messages.",
+        '"New" starts a conversation with a contact, without waiting for them to write.',
+        "The filters narrow the list by connection, tags, period, wallet, unread and breached SLA.",
+        '"Select" marks several tickets to accept, transfer, tag or close together.'
+      ]
+    },
+    ticketsChat: {
+      title: "The conversation",
+      text: "Click a ticket and the conversation opens here, with the customer's history.",
+      points: [
+        "Accept the conversation to take it. Type the message and press Enter to send.",
+        'Type "/" at the start of the message to pick a quick response.',
+        "Drag files over the conversation to attach them; images show a preview before sending.",
+        "The top has the actions to transfer, pause and close the ticket."
+      ]
+    },
+    kanban: {
+      title: "Kanban",
+      text: "The open tickets arranged in columns.",
+      points: [
+        "There is one column for open tickets and one for each tag set to be a Kanban column.",
+        "Drag the card to another column to change the tag of the ticket.",
+        "The card menu moves it to another column or opens the ticket."
+      ]
+    },
+    quickMessages: {
+      title: "Quick Responses",
+      text: "Ready-made texts for the messages you repeat every day.",
+      points: [
+        "Create a response with a shortcut and its text.",
+        'In the conversation, type "/" and the shortcut to insert the text.'
+      ]
+    },
+    contacts: {
+      title: "Contacts",
+      text: "The company's customer list.",
+      points: [
+        "Search by name or number and filter by wallet or tags.",
+        '"Add Contact" registers a new one; the WhatsApp icon starts a conversation with it.',
+        "The wallet column shows who is responsible for each customer."
+      ]
+    },
+    schedules: {
+      title: "Schedules",
+      text: "Messages scheduled to go out by themselves on the day and time you choose.",
+      points: [
+        '"New Schedule": pick one or several contacts (or everyone with a tag), the date and the message.',
+        "The repeat option sends it again every day, week, month or year.",
+        "You can attach a file and send on business days only."
+      ]
+    },
+    tags: {
+      title: "Tags",
+      text: "Coloured labels to classify tickets and contacts.",
+      points: [
+        '"New Tag": give it a name, a colour and, if you want, the departments that may use it.',
+        "Set it as a Kanban column to make it one.",
+        "Once applied, the tag works as a filter in Tickets and in Contacts."
+      ]
+    },
+    chats: {
+      title: "Internal Chat",
+      text: "Conversation between the people of the company, outside WhatsApp.",
+      points: [
+        "Search for a person and click to open the conversation.",
+        "A group gathers several people in one conversation.",
+        "It takes attachments and audio; dragging files works here too."
+      ]
+    },
+    support: {
+      title: "Help and Support",
+      text: "Where to clear doubts and report any failure in the system.",
+      points: [
+        "Help shows guidance material and videos, when any has been published.",
+        "In Support, open a ticket, tell what happened and attach a screenshot, a video or a PDF.",
+        "The answer arrives in the conversation of the ticket itself. Writing in a concluded ticket reopens it."
+      ]
+    },
+    indicators: {
+      title: "Dashboard, SLA, Metrics and Online users",
+      text: "The numbers of the operation, to follow the team.",
+      points: [
+        "Dashboard: team online, how many are waiting and the indicators of the chosen period.",
+        "SLA panel: open tickets by queue and by agent, on time or breached.",
+        "Metrics: tickets by day, queue, agent and close reason, with a CSV export.",
+        "Online users: one card per person of the team, updated every minute."
+      ]
+    },
+    security: {
+      title: "Allowed IPs and Audit log",
+      text: "The company's security controls.",
+      points: [
+        "Allowed IPs: turn the restriction on and list the addresses the team may sign in from. Add your own IP before saving.",
+        "Audit log: the record of the actions taken in the system, filtered by date, user and action."
+      ]
+    },
+    connections: {
+      title: "Connections",
+      text: "The WhatsApp numbers linked to SuperChat.",
+      points: [
+        '"Add WhatsApp" creates the connection; "QR CODE" shows the code to read with the phone.',
+        "The status is in the list: connected, disconnected or waiting for the QR Code.",
+        'A "!" on this menu item warns that a connection is down.'
+      ]
+    },
+    queues: {
+      title: "Queues & Chatbot and close reasons",
+      text: "How conversations are spread between departments and how they are closed.",
+      points: [
+        'Each queue is a department: "Add Queue" sets its name, colour, greeting and chatbot options.',
+        "Each agent works with the queues they were put in.",
+        "Close reasons: register the reasons the agent picks when closing, when Settings requires one."
+      ]
+    },
+    users: {
+      title: "Users",
+      text: "Who signs in to the system and what each person may do.",
+      points: [
+        '"Add User": name, e-mail, password, profile (administrator or user) and the person\'s queues.',
+        "The access hours restriction limits the days and time they may sign in.",
+        "The two-step verification column shows who turned it on and lets you reset it."
+      ]
+    },
+    settings: {
+      title: "API and Settings",
+      text: "The general rules of the company.",
+      points: [
+        "In Settings, the options tab holds, among others, the SLA targets, the customer wallet, the close reason requirement and the business hours.",
+        "API has the documentation and a test for sending messages with a token."
+      ]
+    },
+    search: {
+      title: "Quick search",
+      text: "A shortcut to get anywhere without going through the menu.",
+      points: [
+        "Click here or press Ctrl K.",
+        "Type the name of a screen, a ticket or a customer and pick it from the list.",
+        "Picking a customer opens a conversation with them."
+      ]
+    },
+    account: {
+      title: "Your menu",
+      text: "Click your name to adjust the account and the look.",
+      points: [
+        "Profile and account security, where two-step verification is turned on.",
+        "Light or dark mode and three layouts: Workspace, Focus and Panel.",
+        '"System tour" repeats this tour whenever you want.'
+      ]
+    }
+  }
+};
+es.featureTour = {
+  menu: "Tour por el sistema",
+  title: "Tour por el sistema",
+  stepOf: "Tour · paso {{n}} de {{total}}",
+  stepShort: "Paso {{n}} de {{total}}",
+  leave: "Salir del tour",
+  back: "Volver",
+  next: "Continuar",
+  finish: "Finalizar",
+  offerTitle: "Conoce SuperChat",
+  offerText:
+    "Un tour rápido, de {{total}} pasos, muestra dónde está cada funcionalidad y cómo funciona. Nada se envía ni se cambia, y puedes salir cuando quieras.",
+  offerLater:
+    'Para hacerlo después: haz clic en tu nombre, en la esquina de arriba, y en "Tour por el sistema".',
+  notNow: "Ahora no",
+  start: "Hacer el tour",
+  endTitle: "Llegaste al final del tour",
+  endText:
+    'Para verlo otra vez, haz clic en tu nombre, en la esquina de arriba, y en "Tour por el sistema". Si algo no funciona como esperabas, abre un ticket en Soporte.',
+  conclude: "Concluir",
+  repeat: "Repetir tour",
+  groups: {
+    service: "Menú · Atención",
+    management: "Menú · Gerencia",
+    administration: "Menú · Administración",
+    topBar: "Barra de arriba"
+  },
+  steps: {
+    tickets: {
+      title: "Atenciones",
+      text: "Cada conversación de WhatsApp se vuelve una atención. Es la pantalla en la que trabajas todo el día.",
+      points: [
+        "La conversación nueva llega a la pestaña de espera.",
+        "Quien la acepta pasa a ser su responsable.",
+        "Al terminar, la finalizas y pasa a la pestaña de resueltos."
+      ]
+    },
+    ticketsList: {
+      title: "La lista de atenciones",
+      text: "Las pestañas separan las conversaciones por situación. Los botones de abajo abren, filtran y actúan sobre varias a la vez.",
+      points: [
+        "La primera pestaña trae las atenciones en curso; después vienen en espera, pausadas y resueltas. La lupa busca atenciones y mensajes.",
+        '"Nuevo" abre una conversación con un contacto, sin esperar a que escriba.',
+        "Los filtros acotan la lista por conexión, etiquetas, período, cartera, no leídas y SLA vencido.",
+        '"Seleccionar" marca varias atenciones para aceptar, transferir, etiquetar o finalizar juntas.'
+      ]
+    },
+    ticketsChat: {
+      title: "La conversación",
+      text: "Al hacer clic en una atención, la conversación se abre aquí, con el historial del cliente.",
+      points: [
+        "Acepta la conversación para asumirla. Escribe el mensaje y pulsa Enter para enviar.",
+        'Escribe "/" al comienzo del mensaje para elegir una respuesta rápida.',
+        "Arrastra archivos sobre la conversación para adjuntarlos; las imágenes muestran la vista previa antes del envío.",
+        "Arriba están las acciones de transferir, pausar y finalizar la atención."
+      ]
+    },
+    kanban: {
+      title: "Kanban",
+      text: "Las atenciones abiertas organizadas en columnas.",
+      points: [
+        "Hay una columna de abiertas y una por cada etiqueta marcada como columna del Kanban.",
+        "Arrastra la tarjeta a otra columna para cambiar la etiqueta de la atención.",
+        "El menú de la tarjeta la mueve a otra columna o abre la atención."
+      ]
+    },
+    quickMessages: {
+      title: "Respuestas Rápidas",
+      text: "Textos listos para los mensajes que repites todos los días.",
+      points: [
+        "Crea una respuesta con un atajo y su texto.",
+        'En la conversación, escribe "/" y el atajo para insertar el texto.'
+      ]
+    },
+    contacts: {
+      title: "Contactos",
+      text: "La agenda de clientes de la empresa.",
+      points: [
+        "Busca por nombre o número y filtra por cartera o etiquetas.",
+        '"Agregar Contacto" registra uno nuevo; el icono de WhatsApp inicia la conversación con él.',
+        "La columna de cartera muestra quién es el responsable de cada cliente."
+      ]
+    },
+    schedules: {
+      title: "Agendamientos",
+      text: "Mensajes programados para salir solos el día y la hora que elijas.",
+      points: [
+        '"Nuevo Agendamiento": elige uno o varios contactos (o todos los de una etiqueta), la fecha y el mensaje.',
+        "La repetición lo envía otra vez cada día, semana, mes o año.",
+        "Puedes adjuntar un archivo y enviar solo en día hábil."
+      ]
+    },
+    tags: {
+      title: "Etiquetas",
+      text: "Etiquetas de colores para clasificar las atenciones y los contactos.",
+      points: [
+        '"Nueva Etiqueta": dale un nombre, un color y, si quieres, los sectores que pueden usarla.',
+        "Márcala como columna del Kanban para que lo sea.",
+        "Una vez aplicada, la etiqueta sirve de filtro en Atenciones y en Contactos."
+      ]
+    },
+    chats: {
+      title: "Chat Interno",
+      text: "Conversación entre los compañeros de la empresa, sin pasar por WhatsApp.",
+      points: [
+        "Busca a una persona y haz clic para abrir la conversación.",
+        "Un grupo reúne a varias personas en una sola conversación.",
+        "Acepta adjuntos y audio; arrastrar archivos también funciona aquí."
+      ]
+    },
+    support: {
+      title: "Ayuda y Soporte",
+      text: "Dónde resolver dudas y avisar de cualquier falla en el sistema.",
+      points: [
+        "Ayuda muestra los materiales y videos de orientación, cuando hay alguno publicado.",
+        "En Soporte, abre un ticket, cuenta lo que pasó y adjunta una captura, un video o un PDF.",
+        "La respuesta llega a la conversación del propio ticket. Escribir en un ticket concluido lo reabre."
+      ]
+    },
+    indicators: {
+      title: "Tablero, SLA, Métricas y Usuarios en línea",
+      text: "Los números de la operación, para acompañar al equipo.",
+      points: [
+        "Tablero: equipo en línea, cuántos esperan y los indicadores del período elegido.",
+        "Panel de SLA: atenciones abiertas por fila y por agente, a tiempo o vencidas.",
+        "Métricas: atenciones por día, fila, agente y motivo de finalización, con exportación a CSV.",
+        "Usuarios en línea: una tarjeta por persona del equipo, actualizada cada minuto."
+      ]
+    },
+    security: {
+      title: "IP permitidas y Auditoría",
+      text: "Los controles de seguridad de la empresa.",
+      points: [
+        "IP permitidas: activa la restricción y lista las direcciones desde las que el equipo puede entrar. Agrega tu propia IP antes de guardar.",
+        "Auditoría: el registro de las acciones hechas en el sistema, con filtro por fecha, usuario y acción."
+      ]
+    },
+    connections: {
+      title: "Conexiones",
+      text: "Los números de WhatsApp conectados a SuperChat.",
+      points: [
+        '"Agregar WhatsApp" crea la conexión; "CÓDIGO QR" muestra el código para leer con el celular.',
+        "La situación aparece en la lista: conectado, desconectado o esperando el código QR.",
+        'Un "!" en este elemento del menú avisa que alguna conexión está caída.'
+      ]
+    },
+    queues: {
+      title: "Filas y Chatbot y motivos de finalización",
+      text: "Cómo se reparten las conversaciones entre los sectores y cómo se cierran.",
+      points: [
+        'Cada fila es un sector: "Agregar fila" define el nombre, el color, el saludo y las opciones del chatbot.',
+        "Cada agente trabaja con las filas en las que fue puesto.",
+        "Motivos de finalización: registra los motivos que el agente elige al finalizar, cuando Configuraciones lo exige."
+      ]
+    },
+    users: {
+      title: "Usuarios",
+      text: "Quién entra al sistema y qué puede hacer cada persona.",
+      points: [
+        '"Agregar usuario": nombre, correo, contraseña, perfil (administrador o usuario) y las filas de la persona.',
+        "La restricción de horario de acceso limita los días y la hora en que entra.",
+        "La columna de la verificación en dos pasos muestra quién la activó y permite restablecerla."
+      ]
+    },
+    settings: {
+      title: "API y Configuraciones",
+      text: "Las reglas generales de la empresa.",
+      points: [
+        "En Configuraciones, la pestaña de opciones reúne, entre otras, los plazos de SLA, la cartera de clientes, la exigencia de motivo al finalizar y el horario de atención.",
+        "API trae la documentación y una prueba de envío de mensajes por token."
+      ]
+    },
+    search: {
+      title: "Búsqueda rápida",
+      text: "Un atajo para llegar a cualquier lugar sin pasar por el menú.",
+      points: [
+        "Haz clic aquí o pulsa Ctrl K.",
+        "Escribe el nombre de una pantalla, de una atención o de un cliente y elígelo en la lista.",
+        "Elegir un cliente abre una conversación con él."
+      ]
+    },
+    account: {
+      title: "Tu menú",
+      text: "Haz clic en tu nombre para ajustar la cuenta y la apariencia.",
+      points: [
+        "Perfil y seguridad de la cuenta, donde se activa la verificación en dos pasos.",
+        "Modo claro u oscuro y tres diseños: Workspace, Foco y Panel.",
+        '"Tour por el sistema" repite este tour cuando quieras.'
+      ]
+    }
+  }
+};
+
 export const komunickMessages = {
   pt: { translations: pt },
   pt_PT: { translations: pt },

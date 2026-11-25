@@ -6,6 +6,10 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Adicionado
 
+- **Tour pelo sistema:** um tour guiado passa pelas telas de verdade e explica como cada funcionalidade funciona, com a
+  tela escurecida, o ponto do passo aceso, um balão com a explicação, "Tour · passo n de N" e **Sair do tour** sempre à
+  mão. São 12 passos para o atendente e 18 para o administrador. É oferecido uma vez a cada usuário e pode ser
+  repetido pelo menu do usuário. Nada é enviado nem alterado durante o tour (RF-031).
 - Mensagem de boas-vindas, uma vez por usuário, avisando que o SuperChat está em versão beta e que os problemas devem
   ser enviados pela aba **Suporte** (RF-030).
 - **Suporte**, no menu de todos os perfis: o usuário abre chamados (título, categoria, prioridade, descrição e até 5

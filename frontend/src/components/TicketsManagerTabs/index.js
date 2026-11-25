@@ -437,6 +437,7 @@ const TicketsManagerTabs = () => {
           textColor="primary"
           className={classes.visions}
           aria-label={i18n.t("tickets.views.label")}
+          data-tour="tickets:tabs"
         >
           <Tab
             value="mine"
@@ -467,7 +468,12 @@ const TicketsManagerTabs = () => {
             aria-label={i18n.t("tickets.tabs.search.title")}
           />
         </Tabs>
-        <Paper square elevation={0} className={classes.ticketOptionsBox}>
+        <Paper
+          square
+          elevation={0}
+          className={classes.ticketOptionsBox}
+          data-tour="tickets:actions"
+        >
           {tab === "search" ? (
             <div className={classes.serachInputWrapper}>
               <SearchIcon className={classes.searchIcon} />

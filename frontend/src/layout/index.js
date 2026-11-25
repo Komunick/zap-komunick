@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useContext, useEffect, useRef } from "react";
 import { useHistory } from "react-router-dom";
 import clsx from "clsx";
 import {
@@ -39,6 +39,8 @@ import NotificationsVolume from "../components/NotificationsVolume";
 import UserModal from "../components/UserModal";
 import AboutModal from "../components/AboutModal";
 import WelcomeBetaDialog from "../components/WelcomeBetaDialog";
+import FeatureTour from "../components/FeatureTour";
+import { FEATURE_TOUR_EVENT } from "../helpers/featureTour";
 import BrandLogo from "../components/BrandLogo";
 import KomunickEndorsement from "../components/KomunickEndorsement";
 import { AuthContext } from "../context/Auth/AuthContext";
@@ -675,6 +677,11 @@ const LoggedInLayout = ({ children, themeToggle }) => {
       : "workspace"
   );
   const [paletteOpen, setPaletteOpen] = useState(false);
+  // Zap Komunick: the feature tour (RF-031) waits for the beta notice, and
+  // while it runs the side menu stays open so every item shows its name.
+  const [welcomeSettled, setWelcomeSettled] = useState(null);
+  const [tourActive, setTourActive] = useState(false);
+  const drawerBeforeTour = useRef(null);
   const focoDesktop = layoutMode === "foco" && drawerVariant !== "temporary";
   const painelDesktop =
     layoutMode === "painel" && drawerVariant !== "temporary";
@@ -827,8 +834,28 @@ const LoggedInLayout = ({ children, themeToggle }) => {
       return;
     }
 
+    // the menu held open by the tour is not the person's choice: not stored
+    if (tourActive || drawerBeforeTour.current !== null) {
+      return;
+    }
+
     persistDrawerOpenState(drawerOpen);
-  }, [drawerOpen, greaterThenSm]);
+  }, [drawerOpen, greaterThenSm, tourActive]);
+
+  useEffect(() => {
+    if (tourActive) {
+      if (drawerVariant !== "permanent" || focoDesktop) return;
+      drawerBeforeTour.current = drawerOpen;
+      setDrawerOpen(true);
+      return;
+    }
+    if (drawerBeforeTour.current !== null) {
+      const before = drawerBeforeTour.current;
+      drawerBeforeTour.current = null;
+      setDrawerOpen(before);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tourActive]);
 
   useEffect(() => {
     if (!socketManager?.subscribeWsConnectionIssue) {
@@ -926,7 +953,8 @@ const LoggedInLayout = ({ children, themeToggle }) => {
     if (
       event.pointerType === "mouse" &&
       greaterThenSm &&
-      drawerVariant === "permanent"
+      drawerVariant === "permanent" &&
+      !tourActive
     ) {
       setDrawerOpen(open);
     }
@@ -948,6 +976,11 @@ const LoggedInLayout = ({ children, themeToggle }) => {
     localStorage.setItem("layoutMode", mode);
     setLayoutMode(mode);
     handleCloseProfileMenu();
+  };
+
+  const handleOpenTour = () => {
+    handleCloseProfileMenu();
+    window.dispatchEvent(new CustomEvent(FEATURE_TOUR_EVENT));
   };
 
   const handleChooseLanguage = language => {
@@ -1076,7 +1109,12 @@ const LoggedInLayout = ({ children, themeToggle }) => {
         open={aboutModalOpen}
         onClose={() => setAboutModalOpen(false)}
       />
-      <WelcomeBetaDialog userId={user?.id} />
+      <WelcomeBetaDialog userId={user?.id} onSettled={setWelcomeSettled} />
+      <FeatureTour
+        user={user}
+        canOffer={welcomeSettled === "seen" || welcomeSettled === "dismissed"}
+        onActiveChange={setTourActive}
+      />
       <CommandPalette
         open={paletteOpen}
         onClose={() => setPaletteOpen(false)}
@@ -1126,6 +1164,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
             <button
               type="button"
               className={classes.searchTrigger}
+              data-tour="top:search"
               onClick={() => setPaletteOpen(true)}
               aria-label={i18n.t("layoutMode.searchPlaceholder")}
             >
@@ -1199,6 +1238,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
               role="button"
               tabIndex={0}
               className={classes.profileTrigger}
+              data-tour="top:user"
             >
               <div className={classes.userInfoPanel}>
                 <Typography noWrap className={classes.userInfoName}>
@@ -1306,6 +1346,9 @@ const LoggedInLayout = ({ children, themeToggle }) => {
                   </MenuItem>
                 ))}
               </NestedMenuItem>
+              <MenuItem onClick={handleOpenTour}>
+                {i18n.t("featureTour.menu")}
+              </MenuItem>
               <MenuItem onClick={handleOpenAboutModal}>
                 {i18n.t("about.aboutthe")} {theme.appName}
               </MenuItem>

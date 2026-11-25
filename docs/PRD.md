@@ -966,6 +966,42 @@ então o chamado passa a Em atendimento com ele como responsável, a resposta ap
 página e o menu Suporte mostra a novidade. Depois de concluído, se ela escrever "voltou a acontecer", o chamado é
 reaberto com o mesmo responsável.
 
+### RF-031 — Tour pelas funcionalidades
+
+**Pedido (25/11/2026):** um tour breve pelas funcionalidades do SuperChat, parecido com os tours do Brazil TMS, dizendo
+como cada funcionalidade funciona.
+
+**Regras importantes:**
+- O tour tem a mesma forma dos tours do Brazil TMS: a tela escurece e fica aceso só o que o passo mostra, um balão
+  preso a esse ponto explica a funcionalidade, uma pílula no alto diz "Tour · passo n de N" e o botão **Sair do tour**
+  fica à mão o tempo todo (o `Esc` faz o mesmo). As setas do teclado andam entre os passos.
+- Diferente do Brazil TMS, o tour não usa telas de treino: ele passa pelas telas de verdade. Cada passo abre a página
+  da funcionalidade e aponta o item dela no menu. Enquanto o tour está aberto, o sistema por trás não recebe clique nem
+  teclado, e nada é enviado nem alterado. No fim, a pessoa volta para a tela em que estava.
+- Cada passo diz o que a funcionalidade é e, em dois a quatro pontos, como ela funciona, citando os nomes das abas e
+  dos botões como aparecem na tela. O tour só fala do que existe hoje: recursos em simulação ou desligados por padrão
+  (assistente, integrações, campanhas) ficam de fora.
+- **Atendente (12 passos):** Atendimentos (o item do menu, a lista e a conversa), Kanban, Respostas Rápidas, Contatos,
+  Agendamentos, Tags, Chat Interno, Ajuda e Suporte, a busca rápida (`Ctrl K`) e o menu do usuário.
+- **Administrador (18 passos):** os mesmos e mais Dashboard, SLA, Métricas e Usuários online; IPs permitidos e
+  Auditoria; Conexões; Filas & Chatbot e Motivos de finalização; Usuários; API e Configurações.
+- O tour acompanha o layout de cada pessoa: no Workspace e no Painel o menu lateral fica aberto durante o tour, para os
+  itens aparecerem com o nome; no Foco o balão aponta a aba, ou a aba "Mais" quando a página mora dentro dela. No
+  celular, onde o menu fica recolhido, a explicação aparece num cartão no pé da tela, sobre a página do passo.
+- O tour é oferecido uma vez a cada usuário, depois da mensagem de boas-vindas (nunca os dois avisos juntos). Quem
+  responde "Agora não" não é perguntado de novo. A resposta fica guardada no navegador, por usuário.
+- **Tour pelo sistema**, no menu do usuário, repete o tour quando a pessoa quiser.
+- A tela final diz onde rever o tour e lembra a aba Suporte. **Concluir** fecha; **Repetir tour** volta ao passo 1.
+- Os textos existem em português, inglês e espanhol.
+
+**Cenário de sucesso:**
+
+Dado uma atendente que entra no SuperChat pela primeira vez depois desta entrega,
+quando ela aceita o convite "Conheça o SuperChat" e clica em Continuar a cada passo,
+então o tour abre Atendimentos, Kanban, Respostas Rápidas e as demais telas do menu dela, explicando cada uma, termina
+em "Você chegou ao fim do tour" e, ao concluir, ela está de volta na tela em que estava, sem nenhuma mensagem enviada
+nem cadastro alterado.
+
 ## 4. Restrições e cuidados
 
 **Uso e acesso:** navegador, perfis do Ticketz (admin e usuário). Painel de SLA, carteira, horário de acesso, motivos
