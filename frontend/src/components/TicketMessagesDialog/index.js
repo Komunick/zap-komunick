@@ -18,6 +18,7 @@ import { ReplyMessageProvider } from "../../context/ReplyingMessage/ReplyingMess
 import TicketHeader from "../TicketHeader";
 import TicketInfo from "../TicketInfo";
 import { SocketContext } from "../../context/Socket/SocketContext";
+import { isWaitingForSector } from "../../helpers/generalTriage";
 
 const drawerWidth = 320;
 
@@ -81,7 +82,11 @@ export default function TicketMessagesDialog({ open, handleClose, ticketId }) {
             const { queues, profile } = user;
 
             const queueAllowed = queues.find(q => q.id === queueId);
-            if (queueAllowed === undefined && profile !== "admin") {
+            if (
+              queueAllowed === undefined &&
+              profile !== "admin" &&
+              !isWaitingForSector(data)
+            ) {
               toast.error("Acesso não permitido");
               history.push("/tickets");
               return;

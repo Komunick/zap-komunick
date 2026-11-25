@@ -5,6 +5,11 @@ import AuthorizeTicketContextService, {
 } from "../TicketServices/AuthorizeTicketContextService";
 import AuthorizeMessageContextService from "../MessageServices/AuthorizeMessageContextService";
 import { logger } from "../../utils/logger";
+import Ticket from "../../models/Ticket";
+import {
+  isWaitingInGeneralTriage,
+  loadGeneralTriageScope
+} from "../../helpers/GeneralTriage";
 import {
   MessageQuotePayload,
   sanitizeMessageQuotePayload
@@ -115,6 +120,76 @@ export async function invalidateTicketNotifications(
   }
 }
 
+// Zap Komunick (RF-033): the people of a queue stop seeing a ticket that left
+// it by a way that does not reach them (a ticket that was waiting for a sector
+// and went to another one, or was taken by an administrator). The row is taken
+// out of their lists; whoever may still see it gets it back with the update
+// that follows.
+export async function removeTicketFromQueueLists(
+  io: Server,
+  ticket: { id: number; companyId: number },
+  queueId: number | null | undefined
+): Promise<void> {
+  if (queueId == null) return;
+  try {
+    const sockets = await io
+      .in([`queue-${queueId}-notification`, `queue-${queueId}-pending`])
+      .fetchSockets();
+    sockets.forEach(socket => {
+      if (socket.data.contextActor?.companyId === ticket.companyId) {
+        socket.emit(`company-${ticket.companyId}-ticket`, {
+          action: "removeFromList",
+          ticketId: ticket.id
+        });
+      }
+    });
+  } catch {
+    logger.warn("Could not take a ticket out of the lists of its old queue");
+  }
+}
+
+const NO_QUEUE_ROOM = /^queue-null-/;
+
+// Zap Komunick (RF-033): the events of a ticket without a queue are addressed
+// to rooms nobody is in ("queue-null-..."). While the ticket waits for the
+// customer to pick a sector, the rooms of the general queue are added, so its
+// attendants get the conversation live. Each recipient is still authorized
+// one by one below. Only tickets without a queue cost the extra lookup.
+export async function withGeneralTriageRooms(
+  ticketId: string | number,
+  rooms: string[]
+): Promise<string[]> {
+  const noQueue = rooms.filter(room => NO_QUEUE_ROOM.test(room));
+  if (!noQueue.length) return rooms;
+  try {
+    const ticket = await Ticket.findOne({
+      where: { id: ticketId },
+      attributes: [
+        "id",
+        "companyId",
+        "status",
+        "channel",
+        "isGroup",
+        "queueId",
+        "userId",
+        "whatsappId",
+        "generalTriageStartedAt"
+      ]
+    });
+    if (!ticket || !ticket.generalTriageStartedAt) return rooms;
+    const scope = await loadGeneralTriageScope(ticket.companyId);
+    if (!scope || !isWaitingInGeneralTriage(ticket, scope)) return rooms;
+    return [
+      ...rooms,
+      ...noQueue.map(room =>
+        room.replace(NO_QUEUE_ROOM, `queue-${scope.queueId}-`)
+      )
+    ];
+  } catch {
+    return rooms;
+  }
+}
+
 export async function refreshUserContextSockets(
   io: Server,
   userId: string | number
@@ -198,7 +273,9 @@ export async function emitTicketContext(
   rooms: string[]
 ): Promise<void> {
   try {
-    const sockets = await io.in(rooms).fetchSockets();
+    const sockets = await io
+      .in(await withGeneralTriageRooms(ticketId, rooms))
+      .fetchSockets();
     await Promise.all(
       sockets.map(async socket => {
         if (!(await canReceive(socket, ticketId))) return;

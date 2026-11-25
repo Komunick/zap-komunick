@@ -17,6 +17,7 @@ import { logger } from "../../utils/logger";
 import {
   emitTicketContext,
   invalidateTicketNotifications,
+  removeTicketFromQueueLists,
   revokeTicketContextRooms
 } from "../SocketServices/TicketContextSocketService";
 import { incrementCounter } from "../CounterServices/IncrementCounter";
@@ -28,6 +29,13 @@ import {
   checkStatusTransition
 } from "../../helpers/TicketPauseAndClose";
 import { ActiveCloseReasonIds } from "../CloseReasonServices/CloseReasonService";
+import {
+  isWaitingInGeneralTriage,
+  loadGeneralTriageScope,
+  loadMemberGeneralTriageScope
+} from "../../helpers/GeneralTriage";
+import { loadTicketViewer } from "./AuthorizeTicketContextService";
+import { assignGeneralTriageDestination } from "../WbotServices/GeneralTriageRouting";
 
 export interface UpdateTicketData {
   status?: string;
@@ -72,6 +80,37 @@ const sendFormattedMessage = async (
     text: messageText
   });
   await verifyMessage(queueChangedMessage, ticket, ticket.contact);
+};
+
+// Zap Komunick (RF-033): an attendant of the general queue takes a ticket that
+// is still waiting for the customer to pick a sector. The ticket goes to the
+// general queue first, exactly as it would at the end of the wait (same
+// bookkeeping of messages and of the waiting time), and is then accepted like
+// any other ticket of that queue. Administrators keep accepting as before.
+const takeIntoGeneralQueue = async (
+  ticket: Ticket,
+  userId: number | string
+): Promise<boolean> => {
+  try {
+    const viewer = await loadTicketViewer({
+      userId,
+      companyId: ticket.companyId
+    });
+    if (viewer.isAdmin) return false;
+    const scope = await loadMemberGeneralTriageScope(
+      ticket.companyId,
+      viewer.queueIds
+    );
+    if (!scope || !isWaitingInGeneralTriage(ticket, scope)) return false;
+    const routed = await assignGeneralTriageDestination(ticket, {
+      id: scope.queueId,
+      chatbot: false,
+      isGeneral: true
+    });
+    return !!routed;
+  } catch {
+    return false;
+  }
 };
 
 export async function websocketUpdateTicket(
@@ -155,6 +194,25 @@ const UpdateTicketService = async ({
       throw new AppError("ERR_TICKET_NOT_PENDING", 409);
     }
     const isGroup = ticket.contact?.isGroup || ticket.isGroup;
+
+    // Zap Komunick (RF-033): see takeIntoGeneralQueue.
+    if (
+      !ticket.queueId &&
+      ticket.generalTriageStartedAt &&
+      userId &&
+      ticket.status === "pending" &&
+      status === "open" &&
+      (await takeIntoGeneralQueue(ticket, userId))
+    ) {
+      await ticket.reload();
+    }
+    // A ticket that stops waiting for a sector leaves the lists of the general
+    // queue (see after the update below).
+    const waitScope =
+      !ticket.queueId && ticket.generalTriageStartedAt
+        ? await loadGeneralTriageScope(ticket.companyId)
+        : null;
+    const wasWaitingForSector = isWaitingInGeneralTriage(ticket, waitScope);
 
     if (queueId && Number(queueId) !== ticket.queueId) {
       const newQueue = await Queue.findByPk(queueId);
@@ -403,6 +461,14 @@ const UpdateTicketService = async ({
       ...(status === "closed" ? { unansweredSince: null } : {})
     });
     await revokeTicketContextRooms(io, ticket.id);
+    if (
+      wasWaitingForSector &&
+      waitScope &&
+      ticket.queueId !== waitScope.queueId &&
+      !isWaitingInGeneralTriage(ticket, waitScope)
+    ) {
+      await removeTicketFromQueueLists(io, ticket, waitScope.queueId);
+    }
     if (
       ticket.status !== "pending" &&
       ticket.status !== "open" &&

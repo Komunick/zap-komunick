@@ -4,6 +4,8 @@ import {
   readGeneralTriageTimeout
 } from "../../helpers/GeneralTriage";
 import { cacheLayer } from "../../libs/cache";
+import { getIO } from "../../libs/socket";
+import { removeTicketFromQueueLists } from "../SocketServices/TicketContextSocketService";
 import { logger } from "../../utils/logger";
 import IsWhatsAppQueueLinked from "../../helpers/IsWhatsAppQueueLinked";
 import Message from "../../models/Message";
@@ -160,6 +162,20 @@ export const assignGeneralTriageDestination = async (
   if (!moved) return null;
 
   const routedTicket = await ShowTicketService(id, companyId);
+  // Zap Komunick (RF-033): while it waited, the ticket was on the lists of the
+  // general queue. When the customer picks another sector it leaves them; the
+  // attendants who are also of the new sector get it back with the update.
+  if (!destination.isGeneral) {
+    try {
+      await removeTicketFromQueueLists(
+        getIO(),
+        routedTicket,
+        await readGeneralTriageQueueId(companyId)
+      );
+    } catch {
+      /* The lists correct themselves on the next reload. */
+    }
+  }
   await websocketUpdateTicket(routedTicket);
   return routedTicket;
 };

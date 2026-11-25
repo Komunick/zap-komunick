@@ -1,7 +1,12 @@
 import AppError from "../../errors/AppError";
 import { Transaction } from "sequelize";
 import {
+  isWaitingInGeneralTriage,
+  loadMemberGeneralTriageScope
+} from "../../helpers/GeneralTriage";
+import {
   ticketContextError,
+  TicketContext,
   TicketViewer
 } from "../../helpers/TicketAccessRules";
 import Contact from "../../models/Contact";
@@ -66,8 +71,43 @@ const AuthorizeTicketContextService = async (
     ...(transaction ? { transaction } : {})
   });
   if (!contact) throw new AppError("ERR_NO_TICKET_FOUND", 404);
+  // Zap Komunick (RF-033): a ticket waiting for the customer to pick a sector
+  // counts as being in the general queue for whoever belongs to that queue.
+  // The first read stays as it was; what the rule needs is only read for a
+  // ticket without a queue, which a non-administrator was always refused.
+  let context: TicketContext = ticket;
+  if (!viewer.isAdmin && ticket.queueId === null && viewer.queueIds.length) {
+    const state = await Ticket.findOne({
+      where: { id: ticket.id, companyId: actor.companyId },
+      attributes: [
+        "id",
+        "queueId",
+        "isGroup",
+        "status",
+        "channel",
+        "userId",
+        "whatsappId",
+        "generalTriageStartedAt"
+      ],
+      ...(transaction ? { transaction } : {})
+    });
+    if (state?.generalTriageStartedAt) {
+      const scope = await loadMemberGeneralTriageScope(
+        actor.companyId,
+        viewer.queueIds,
+        transaction
+      );
+      if (scope && isWaitingInGeneralTriage(state, scope)) {
+        context = {
+          companyId: ticket.companyId,
+          contactId: ticket.contactId,
+          queueId: scope.queueId
+        };
+      }
+    }
+  }
   const error = ticketContextError(
-    ticket,
+    context,
     viewer,
     contact.companyId,
     expectedContactId === undefined ? undefined : Number(expectedContactId)

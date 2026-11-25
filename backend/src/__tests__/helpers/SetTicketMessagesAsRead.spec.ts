@@ -3,6 +3,7 @@ import SetTicketMessagesAsRead from "../../helpers/SetTicketMessagesAsRead";
 import { getIO } from "../../libs/socket";
 import Message from "../../models/Message";
 import Ticket from "../../models/Ticket";
+import { loadGeneralTriageScope } from "../../helpers/GeneralTriage";
 
 jest.mock("../../helpers/GetTicketWbot", () => jest.fn());
 jest.mock("../../libs/socket", () => ({ getIO: jest.fn() }));
@@ -11,6 +12,16 @@ jest.mock("../../models/Message", () => ({
   update: jest.fn()
 }));
 jest.mock("../../models/Ticket", () => ({}));
+jest.mock("../../helpers/GeneralTriage", () => ({
+  ...jest.requireActual("../../helpers/GeneralTriage"),
+  loadGeneralTriageScope: jest.fn()
+}));
+jest.mock("../../helpers/CheckSettings", () => ({
+  GetCompanySetting: jest.fn()
+}));
+jest.mock("../../models/Queue", () => ({}));
+jest.mock("../../models/Setting", () => ({}));
+jest.mock("../../models/Whatsapp", () => ({}));
 
 const emit = jest.fn();
 const to = jest.fn(() => ({ emit }));
@@ -76,5 +87,57 @@ it("invalidates notifications when stored unread messages exist despite a zero c
   expect(emit).toHaveBeenCalledWith("company-10-ticket", {
     action: "updateUnread",
     ticketId: 301
+  });
+});
+
+// Zap Komunick (RF-033): a conversation waiting for a sector is on the lists
+// of the general queue, so its unread count is cleared there too.
+describe("a conversation waiting for a sector", () => {
+  const waiting = () => ({
+    ...fictionalTicket(null, 2),
+    status: "pending",
+    channel: "whatsapp",
+    isGroup: false,
+    userId: null,
+    whatsappId: 2,
+    generalTriageStartedAt: new Date("2026-11-25T14:11:00Z")
+  });
+
+  it("clears the unread count on the lists of the general queue", async () => {
+    (loadGeneralTriageScope as jest.Mock).mockResolvedValue({
+      queueId: 7,
+      whatsappIds: [2]
+    });
+    await SetTicketMessagesAsRead(waiting() as unknown as Ticket);
+    expect(to).toHaveBeenCalledWith([
+      "301",
+      "company-10-pending",
+      "queue-7-pending",
+      "queue-7-notification"
+    ]);
+  });
+
+  it("keeps the event as it was when the company has no general triage", async () => {
+    (loadGeneralTriageScope as jest.Mock).mockResolvedValue(null);
+    await SetTicketMessagesAsRead(waiting() as unknown as Ticket);
+    expect(to).toHaveBeenCalledWith(["301", "company-10-pending"]);
+  });
+
+  it("still sends the event when the lookup fails", async () => {
+    (loadGeneralTriageScope as jest.Mock).mockRejectedValue(new Error("db"));
+    await SetTicketMessagesAsRead(waiting() as unknown as Ticket);
+    expect(to).toHaveBeenCalledWith(["301", "company-10-pending"]);
+    expect(emit).toHaveBeenCalledWith("company-10-ticket", {
+      action: "updateUnread",
+      ticketId: 301
+    });
+  });
+
+  it("does not look anything up for a ticket without sector that is not waiting", async () => {
+    (loadGeneralTriageScope as jest.Mock).mockClear();
+    await SetTicketMessagesAsRead(
+      fictionalTicket(null, 1) as unknown as Ticket
+    );
+    expect(loadGeneralTriageScope).not.toHaveBeenCalled();
   });
 });

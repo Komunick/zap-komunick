@@ -30,6 +30,7 @@ import { SocketContext } from "../../context/Socket/SocketContext";
 import Favicon from "react-favicon";
 import { PRODUCT_ICON } from "../../helpers/productBrand";
 import useSettings from "../../hooks/useSettings";
+import { isWaitingForSector } from "../../helpers/generalTriage";
 
 const defaultLogoFavicon = PRODUCT_ICON;
 const noQueues = [];
@@ -71,7 +72,7 @@ const NotificationsPopOver = props => {
       ticket &&
       ticket.companyId === companyId &&
       ticket.status !== "closed" &&
-      queueIds.has(ticket.queueId) &&
+      (queueIds.has(ticket.queueId) || isWaitingForSector(ticket)) &&
       (ticket.userId === userId ||
         (ticket.userId == null && ticket.status === "pending")),
     [companyId, queueIds, userId]

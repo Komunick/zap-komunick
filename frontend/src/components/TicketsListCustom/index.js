@@ -21,6 +21,7 @@ import { AuthContext } from "../../context/Auth/AuthContext";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import toastError from "../../errors/toastError";
 import useSettings from "../../hooks/useSettings";
+import { isWaitingForSector } from "../../helpers/generalTriage";
 
 const useStyles = makeStyles(theme => ({
   ticketsListWrapper: {
@@ -289,8 +290,10 @@ const TicketsListCustom = props => {
 
   useEffect(() => {
     const queueIds = queues.map(q => q.id);
+    // Zap Komunick (RF-033): a conversation waiting for the customer to pick a
+    // sector has no queue; the server only sends it to who may see it.
     const filteredTickets = tickets.filter(
-      t => queueIds.indexOf(t.queueId) > -1
+      t => queueIds.indexOf(t.queueId) > -1 || isWaitingForSector(t)
     );
 
     if (profile === "user") {
@@ -404,6 +407,7 @@ const TicketsListCustom = props => {
       const queueIds = queues.map(q => q.id);
       if (
         profile === "user" &&
+        !isWaitingForSector(data.ticket) &&
         (queueIds.indexOf(data.ticket?.queue?.id) === -1 ||
           data.ticket.queue === null)
       ) {

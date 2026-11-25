@@ -293,3 +293,47 @@ test.each([
     expect(document.title).toBe("SuperChat");
   }
 );
+
+// Zap Komunick (RF-033): the server only sends a conversation waiting for a
+// sector to the attendants of the general queue; the bell must not drop it
+// for having no sector.
+test("notifies a conversation that is waiting for the customer to pick a sector", async () => {
+  useTickets.mockReturnValue({
+    tickets: [
+      {
+        ...pendingTicket,
+        id: 121,
+        queueId: null,
+        generalTriageStartedAt: "2026-11-25T14:11:00.000Z",
+        contact: { id: 301, name: "Cliente sem setor" }
+      },
+      // without the wait it is a ticket of the administrators: still dropped
+      {
+        ...pendingTicket,
+        id: 122,
+        queueId: null,
+        generalTriageStartedAt: null,
+        contact: { id: 302, name: "Iniciada pelo celular" }
+      },
+      // someone took it: it is no longer waiting
+      {
+        ...pendingTicket,
+        id: 123,
+        queueId: null,
+        userId: 8,
+        generalTriageStartedAt: "2026-11-25T14:11:00.000Z",
+        contact: { id: 303, name: "Assumida por outro" }
+      }
+    ],
+    refetch: mockRefetchTickets
+  });
+  render(
+    sectorView({ id: 7, companyId: 10, profile: "user", queues: [{ id: 5 }] })
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Mostrar Notificações" }));
+
+  expect(await screen.findByText("Cliente sem setor")).not.toBeNull();
+  expect(screen.queryByText("Iniciada pelo celular")).toBeNull();
+  expect(screen.queryByText("Assumida por outro")).toBeNull();
+  expect(document.title).toBe("➊ - SuperChat");
+});
