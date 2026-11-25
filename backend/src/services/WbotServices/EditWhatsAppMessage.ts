@@ -1,6 +1,7 @@
 import { getContentType, normalizeMessageContent } from "libzapitu-rf";
 import AppError from "../../errors/AppError";
 import GetTicketWbot from "../../helpers/GetTicketWbot";
+import { assertNotImportedMessage } from "../../helpers/ImportedMessage";
 import Message from "../../models/Message";
 import OldMessage from "../../models/OldMessage";
 import Ticket from "../../models/Ticket";
@@ -57,6 +58,8 @@ const EditWhatsAppMessage = async ({
   if (!message) {
     throw new AppError("No message found with this ID.");
   }
+
+  assertNotImportedMessage(message);
 
   const { ticket } = message;
 

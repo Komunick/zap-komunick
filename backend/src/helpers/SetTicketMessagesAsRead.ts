@@ -15,7 +15,10 @@ const SetTicketMessagesAsRead = async (ticket: Ticket): Promise<void> => {
   await ticket.update({ unreadMessages: 0 }, { silent: true });
 
   try {
-    const wbot = await GetTicketWbot(ticket);
+    // Zap Komunick: a ticket without channel (history imported from the
+    // previous system, RF-029) has nothing to mark on WhatsApp, and
+    // GetTicketWbot would save the default connection on it
+    const wbot = ticket.whatsappId ? await GetTicketWbot(ticket) : null;
 
     if (wbot) {
       const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);

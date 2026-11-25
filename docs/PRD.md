@@ -913,6 +913,39 @@ Dado um atendimento aguardando na fila Fiscal com o nome da Yasmin,
 quando a Yasmin inicia conversa com esse cliente pela fila Fiscal,
 então o atendimento abre em andamento com ela, sem aviso de conversa em aberto.
 
+### RF-029 — Histórico do ZapContábil no SuperChat
+
+**Pedido (23/11/2026):** trazer para o SuperChat as conversas antigas da JB Fraga que estão no ZapContábil (Zappy), para
+a equipe ver o que o cliente falou antes. Primeira etapa: só texto, de todo o histórico.
+
+**Regras importantes:**
+- Cada atendimento do ZapContábil vira um atendimento **fechado** no SuperChat, do mesmo cliente, com as mensagens na
+  data original. Ele aparece no histórico do cliente com o separador de atendimento anterior, sem canal.
+- O cliente é encontrado pelo número (com e sem o nono dígito). Quem não existe no SuperChat é criado com o nome do
+  ZapContábil. Grupos ficam de fora.
+- Fila e atendente são ligados pelo nome quando existem no SuperChat; senão o atendimento fica sem fila ou sem
+  atendente. A regra "Histórico do cliente para atendentes" (RF-027) vale para eles como para os demais. Nome que duas
+  filas ou dois usuários do SuperChat compartilham não é escolhido ao acaso: aparece na simulação como ambíguo, para
+  ser resolvido com um mapa de nomes.
+- Anexos entram como texto com o nome do arquivo (📎 nome). Os arquivos ficam para uma segunda etapa. Respostas e
+  mensagens com link continuam como texto comum.
+- Mensagem importada é só para consulta: não dá para responder citando, encaminhar, editar, apagar nem reagir. O menu
+  da mensagem avisa, e abrir ou tentar uma dessas ações não muda o atendimento importado. Reabrir um atendimento
+  importado, ou responder por ele, usa a conexão padrão, como já acontece com atendimento que ficou sem conexão.
+- Mensagem que o SuperChat já tem (mesmo identificador do WhatsApp, porque os dois sistemas usam o mesmo número) não
+  é repetida. Rodar a importação de novo não duplica nada.
+- A importação roda primeiro em simulação, que só conta: atendimentos, mensagens, clientes novos e o que ficaria de
+  fora, com o motivo (sem data válida, vazia ou sem identificador). O conteúdo das mensagens não aparece em relatório
+  nem sai do servidor. O arquivo exportado do ZapContábil fica fora do repositório e é apagado depois da importação.
+- Para gravar, é obrigatório informar a data em que o SuperChat passou a receber o número (ou declarar que os dois
+  sistemas nunca receberam ao mesmo tempo). Opção digitada errado interrompe a execução em vez de ser ignorada.
+
+**Cenário de sucesso:**
+
+Dado uma cliente que conversou com a JB pelo ZapContábil em outubro,
+quando a importação roda e a atendente abre o atendimento atual dela no SuperChat,
+então vê as mensagens de outubro acima, no atendimento anterior, na data em que foram trocadas.
+
 ### RF-033 — Conversa sem setor visível na hora para a fila geral
 
 **Relato (25/11/2026):** "quando o cliente não escolhe o setor, não está mostrando as mensagens no Aguardando; a gente

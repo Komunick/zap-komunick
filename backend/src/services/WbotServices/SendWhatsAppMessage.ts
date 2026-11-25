@@ -2,6 +2,7 @@ import { WAMessage } from "libzapitu-rf";
 import * as Sentry from "@sentry/node";
 import AppError from "../../errors/AppError";
 import GetTicketWbot from "../../helpers/GetTicketWbot";
+import { assertNotImportedMessage } from "../../helpers/ImportedMessage";
 import Message from "../../models/Message";
 import Ticket from "../../models/Ticket";
 
@@ -51,6 +52,9 @@ const SendWhatsAppMessage = async ({
     });
 
     if (chatMessage) {
+      // Zap Komunick: imported history (RF-029) cannot be quoted; saying so
+      // is better than sending the answer without the quote
+      assertNotImportedMessage(chatMessage);
       const msgFound = JSON.parse(chatMessage.dataJson);
 
       options = {

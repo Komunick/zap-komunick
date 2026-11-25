@@ -22,7 +22,15 @@ const ForwardMessageService = async (
   contact: Contact,
   queue: Queue
 ): Promise<Message> => {
-  const { whatsapp } = message.ticket;
+  // Zap Komunick: imported history (RF-029) has no WhatsApp payload to
+  // forward. Checked first, before any ticket is opened for the destination.
+  if (!message.dataJson) {
+    throw new AppError("ERR_FORWARD_IMPORTED_MESSAGE", 400);
+  }
+
+  // a ticket whose connection was deleted forwards through the default one
+  const whatsapp =
+    message.ticket.whatsapp || (await GetDefaultWhatsApp(message.companyId));
 
   if (!whatsapp) {
     throw new AppError("ERR_NO_DEF_WAPP_FOUND", 404);

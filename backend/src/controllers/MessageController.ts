@@ -3,6 +3,8 @@ import fs from "fs";
 import AppError from "../errors/AppError";
 
 import SetTicketMessagesAsRead from "../helpers/SetTicketMessagesAsRead";
+import BindDefaultWhatsapp from "../helpers/BindDefaultWhatsapp";
+import { assertNotImportedMessage } from "../helpers/ImportedMessage";
 import { sanitizeMessageQuotePayload } from "../helpers/MessageQuotePrivacy";
 import { isMessageSignatureRequired } from "../helpers/MessageSignature";
 import { getIO } from "../libs/socket";
@@ -178,6 +180,9 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   const ticket = await ShowTicketService(ticketId, companyId);
   const { channel } = ticket;
   if (channel === "whatsapp") {
+    // Zap Komunick: answering a ticket without connection uses the default
+    // one (reading it no longer does, RF-029)
+    await BindDefaultWhatsapp(ticket);
     await SetTicketMessagesAsRead(ticket);
     if (!ticket.isGroup) {
       const contact = await ShowContactService(ticket.contactId, companyId);
@@ -234,8 +239,10 @@ export const react = async (req: Request, res: Response): Promise<Response> => {
   if (!message) {
     throw new AppError("ERR_MESSAGE_NOT_FOUND", 404);
   }
+  assertNotImportedMessage(message);
 
   const ticket = await ShowTicketService(ticketId, companyId);
+  await BindDefaultWhatsapp(ticket);
   const wbot = getWbot(ticket.whatsappId);
 
   if (!wbot) {

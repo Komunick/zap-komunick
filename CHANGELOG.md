@@ -6,6 +6,10 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Adicionado
 
+- Importação do histórico de conversas do ZapContábil como atendimentos fechados (script `importZappyHistory`, com
+  simulação antes de gravar e sem repetir mensagens que o SuperChat já tem). Primeira etapa só com texto (RF-029).
+  Mensagem importada é só para consulta: o menu avisa, e responder citando, encaminhar, editar, apagar ou reagir é
+  recusado com explicação. Gravar exige a data de corte (`--until` ou `--no-until`), e opção desconhecida interrompe.
 - **Atualizar**, na barra de cima: quem já está com o SuperChat aberto é avisado quando uma versão nova é publicada,
   sem ser interrompido. Um cartão diz o que fica guardado e o que se perde antes de a página ser carregada de novo, o
   que só acontece no clique em **Atualizar agora**. Navegadores ainda na versão antiga recebem do servidor um aviso

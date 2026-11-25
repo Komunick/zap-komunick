@@ -599,6 +599,9 @@ const pt = {
       }
     }
   },
+  messageOptionsMenu: {
+    importedReadOnly: "Histórico do ZapContábil: só para consulta"
+  },
   messagesInput: {
     placeholderPaused: "Atendimento pausado. Clique em Retomar para responder.",
     dropFiles: "Solte os arquivos para anexar",
@@ -668,6 +671,10 @@ const pt = {
     businessDaysTooltip: "Só em dia útil"
   },
   backendErrors: {
+    ERR_FORWARD_IMPORTED_MESSAGE:
+      "Esta mensagem veio do histórico do ZapContábil e não pode ser encaminhada pelo WhatsApp.",
+    ERR_IMPORTED_MESSAGE_READ_ONLY:
+      "Esta mensagem veio do histórico do ZapContábil e não pode ser respondida, editada, apagada nem receber reação.",
     ERR_NO_CONNECTED_WHATSAPP_FOR_QUEUE:
       "A fila selecionada não tem um canal de WhatsApp conectado.",
     ERR_QUEUE_NOT_LINKED_TO_WHATSAPP:
@@ -1309,6 +1316,9 @@ const en = {
       }
     }
   },
+  messageOptionsMenu: {
+    importedReadOnly: "ZapContábil history: read only"
+  },
   messagesInput: {
     placeholderPaused: "Ticket paused. Click Resume to reply.",
     dropFiles: "Drop the files to attach them",
@@ -1379,6 +1389,10 @@ const en = {
     businessDaysTooltip: "Business days only"
   },
   backendErrors: {
+    ERR_FORWARD_IMPORTED_MESSAGE:
+      "This message came from the ZapContábil history and cannot be forwarded through WhatsApp.",
+    ERR_IMPORTED_MESSAGE_READ_ONLY:
+      "This message came from the ZapContábil history and cannot be replied to, edited, deleted or reacted to.",
     ERR_NO_CONNECTED_WHATSAPP_FOR_QUEUE:
       "The selected queue has no connected WhatsApp channel.",
     ERR_QUEUE_NOT_LINKED_TO_WHATSAPP:
@@ -2023,6 +2037,9 @@ const es = {
       }
     }
   },
+  messageOptionsMenu: {
+    importedReadOnly: "Historial de ZapContábil: solo consulta"
+  },
   messagesInput: {
     placeholderPaused: "Atención pausada. Haga clic en Retomar para responder.",
     dropFiles: "Suelte los archivos para adjuntarlos",
@@ -2094,6 +2111,10 @@ const es = {
     businessDaysTooltip: "Solo en día hábil"
   },
   backendErrors: {
+    ERR_FORWARD_IMPORTED_MESSAGE:
+      "Este mensaje vino del historial de ZapContábil y no se puede reenviar por WhatsApp.",
+    ERR_IMPORTED_MESSAGE_READ_ONLY:
+      "Este mensaje vino del historial de ZapContábil y no se puede responder, editar, eliminar ni recibir reacción.",
     ERR_NO_CONNECTED_WHATSAPP_FOR_QUEUE:
       "La cola seleccionada no tiene un canal de WhatsApp conectado.",
     ERR_QUEUE_NOT_LINKED_TO_WHATSAPP:
