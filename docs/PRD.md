@@ -989,7 +989,12 @@ como cada funcionalidade funciona.
   itens aparecerem com o nome; no Foco o balão aponta a aba, ou a aba "Mais" quando a página mora dentro dela. No
   celular, onde o menu fica recolhido, a explicação aparece num cartão no pé da tela, sobre a página do passo.
 - O tour é oferecido uma vez a cada usuário, depois da mensagem de boas-vindas (nunca os dois avisos juntos). Quem
-  responde "Agora não" não é perguntado de novo. A resposta fica guardada no navegador, por usuário.
+  responde "Agora não" não é perguntado de novo. Fechar o convite com `Esc` ou com um clique fora não é resposta: ele
+  volta na próxima vez que a página for carregada. A resposta fica guardada no navegador, por usuário; com duas abas
+  abertas, responder numa fecha o convite na outra.
+- O tour não deixa rastro no histórico do navegador: depois dele, o botão Voltar leva para onde a pessoa estava antes.
+  Usar o botão Voltar durante o tour encerra o tour na tela para onde o botão levou.
+- Quem fecha o convite sem responder e depois faz o tour pelo menu não é convidado de novo.
 - **Tour pelo sistema**, no menu do usuário, repete o tour quando a pessoa quiser.
 - A tela final diz onde rever o tour e lembra a aba Suporte. **Concluir** fecha; **Repetir tour** volta ao passo 1.
 - Os textos existem em português, inglês e espanhol.
@@ -1001,6 +1006,43 @@ quando ela aceita o convite "Conheça o SuperChat" e clica em Continuar a cada p
 então o tour abre Atendimentos, Kanban, Respostas Rápidas e as demais telas do menu dela, explicando cada uma, termina
 em "Você chegou ao fim do tour" e, ao concluir, ela está de volta na tela em que estava, sem nenhuma mensagem enviada
 nem cadastro alterado.
+
+### RF-032 — Aviso de versão nova para quem já está online
+
+**Pedido (25/11/2026):** apresentar o tour a todos os usuários, inclusive aos que já estavam online quando ele foi
+publicado.
+
+**Problema:** quem deixa o SuperChat aberto o dia inteiro continua rodando o programa que o navegador carregou de manhã.
+Uma publicação feita às 10 h só chega a essa pessoa quando a página é carregada de novo. Por isso o convite do tour não
+apareceu para quem já estava trabalhando.
+
+**Regras importantes:**
+- **Atualizar**, na barra de cima, aparece quando existe uma versão do SuperChat mais nova do que a que está na tela.
+  É um botão, sem janela e sem som: nunca tira o teclado de quem está digitando para um cliente e não cobre a conversa.
+- Clicar em **Atualizar** abre um cartão pequeno que diz o que fica guardado (o texto digitado na conversa com o
+  cliente) e o que se perde (anexos ainda não enviados, áudio em gravação, edição ou resposta de mensagem e formulários
+  abertos). A página só é carregada de novo no clique em **Atualizar agora**. Nunca sozinha.
+- Depois de atualizar, quem ainda não respondeu ao convite do tour o recebe (RF-031).
+- O SuperChat percebe a versão nova comparando o programa que está rodando com o que está publicado. Ele confere logo
+  depois de a conexão cair e voltar (o que acontece em toda publicação), quando a pessoa volta para a aba, quando uma
+  tela não consegue carregar um arquivo e de tempos em tempos. Na dúvida (sem internet, servidor reiniciando), não
+  mostra nada: uma queda de rede nunca acende o botão.
+- No celular a barra de cima já está cheia: enquanto **Atualizar** está nela, ele ocupa o lugar do controle de volume.
+- O cartão vem logo depois do botão na ordem do teclado, e o `Esc` o fecha.
+- Enquanto o tour está na tela, o botão fica escondido.
+- **Navegadores com a versão antiga, de antes desta entrega:** eles não têm o botão e não aprendem nada novo. O servidor
+  os reconhece e manda um aviso curto, "O SuperChat foi atualizado. Aperte F5 para carregar a versão nova.", que a
+  versão antiga mostra na tela por três segundos, do mesmo jeito que mostra os avisos de conexão do WhatsApp. O aviso
+  vem dez segundos depois de a conexão voltar e se repete a cada dez minutos, no máximo seis vezes por pessoa a cada
+  publicação (somando todas as abas e reconexões), até a página ser carregada de novo. Ele não desconecta ninguém e não
+  recarrega a página. A variável `LEGACY_CLIENT_NOTICE=off` desliga esse aviso na instalação.
+
+**Cenário de sucesso:**
+
+Dado uma atendente com o SuperChat aberto desde cedo, respondendo a um cliente,
+quando uma versão nova é publicada,
+então aparece **Atualizar** na barra de cima, sem interromper o que ela digita; ao clicar em Atualizar agora, a página
+volta na mesma conversa, com o texto que ela tinha digitado, e o convite do tour aparece se ela ainda não respondeu.
 
 ## 4. Restrições e cuidados
 

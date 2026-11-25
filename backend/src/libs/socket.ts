@@ -54,6 +54,11 @@ import AuthorizeTicketContextService from "../services/TicketServices/AuthorizeT
 import { refreshSocketContextRooms } from "../services/SocketServices/TicketContextSocketService";
 import { DecoupledDriverServices } from "../services/DecoupledDriverServices/DecoupledDriverServices";
 import { corsOrigin } from "../helpers/corsOrigin";
+import {
+  isLegacyClient,
+  legacyClientNoticeEnabled,
+  startLegacyClientNotice
+} from "../helpers/LegacyClientNotice";
 
 const decoupledDriverServices = DecoupledDriverServices.getInstance();
 
@@ -146,7 +151,15 @@ export const initIO = (httpServer: Server): SocketIO => {
       notifyOnlineChange(user.companyId, user.id, true);
     });
 
+    // Zap Komunick: a browser still running a frontend from before RF-032 is
+    // asked, by the only channel it already listens to, to load the page again.
+    const stopLegacyNotice =
+      legacyClientNoticeEnabled() && isLegacyClient(socket.handshake.query)
+        ? startLegacyClientNotice(socket, user.id)
+        : null;
+
     socket.on("disconnect", async () => {
+      stopLegacyNotice?.();
       UserSocketSession.update(
         { active: false },
         { where: { id: socket.id } }

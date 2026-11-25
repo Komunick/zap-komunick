@@ -46,6 +46,7 @@ import { decodeToken, isExpired } from "react-jwt";
 import { toast } from "react-toastify";
 import api from "../../services/api";
 import { readStoredToken } from "../../helpers/storedToken";
+import { frontendVersionTag } from "../../helpers/appVersion";
 
 const tokenIdentity = token => {
   try {
@@ -449,7 +450,9 @@ const socketManager = {
         transports: ["websocket"],
         pingTimeout: 18000,
         pingInterval: 18000,
-        query: { token }
+        // Zap Komunick: `fv` tells the server this frontend notices a new
+        // publication by itself (RF-032).
+        query: { token, fv: frontendVersionTag() }
       });
       const socket = this.currentSocket;
 

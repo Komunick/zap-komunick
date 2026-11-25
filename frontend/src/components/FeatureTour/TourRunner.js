@@ -339,10 +339,37 @@ const ARROW_CLASS = {
   left: "arrowLeft"
 };
 
-const TourRunner = ({ steps, onClose }) => {
+// The size of the window, kept up to date: the balloon and the card depend on
+// it, and the rectangle of the target does not always change with it (a phone
+// that is turned while the explanation is a card at the bottom).
+const useViewport = () => {
+  const [size, setSize] = useState(viewport);
+  useEffect(() => {
+    const read = () =>
+      setSize(current => {
+        const next = viewport();
+        return current.width === next.width && current.height === next.height
+          ? current
+          : next;
+      });
+    window.addEventListener("resize", read);
+    window.addEventListener("orientationchange", read);
+    return () => {
+      window.removeEventListener("resize", read);
+      window.removeEventListener("orientationchange", read);
+    };
+  }, []);
+  return size;
+};
+
+const TourRunner = ({ steps: stepsAtStart, onClose }) => {
   const classes = useStyles();
   const history = useHistory();
   const location = useLocation();
+  // The script is the one the tour began with: a change of profile in the
+  // middle (an administrator made a plain user) cannot jump to the end.
+  const [steps] = useState(stepsAtStart);
+  const screen = useViewport();
   const [index, setIndex] = useState(0);
   const total = steps.length;
   const finished = index >= total;
@@ -371,11 +398,41 @@ const TourRunner = ({ steps, onClose }) => {
     };
   }, []);
 
+  // The tour only ever REPLACES the entry of the browser history it began on,
+  // so after it the Back button does not walk through its pages. `navigate`
+  // marks the moves the tour itself makes.
+  const ownMove = useRef(false);
+  const navigate = useCallback(
+    address => {
+      ownMove.current = true;
+      try {
+        history.replace(address);
+      } finally {
+        ownMove.current = false;
+      }
+    },
+    [history]
+  );
+
+  // A move the tour did NOT make (the browser Back button, a click on a
+  // desktop notification) lands on an entry that is not the tour's. The tour
+  // ends there, without touching the history: replacing that entry would
+  // destroy a page of the person's own way back.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  useEffect(
+    () =>
+      history.listen(() => {
+        if (!ownMove.current) onCloseRef.current(false);
+      }),
+    [history]
+  );
+
   // Each step opens the page of its feature, so the real screen is the one
   // behind the explanation.
   useEffect(() => {
     if (step?.route && !isOnTourRoute(location.pathname, step.route)) {
-      history.push(step.route);
+      navigate(step.route);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
@@ -399,7 +456,6 @@ const TourRunner = ({ steps, onClose }) => {
       return;
     }
     const size = { width: balloon.offsetWidth, height: balloon.offsetHeight };
-    const screen = viewport();
     if (rect) {
       setPlace(placeBalloon(rect, size, screen, side || step.side));
       return;
@@ -410,17 +466,17 @@ const TourRunner = ({ steps, onClose }) => {
       top: Math.max(52, screen.height - size.height - CARD_BOTTOM),
       arrow: null
     });
-  }, [rect, settled, side, finished, step, index]);
+  }, [rect, settled, side, finished, step, index, screen]);
 
   const leave = useCallback(
     completed => {
       const back = origin.current;
       if (back !== `${history.location.pathname}${history.location.search}`) {
-        history.push(back);
+        navigate(back);
       }
       onClose(completed);
     },
-    [history, onClose]
+    [history, navigate, onClose]
   );
 
   const next = () => setIndex(current => Math.min(current + 1, total));

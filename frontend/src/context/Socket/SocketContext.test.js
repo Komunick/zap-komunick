@@ -127,6 +127,18 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
+test("the handshake tells the server which frontend is running", () => {
+  select("fixture-A", { id: 101, companyId: 10 });
+  socketManager.GetSocket();
+
+  const [, options] = openSocket.mock.calls[0];
+  expect(options.query.token).toBe("fixture-A");
+  // any non-empty value: without it the server takes the page for a frontend
+  // from before RF-032 and asks it for F5
+  expect(typeof options.query.fv).toBe("string");
+  expect(options.query.fv.trim()).not.toBe("");
+});
+
 test("changing actors in the same company closes the old transport and its receivers", async () => {
   select("fixture-A", { id: 101, companyId: 10 });
   const a = socketManager.GetSocket();
