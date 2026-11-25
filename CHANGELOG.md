@@ -88,6 +88,10 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- Ao anexar um arquivo com a tela em zoom (ou em notebook de tela baixa), a prévia empurrava a barra de **enviar** e
+  **cancelar** para fora da tela e o arquivo não podia ser enviado. Agora a prévia encolhe para caber, a conversa e a
+  faixa de painéis cedem o espaço enquanto o arquivo espera, e a barra fica inteira na tela (medido até 200% de zoom
+  num notebook de 768 px); em tela alta nada muda (RF-023).
 - Tour pelo sistema: depois do tour, o botão Voltar do navegador não passa mais pelas telas do tour; fechar o convite
   com Esc ou com um clique fora não conta mais como "Agora não"; o cartão acompanha a tela quando o celular é virado; e
   responder ao convite numa aba fecha o convite nas outras (RF-031).
