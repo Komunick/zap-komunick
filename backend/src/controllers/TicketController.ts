@@ -28,7 +28,10 @@ import AuthorizeTicketContextService, {
 import Contact from "../models/Contact";
 import Queue from "../models/Queue";
 import User from "../models/User";
-import { emitTicketContext } from "../services/SocketServices/TicketContextSocketService";
+import {
+  emitTicketContext,
+  removeWaitingTicketFromGeneralLists
+} from "../services/SocketServices/TicketContextSocketService";
 
 type IndexQuery = {
   isSearch?: string;
@@ -435,6 +438,9 @@ export const remove = async (
       action: "delete",
       ticketId: +ticketId
     });
+  // Zap Komunick (RF-033): a ticket that was waiting for a sector was on the
+  // lists of the general queue, which the rooms above do not reach.
+  await removeWaitingTicketFromGeneralLists(io, ticket);
 
   return res.status(200).json({ message: "ticket deleted" });
 };

@@ -27,6 +27,10 @@ import {
   TicketFilters
 } from "../../helpers/TicketFilters";
 import { loadTicketViewer } from "./AuthorizeTicketContextService";
+import {
+  generalTriageWaitWhere,
+  loadMemberGeneralTriageScope
+} from "../../helpers/GeneralTriage";
 
 interface Request {
   isSearch?: boolean;
@@ -119,15 +123,35 @@ const ListTicketsService = async ({
     }
   ];
 
+  // Zap Komunick (RF-033): a ticket waiting for the customer to pick a sector
+  // counts as being in the general queue for whoever belongs to that queue,
+  // so it shows in "Aguardando" right away instead of after the wait. Like
+  // any ticket of that queue, it hides when its chip is switched off.
+  // Nothing changes for an administrator, the notification list included:
+  // their bell keeps following the sectors they are in.
+  const triageScope = !viewer.isAdmin
+    ? await loadMemberGeneralTriageScope(companyId, viewer.queueIds)
+    : null;
+  const triageWait = triageScope ? generalTriageWaitWhere(triageScope) : null;
+  const generalChipOn =
+    !!triageScope &&
+    (Array.isArray(queueIds) ? queueIds : [])
+      .map(Number)
+      .includes(triageScope.queueId);
+
   let whereCondition: Filterable["where"] = {
     [Op.and]: andedOrs,
     ...(isNotificationList
       ? {}
-      : {
-          queueId: {
-            [Op.or]: user.profile === "admin" ? [queueIds, null] : [queueIds]
+      : triageWait && generalChipOn
+        ? {
+            [Op.or]: [{ queueId: { [Op.or]: [queueIds] } }, triageWait]
           }
-        }),
+        : {
+            queueId: {
+              [Op.or]: user.profile === "admin" ? [queueIds, null] : [queueIds]
+            }
+          }),
     ...(groupsTab ? { isGroup: groups === "true" } : {})
   };
 
@@ -390,7 +414,16 @@ const ListTicketsService = async ({
     [Op.and]: [
       whereCondition,
       ...(isNotificationList || !viewer.isAdmin
-        ? [{ queueId: { [Op.in]: viewer.queueIds } }]
+        ? [
+            triageWait
+              ? {
+                  [Op.or]: [
+                    { queueId: { [Op.in]: viewer.queueIds } },
+                    triageWait
+                  ]
+                }
+              : { queueId: { [Op.in]: viewer.queueIds } }
+          ]
         : [])
     ]
   };

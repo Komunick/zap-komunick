@@ -21,6 +21,10 @@ import { AuthContext } from "../../context/Auth/AuthContext";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import toastError from "../../errors/toastError";
 import useSettings from "../../hooks/useSettings";
+import {
+  isWaitingForSector,
+  outsideSelectedQueues as outsideQueues
+} from "../../helpers/generalTriage";
 
 const useStyles = makeStyles(theme => ({
   ticketsListWrapper: {
@@ -219,6 +223,9 @@ const TicketsListCustom = props => {
   // Zap Komunick: close reason (docs/PRD.md, RF-007)
   const [closeReasonRequired, setCloseReasonRequired] = useState("disabled");
   const [, setSlaTick] = useState(0);
+  // Zap Komunick (RF-033): the general queue of the triage. A conversation
+  // waiting for a sector follows the chip of that queue, like the server does.
+  const [generalQueueId, setGeneralQueueId] = useState(0);
 
   useEffect(() => {
     getSetting("slaMinutes", "0")
@@ -226,6 +233,9 @@ const TicketsListCustom = props => {
       .catch(() => {});
     getSetting("closeReasonRequired", "disabled")
       .then(value => setCloseReasonRequired(value || "disabled"))
+      .catch(() => {});
+    getSetting("generalTriageQueueId", "")
+      .then(value => setGeneralQueueId(Number(value) || 0))
       .catch(() => {});
     // re-render once a minute so tickets cross the deadline without events
     const timer = setInterval(() => setSlaTick(tick => tick + 1), 60000);
@@ -241,6 +251,9 @@ const TicketsListCustom = props => {
       }
       if (data?.key === "closeReasonRequired") {
         setCloseReasonRequired(data.value || "disabled");
+      }
+      if (data?.key === "generalTriageQueueId") {
+        setGeneralQueueId(Number(data.value) || 0);
       }
     };
     socket.on("settings", onSettings);
@@ -289,8 +302,10 @@ const TicketsListCustom = props => {
 
   useEffect(() => {
     const queueIds = queues.map(q => q.id);
+    // Zap Komunick (RF-033): a conversation waiting for the customer to pick a
+    // sector has no queue; the server only sends it to who may see it.
     const filteredTickets = tickets.filter(
-      t => queueIds.indexOf(t.queueId) > -1
+      t => queueIds.indexOf(t.queueId) > -1 || isWaitingForSector(t)
     );
 
     if (profile === "user") {
@@ -327,12 +342,16 @@ const TicketsListCustom = props => {
           )) &&
         (!users?.length || users.some(u => u === ticket.userId)) &&
         (!ticket.userId || ticket.userId === user?.id || showAll) &&
-        (!ticket.queueId || selectedQueueIds.indexOf(ticket.queueId) > -1)
+        !outsideSelectedQueues(ticket)
       );
     };
 
-    const notBelongsToUserQueues = ticket =>
-      ticket.queueId && selectedQueueIds.indexOf(ticket.queueId) === -1;
+    // A conversation waiting for a sector follows the chip of the general
+    // queue (helpers/generalTriage.js).
+    const outsideSelectedQueues = ticket =>
+      outsideQueues(ticket, selectedQueueIds, { profile, generalQueueId });
+
+    const notBelongsToUserQueues = outsideSelectedQueues;
 
     const onConnectTicketList = () => {
       if (status) {
@@ -404,6 +423,7 @@ const TicketsListCustom = props => {
       const queueIds = queues.map(q => q.id);
       if (
         profile === "user" &&
+        !isWaitingForSector(data.ticket) &&
         (queueIds.indexOf(data.ticket?.queue?.id) === -1 ||
           data.ticket.queue === null)
       ) {
@@ -495,7 +515,8 @@ const TicketsListCustom = props => {
     socketManager,
     refetchTickets,
     filtersKey,
-    slaMinutes
+    slaMinutes,
+    generalQueueId
   ]);
 
   useEffect(() => {

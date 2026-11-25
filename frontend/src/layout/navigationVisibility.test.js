@@ -75,6 +75,7 @@ jest.mock("../components/SchedulesForm", () => () => null);
 jest.mock("../components/CompaniesManager", () => () => null);
 jest.mock("../components/PlansManager", () => () => null);
 jest.mock("../components/HelpsManager", () => () => null);
+jest.mock("../components/SupportMenuIcon", () => () => null);
 jest.mock("../components/ContainersManager", () => jest.fn(() => null));
 jest.mock("../components/Settings/Options", () => () => null);
 jest.mock("../components/Settings/Whitelabel", () => () => null);

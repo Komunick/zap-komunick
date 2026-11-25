@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Redirect } from "react-router-dom";
 
 import LoggedInLayout from "../layout";
 import { WhatsAppsProvider } from "../context/WhatsApp/WhatsAppsContext";
@@ -37,6 +38,7 @@ const CloseReasons = lazyRoute(() => import("../pages/CloseReasons"));
 const AccountSecurity = lazyRoute(() => import("../pages/AccountSecurity"));
 const IpAllowlist = lazyRoute(() => import("../pages/IpAllowlist"));
 const AuditLogs = lazyRoute(() => import("../pages/AuditLogs"));
+const Support = lazyRoute(() => import("../pages/Support"));
 
 const PrivateRoutes = () => {
   const [showCampaigns, setShowCampaigns] = useState(false);
@@ -89,6 +91,16 @@ const PrivateRoutes = () => {
           <Route exact path="/tags" component={Tags} isPrivate />
           <Route exact path="/contacts" component={Contacts} isPrivate />
           <Route exact path="/helps" component={Helps} isPrivate />
+          <Route
+            exact
+            path="/support/:ticketId?"
+            component={Support}
+            isPrivate
+          />
+          {/* Zap Komunick: first address of the feature, kept for old links */}
+          <Route exact path="/error-report" isPrivate>
+            <Redirect to="/support" />
+          </Route>
           <Route exact path="/users" component={Users} isPrivate />
           <Route exact path="/messages-api" component={MessagesAPI} isPrivate />
           <Route exact path="/settings" component={SettingsCustom} isPrivate />

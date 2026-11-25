@@ -26,6 +26,7 @@ import WhatsMarked from "react-whatsmarked";
 import { Tooltip } from "@material-ui/core";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import toastError from "../../errors/toastError";
+import { isWaitingForSector } from "../../helpers/generalTriage";
 
 const useStyles = makeStyles(theme => ({
   ticket: {
@@ -181,7 +182,12 @@ const TicketListItem = ({ ticket, groupActionButtons }) => {
         <Tooltip
           arrow
           placement="right"
-          title={ticket.queue?.name || "Sem fila"}
+          title={
+            ticket.queue?.name ||
+            (isWaitingForSector(ticket)
+              ? i18n.t("generalTriage.waiting")
+              : "Sem fila")
+          }
         >
           <span
             style={{ backgroundColor: ticket.queue?.color || "#7C7C7C" }}

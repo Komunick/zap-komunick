@@ -6,6 +6,7 @@ import Typography from "@material-ui/core/Typography";
 
 import BackdropLoading from "../components/BackdropLoading";
 import { i18n } from "../translate/i18n";
+import { UPDATE_AVAILABLE_EVENT } from "../helpers/appVersion";
 
 const RouteLoadError = () => (
   <Box display="flex" flexDirection="column" alignItems="center" py={4}>
@@ -24,6 +25,8 @@ export const lazyRoute = load =>
         error?.name === "ChunkLoadError" ||
         error?.code === "CSS_CHUNK_LOAD_FAILED"
       ) {
+        // Zap Komunick: the "Atualizar" notice tells the same story (RF-032).
+        window.dispatchEvent(new Event(UPDATE_AVAILABLE_EVENT));
         return { default: RouteLoadError };
       }
       throw error;

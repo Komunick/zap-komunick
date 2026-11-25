@@ -1,3 +1,7 @@
+import {
+  isWaitingInGeneralTriage,
+  loadGeneralTriageScope
+} from "./GeneralTriage";
 import { WASocket, proto } from "libzapitu-rf";
 import { Op, WhereOptions } from "sequelize";
 import { getIO } from "../libs/socket";
@@ -119,6 +123,20 @@ const SetTicketMessagesAsRead = async (ticket: Ticket): Promise<void> => {
   const rooms = [id.toString(), `company-${companyId}-${status}`];
   if (queueId != null) {
     rooms.push(`queue-${queueId}-${status}`, `queue-${queueId}-notification`);
+  } else if (ticket.generalTriageStartedAt) {
+    // Zap Komunick (RF-033): a ticket waiting for a sector is on the lists of
+    // the general queue, so its unread count is cleared there too.
+    try {
+      const scope = await loadGeneralTriageScope(companyId);
+      if (scope && isWaitingInGeneralTriage(ticket, scope)) {
+        rooms.push(
+          `queue-${scope.queueId}-${status}`,
+          `queue-${scope.queueId}-notification`
+        );
+      }
+    } catch {
+      /* The count corrects itself on the next reload of the list. */
+    }
   }
   getIO().to(rooms).emit(`company-${companyId}-ticket`, {
     action: "updateUnread",

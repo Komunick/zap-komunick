@@ -1,0 +1,17 @@
+# Ensaio de restauracao: sem Traefik, sem saida para o WhatsApp e em outra faixa de rede.
+# O backend confere TRUST_PROXY contra o perfil gravado na imagem; aqui o proxy real e outro,
+# entao o valor e fixo e o IP do visitante nao e confiavel neste ambiente.
+services:
+  backend:
+    environment:
+      TRUST_PROXY: ${ZK_PERFIL_TRUST_PROXY:?}
+    restart: "no"
+  migrate:
+    environment:
+      TRUST_PROXY: ${ZK_PERFIL_TRUST_PROXY:?}
+  frontend:
+    restart: "no"
+  postgres:
+    restart: "no"
+  redis:
+    restart: "no"

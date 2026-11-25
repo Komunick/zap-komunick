@@ -1,0 +1,5 @@
+[Unit]
+Description=SuperChat dev: deploy automatico quando a branch monitorada recebe commit
+[Service]
+Type=oneshot
+ExecStart=/opt/zap-komunick/bin/zapk.sh poll

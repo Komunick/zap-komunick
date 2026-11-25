@@ -10,6 +10,22 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   simulação antes de gravar e sem repetir mensagens que o SuperChat já tem). Primeira etapa só com texto (RF-029).
   Mensagem importada é só para consulta: o menu avisa, e responder citando, encaminhar, editar, apagar ou reagir é
   recusado com explicação. Gravar exige a data de corte (`--until` ou `--no-until`), e opção desconhecida interrompe.
+- **Atualizar**, na barra de cima: quem já está com o SuperChat aberto é avisado quando uma versão nova é publicada,
+  sem ser interrompido. Um cartão diz o que fica guardado e o que se perde antes de a página ser carregada de novo, o
+  que só acontece no clique em **Atualizar agora**. Navegadores ainda na versão antiga recebem do servidor um aviso
+  curto pedindo F5 (desligável com `LEGACY_CLIENT_NOTICE=off`) (RF-032).
+- **Tour pelo sistema:** um tour guiado passa pelas telas de verdade e explica como cada funcionalidade funciona, com a
+  tela escurecida, o ponto do passo aceso, um balão com a explicação, "Tour · passo n de N" e **Sair do tour** sempre à
+  mão. São 12 passos para o atendente e 18 para o administrador. É oferecido uma vez a cada usuário e pode ser
+  repetido pelo menu do usuário. Nada é enviado nem alterado durante o tour (RF-031).
+- Mensagem de boas-vindas, uma vez por usuário, avisando que o SuperChat está em versão beta e que os problemas devem
+  ser enviados pela aba **Suporte** (RF-030).
+- **Suporte**, no menu de todos os perfis: o usuário abre chamados (título, categoria, prioridade, descrição e até 5
+  anexos em imagem, vídeo ou PDF, 15 MB por envio), acompanha os próprios e conversa com a equipe ali mesmo, ao vivo.
+  O superadministrador da instalação vê a fila com os chamados de todas as empresas, assume, pede informação, conclui e
+  reabre. Escrever num chamado concluído reabre o chamado. O menu mostra quantos chamados têm novidade. Nada é
+  enviado por e-mail (RF-030).
+- Pacote para instalar o SuperChat em qualquer VM ARM64 e migrar os dados entre VMs, com ensaio (`deploy/vm`).
 - Antes de enviar imagens, a conversa mostra a prévia de cada uma. Com vários arquivos, miniaturas escolhem qual ver.
 - Quando o cliente já tem atendimento em andamento, o aviso diz com quem está, em que fila, por qual canal e desde
   quando. Ao iniciar conversa, a janela oferece **Abrir atendimento** e **Assumir** ou **Aceitar**, conforme as
@@ -20,12 +36,27 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   prevalece sobre a preferência de assinatura do navegador e mantém o acesso por setor.
 - Na tela de atendimento, um botão no cabeçalho, ao lado de Finalizar, recolhe e reabre o painel do cliente.
   Recolhido, a conversa ocupa a largura toda. O SuperChat lembra a escolha de cada usuário neste navegador.
+- A mensagem de boas-vindas passa a destacar a abertura de chamado: um bloco "Encontrou uma falha? Abra um chamado."
+  com o passo a passo, um incentivo a relatar mesmo as falhas pequenas, e **Abrir um chamado** como botão principal.
+  Quem já tinha fechado a mensagem anterior vê a nova uma vez (RF-030).
+- Alerta de chamados no Windows de quem atende: um programa que roda escondido, consulta a fila a cada 30 segundos e,
+  quando chega chamado novo ou mensagem nova de um solicitante, mostra um aviso do Windows e apita, mesmo com o
+  navegador fechado. Usa uma chave própria, que só lê essa lista (`deploy/alerta-suporte-windows`, RF-030).
+- Arrastar arquivos para anexar passa a valer em todas as conversas. No Chat interno, soltar um ou mais arquivos em
+  qualquer ponto da conversa os deixa prontos para enviar, somados aos já escolhidos. No Suporte, o arquivo pode ser
+  solto em qualquer ponto do chamado, e não só no campo de texto. As duas telas mostram "Solte os arquivos para
+  anexar", deixam de fora pastas e arquivos vazios com um aviso e ignoram texto ou link arrastado. Nos atendimentos
+  isso já existia.
 - Arquivos arrastados para a conversa ou para o campo de mensagem entram como anexo, com a mesma validação do botão
   de anexo. Pastas e arquivos vazios são recusados com aviso, inclusive pelo botão.
 
 
 ### Alterado
 
+- A conversa de quem ainda não escolheu o setor aparece na hora em **Aguardando**, com o rótulo **Sem setor**, para
+  quem é da fila de atendimento geral, em vez de só depois do tempo de espera da triagem (15 minutos por padrão).
+  Aceitar leva a conversa para a fila geral. Quem não é dessa fila continua sem vê-la, e as demais conversas sem
+  fila continuam só com os administradores (RF-033).
 - Atualizado com o Ticketz até a v1.0.141 (46 commits, de 21/10 a 18/11/2026, sem migração de banco). Entram:
   - dependências do backend e do frontend com correções de segurança;
   - contato que não existe no WhatsApp deixa de dar erro;
@@ -61,6 +92,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- Tour pelo sistema: depois do tour, o botão Voltar do navegador não passa mais pelas telas do tour; fechar o convite
+  com Esc ou com um clique fora não conta mais como "Agora não"; o cartão acompanha a tela quando o celular é virado; e
+  responder ao convite numa aba fecha o convite nas outras (RF-031).
 - A barra de envio de anexos segue o tema. No modo escuro ela era quase branca e o nome do arquivo não aparecia.
 - Conexão de WhatsApp que parece aberta e não recebe mais nada:
   - um download interno cortado ou parado por 60 s agora dá erro. Antes ele esperava para sempre e prendia a fila

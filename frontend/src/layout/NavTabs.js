@@ -72,6 +72,8 @@ const NavTabs = ({ isAdmin }) => {
           key={item.id}
           to={item.to}
           aria-current={isActivePath(pathname, item.to) ? "page" : undefined}
+          data-tour={`nav:${item.to}`}
+          data-tour-side="below"
           className={clsx(
             classes.tab,
             isActivePath(pathname, item.to) && classes.tabActive
@@ -83,6 +85,8 @@ const NavTabs = ({ isAdmin }) => {
       <button
         type="button"
         aria-haspopup="true"
+        data-tour="nav:more"
+        data-tour-side="below"
         className={clsx(classes.tab, moreActive && classes.tabActive)}
         onClick={e => setAnchorEl(e.currentTarget)}
       >

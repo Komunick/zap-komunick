@@ -12,6 +12,7 @@ import Whatsapp from "../../models/Whatsapp";
 import ShowTicketService from "../../services/TicketServices/ShowTicketService";
 import { websocketUpdateTicket } from "../../services/TicketServices/UpdateTicketService";
 import { cacheLayer } from "../../libs/cache";
+import { removeTicketFromQueueLists } from "../../services/SocketServices/TicketContextSocketService";
 import {
   assignGeneralTriageDestination,
   claimGeneralTriageMenu,
@@ -27,6 +28,10 @@ jest.mock("../../helpers/GeneralTriage", () => ({
   readGeneralTriageTimeout: jest.fn()
 }));
 jest.mock("../../helpers/IsWhatsAppQueueLinked", () => jest.fn());
+jest.mock("../../libs/socket", () => ({ getIO: jest.fn(() => "io") }));
+jest.mock("../../services/SocketServices/TicketContextSocketService", () => ({
+  removeTicketFromQueueLists: jest.fn()
+}));
 jest.mock("../../libs/cache", () => ({
   cacheLayer: { setIfAbsent: jest.fn() }
 }));
@@ -218,5 +223,51 @@ describe("sector menu sent once per wait", () => {
     setIfAbsent.mockRejectedValueOnce(new Error("redis down"));
 
     await expect(claimGeneralTriageMenu(ticket)).resolves.toBe(true);
+  });
+});
+
+// Zap Komunick (RF-033): while it waited, the conversation was on the lists of
+// the general queue.
+describe("leaving the wait", () => {
+  it("takes the conversation off the lists of the general queue when the customer picks another sector", async () => {
+    await assignGeneralTriageDestination(ticket, {
+      id: 63,
+      chatbot: false,
+      isGeneral: false
+    });
+
+    expect(removeTicketFromQueueLists).toHaveBeenCalledWith(
+      "io",
+      routed,
+      general.id
+    );
+    // the removal goes first: whoever is also of the new sector gets it back
+    expect(
+      (removeTicketFromQueueLists as jest.Mock).mock.invocationCallOrder[0]
+    ).toBeLessThan(
+      (websocketUpdateTicket as jest.Mock).mock.invocationCallOrder[0]
+    );
+  });
+
+  it("leaves the lists alone when the conversation goes to the general queue itself", async () => {
+    (removeTicketFromQueueLists as jest.Mock).mockClear();
+    await assignGeneralTriageDestination(ticket, general);
+    expect(removeTicketFromQueueLists).not.toHaveBeenCalled();
+    expect(websocketUpdateTicket).toHaveBeenCalledWith(routed);
+  });
+
+  it("still delivers the update when the lists cannot be corrected", async () => {
+    (removeTicketFromQueueLists as jest.Mock).mockRejectedValueOnce(
+      new Error("socket down")
+    );
+    (websocketUpdateTicket as jest.Mock).mockClear();
+    await expect(
+      assignGeneralTriageDestination(ticket, {
+        id: 63,
+        chatbot: false,
+        isGeneral: false
+      })
+    ).resolves.toBe(routed);
+    expect(websocketUpdateTicket).toHaveBeenCalledWith(routed);
   });
 });

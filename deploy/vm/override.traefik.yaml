@@ -1,0 +1,24 @@
+# Expoe o frontend pelo Traefik ja existente na VM (o do Coolify, por exemplo).
+services:
+  frontend:
+    networks:
+      ingress: {}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${ZK_INGRESS_NETWORK:?}"
+      - "traefik.http.routers.http-${COMPOSE_PROJECT_NAME:?}.entryPoints=http"
+      - "traefik.http.routers.http-${COMPOSE_PROJECT_NAME:?}.rule=Host(`${ZK_PUBLIC_HOST:?}`)"
+      # middleware proprio: nem todo Traefik tem o redirect-to-https do Coolify
+      - "traefik.http.middlewares.https-${COMPOSE_PROJECT_NAME:?}.redirectscheme.scheme=https"
+      - "traefik.http.routers.http-${COMPOSE_PROJECT_NAME:?}.middlewares=https-${COMPOSE_PROJECT_NAME:?}"
+      - "traefik.http.routers.https-${COMPOSE_PROJECT_NAME:?}.entryPoints=https"
+      - "traefik.http.routers.https-${COMPOSE_PROJECT_NAME:?}.rule=Host(`${ZK_PUBLIC_HOST:?}`)"
+      - "traefik.http.routers.https-${COMPOSE_PROJECT_NAME:?}.tls=true"
+      - "traefik.http.routers.https-${COMPOSE_PROJECT_NAME:?}.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.https-${COMPOSE_PROJECT_NAME:?}.service=${COMPOSE_PROJECT_NAME:?}"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME:?}.loadbalancer.server.port=8080"
+
+networks:
+  ingress:
+    external: true
+    name: ${ZK_INGRESS_NETWORK:?}

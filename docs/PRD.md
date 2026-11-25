@@ -946,13 +946,181 @@ Dado uma cliente que conversou com a JB pelo ZapContábil em outubro,
 quando a importação roda e a atendente abre o atendimento atual dela no SuperChat,
 então vê as mensagens de outubro acima, no atendimento anterior, na data em que foram trocadas.
 
+### RF-033 — Conversa sem setor visível na hora para a fila geral
+
+**Relato (25/11/2026):** "quando o cliente não escolhe o setor, não está mostrando as mensagens no Aguardando; a gente
+tem que ficar olhando no celular para ver os clientes que mandam mensagem e não escolhem o setor".
+
+**Como era:** com a **Triagem sem setor** ligada, o cliente que não escolhe um setor no menu fica sem fila durante o
+"tempo para escolher um setor" (15 minutos por padrão) e só depois vai para a fila de atendimento geral. Atendimento
+sem fila só aparece para administrador, então nesse intervalo a equipe não via o cliente.
+
+**Regras importantes:**
+- A conversa que está esperando o cliente escolher o setor conta como se já estivesse na fila de atendimento geral
+  para quem pertence a essa fila. São as mesmas pessoas que a receberiam ao fim da espera; muda só o atraso.
+- Para essas pessoas ela aparece em **Aguardando** na hora, com o rótulo **Sem setor**, entra no contador da aba, chega
+  ao vivo, toca a notificação e pode ser aberta e lida. Como qualquer conversa da fila geral, some da lista quando o
+  filtro dessa fila está desligado.
+- Enquanto ninguém aceita, o menu continua valendo: se o cliente escolher um setor, a conversa vai para ele e sai da
+  lista de quem não é desse setor.
+- Aceitar leva a conversa para a fila de atendimento geral, do mesmo jeito que o fim da espera levaria, e a deixa com
+  quem aceitou. Finalizar sem aceitar faz o mesmo antes de fechar, para a conversa não terminar sem setor nas mãos de
+  quem não enxerga conversas sem setor.
+- Se o cliente escolher um setor no instante em que alguém aceita, vale o setor do cliente: o aceite é recusado para
+  quem não é desse setor.
+- As anotações feitas na conversa em espera aparecem para quem pode abri-la.
+- Quem não é da fila de atendimento geral continua sem ver nem poder aceitar essas conversas.
+- Nada muda para as outras conversas sem fila (as iniciadas pelo celular e as anteriores à triagem): continuam só com
+  os administradores. Para o administrador nada muda.
+- Vale só onde a Triagem sem setor está configurada, e só nas conexões de WhatsApp ligadas à fila geral.
+
+**Cenário de sucesso:**
+
+Dado que a JB Fraga tem a Triagem sem setor com a fila "Atendimento geral" e 15 minutos de espera,
+quando um cliente manda "Posso enviar o código?" e não responde ao menu de setores,
+então, no mesmo instante, a conversa aparece em Aguardando para quem é da fila Atendimento geral, com o rótulo
+"Sem setor"; ao aceitar, ela passa para a fila Atendimento geral com quem aceitou, e a equipe não precisa mais olhar
+o celular.
+
+### RF-030 — Aviso de versão beta e chamados de suporte
+
+**Pedido (24/11/2026):** avisar quem entra no SuperChat de que o sistema está em versão beta e pode apresentar erros,
+e dar um lugar para pedir suporte dentro do próprio sistema: o usuário abre um chamado, anexa imagens, vídeos ou PDF, e
+conversa ao vivo com o superadministrador, que vê e responde todos os chamados. O modelo é a central de chamados do
+Brazil TMS. Nada é enviado por e-mail.
+
+**Regras importantes:**
+- Depois do login, cada usuário vê uma vez a mensagem de boas-vindas: o sistema está em beta e podem ocorrer erros,
+  bugs e falhas. O centro da mensagem é o convite a abrir chamado: um bloco em destaque "Encontrou uma falha? Abra um
+  chamado.", o passo a passo (Suporte, contar o que aconteceu, acompanhar a resposta), o incentivo a relatar mesmo as
+  falhas pequenas e **Abrir um chamado** como botão principal. A resposta fica guardada no navegador, por usuário; em
+  outro navegador ou computador a mensagem aparece de novo. Quando o texto muda de forma relevante, a versão da
+  mensagem sobe e todos a veem mais uma vez.
+- **Suporte** fica no menu de todos os perfis, na aba "Mais" do layout Foco e no `Ctrl K`. O menu mostra quantos
+  chamados têm novidade para quem está logado.
+- Qualquer usuário abre chamado, numerado `CH-000123`: título (obrigatório), categoria (Erro numa tela, Dado
+  incorreto, Dúvida de uso, Permissão de acesso, Sugestão de melhoria, Outro), prioridade (Baixa, Média, Alta; "Parou
+  meu trabalho" vira Crítica), tela onde aconteceu e descrição. Aceita até 5 anexos e 15 MB por envio, só imagem (PNG,
+  JPEG, GIF, WebP), vídeo (MP4, WebM, MOV) ou PDF, escolhidos, colados com `Ctrl+V` ou arrastados para qualquer
+  ponto do chamado.
+- O servidor confere o tipo do anexo pelo conteúdo do arquivo, e não pelo nome. Os anexos ficam no volume privado e só
+  saem pela rota autenticada do chamado a que pertencem; abrem dentro do sistema.
+- Cada usuário vê só os próprios chamados. Chamado de outra pessoa responde como inexistente. Quem atende é o
+  superadministrador da instalação, que vê a fila com os chamados de todas as empresas, o e-mail do solicitante e os
+  dados técnicos (navegador, tamanho da tela, endereço).
+- Situações: **Aberto**, **Em atendimento**, **Aguardando o solicitante** (para o dono do chamado, "Aguardando você"),
+  **Concluído** e **Cancelado**.
+  - O suporte assume (vira responsável), pede informação, retoma, conclui e reabre. Pedir informação, concluir e
+    cancelar exigem um texto, que entra na conversa.
+  - A primeira resposta do suporte num chamado aberto já assume o chamado.
+  - O solicitante só cancela enquanto o chamado está Aberto. Quando ele responde um pedido de informação, o chamado
+    volta a Em atendimento.
+  - Escrever num chamado concluído ou cancelado reabre o chamado, sem prazo. Com responsável, ele volta a Em
+    atendimento; sem responsável, volta para a fila.
+- A conversa é ao vivo: o servidor avisa, pelo canal de tempo real, qual chamado mudou, e cada tela busca de novo só o
+  que aquele usuário pode ver. As mudanças de situação aparecem na conversa, com quem fez e quando.
+- Limites: 10 chamados e 120 mensagens por usuário por hora.
+- Alerta no Windows de quem atende (`deploy/alerta-suporte-windows`): um programa na conta do usuário consulta a
+  fila a cada 30 segundos e, a cada chamado novo ou mensagem nova de solicitante, mostra um aviso do Windows e apita,
+  mesmo com o navegador fechado. Ele usa a chave do alerta, criada por um superadministrador, que abre uma rota só de
+  leitura com número, título, empresa, solicitante, prioridade e horário dos chamados que esperam o suporte. A chave
+  não lê conversa nem anexo, não é login, e o servidor guarda só o SHA-256 dela.
+- Os reportes de erro gravados pela primeira versão desta função viram chamados, com o mesmo número.
+
+**Cenário de sucesso:**
+
+Dado uma atendente que abriu o chamado CH-000012 com um print,
+quando o superadministrador responde na fila de chamados,
+então o chamado passa a Em atendimento com ele como responsável, a resposta aparece na conversa dela sem recarregar a
+página e o menu Suporte mostra a novidade. Depois de concluído, se ela escrever "voltou a acontecer", o chamado é
+reaberto com o mesmo responsável.
+
+### RF-031 — Tour pelas funcionalidades
+
+**Pedido (25/11/2026):** um tour breve pelas funcionalidades do SuperChat, parecido com os tours do Brazil TMS, dizendo
+como cada funcionalidade funciona.
+
+**Regras importantes:**
+- O tour tem a mesma forma dos tours do Brazil TMS: a tela escurece e fica aceso só o que o passo mostra, um balão
+  preso a esse ponto explica a funcionalidade, uma pílula no alto diz "Tour · passo n de N" e o botão **Sair do tour**
+  fica à mão o tempo todo (o `Esc` faz o mesmo). As setas do teclado andam entre os passos.
+- Diferente do Brazil TMS, o tour não usa telas de treino: ele passa pelas telas de verdade. Cada passo abre a página
+  da funcionalidade e aponta o item dela no menu. Enquanto o tour está aberto, o sistema por trás não recebe clique nem
+  teclado, e nada é enviado nem alterado. No fim, a pessoa volta para a tela em que estava.
+- Cada passo diz o que a funcionalidade é e, em dois a quatro pontos, como ela funciona, citando os nomes das abas e
+  dos botões como aparecem na tela. O tour só fala do que existe hoje: recursos em simulação ou desligados por padrão
+  (assistente, integrações, campanhas) ficam de fora.
+- **Atendente (12 passos):** Atendimentos (o item do menu, a lista e a conversa), Kanban, Respostas Rápidas, Contatos,
+  Agendamentos, Tags, Chat Interno, Ajuda e Suporte, a busca rápida (`Ctrl K`) e o menu do usuário.
+- **Administrador (18 passos):** os mesmos e mais Dashboard, SLA, Métricas e Usuários online; IPs permitidos e
+  Auditoria; Conexões; Filas & Chatbot e Motivos de finalização; Usuários; API e Configurações.
+- O tour acompanha o layout de cada pessoa: no Workspace e no Painel o menu lateral fica aberto durante o tour, para os
+  itens aparecerem com o nome; no Foco o balão aponta a aba, ou a aba "Mais" quando a página mora dentro dela. No
+  celular, onde o menu fica recolhido, a explicação aparece num cartão no pé da tela, sobre a página do passo.
+- O tour é oferecido uma vez a cada usuário, depois da mensagem de boas-vindas (nunca os dois avisos juntos). Quem
+  responde "Agora não" não é perguntado de novo. Fechar o convite com `Esc` ou com um clique fora não é resposta: ele
+  volta na próxima vez que a página for carregada. A resposta fica guardada no navegador, por usuário; com duas abas
+  abertas, responder numa fecha o convite na outra.
+- O tour não deixa rastro no histórico do navegador: depois dele, o botão Voltar leva para onde a pessoa estava antes.
+  Usar o botão Voltar durante o tour encerra o tour na tela para onde o botão levou.
+- Quem fecha o convite sem responder e depois faz o tour pelo menu não é convidado de novo.
+- **Tour pelo sistema**, no menu do usuário, repete o tour quando a pessoa quiser.
+- A tela final diz onde rever o tour e lembra a aba Suporte. **Concluir** fecha; **Repetir tour** volta ao passo 1.
+- Os textos existem em português, inglês e espanhol.
+
+**Cenário de sucesso:**
+
+Dado uma atendente que entra no SuperChat pela primeira vez depois desta entrega,
+quando ela aceita o convite "Conheça o SuperChat" e clica em Continuar a cada passo,
+então o tour abre Atendimentos, Kanban, Respostas Rápidas e as demais telas do menu dela, explicando cada uma, termina
+em "Você chegou ao fim do tour" e, ao concluir, ela está de volta na tela em que estava, sem nenhuma mensagem enviada
+nem cadastro alterado.
+
+### RF-032 — Aviso de versão nova para quem já está online
+
+**Pedido (25/11/2026):** apresentar o tour a todos os usuários, inclusive aos que já estavam online quando ele foi
+publicado.
+
+**Problema:** quem deixa o SuperChat aberto o dia inteiro continua rodando o programa que o navegador carregou de manhã.
+Uma publicação feita às 10 h só chega a essa pessoa quando a página é carregada de novo. Por isso o convite do tour não
+apareceu para quem já estava trabalhando.
+
+**Regras importantes:**
+- **Atualizar**, na barra de cima, aparece quando existe uma versão do SuperChat mais nova do que a que está na tela.
+  É um botão, sem janela e sem som: nunca tira o teclado de quem está digitando para um cliente e não cobre a conversa.
+- Clicar em **Atualizar** abre um cartão pequeno que diz o que fica guardado (o texto digitado na conversa com o
+  cliente) e o que se perde (anexos ainda não enviados, áudio em gravação, edição ou resposta de mensagem e formulários
+  abertos). A página só é carregada de novo no clique em **Atualizar agora**. Nunca sozinha.
+- Depois de atualizar, quem ainda não respondeu ao convite do tour o recebe (RF-031).
+- O SuperChat percebe a versão nova comparando o programa que está rodando com o que está publicado. Ele confere logo
+  depois de a conexão cair e voltar (o que acontece em toda publicação), quando a pessoa volta para a aba, quando uma
+  tela não consegue carregar um arquivo e de tempos em tempos. Na dúvida (sem internet, servidor reiniciando), não
+  mostra nada: uma queda de rede nunca acende o botão.
+- No celular a barra de cima já está cheia: enquanto **Atualizar** está nela, ele ocupa o lugar do controle de volume.
+- O cartão vem logo depois do botão na ordem do teclado, e o `Esc` o fecha.
+- Enquanto o tour está na tela, o botão fica escondido.
+- **Navegadores com a versão antiga, de antes desta entrega:** eles não têm o botão e não aprendem nada novo. O servidor
+  os reconhece e manda um aviso curto, "O SuperChat foi atualizado. Aperte F5 para carregar a versão nova.", que a
+  versão antiga mostra na tela por três segundos, do mesmo jeito que mostra os avisos de conexão do WhatsApp. O aviso
+  vem dez segundos depois de a conexão voltar e se repete a cada dez minutos, no máximo seis vezes por pessoa a cada
+  publicação (somando todas as abas e reconexões), até a página ser carregada de novo. Ele não desconecta ninguém e não
+  recarrega a página. A variável `LEGACY_CLIENT_NOTICE=off` desliga esse aviso na instalação.
+
+**Cenário de sucesso:**
+
+Dado uma atendente com o SuperChat aberto desde cedo, respondendo a um cliente,
+quando uma versão nova é publicada,
+então aparece **Atualizar** na barra de cima, sem interromper o que ela digita; ao clicar em Atualizar agora, a página
+volta na mesma conversa, com o texto que ela tinha digitado, e o convite do tour aparece se ela ainda não respondeu.
+
 ## 4. Restrições e cuidados
 
 **Uso e acesso:** navegador, perfis do Ticketz (admin e usuário). Painel de SLA, carteira, horário de acesso, motivos
 de finalização e a exigência de motivo são geridos só por administradores.
 
 **Dados e integrações:** dados de contatos e mensagens dos clientes das empresas usuárias. Nenhum dado novo sai do
-sistema; nenhuma integração externa nova.
+sistema; nenhuma integração externa nova. Os chamados de suporte (RF-030) ficam dentro do SuperChat: um print anexado
+pode mostrar dados de clientes, e por isso só o dono do chamado e o superadministrador da instalação o veem.
 
 **Privacidade:** o sistema não pede a localização do navegador e não envia IP, coordenadas nem dados de uso a terceiros por
 conta própria. O país do campo de telefone vem do idioma do navegador. Saem de cena a geolocalização e o

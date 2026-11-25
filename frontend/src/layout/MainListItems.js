@@ -47,6 +47,7 @@ import SupervisedUserCircleOutlinedIcon from "@material-ui/icons/SupervisedUserC
 import AssignmentTurnedInOutlinedIcon from "@material-ui/icons/AssignmentTurnedInOutlined";
 import SecurityOutlinedIcon from "@material-ui/icons/SecurityOutlined";
 import HistoryOutlinedIcon from "@material-ui/icons/HistoryOutlined";
+import SupportMenuIcon from "../components/SupportMenuIcon";
 import { i18n } from "../translate/i18n";
 import { WhatsAppsContext } from "../context/WhatsApp/WhatsAppsContext";
 import { AuthContext } from "../context/Auth/AuthContext";
@@ -172,6 +173,7 @@ function ListItemLink(props) {
           className={clsx(classes.menuLink, active && classes.menuLinkActive)}
           aria-current={active ? "page" : undefined}
           aria-label={typeof primary === "string" ? primary : undefined}
+          data-tour={`nav:${to}`}
         >
           {icon ? (
             <ListItemIcon className={classes.menuIcon}>{icon}</ListItemIcon>
@@ -426,6 +428,12 @@ const MainListItems = props => {
                   to="/helps"
                   primary={i18n.t("mainDrawer.listItems.helps")}
                   icon={<HelpOutlineIcon />}
+                />
+                {/* Zap Komunick: support tickets (RF-030) */}
+                <ListItemLink
+                  to="/support"
+                  primary={i18n.t("mainDrawer.listItems.support")}
+                  icon={<SupportMenuIcon />}
                 />
               </>
             </>

@@ -16,7 +16,8 @@ const safeSettingsKeys = new Set([
   "tagsMode",
   "slaMinutes",
   "closeReasonRequired",
-  "allowSilentlyClose"
+  "allowSilentlyClose",
+  "generalTriageQueueId"
 ]);
 
 const useSettings = () => {

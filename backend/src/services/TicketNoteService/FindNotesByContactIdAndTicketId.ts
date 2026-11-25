@@ -25,7 +25,7 @@ const FindNotesByContactIdAndTicketId = async ({
       contactId,
       ticketId
     },
-    include: ticketNoteScope(viewer),
+    include: ticketNoteScope(viewer, { authorizedTicket: true }),
     order: [["createdAt", "DESC"]]
   });
 

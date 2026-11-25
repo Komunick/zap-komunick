@@ -33,6 +33,7 @@ import {
   readCustomerPanelCollapsed,
   writeCustomerPanelCollapsed
 } from "../../helpers/customerPanelPreference";
+import { isWaitingForSector } from "../../helpers/generalTriage";
 
 const drawerWidth = 320;
 
@@ -222,7 +223,11 @@ const Ticket = () => {
         const { queues, profile } = user;
 
         const queueAllowed = queues.find(q => q.id === queueId);
-        if (queueAllowed === undefined && profile !== "admin") {
+        if (
+          queueAllowed === undefined &&
+          profile !== "admin" &&
+          !isWaitingForSector(data)
+        ) {
           toast.error("Acesso não permitido");
           history.push("/tickets");
           return;
