@@ -189,7 +189,8 @@ test("when a file fails, it and the ones after it stay selected and the attendan
   ]);
   expect(toastError).toHaveBeenCalledWith(failure);
   expect(toast.warn).toHaveBeenCalledWith(
-    "messagesInput.sendStopped 1/3 dois.jpg"
+    "messagesInput.sendStopped 1/3 dois.jpg",
+    { autoClose: 12000 }
   );
   expect(
     screen.queryByRole("button", { name: "um.jpg" })

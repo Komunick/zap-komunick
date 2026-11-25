@@ -1074,12 +1074,14 @@ const MessageInputCustom = props => {
     if (error) {
       toastError(error);
       if (total > 1) {
+        // long enough to be read: it says what went and what did not
         toast.warn(
           i18n.t("messagesInput.sendStopped", {
             sent,
             total,
             name: pending[0]?.name
-          })
+          }),
+          { autoClose: 12000 }
         );
       }
     }
