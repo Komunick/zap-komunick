@@ -6,6 +6,10 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Adicionado
 
+- **Atualizar**, na barra de cima: quem já está com o SuperChat aberto é avisado quando uma versão nova é publicada,
+  sem ser interrompido. Um cartão diz o que fica guardado e o que se perde antes de a página ser carregada de novo, o
+  que só acontece no clique em **Atualizar agora**. Navegadores ainda na versão antiga recebem do servidor um aviso
+  curto pedindo F5 (desligável com `LEGACY_CLIENT_NOTICE=off`) (RF-032).
 - **Tour pelo sistema:** um tour guiado passa pelas telas de verdade e explica como cada funcionalidade funciona, com a
   tela escurecida, o ponto do passo aceso, um balão com a explicação, "Tour · passo n de N" e **Sair do tour** sempre à
   mão. São 12 passos para o atendente e 18 para o administrador. É oferecido uma vez a cada usuário e pode ser
@@ -80,6 +84,9 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Corrigido
 
+- Tour pelo sistema: depois do tour, o botão Voltar do navegador não passa mais pelas telas do tour; fechar o convite
+  com Esc ou com um clique fora não conta mais como "Agora não"; o cartão acompanha a tela quando o celular é virado; e
+  responder ao convite numa aba fecha o convite nas outras (RF-031).
 - A barra de envio de anexos segue o tema. No modo escuro ela era quase branca e o nome do arquivo não aparecia.
 - Conexão de WhatsApp que parece aberta e não recebe mais nada:
   - um download interno cortado ou parado por 60 s agora dá erro. Antes ele esperava para sempre e prendia a fila

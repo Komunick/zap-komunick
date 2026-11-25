@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from "react";
 import {
   Button,
   Dialog,
@@ -14,6 +20,7 @@ import {
   FEATURE_TOUR_EVENT,
   buildTourSteps,
   featureTourAnswered,
+  featureTourKey,
   rememberFeatureTour
 } from "../../helpers/featureTour";
 import TourRunner from "./TourRunner";
@@ -60,14 +67,35 @@ const FeatureTour = ({ user, canOffer = true, onActiveChange }) => {
   }, [userId, canOffer]);
 
   // "Tour pelo sistema" in the user menu (or anywhere else) asks for the tour.
+  // A request that arrives while the tour is already on screen changes
+  // nothing; one that arrives while the invitation is open counts as accepting
+  // it, so the answer is still recorded at the end.
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
   useEffect(() => {
     const open = () => {
-      setFirstTime(false);
+      if (modeRef.current === "running") return;
+      setFirstTime(modeRef.current === "offer");
       setMode("running");
     };
     window.addEventListener(FEATURE_TOUR_EVENT, open);
     return () => window.removeEventListener(FEATURE_TOUR_EVENT, open);
   }, []);
+
+  // Two tabs of the same person show the same invitation: answering it in one
+  // closes it in the other, which writes nothing. A tour already running in
+  // another tab is left alone.
+  useEffect(() => {
+    if (!userId) return undefined;
+    const onStorage = event => {
+      if (event.key !== featureTourKey(userId) || event.newValue === null) {
+        return;
+      }
+      setMode(current => (current === "offer" ? null : current));
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [userId]);
 
   useEffect(() => {
     onActiveChange?.(mode === "running");
@@ -79,14 +107,24 @@ const FeatureTour = ({ user, canOffer = true, onActiveChange }) => {
     setMode("running");
   };
 
+  // Only the "Agora não" button is an answer. Esc or a click outside just
+  // closes the invitation, which comes back the next time the page is loaded.
   const later = () => {
     rememberFeatureTour(userId, "later");
     setMode(null);
   };
 
+  const dismiss = () => setMode(null);
+
+  // The tour answers the invitation when it came from it, and also when the
+  // invitation was never answered (closed with Esc, then "Tour pelo sistema"
+  // in the menu): whoever took the tour is not invited to it again. Taking it
+  // again later never changes the stored answer.
   const close = useCallback(
     completed => {
-      if (firstTime) rememberFeatureTour(userId, completed ? "done" : "left");
+      if (firstTime || !featureTourAnswered(userId)) {
+        rememberFeatureTour(userId, completed ? "done" : "left");
+      }
       setMode(null);
     },
     [firstTime, userId]
@@ -99,7 +137,7 @@ const FeatureTour = ({ user, canOffer = true, onActiveChange }) => {
   return (
     <Dialog
       open={mode === "offer"}
-      onClose={later}
+      onClose={dismiss}
       maxWidth="xs"
       fullWidth
       aria-labelledby="feature-tour-offer"

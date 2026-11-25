@@ -40,6 +40,8 @@ import UserModal from "../components/UserModal";
 import AboutModal from "../components/AboutModal";
 import WelcomeBetaDialog from "../components/WelcomeBetaDialog";
 import FeatureTour from "../components/FeatureTour";
+import UpdateNotice from "../components/UpdateNotice";
+import useAppUpdate from "../hooks/useAppUpdate";
 import { FEATURE_TOUR_EVENT } from "../helpers/featureTour";
 import BrandLogo from "../components/BrandLogo";
 import KomunickEndorsement from "../components/KomunickEndorsement";
@@ -682,6 +684,9 @@ const LoggedInLayout = ({ children, themeToggle }) => {
   const [welcomeSettled, setWelcomeSettled] = useState(null);
   const [tourActive, setTourActive] = useState(false);
   const drawerBeforeTour = useRef(null);
+  // Zap Komunick: a newer SuperChat than the one on screen was published
+  // (RF-032).
+  const updateAvailable = useAppUpdate();
   const focoDesktop = layoutMode === "foco" && drawerVariant !== "temporary";
   const painelDesktop =
     layoutMode === "painel" && drawerVariant !== "temporary";
@@ -1210,11 +1215,19 @@ const LoggedInLayout = ({ children, themeToggle }) => {
             </Tooltip>
           )}
 
+          {/* Zap Komunick: a newer SuperChat was published (RF-032) */}
+          <UpdateNotice available={updateAvailable} hidden={tourActive} />
+
           {canAccessBackendlogs && <Backendlogs />}
 
           <PhoneCall />
 
-          <NotificationsVolume setVolume={setVolume} volume={volume} />
+          {/* On a phone the bar is already full: while "Atualizar" is there,
+              it takes the place of the volume control, so the account at the
+              end of the bar is not pushed off the screen. */}
+          {(greaterThenSm || !updateAvailable || tourActive) && (
+            <NotificationsVolume setVolume={setVolume} volume={volume} />
+          )}
 
           {user.id && <NotificationsPopOver volume={volume} />}
           {user.id && <SlaAlertsPopover key={`${user.companyId}:${user.id}`} />}

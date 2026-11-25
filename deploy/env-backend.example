@@ -56,3 +56,7 @@ ACESSORIAS_MODE=disabled
 # P3 SCI and P4 integrated queries are simulations with independent company flags.
 SCI_MODE=disabled
 INTEGRATED_ASSISTANT_MODE=disabled
+
+# Aviso para navegadores que ainda rodam um frontend antigo (RF-032): o servidor
+# pede F5 pelo canal de avisos da conexao. "off" desliga.
+# LEGACY_CLIENT_NOTICE=off

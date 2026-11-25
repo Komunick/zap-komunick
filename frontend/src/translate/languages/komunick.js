@@ -4579,12 +4579,12 @@ pt.featureTour = {
   offerText:
     "Um tour rápido, de {{total}} passos, mostra onde fica cada funcionalidade e como ela funciona. Nada é enviado nem alterado, e você pode sair quando quiser.",
   offerLater:
-    'Para fazer depois: clique no seu nome, no canto de cima, e em "Tour pelo sistema".',
+    'Para fazer depois: clique na sua conta, no canto de cima, e em "Tour pelo sistema".',
   notNow: "Agora não",
   start: "Fazer tour",
   endTitle: "Você chegou ao fim do tour",
   endText:
-    'Para rever, clique no seu nome, no canto de cima, e em "Tour pelo sistema". Se algo não funcionar como esperado, abra um chamado em Suporte.',
+    'Para rever, clique na sua conta, no canto de cima, e em "Tour pelo sistema". Se algo não funcionar como esperado, abra um chamado em Suporte.',
   conclude: "Concluir",
   repeat: "Repetir tour",
   groups: {
@@ -4709,7 +4709,7 @@ pt.featureTour = {
       points: [
         '"Adicionar WhatsApp" cria a conexão; "QR CODE" mostra o código para ler com o celular.',
         "A situação aparece na lista: conectado, desconectado ou aguardando o QR Code.",
-        'Um "!" neste item do menu avisa que alguma conexão está fora do ar.'
+        'No menu lateral, um "!" neste item avisa que alguma conexão está fora do ar.'
       ]
     },
     queues: {
@@ -4744,12 +4744,12 @@ pt.featureTour = {
       points: [
         "Clique aqui ou aperte Ctrl K.",
         "Digite o nome de uma tela, de um atendimento ou de um cliente e escolha na lista.",
-        "Escolher um cliente abre uma conversa com ele."
+        "Escolher um cliente abre a janela para iniciar a conversa com ele."
       ]
     },
     account: {
       title: "Seu menu",
-      text: "Clique no seu nome para ajustar a conta e a aparência.",
+      text: "Clique na sua conta, no canto de cima, para ajustar o perfil e a aparência.",
       points: [
         '"Perfil" e "Segurança da conta", onde se ativa a verificação em duas etapas.',
         "Modo claro ou escuro e três layouts: Workspace, Foco e Painel.",
@@ -4771,12 +4771,12 @@ en.featureTour = {
   offerText:
     "A quick tour of {{total}} steps shows where each feature is and how it works. Nothing is sent or changed, and you can leave at any time.",
   offerLater:
-    'To take it later: click your name, at the top corner, then "System tour".',
+    'To take it later: click your account, at the top corner, then "System tour".',
   notNow: "Not now",
   start: "Take the tour",
   endTitle: "You have reached the end of the tour",
   endText:
-    'To see it again, click your name, at the top corner, then "System tour". If something does not work as expected, open a ticket in Support.',
+    'To see it again, click your account, at the top corner, then "System tour". If something does not work as expected, open a ticket in Support.',
   conclude: "Done",
   repeat: "Repeat tour",
   groups: {
@@ -4901,7 +4901,7 @@ en.featureTour = {
       points: [
         '"Add WhatsApp" creates the connection; "QR CODE" shows the code to read with the phone.',
         "The status is in the list: connected, disconnected or waiting for the QR Code.",
-        'A "!" on this menu item warns that a connection is down.'
+        'In the side menu, a "!" on this item warns that a connection is down.'
       ]
     },
     queues: {
@@ -4936,12 +4936,12 @@ en.featureTour = {
       points: [
         "Click here or press Ctrl K.",
         "Type the name of a screen, a ticket or a customer and pick it from the list.",
-        "Picking a customer opens a conversation with them."
+        "Picking a customer opens the window to start a conversation with them."
       ]
     },
     account: {
       title: "Your menu",
-      text: "Click your name to adjust the account and the look.",
+      text: "Click your account, at the top corner, to adjust the profile and the look.",
       points: [
         "Profile and account security, where two-step verification is turned on.",
         "Light or dark mode and three layouts: Workspace, Focus and Panel.",
@@ -4963,12 +4963,12 @@ es.featureTour = {
   offerText:
     "Un tour rápido, de {{total}} pasos, muestra dónde está cada funcionalidad y cómo funciona. Nada se envía ni se cambia, y puedes salir cuando quieras.",
   offerLater:
-    'Para hacerlo después: haz clic en tu nombre, en la esquina de arriba, y en "Tour por el sistema".',
+    'Para hacerlo después: haz clic en tu cuenta, en la esquina de arriba, y en "Tour por el sistema".',
   notNow: "Ahora no",
   start: "Hacer el tour",
   endTitle: "Llegaste al final del tour",
   endText:
-    'Para verlo otra vez, haz clic en tu nombre, en la esquina de arriba, y en "Tour por el sistema". Si algo no funciona como esperabas, abre un ticket en Soporte.',
+    'Para verlo otra vez, haz clic en tu cuenta, en la esquina de arriba, y en "Tour por el sistema". Si algo no funciona como esperabas, abre un ticket en Soporte.',
   conclude: "Concluir",
   repeat: "Repetir tour",
   groups: {
@@ -5093,7 +5093,7 @@ es.featureTour = {
       points: [
         '"Agregar WhatsApp" crea la conexión; "CÓDIGO QR" muestra el código para leer con el celular.',
         "La situación aparece en la lista: conectado, desconectado o esperando el código QR.",
-        'Un "!" en este elemento del menú avisa que alguna conexión está caída.'
+        'En el menú lateral, un "!" en este elemento avisa que alguna conexión está caída.'
       ]
     },
     queues: {
@@ -5128,12 +5128,12 @@ es.featureTour = {
       points: [
         "Haz clic aquí o pulsa Ctrl K.",
         "Escribe el nombre de una pantalla, de una atención o de un cliente y elígelo en la lista.",
-        "Elegir un cliente abre una conversación con él."
+        "Elegir un cliente abre la ventana para iniciar la conversación con él."
       ]
     },
     account: {
       title: "Tu menú",
-      text: "Haz clic en tu nombre para ajustar la cuenta y la apariencia.",
+      text: "Haz clic en tu cuenta, en la esquina de arriba, para ajustar el perfil y la apariencia.",
       points: [
         "Perfil y seguridad de la cuenta, donde se activa la verificación en dos pasos.",
         "Modo claro u oscuro y tres diseños: Workspace, Foco y Panel.",
@@ -5141,6 +5141,38 @@ es.featureTour = {
       ]
     }
   }
+};
+
+// "Atualizar": a newer SuperChat than the one on screen was published (RF-032).
+pt.updateNotice = {
+  button: "Atualizar",
+  buttonLabel: "Há uma versão nova do SuperChat. Clique para atualizar.",
+  title: "O SuperChat foi atualizado",
+  text: "Atualize a página para usar a versão nova.",
+  kept: "O texto que você digitou na conversa com o cliente fica guardado.",
+  lost: "Termine antes o que estiver pela metade: anexos ainda não enviados, áudio em gravação, edição ou resposta de mensagem e formulários abertos não são mantidos.",
+  later: "Depois",
+  now: "Atualizar agora"
+};
+en.updateNotice = {
+  button: "Update",
+  buttonLabel: "There is a new version of SuperChat. Click to update.",
+  title: "SuperChat has been updated",
+  text: "Reload the page to use the new version.",
+  kept: "The text you typed in the conversation with the customer is kept.",
+  lost: "Finish first whatever is halfway: attachments not sent yet, an audio being recorded, a message being edited or replied to and open forms are not kept.",
+  later: "Later",
+  now: "Update now"
+};
+es.updateNotice = {
+  button: "Actualizar",
+  buttonLabel: "Hay una versión nueva de SuperChat. Haz clic para actualizar.",
+  title: "SuperChat fue actualizado",
+  text: "Actualiza la página para usar la versión nueva.",
+  kept: "El texto que escribiste en la conversación con el cliente queda guardado.",
+  lost: "Termina antes lo que esté a medias: adjuntos aún no enviados, audio en grabación, edición o respuesta de un mensaje y formularios abiertos no se conservan.",
+  later: "Después",
+  now: "Actualizar ahora"
 };
 
 export const komunickMessages = {

@@ -8,7 +8,8 @@ import {
   screen,
   waitFor
 } from "@testing-library/react";
-import { MemoryRouter, useLocation } from "react-router-dom";
+import { MemoryRouter, Router, useLocation } from "react-router-dom";
+import { createMemoryHistory } from "history";
 import FeatureTour from ".";
 import {
   FEATURE_TOUR_EVENT,
@@ -165,6 +166,121 @@ describe("the offer", () => {
     expect(screen.getByRole("dialog")).toHaveTextContent(
       `tour de ${adminSteps.length}`
     );
+  });
+});
+
+describe("answering the invitation", () => {
+  it("does not take Esc or a click outside as an answer", () => {
+    const { unmount } = renderTour();
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+    expect(answerOf(7)).toBeNull();
+    unmount();
+
+    // so it is offered again the next time the page is loaded
+    renderTour();
+    expect(screen.getByRole("dialog")).toHaveTextContent(
+      "featureTour.offerTitle"
+    );
+  });
+
+  it("closes in this tab when it is answered in another one, writing nothing", async () => {
+    renderTour();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    // the other tab stored the answer: this one only hears about it
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: featureTourKey(7),
+          newValue: JSON.stringify({ answer: "later" })
+        })
+      );
+    });
+
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    );
+    // this tab's own storage was not touched by closing
+    expect(answerOf(7)).toBeNull();
+  });
+
+  it("ignores what another tab stores for someone else, or a removal", async () => {
+    renderTour();
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent("storage", { key: featureTourKey(8), newValue: "{}" })
+      );
+      window.dispatchEvent(
+        new StorageEvent("storage", { key: featureTourKey(7), newValue: null })
+      );
+      window.dispatchEvent(
+        new StorageEvent("storage", { key: "layoutMode", newValue: "foco" })
+      );
+    });
+    // a dialog that was told to close stays in the document while it fades
+    // out: only after that time does "still there" mean "was not closed"
+    await act(() => new Promise(resolve => setTimeout(resolve, 500)));
+    expect(screen.getByRole("dialog")).toHaveTextContent(
+      "featureTour.offerTitle"
+    );
+    expect(screen.getByRole("dialog")).toBeVisible();
+  });
+
+  it("does not close a tour that is running when another tab answers", () => {
+    renderTour();
+    click("featureTour.start");
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: featureTourKey(7),
+          newValue: JSON.stringify({ answer: "later" })
+        })
+      );
+    });
+    expect(tour()).toHaveTextContent(title("tickets"));
+  });
+
+  it("counts a tour taken from the menu as the answer when the invitation was only closed", () => {
+    const { unmount } = renderTour();
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+    expect(answerOf(7)).toBeNull();
+
+    // later, "Tour pelo sistema" in the menu, to the end
+    askForTour();
+    agentSteps.forEach((step, position) =>
+      click(
+        position === agentSteps.length - 1
+          ? "featureTour.finish"
+          : "featureTour.next"
+      )
+    );
+    click("featureTour.conclude");
+    expect(answerOf(7)).toBe("done");
+    unmount();
+
+    // whoever took the tour is not invited to it again
+    renderTour();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("takes a request for the tour while the invitation is open as accepting it", () => {
+    renderTour();
+    askForTour();
+    expect(tour()).toHaveTextContent(title("tickets"));
+    click("featureTour.leave");
+    // the answer of the first time is recorded, so it is not offered again
+    expect(answerOf(7)).toBe("left");
+  });
+
+  it("ignores a request for the tour while the first tour is running", () => {
+    renderTour();
+    click("featureTour.start");
+    click("featureTour.next");
+    askForTour();
+    // same step, and the tour still counts as the answer to the invitation
+    expect(tour()).toHaveTextContent(title("ticketsList"));
+    click("featureTour.leave");
+    expect(answerOf(7)).toBe("left");
   });
 });
 
@@ -527,5 +643,141 @@ describe('"Sair do tour"', () => {
 
     click("featureTour.back");
     await waitFor(() => expect(leave.className).toBe(corner));
+  });
+});
+
+describe("what the tour leaves behind", () => {
+  it("does not fill the browser history with the pages of the tour", () => {
+    localStorage.setItem(featureTourKey(7), JSON.stringify({ answer: "done" }));
+    const history = createMemoryHistory({
+      initialEntries: ["/kanban", "/contacts?x=1"],
+      initialIndex: 1
+    });
+    render(
+      <Router history={history}>
+        <FeatureTour user={agent} />
+      </Router>
+    );
+    const before = history.length;
+
+    askForTour();
+    agentSteps.forEach((step, position) =>
+      click(
+        position === agentSteps.length - 1
+          ? "featureTour.finish"
+          : "featureTour.next"
+      )
+    );
+    click("featureTour.conclude");
+
+    expect(history.length).toBe(before);
+    expect(`${history.location.pathname}${history.location.search}`).toBe(
+      "/contacts?x=1"
+    );
+    // Back goes to where the person was before, not through the tour
+    act(() => history.goBack());
+    expect(history.location.pathname).toBe("/kanban");
+  });
+
+  it("ends where the person went when they leave the tour by the Back button", () => {
+    localStorage.setItem(featureTourKey(7), JSON.stringify({ answer: "done" }));
+    const history = createMemoryHistory({
+      initialEntries: ["/kanban", "/contacts"],
+      initialIndex: 1
+    });
+    const onActiveChange = jest.fn();
+    render(
+      <Router history={history}>
+        <FeatureTour user={agent} onActiveChange={onActiveChange} />
+      </Router>
+    );
+    askForTour();
+    click("featureTour.next");
+    expect(history.location.pathname).toBe("/tickets");
+
+    // the Back button: a move the tour did not make
+    act(() => history.goBack());
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(onActiveChange).toHaveBeenLastCalledWith(false);
+    // the person stays where the button took them, and that page of their
+    // history was not replaced by the tour
+    expect(history.location.pathname).toBe("/kanban");
+    expect(history.length).toBe(2);
+    expect(history.entries[0].pathname).toBe("/kanban");
+  });
+
+  it("keeps running through the moves it makes itself", () => {
+    localStorage.setItem(featureTourKey(7), JSON.stringify({ answer: "done" }));
+    const history = createMemoryHistory({ initialEntries: ["/contacts"] });
+    render(
+      <Router history={history}>
+        <FeatureTour user={agent} />
+      </Router>
+    );
+    askForTour();
+    for (let i = 0; i < 5; i += 1) click("featureTour.next");
+    expect(tour()).toHaveTextContent(title("contacts"));
+    expect(history.location.pathname).toBe("/contacts");
+    click("featureTour.back");
+    expect(tour()).toHaveTextContent(title("quickMessages"));
+    expect(history.location.pathname).toBe("/quick-messages");
+  });
+
+  it("keeps the script it began with when the profile changes in the middle", () => {
+    localStorage.setItem(featureTourKey(9), JSON.stringify({ answer: "done" }));
+    const { rerender } = render(
+      <MemoryRouter>
+        <FeatureTour user={admin} />
+      </MemoryRouter>
+    );
+    askForTour();
+    const users = adminSteps.findIndex(step => step.id === "users");
+    for (let i = 0; i < users; i += 1) click("featureTour.next");
+    expect(tour()).toHaveTextContent(title("users"));
+
+    // the administrator becomes a plain user while the tour is on screen
+    rerender(
+      <MemoryRouter>
+        <FeatureTour user={{ ...admin, profile: "user" }} />
+      </MemoryRouter>
+    );
+    expect(tour()).toHaveTextContent(title("users"));
+    expect(screen.getByTestId("tour-pill")).toHaveTextContent(
+      `passo ${users + 1} de ${adminSteps.length}`
+    );
+    expect(tour()).not.toHaveTextContent("featureTour.endTitle");
+  });
+});
+
+describe("the size of the window", () => {
+  const realHeight = window.innerHeight;
+  const realWidth = window.innerWidth;
+  const resizeTo = (width, height) => {
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      value: width
+    });
+    Object.defineProperty(window, "innerHeight", {
+      configurable: true,
+      value: height
+    });
+    act(() => {
+      window.dispatchEvent(new Event("resize"));
+    });
+  };
+  afterEach(() => resizeTo(realWidth, realHeight));
+
+  it("moves the card when the window changes and the target does not", async () => {
+    resizeTo(400, 800);
+    renderTour();
+    click("featureTour.start");
+    const balloon = screen.getByTestId("tour-balloon");
+    await waitFor(() => expect(balloon).toHaveAttribute("data-side", "card"));
+    expect(balloon).toHaveStyle({ top: "780px" });
+
+    // the phone is turned: the card follows the new height
+    resizeTo(800, 400);
+    await waitFor(() => expect(balloon).toHaveStyle({ top: "380px" }));
   });
 });
