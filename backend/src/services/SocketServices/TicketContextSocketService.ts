@@ -7,6 +7,7 @@ import AuthorizeMessageContextService from "../MessageServices/AuthorizeMessageC
 import { logger } from "../../utils/logger";
 import Ticket from "../../models/Ticket";
 import {
+  GeneralTriageTicket,
   isWaitingInGeneralTriage,
   loadGeneralTriageScope
 } from "../../helpers/GeneralTriage";
@@ -145,6 +146,23 @@ export async function removeTicketFromQueueLists(
     });
   } catch {
     logger.warn("Could not take a ticket out of the lists of its old queue");
+  }
+}
+
+// A ticket that was waiting for a sector and is gone (deleted) leaves the lists
+// of the general queue. `ticket` is the ticket as it was. Never throws.
+export async function removeWaitingTicketFromGeneralLists(
+  io: Server,
+  ticket: GeneralTriageTicket & { id: number; companyId: number }
+): Promise<void> {
+  if (ticket.queueId != null || !ticket.generalTriageStartedAt) return;
+  try {
+    const scope = await loadGeneralTriageScope(ticket.companyId);
+    if (scope && isWaitingInGeneralTriage(ticket, scope)) {
+      await removeTicketFromQueueLists(io, ticket, scope.queueId);
+    }
+  } catch {
+    logger.warn("Could not take a deleted ticket out of the general lists");
   }
 }
 

@@ -1,4 +1,8 @@
-import { isWaitingForSector } from "./generalTriage";
+import {
+  chipQueueId,
+  isWaitingForSector,
+  outsideSelectedQueues
+} from "./generalTriage";
 import { komunickMessages } from "../translate/languages/komunick";
 
 // A conversation whose customer has not picked a sector yet, as the server
@@ -48,4 +52,45 @@ it.each(["pt", "pt_PT", "en", "es"])("has the label in %s", language => {
   expect(
     komunickMessages[language].translations.generalTriage.waiting.trim()
   ).not.toBe("");
+});
+
+describe("the queue chips of the list", () => {
+  const attendant = { profile: "user", generalQueueId: 7 };
+  const admin = { profile: "admin", generalQueueId: 7 };
+  const ofLegal = { ...waiting, queueId: 8, generalTriageStartedAt: null };
+  const fromPhone = { ...waiting, generalTriageStartedAt: null };
+
+  it("counts a waiting conversation in the general queue for an attendant", () => {
+    expect(chipQueueId(waiting, attendant)).toBe(7);
+    expect(chipQueueId(ofLegal, attendant)).toBe(8);
+    expect(chipQueueId(fromPhone, attendant)).toBe(0);
+  });
+
+  it("hides it when the chip of the general queue is off, like the server does", () => {
+    expect(outsideSelectedQueues(waiting, [7, 8], attendant)).toBe(false);
+    expect(outsideSelectedQueues(waiting, [8], attendant)).toBe(true);
+    expect(outsideSelectedQueues(waiting, [], attendant)).toBe(true);
+  });
+
+  it("keeps the rule of every other ticket as it was", () => {
+    expect(outsideSelectedQueues(ofLegal, [8], attendant)).toBe(false);
+    expect(outsideSelectedQueues(ofLegal, [7], attendant)).toBe(true);
+    // a ticket without a sector that is not waiting has no chip to follow
+    expect(outsideSelectedQueues(fromPhone, [], attendant)).toBe(false);
+  });
+
+  it("changes nothing for an administrator", () => {
+    expect(chipQueueId(waiting, admin)).toBe(0);
+    expect(outsideSelectedQueues(waiting, [8], admin)).toBe(false);
+    expect(outsideSelectedQueues(ofLegal, [7], admin)).toBe(true);
+  });
+
+  it("shows the conversation while the general queue is not known yet", () => {
+    // the setting has not loaded (or the company has no triage)
+    const unknown = { profile: "user", generalQueueId: 0 };
+    expect(outsideSelectedQueues(waiting, [8], unknown)).toBe(false);
+    expect(outsideSelectedQueues(waiting, [8], { profile: "user" })).toBe(
+      false
+    );
+  });
 });

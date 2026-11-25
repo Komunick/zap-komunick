@@ -337,3 +337,29 @@ test("notifies a conversation that is waiting for the customer to pick a sector"
   expect(screen.queryByText("Assumida por outro")).toBeNull();
   expect(document.title).toBe("➊ - SuperChat");
 });
+
+// Nothing changes for an administrator: they receive every ticket of the
+// company, so their bell keeps following the sectors they are in.
+test("does not ring for an administrator when a conversation waits for a sector", async () => {
+  useTickets.mockReturnValue({
+    tickets: [
+      pendingTicket,
+      {
+        ...pendingTicket,
+        id: 131,
+        queueId: null,
+        generalTriageStartedAt: "2026-11-25T14:11:00.000Z",
+        contact: { id: 311, name: "Cliente sem setor" }
+      }
+    ],
+    refetch: mockRefetchTickets
+  });
+  render(
+    sectorView({ id: 7, companyId: 10, profile: "admin", queues: [{ id: 5 }] })
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Mostrar Notificações" }));
+
+  expect(await screen.findByText("Contato do Fiscal")).not.toBeNull();
+  expect(screen.queryByText("Cliente sem setor")).toBeNull();
+  expect(document.title).toBe("➊ - SuperChat");
+});

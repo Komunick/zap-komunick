@@ -127,10 +127,11 @@ const ListTicketsService = async ({
   // counts as being in the general queue for whoever belongs to that queue,
   // so it shows in "Aguardando" right away instead of after the wait. Like
   // any ticket of that queue, it hides when its chip is switched off.
-  const triageScope =
-    !viewer.isAdmin || isNotificationList
-      ? await loadMemberGeneralTriageScope(companyId, viewer.queueIds)
-      : null;
+  // Nothing changes for an administrator, the notification list included:
+  // their bell keeps following the sectors they are in.
+  const triageScope = !viewer.isAdmin
+    ? await loadMemberGeneralTriageScope(companyId, viewer.queueIds)
+    : null;
   const triageWait = triageScope ? generalTriageWaitWhere(triageScope) : null;
   const generalChipOn =
     !!triageScope &&
@@ -142,7 +143,7 @@ const ListTicketsService = async ({
     [Op.and]: andedOrs,
     ...(isNotificationList
       ? {}
-      : triageWait && generalChipOn && user.profile !== "admin"
+      : triageWait && generalChipOn
         ? {
             [Op.or]: [{ queueId: { [Op.or]: [queueIds] } }, triageWait]
           }

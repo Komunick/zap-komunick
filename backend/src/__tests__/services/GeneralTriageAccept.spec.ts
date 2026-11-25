@@ -253,3 +253,106 @@ describe("an administrator and a conversation waiting for a sector", () => {
     expect(removeTicketFromQueueLists).not.toHaveBeenCalled();
   });
 });
+
+// A close goes by who is closing: the ticket must not end up closed without a
+// sector in the hands of someone who cannot see tickets without a sector.
+describe("closing a conversation that waits for a sector", () => {
+  beforeEach(() => {
+    // every setting at its default (a closed ticket keeps its sector and its
+    // attendant), and closing without a farewell message is allowed
+    (GetCompanySetting as jest.Mock).mockImplementation(
+      async (_company, key, fallback) =>
+        key === "allowSilentlyClose" ? "enabled" : (fallback ?? "disabled")
+    );
+  });
+
+  const close = () =>
+    UpdateTicketService({
+      ticketId: 301,
+      reqUserId: 101,
+      ticketData: { status: "closed", justClose: true, userId: 101 }
+    });
+
+  it("takes it into the general queue first when an attendant of that queue closes it", async () => {
+    actingAs("user", [GENERAL]);
+
+    await close();
+
+    expect(assignGeneralTriageDestination).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 301 }),
+      { id: GENERAL, chatbot: false, isGeneral: true }
+    );
+    expect(row).toMatchObject({ queueId: GENERAL, status: "closed" });
+  });
+
+  it("goes by the requester even when the request names nobody", async () => {
+    actingAs("user", [GENERAL]);
+
+    await UpdateTicketService({
+      ticketId: 301,
+      reqUserId: 101,
+      ticketData: { status: "closed", justClose: true }
+    });
+
+    expect(loadTicketViewer).toHaveBeenCalledWith({
+      userId: 101,
+      companyId: 10
+    });
+    expect(row).toMatchObject({ queueId: GENERAL, status: "closed" });
+  });
+
+  it("leaves an administrator closing it as before", async () => {
+    actingAs("admin", []);
+
+    await close();
+
+    expect(assignGeneralTriageDestination).not.toHaveBeenCalled();
+    expect(row).toMatchObject({ queueId: null, status: "closed" });
+    expect(removeTicketFromQueueLists).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ id: 301 }),
+      GENERAL
+    );
+  });
+});
+
+// The customer may pick a sector between the access check of the request and
+// the update: the ticket read by the update is the one that counts.
+describe("an accept that loses the race with the customer's choice", () => {
+  it("is refused when the ticket is now of a sector the attendant is not in", async () => {
+    actingAs("user", [GENERAL]);
+    // by the time the update reads the ticket, it is already in sector 9
+    row.queueId = 9;
+    row.generalTriageStartedAt = null;
+    row.chatbot = false;
+
+    await expect(accept()).rejects.toMatchObject({
+      message: "ERR_NO_PERMISSION",
+      statusCode: 403
+    });
+    expect(assignGeneralTriageDestination).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+    expect(row).toMatchObject({ queueId: 9, userId: null, status: "pending" });
+  });
+
+  it("goes through when the ticket is now of a sector the attendant is in", async () => {
+    actingAs("user", [GENERAL, 9]);
+    row.queueId = 9;
+    row.generalTriageStartedAt = null;
+    row.chatbot = false;
+
+    await accept();
+
+    expect(row).toMatchObject({ queueId: 9, userId: 101, status: "open" });
+  });
+
+  it("does not question an administrator, nor an accept that names its queue", async () => {
+    actingAs("admin", []);
+    row.queueId = 9;
+    row.generalTriageStartedAt = null;
+    await accept();
+    expect(row).toMatchObject({ queueId: 9, userId: 101, status: "open" });
+    // an administrator is never looked up as a member of anything
+    expect(loadTicketViewer).not.toHaveBeenCalled();
+  });
+});

@@ -931,7 +931,11 @@ sem fila só aparece para administrador, então nesse intervalo a equipe não vi
 - Enquanto ninguém aceita, o menu continua valendo: se o cliente escolher um setor, a conversa vai para ele e sai da
   lista de quem não é desse setor.
 - Aceitar leva a conversa para a fila de atendimento geral, do mesmo jeito que o fim da espera levaria, e a deixa com
-  quem aceitou.
+  quem aceitou. Finalizar sem aceitar faz o mesmo antes de fechar, para a conversa não terminar sem setor nas mãos de
+  quem não enxerga conversas sem setor.
+- Se o cliente escolher um setor no instante em que alguém aceita, vale o setor do cliente: o aceite é recusado para
+  quem não é desse setor.
+- As anotações feitas na conversa em espera aparecem para quem pode abri-la.
 - Quem não é da fila de atendimento geral continua sem ver nem poder aceitar essas conversas.
 - Nada muda para as outras conversas sem fila (as iniciadas pelo celular e as anteriores à triagem): continuam só com
   os administradores. Para o administrador nada muda.

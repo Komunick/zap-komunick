@@ -2,6 +2,7 @@ import { Server } from "socket.io";
 import {
   emitTicketContext,
   removeTicketFromQueueLists,
+  removeWaitingTicketFromGeneralLists,
   withGeneralTriageRooms
 } from "../../services/SocketServices/TicketContextSocketService";
 import AuthorizeTicketContextService from "../../services/TicketServices/AuthorizeTicketContextService";
@@ -179,6 +180,58 @@ describe("removeTicketFromQueueLists", () => {
     } as unknown as Server;
     await expect(
       removeTicketFromQueueLists(broken, { id: 301, companyId: 10 }, 7)
+    ).resolves.toBeUndefined();
+  });
+});
+
+describe("removeWaitingTicketFromGeneralLists", () => {
+  const deleted = {
+    id: 301,
+    companyId: 10,
+    status: "pending",
+    queueId: null,
+    generalTriageStartedAt: new Date("2026-11-25T14:11:00Z")
+  };
+
+  it("takes a deleted waiting conversation out of the lists of the general queue", async () => {
+    const member = socketOf(10);
+    const { io, inRooms } = ioWith([member]);
+
+    await removeWaitingTicketFromGeneralLists(io, deleted);
+
+    expect(isWaitingInGeneralTriage).toHaveBeenCalledWith(deleted, {
+      queueId: 7,
+      whatsappIds: [2]
+    });
+    expect(inRooms).toHaveBeenCalledWith([
+      "queue-7-notification",
+      "queue-7-pending"
+    ]);
+    expect(member.emit).toHaveBeenCalledWith("company-10-ticket", {
+      action: "removeFromList",
+      ticketId: 301
+    });
+  });
+
+  it("does nothing, and looks nothing up, for a ticket that was not waiting", async () => {
+    const { io, inRooms } = ioWith([]);
+    await removeWaitingTicketFromGeneralLists(io, { ...deleted, queueId: 8 });
+    await removeWaitingTicketFromGeneralLists(io, {
+      ...deleted,
+      generalTriageStartedAt: null
+    });
+    expect(loadGeneralTriageScope).not.toHaveBeenCalled();
+
+    (isWaitingInGeneralTriage as jest.Mock).mockReturnValue(false);
+    await removeWaitingTicketFromGeneralLists(io, deleted);
+    expect(inRooms).not.toHaveBeenCalled();
+  });
+
+  it("never turns a delete that worked into an error", async () => {
+    (loadGeneralTriageScope as jest.Mock).mockRejectedValue(new Error("db"));
+    const { io } = ioWith([]);
+    await expect(
+      removeWaitingTicketFromGeneralLists(io, deleted)
     ).resolves.toBeUndefined();
   });
 });

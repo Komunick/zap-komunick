@@ -30,7 +30,10 @@ export const safeSettingsKeys = {
   slaMinutes: "0",
   closeReasonRequired: "disabled",
   [FORCE_MESSAGE_SIGNATURE]: "disabled",
-  allowSilentlyClose: "enabled"
+  allowSilentlyClose: "enabled",
+  // Zap Komunick (RF-033): which queue is the general one, so the ticket
+  // list can apply its queue filter to the conversations waiting for a sector.
+  generalTriageQueueId: ""
 };
 
 export const GetSettingService = async ({

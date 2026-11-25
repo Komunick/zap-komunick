@@ -10,3 +10,20 @@ export const isWaitingForSector = ticket =>
   ticket.status === "pending" &&
   ticket.userId == null &&
   !ticket.isGroup;
+
+// The queue a ticket counts in for the queue chips of the list: its own, or
+// the general one while it waits for the customer to pick a sector. An
+// attendant only receives such a ticket as a member of the general queue; an
+// administrator receives every ticket, and for them a ticket without a sector
+// keeps being shown whatever the chips say, as before.
+export const chipQueueId = (ticket, { profile, generalQueueId }) =>
+  ticket?.queueId ||
+  (profile === "user" && isWaitingForSector(ticket)
+    ? Number(generalQueueId) || 0
+    : 0);
+
+// True when the chips that are switched on leave the ticket out.
+export const outsideSelectedQueues = (ticket, selectedQueueIds, context) => {
+  const id = chipQueueId(ticket, context);
+  return !!id && (selectedQueueIds || []).indexOf(id) === -1;
+};

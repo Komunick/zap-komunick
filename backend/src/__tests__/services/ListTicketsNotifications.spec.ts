@@ -196,7 +196,7 @@ describe("conversations waiting for a sector", () => {
     expect(where).toContain("\"status\" != 'closed'");
   });
 
-  it("change nothing in the list of an administrator", async () => {
+  it("change nothing for an administrator, in the list and in the bell", async () => {
     viewer("admin", [GENERAL]);
     member();
     await ListTicketsService({
@@ -204,12 +204,22 @@ describe("conversations waiting for a sector", () => {
       queueIds: [GENERAL],
       status: "pending"
     });
-    const where = listWhere();
-
     // an administrator already sees every ticket without a sector
+    expect(listWhere()).toContain(
+      `"queueId" IN (${GENERAL}) OR "queueId" IS NULL`
+    );
+    expect(listWhere()).not.toContain("generalTriageStartedAt");
+
+    // and their bell keeps following the sectors they are in
+    await ListTicketsService({
+      ...baseRequest,
+      withUnreadMessages: "true",
+      notClosed: true
+    });
+    expect(listWhere()).toContain(`"queueId" IN (${GENERAL})`);
+    expect(listWhere()).not.toContain('"queueId" IS NULL');
+    expect(listWhere()).not.toContain("generalTriageStartedAt");
     expect(loadMemberGeneralTriageScope).not.toHaveBeenCalled();
-    expect(where).toContain(`"queueId" IN (${GENERAL}) OR "queueId" IS NULL`);
-    expect(where).not.toContain("generalTriageStartedAt");
   });
 
   it("never leave the company of the viewer", async () => {

@@ -72,10 +72,14 @@ const NotificationsPopOver = props => {
       ticket &&
       ticket.companyId === companyId &&
       ticket.status !== "closed" &&
-      (queueIds.has(ticket.queueId) || isWaitingForSector(ticket)) &&
+      // Zap Komunick (RF-033): the server only sends a conversation waiting
+      // for a sector to an attendant of the general queue. An administrator
+      // gets every ticket, so their bell keeps following their own sectors.
+      (queueIds.has(ticket.queueId) ||
+        (user?.profile !== "admin" && isWaitingForSector(ticket))) &&
       (ticket.userId === userId ||
         (ticket.userId == null && ticket.status === "pending")),
-    [companyId, queueIds, userId]
+    [companyId, queueIds, userId, user?.profile]
   );
 
   const desktopNotifications = useRef(new Map());
