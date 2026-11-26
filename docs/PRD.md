@@ -567,9 +567,11 @@ resolvida volta a escrever, o sistema abre um atendimento novo (a reabertura aut
 mostrava as mensagens do atendimento aberto.
 
 - A conversa mostra o histórico de todos os atendimentos do cliente, do mais antigo ao atual, com uma divisória
-  "Atendimento anterior #N" e "Atendimento atual #N".
-- Com a visibilidade por fila, o histórico de um atendimento anterior só aparece se a equipe tiver acesso
-  à fila desse atendimento. A regra vale para mensagens antigas sem fila, anexos e citações. O atendimento
+  "Atendimento anterior #N" e "Atendimento atual #N" (e "Atendimento em andamento #N" para outro atendimento do
+  cliente que ainda não foi resolvido, RF-027).
+- Com a visibilidade por fila, cada mensagem dos outros atendimentos do cliente pertence ao setor em que foi
+  trocada (o setor gravado na mensagem), esteja o atendimento onde estiver hoje; mensagem sem setor gravado segue o
+  setor atual do atendimento dela. A regra vale para anexos, citações e respostas (detalhe em RF-027). O atendimento
   atual mantém o contexto que a equipe recebe em uma transferência.
 - Na janela de transferência, um campo "Contexto para o setor" e a lista das últimas mensagens do atendimento para
   destacar. A nota aparece na conversa num cartão próprio ("Nota de transferência", de onde para onde, quem
@@ -882,6 +884,25 @@ não é dessa fila os atendimentos e as mensagens de outras filas.
   atendente.
 - O SuperChat só tem as mensagens que passaram por ele com o canal conectado. Conversas feitas direto no celular antes
   do pareamento, ou com o canal fora, não estão no banco: a sincronização do histórico do WhatsApp continua desligada.
+- **Transferir não apaga a conversa de quem transferiu (26/11/2026, JB Fraga).** Relato: "transferi o cliente para o
+  outro setor, quando abri a conversa com ele novamente, a conversa de hoje não consta lá". Com "Só dos setores do
+  atendente", o histórico era cortado pelo setor em que o atendimento está **agora**: ao transferir, o setor de origem
+  perdia até as mensagens que ele mesmo trocou. A regra passa a ser pelo setor gravado em cada mensagem:
+  - quem é do setor em que a mensagem foi trocada continua lendo essa mensagem (e seus anexos) no histórico do
+    cliente, ao abrir qualquer outro atendimento dele, mesmo depois de o atendimento ir para outro setor;
+  - o que o outro setor trocar depois da transferência é do outro setor e não aparece;
+  - mensagem sem setor gravado (menu do robô, linhas antigas) continua seguindo o setor atual do atendimento;
+  - o atendimento transferido em si continua fechado para quem não é do setor dele: não dá para abri-lo nem escrever
+    por ele. O que volta, dentro do histórico, é ler as mensagens, abrir os anexos e citar uma delas numa resposta
+    enviada pelo atendimento que a pessoa tem aberto. Reagir, editar, apagar, encaminhar e ver o histórico de edição
+    continuam dependendo do atendimento da mensagem e são recusados; por isso o menu dessas mensagens mostra só
+    **Responder**, com o aviso "Atendimento em outro setor: dá para ler e responder citando";
+  - a nota de transferência ("Contexto para o setor") é do setor que recebe o atendimento: fica com ele, e quem
+    transferiu não a lê de volta no histórico;
+  - no histórico, um atendimento do cliente que ainda não foi resolvido aparece como "Atendimento em andamento #N"
+    em vez de "Atendimento anterior". A divisória de um atendimento que saiu do setor da pessoa, aberto ou já
+    resolvido, mostra a fila, o canal e o atendente atuais dele, como em RF-026 (a regra por setor esconde mensagens,
+    não esses nomes).
 
 **Cenário de sucesso:**
 

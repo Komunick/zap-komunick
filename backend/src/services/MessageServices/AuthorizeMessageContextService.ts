@@ -1,5 +1,6 @@
 import AppError from "../../errors/AppError";
 import { GetCompanySetting } from "../../helpers/CheckSettings";
+import { seesHistoryMessage } from "../../helpers/HistoryVisibility";
 import Message from "../../models/Message";
 import Ticket from "../../models/Ticket";
 import AuthorizeTicketContextService, {
@@ -36,12 +37,15 @@ const AuthorizeMessageContextService = async (
       attributes: ["id", "queueId"]
     });
     if (!sourceTicket) throw new AppError("ERR_MESSAGE_NOT_FOUND", 404);
+    // Same rule as the history of the conversation: the sector written on
+    // the message, or the one of its ticket when it has none.
     if (
       !viewer.isAdmin &&
-      (sourceTicket.queueId === null ||
-        !viewer.queueIds.includes(sourceTicket.queueId) ||
-        (message.queueId !== null &&
-          !viewer.queueIds.includes(message.queueId))) &&
+      !seesHistoryMessage(
+        viewer.queueIds,
+        message.queueId,
+        sourceTicket.queueId
+      ) &&
       (await GetCompanySetting(
         actor.companyId,
         "messageVisibility",

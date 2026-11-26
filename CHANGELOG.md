@@ -78,7 +78,8 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   Não entram as opções "Espiar" e "Zoom dos ícones", que a lista de atendimentos do SuperChat não usa, nem os testes
   do Ticketz da tela de Conexões em cartões.
 - A opção "Visibilidade da mensagem" passa a se chamar **Histórico do cliente para atendentes**, com "Só dos setores
-  do atendente" e "Completo, de todos os setores". O comportamento de cada valor não mudou.
+  do atendente" e "Completo, de todos os setores". A troca de nome não mudou o comportamento; o de "Só dos setores do
+  atendente" mudou depois, em 26/11 (ver Corrigido).
 - O login carrega só o código de que precisa. As telas internas são baixadas conforme o uso.
 - A consulta de um atendimento começa ao abrir a conversa, sem a espera fixa de 500 ms.
 - A abertura do SuperChat ganha fundo mais suave e uma barra de carregamento discreta. A assinatura oficial
@@ -148,6 +149,13 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   usa um nome encurtado e sem caracteres que quebram caminho ou link; o cliente recebe o nome original. Vários
   arquivos enviados juntos não se sobrescrevem mais.
 - O menu lateral do desktop se recolhe quando o mouse sai da barra.
+- Depois de transferir um cliente para outro setor, quem transferiu abria a conversa do cliente de novo e a conversa
+  do dia não estava mais lá. Com o histórico "Só dos setores do atendente", as mensagens seguiam o setor atual do
+  atendimento; agora cada mensagem segue o setor em que foi trocada. Quem atendeu continua lendo a parte que o seu
+  setor conversou (com os anexos) e pode citar essas mensagens numa resposta; o que o outro setor trocar depois
+  continua só dele, e o atendimento transferido continua fechado para quem não é do setor. No histórico, o atendimento
+  que ainda está aberto aparece como "Atendimento em andamento", e o menu dessas mensagens oferece só **Responder**
+  (reagir, editar, apagar e encaminhar dependem do atendimento da mensagem e eram recusados) (RF-017, RF-027).
 
 ### Segurança
 
@@ -158,8 +166,10 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   `;`, `&` ou `$()` não executa mais comandos no servidor. Os uploads guardam só extensões alfanuméricas simples.
 - Entrar em outra empresa (impersonação) exige conta Super já na rota, antes das checagens do serviço.
 
-- Na visibilidade por fila, o histórico de outro atendimento exige acesso à fila desse atendimento, inclusive
-  para mensagens antigas sem fila, anexos e citações. Criar ou excluir usuários exige o perfil administrativo atual.
+- Na visibilidade por fila, uma mensagem de outro atendimento do cliente só é lida por quem é do setor gravado nela;
+  mensagem antiga sem setor exige acesso à fila atual do atendimento dela. Anexos e citações seguem a mesma regra
+  (ajustada em 26/11: antes exigia também acesso à fila atual do atendimento, o que tirava do setor de origem a
+  conversa que ele mesmo teve). Criar ou excluir usuários exige o perfil administrativo atual.
 
 - A geração de um novo QR Code fica restrita a administradores da empresa dona do canal desconectado.
 

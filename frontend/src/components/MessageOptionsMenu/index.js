@@ -24,7 +24,8 @@ const MessageOptionsMenu = ({
   data,
   menuOpen,
   handleClose,
-  anchorEl
+  anchorEl,
+  replyOnly = false
 }) => {
   const classes = useStyles();
   const { setReplyingMessage } = useContext(ReplyMessageContext);
@@ -147,32 +148,44 @@ const MessageOptionsMenu = ({
             {i18n.t("messageOptionsMenu.importedReadOnly")}
           </MenuItem>
         )}
+        {/* Zap Komunick: a message of a ticket that is now in another sector
+            can be read and quoted in a reply; the other actions are decided by
+            its own ticket and the server refuses them (RF-027) */}
+        {replyOnly && !isImported && (
+          <MenuItem disabled>
+            {i18n.t("messageOptionsMenu.otherSectorReplyOnly")}
+          </MenuItem>
+        )}
         <div hidden={isImported}>
-          <div className={classes.flexContainer}>
-            {mostUsedEmojis.map((emoji, index) => (
-              <div
-                className={classes.emojiButton}
-                onClick={() => handleReact(emoji)}
-                key={index}
-              >
-                <span style={{ fontSize: "1rem" }}>{emoji}</span>
+          {!replyOnly && (
+            <div className={classes.flexContainer}>
+              {mostUsedEmojis.map((emoji, index) => (
+                <div
+                  className={classes.emojiButton}
+                  onClick={() => handleReact(emoji)}
+                  key={index}
+                >
+                  <span style={{ fontSize: "1rem" }}>{emoji}</span>
+                </div>
+              ))}
+              <div className={classes.emojiButton} onClick={openEmoji}>
+                <span style={{ fontSize: "1rem" }}>+</span>
               </div>
-            ))}
-            <div className={classes.emojiButton} onClick={openEmoji}>
-              <span style={{ fontSize: "1rem" }}>+</span>
             </div>
-          </div>
-          {message.fromMe && [
-            <MenuItem key="delete" onClick={handleOpenConfirmationModal}>
-              {i18n.t("messageOptionsMenu.delete")}
-            </MenuItem>,
-            !isSticker && (
-              <MenuItem key="edit" onClick={handleEditMessage}>
-                {i18n.t("messageOptionsMenu.edit")}
-              </MenuItem>
-            )
-          ]}
-          {!isSticker &&
+          )}
+          {!replyOnly &&
+            message.fromMe && [
+              <MenuItem key="delete" onClick={handleOpenConfirmationModal}>
+                {i18n.t("messageOptionsMenu.delete")}
+              </MenuItem>,
+              !isSticker && (
+                <MenuItem key="edit" onClick={handleEditMessage}>
+                  {i18n.t("messageOptionsMenu.edit")}
+                </MenuItem>
+              )
+            ]}
+          {!replyOnly &&
+            !isSticker &&
             (message.isEdited || message.oldMessages?.length > 0) && (
               <MenuItem key="history" onClick={handleOpenMessageHistoryModal}>
                 {i18n.t("messageOptionsMenu.history")}
@@ -181,9 +194,11 @@ const MessageOptionsMenu = ({
           <MenuItem onClick={handleReplyMessage}>
             {i18n.t("messageOptionsMenu.reply")}
           </MenuItem>
-          <MenuItem key="forward" onClick={handleOpenForwardModal}>
-            {i18n.t("messageOptionsMenu.forward")}
-          </MenuItem>
+          {!replyOnly && (
+            <MenuItem key="forward" onClick={handleOpenForwardModal}>
+              {i18n.t("messageOptionsMenu.forward")}
+            </MenuItem>
+          )}
         </div>
       </Menu>
     </>
@@ -194,7 +209,8 @@ MessageOptionsMenu.propTypes = {
   message: PropTypes.object,
   menuOpen: PropTypes.bool.isRequired,
   handleClose: PropTypes.func.isRequired,
-  anchorEl: PropTypes.object
+  anchorEl: PropTypes.object,
+  replyOnly: PropTypes.bool
 };
 
 export default MessageOptionsMenu;

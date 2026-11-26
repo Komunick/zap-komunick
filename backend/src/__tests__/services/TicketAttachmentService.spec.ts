@@ -216,6 +216,10 @@ describe("authorized attachment history and descriptor lifecycle", () => {
     (Message.findAll as jest.Mock).mockImplementation(async options =>
       ormRows(options)
     );
+    // counted from the fixture with the predicate the service really sends
+    (Message.count as jest.Mock).mockImplementation(
+      async ({ where }) => rows.filter(row => matches(row, where)).length
+    );
     (openAttachmentFile as jest.Mock).mockResolvedValue({
       handle: { close },
       size: 50,
@@ -259,15 +263,20 @@ describe("authorized attachment history and descriptor lifecycle", () => {
     expect(options.logging).toBe(false);
     expect(close).toHaveBeenCalledTimes(1);
   });
-  it("preserves transferred context and checks both ticket and message queue for other tickets", async () => {
+  it("preserves transferred context and reads other tickets by the sector written on each message", async () => {
     rows = [
       message("today", 301, { queueId: 402 }),
       message("old-allowed", 300, { queueId: 401 }),
       message("old-null", 300, { queueId: null }),
       message("old-denied", 300, { queueId: 402 }),
-      message("other-queue-null", 303, { queueId: null }),
-      message("other-queue-old-match", 303),
-      message("unassigned-ticket", 304),
+      // ticket 303 is now in another sector: what this sector exchanged there
+      // before the transfer stays readable, the rest of it does not
+      message("moved-own-sector", 303),
+      message("moved-other-sector", 303, { queueId: 402 }),
+      message("moved-null", 303, { queueId: null }),
+      // the same for a ticket that went back to no sector at all
+      message("unassigned-own-sector", 304),
+      message("unassigned-null", 304, { queueId: null }),
       message("other-client", 302),
       message("other-office", 501, { companyId: 20 }),
       message("deleted", 301, { isDeleted: true }),
@@ -276,9 +285,11 @@ describe("authorized attachment history and descriptor lifecycle", () => {
       message("text", 301, { mediaUrl: null })
     ];
     expect((await list()).items.map(item => item.messageId).sort()).toEqual([
+      "moved-own-sector",
       "old-allowed",
       "old-null",
-      "today"
+      "today",
+      "unassigned-own-sector"
     ]);
     await expect(detail("300", "old-denied")).rejects.toMatchObject({
       message: "ERR_NO_PERMISSION",
@@ -286,9 +297,9 @@ describe("authorized attachment history and descriptor lifecycle", () => {
     });
     await Promise.all(
       [
-        ["303", "other-queue-null"],
-        ["303", "other-queue-old-match"],
-        ["304", "unassigned-ticket"]
+        ["303", "moved-other-sector"],
+        ["303", "moved-null"],
+        ["304", "unassigned-null"]
       ].map(([source, id]) =>
         expect(detail(source, id)).rejects.toMatchObject({
           message: "ERR_NO_PERMISSION",
@@ -296,31 +307,169 @@ describe("authorized attachment history and descriptor lifecycle", () => {
         })
       )
     );
+    // the list and the file opened by id agree
+    await Promise.all(
+      [
+        ["303", "moved-own-sector"],
+        ["304", "unassigned-own-sector"],
+        ["300", "old-null"]
+      ].map(async ([source, id]) =>
+        expect((await detail(source, id)).sourceTicketId).toBe(Number(source))
+      )
+    );
+    // an attendant of the other sector reads the other half, and only it
+    queues = [402];
+    tickets.find(ticket => ticket.id === 301).queueId = 402;
+    expect((await list()).items.map(item => item.messageId).sort()).toEqual([
+      "moved-null",
+      "moved-other-sector",
+      "old-denied",
+      "today"
+    ]);
+    await expect(detail("303", "moved-own-sector")).rejects.toMatchObject({
+      message: "ERR_NO_PERMISSION",
+      statusCode: 403
+    });
+    queues = [401];
+    tickets.find(ticket => ticket.id === 301).queueId = 401;
     visibility = "ticket";
     expect((await list()).items.map(item => item.messageId).sort()).toEqual([
+      "moved-null",
+      "moved-other-sector",
+      "moved-own-sector",
       "old-allowed",
       "old-denied",
       "old-null",
-      "other-queue-null",
-      "other-queue-old-match",
       "today",
-      "unassigned-ticket"
+      "unassigned-null",
+      "unassigned-own-sector"
     ]);
+  });
+  // Reported on 26/11/2026: the attendant transfers the client to another
+  // sector, opens the client again and today's conversation is not there.
+  it("keeps the part of a transferred conversation its sector exchanged, in the history of the client", async () => {
+    rows = [
+      message("last-week", 300, { createdAt: "2026-10-20T12:00:00.000Z" }),
+      message("menu-of-the-robot", 303, {
+        queueId: null,
+        createdAt: "2026-10-27T11:00:00.000Z"
+      }),
+      message("asked-here", 303, {
+        createdAt: "2026-10-27T11:01:00.000Z",
+        quotedMsgId: "menu-of-the-robot"
+      }),
+      message("answered-here", 303, {
+        createdAt: "2026-10-27T11:02:00.000Z",
+        quotedMsgId: "asked-here"
+      }),
+      message("after-the-transfer", 303, {
+        queueId: 402,
+        createdAt: "2026-10-27T11:03:00.000Z",
+        quotedMsgId: "answered-here"
+      }),
+      message("reply-in-the-other-sector", 303, {
+        queueId: 402,
+        createdAt: "2026-10-27T11:04:00.000Z",
+        quotedMsgId: "asked-here"
+      }),
+      // exchanged in another sector on another ticket that is in this one:
+      // hidden (only the ticket that is open is read whole)
+      message("other-sector-on-own-ticket", 301, {
+        queueId: 402,
+        createdAt: "2026-10-20T12:01:00.000Z"
+      }),
+      // exchanged in this sector on a ticket that has no sector now: read
+      message("own-sector-on-unassigned", 304, {
+        createdAt: "2026-10-21T12:00:00.000Z"
+      })
+    ];
+    const listHistory = (nextId?: string) =>
+      ListMessagesService({ ...actor, ticketId: "300", nextId });
+    const history = await listHistory();
+    // oldest first, with what was exchanged in this sector on the ticket that
+    // is now in another one
+    expect(history.messages.map(row => row.id)).toEqual([
+      "last-week",
+      "own-sector-on-unassigned",
+      "asked-here",
+      "answered-here"
+    ]);
+    // 8 messages of the client, 4 of them here
+    expect(history.hiddenHistory).toBe(4);
+    // she may act on the ticket that is open; the two that left her sector
+    // are only read
+    expect(
+      history.historyTickets
+        .map(item => [item.id, item.canOpen])
+        .sort(([a], [b]) => Number(a) - Number(b))
+    ).toEqual([
+      [300, true],
+      [303, false],
+      [304, false]
+    ]);
+    const asked = history.messages.find(row => row.id === "asked-here");
+    // the quote of a message without a sector follows its ticket: hidden
+    expect(asked.quotedMsg).toBeNull();
+    // of the two replies, only the one of this sector
+    expect(asked.replies.map((reply: { id: string }) => reply.id)).toEqual([
+      "answered-here"
+    ]);
+    expect(
+      history.messages.find(row => row.id === "answered-here").quotedMsg.id
+    ).toBe("asked-here");
+    // the cursor follows the same rule
+    await expect(listHistory("answered-here")).resolves.toMatchObject({
+      messages: [
+        { id: "last-week" },
+        { id: "own-sector-on-unassigned" },
+        { id: "asked-here" }
+      ]
+    });
+    await expect(listHistory("after-the-transfer")).rejects.toMatchObject({
+      message: "ERR_MESSAGE_NOT_FOUND",
+      statusCode: 404
+    });
+
+    // the ticket itself stays closed to who is not of its sector
+    await expect(
+      ListMessagesService({ ...actor, ticketId: "303" })
+    ).rejects.toMatchObject({ message: "ERR_NO_PERMISSION" });
+
+    // an administrator may act on every ticket of the client
+    profile = "admin";
+    expect(
+      (await listHistory()).historyTickets.every(item => item.canOpen)
+    ).toBe(true);
+  });
+  it("opens the file of a transferred ticket that its sector exchanged, and only that one", async () => {
+    rows = [
+      message("moved-own-sector", 303),
+      message("moved-other-sector", 303, { queueId: 402 })
+    ];
+    const file = await openTicketAttachment(
+      "301",
+      actor,
+      "303",
+      "moved-own-sector",
+      {}
+    );
+    expect(file.size).toBe(50);
+    await file.handle.close();
+    await expect(
+      openTicketAttachment("301", actor, "303", "moved-other-sector", {})
+    ).rejects.toMatchObject({ message: "ERR_NO_PERMISSION", statusCode: 403 });
   });
   it("keeps foreign same-contact tickets out of message history, cursors, quotes and replies", async () => {
     rows = [
       message("current", 301, { queueId: 402, quotedMsgId: "hidden-quote" }),
       message("allowed", 300, { queueId: null }),
       message("hidden-quote", 303, { queueId: null }),
-      message("hidden-reply", 303, { quotedMsgId: "current" }),
-      message("hidden-unassigned", 304)
+      message("hidden-reply", 303, { queueId: 402, quotedMsgId: "current" }),
+      message("hidden-unassigned", 304, { queueId: null })
     ];
     const listHistory = (nextId?: string) =>
       ListMessagesService({ ...actor, ticketId: "301", nextId });
     // Zap Komunick (RF-027): 5 messages of the client, 2 visible here
-    (Message.count as jest.Mock)
-      .mockResolvedValueOnce(5)
-      .mockResolvedValueOnce(2);
     const history = await listHistory();
     expect(history.messages.map(row => row.id).sort()).toEqual([
       "allowed",

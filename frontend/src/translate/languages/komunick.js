@@ -484,6 +484,7 @@ const pt = {
   history: {
     previousTicket: "Atendimento anterior #{{id}}",
     currentTicket: "Atendimento atual #{{id}}",
+    ongoingTicket: "Atendimento em andamento #{{id}}",
     transferNote: "Nota de transferência",
     transferFromTo: "{{from}} → {{to}}",
     internalOnly: "visível só para a equipe",
@@ -600,7 +601,9 @@ const pt = {
     }
   },
   messageOptionsMenu: {
-    importedReadOnly: "Histórico do ZapContábil: só para consulta"
+    importedReadOnly: "Histórico do ZapContábil: só para consulta",
+    otherSectorReplyOnly:
+      "Atendimento em outro setor: dá para ler e responder citando"
   },
   messagesInput: {
     placeholderPaused: "Atendimento pausado. Clique em Retomar para responder.",
@@ -1201,6 +1204,7 @@ const en = {
   history: {
     previousTicket: "Previous ticket #{{id}}",
     currentTicket: "Current ticket #{{id}}",
+    ongoingTicket: "Ticket in progress #{{id}}",
     transferNote: "Transfer note",
     transferFromTo: "{{from}} → {{to}}",
     internalOnly: "visible to the team only",
@@ -1317,7 +1321,9 @@ const en = {
     }
   },
   messageOptionsMenu: {
-    importedReadOnly: "ZapContábil history: read only"
+    importedReadOnly: "ZapContábil history: read only",
+    otherSectorReplyOnly:
+      "Ticket in another sector: you can read it and quote it in a reply"
   },
   messagesInput: {
     placeholderPaused: "Ticket paused. Click Resume to reply.",
@@ -1921,6 +1927,7 @@ const es = {
   history: {
     previousTicket: "Atención anterior #{{id}}",
     currentTicket: "Atención actual #{{id}}",
+    ongoingTicket: "Atención en curso #{{id}}",
     transferNote: "Nota de transferencia",
     transferFromTo: "{{from}} → {{to}}",
     internalOnly: "visible solo para el equipo",
@@ -2038,7 +2045,9 @@ const es = {
     }
   },
   messageOptionsMenu: {
-    importedReadOnly: "Historial de ZapContábil: solo consulta"
+    importedReadOnly: "Historial de ZapContábil: solo consulta",
+    otherSectorReplyOnly:
+      "Atención en otro sector: se puede leer y responder citando"
   },
   messagesInput: {
     placeholderPaused: "Atención pausada. Haga clic en Retomar para responder.",

@@ -45,7 +45,10 @@ const include = (alias: string) =>
 
 beforeEach(() => {
   jest.clearAllMocks();
-  (Ticket.findAll as jest.Mock).mockResolvedValue([{ id: 301 }, { id: 200 }]);
+  (Ticket.findAll as jest.Mock).mockResolvedValue([
+    { id: 301, queueId: 20 },
+    { id: 200, queueId: 99 }
+  ]);
   findAll.mockResolvedValue([]);
 });
 
@@ -85,5 +88,19 @@ describe.each([
       ])
     );
     expect(mentions(include("replies").where, "queueId")).toBe(!isAdmin);
+    // the sector rule: the open ticket, the sector written on the message,
+    // or no sector on a ticket that is in the sector of the attendant now
+    const sector = {
+      [Op.or]: [
+        { ticketId: 301 },
+        { queueId: { [Op.in]: [20] } },
+        { queueId: null, ticketId: { [Op.in]: [301] } }
+      ]
+    };
+    [lastQuery().where[Op.and], include("quotedMsg").where[Op.and], fence]
+      .map(conditions =>
+        conditions.filter(item => Op.or in item && !("mediaType" in item))
+      )
+      .forEach(found => expect(found).toEqual(isAdmin ? [] : [sector]));
   });
 });
