@@ -30,8 +30,7 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 - Quando o cliente já tem atendimento em andamento, o aviso diz com quem está, em que fila, por qual canal e desde
   quando. Ao iniciar conversa, a janela oferece **Abrir atendimento** e **Assumir** ou **Aceitar**, conforme as
   permissões de cada um (RF-026).
-- A conversa avisa quantas mensagens anteriores do cliente ficaram escondidas pela regra de setor e quem pode liberar.
-  O separador de cada atendimento anterior mostra data, fila, canal (e se está desconectado) e atendente (RF-027).
+- O separador de cada atendimento anterior mostra data, fila, canal (e se está desconectado) e atendente (RF-027).
 - A empresa pode exigir o nome do atendente nas mensagens manuais de texto do WhatsApp. A configuração
   prevalece sobre a preferência de assinatura do navegador e mantém o acesso por setor.
 - Na tela de atendimento, um botão no cabeçalho, ao lado de Finalizar, recolhe e reabre o painel do cliente.
@@ -53,6 +52,8 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Alterado
 
+- A conversa não mostra mais, no topo, o aviso "Há N mensagens anteriores deste cliente em setores que você não
+  acompanha…". A regra do histórico por setor continua a mesma: só o aviso saiu (RF-027).
 - A conversa de quem ainda não escolheu o setor aparece na hora em **Aguardando**, com o rótulo **Sem setor**, para
   quem é da fila de atendimento geral, em vez de só depois do tempo de espera da triagem (15 minutos por padrão).
   Aceitar leva a conversa para a fila geral. Quem não é dessa fila continua sem vê-la, e as demais conversas sem

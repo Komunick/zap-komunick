@@ -388,16 +388,6 @@ const useStyles = makeStyles(theme => ({
     whiteSpace: "normal",
     textAlign: "center"
   },
-  hiddenHistoryNotice: {
-    flex: "none",
-    padding: "8px 16px",
-    fontSize: 12,
-    lineHeight: 1.4,
-    color: theme.palette.text.primary,
-    backgroundColor:
-      theme.mode === "light" ? "#FFF7E6" : "rgba(217, 138, 0, 0.12)",
-    borderBottom: "1px solid #D98A00"
-  },
   transferNote: {
     alignSelf: "center",
     width: "min(560px, calc(100% - 32px))",
@@ -722,7 +712,6 @@ const MessagesList = ({
   const [loading, setLoading] = useState(false);
   // Zap Komunick: context of the client history (RF-027)
   const [historyTickets, setHistoryTickets] = useState({});
-  const [hiddenHistory, setHiddenHistory] = useState(0);
   const scrollRef = useRef();
   const stickedRef = useRef();
 
@@ -772,9 +761,6 @@ const MessagesList = ({
             setHistoryTickets(prev =>
               incrementPage ? { ...prev, ...pageTickets } : pageTickets
             );
-            if (!incrementPage) {
-              setHiddenHistory(Number(data.hiddenHistory) || 0);
-            }
             setLoading(false);
           }
 
@@ -804,7 +790,6 @@ const MessagesList = ({
     dispatch({ type: "RESET" });
     setContactPresence("available");
     setHistoryTickets({});
-    setHiddenHistory(0);
 
     currentTicketId.current = ticketId;
 
@@ -1960,11 +1945,6 @@ const MessagesList = ({
         menuOpen={messageOptionsMenuOpen}
         handleClose={handleCloseMessageOptionsMenu}
       />
-      {hiddenHistory > 0 && (
-        <div className={classes.hiddenHistoryNotice} role="status">
-          {i18n.t("history.hiddenNotice", { count: hiddenHistory })}
-        </div>
-      )}
       <div
         id="messagesList"
         className={classes.messagesList}

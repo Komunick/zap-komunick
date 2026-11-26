@@ -487,10 +487,6 @@ const pt = {
     transferNote: "Nota de transferência",
     transferFromTo: "{{from}} → {{to}}",
     internalOnly: "visível só para a equipe",
-    hiddenNotice:
-      "Há {{count}} mensagem anterior deste cliente em setores que você não acompanha ou em atendimento sem setor. Peça a um administrador para incluir você no setor ou liberar o histórico completo em Configurações › Opções › Histórico do cliente para atendentes.",
-    hiddenNotice_plural:
-      "Há {{count}} mensagens anteriores deste cliente em setores que você não acompanha ou em atendimentos sem setor. Peça a um administrador para incluir você no setor ou liberar o histórico completo em Configurações › Opções › Histórico do cliente para atendentes.",
     queue: "fila {{queue}}",
     channel: "canal {{channel}}",
     disconnectedChannel: "canal {{channel}} (desconectado)",
@@ -1204,10 +1200,6 @@ const en = {
     transferNote: "Transfer note",
     transferFromTo: "{{from}} → {{to}}",
     internalOnly: "visible to the team only",
-    hiddenNotice:
-      "There is {{count}} earlier message of this client in sectors you do not follow or in a ticket without sector. Ask an administrator to add you to the sector or to open the full history in Settings › Options › Client history for agents.",
-    hiddenNotice_plural:
-      "There are {{count}} earlier messages of this client in sectors you do not follow or in tickets without sector. Ask an administrator to add you to the sector or to open the full history in Settings › Options › Client history for agents.",
     queue: "queue {{queue}}",
     channel: "channel {{channel}}",
     disconnectedChannel: "channel {{channel}} (disconnected)",
@@ -1924,10 +1916,6 @@ const es = {
     transferNote: "Nota de transferencia",
     transferFromTo: "{{from}} → {{to}}",
     internalOnly: "visible solo para el equipo",
-    hiddenNotice:
-      "Hay {{count}} mensaje anterior de este cliente en sectores que usted no sigue o en una atención sin sector. Pida a un administrador que lo incluya en el sector o que libere el historial completo en Configuración › Opciones › Historial del cliente para agentes.",
-    hiddenNotice_plural:
-      "Hay {{count}} mensajes anteriores de este cliente en sectores que usted no sigue o en atenciones sin sector. Pida a un administrador que lo incluya en el sector o que libere el historial completo en Configuración › Opciones › Historial del cliente para agentes.",
     queue: "cola {{queue}}",
     channel: "canal {{channel}}",
     disconnectedChannel: "canal {{channel}} (desconectado)",
