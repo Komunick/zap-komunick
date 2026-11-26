@@ -405,7 +405,7 @@ têm acesso, além do filtro da fila registrada na mensagem. Cursors, anexos e c
 `PUT /tickets/:id` aceita `transferNote` e
 `transferMessageIds`: se a fila ou o atendente mudou, `CreateTransferNoteService` grava uma `Message` com
 `mediaType` = `transferNote` (id `ZKNOTE…`, `fromMe`, `read`), texto e cópia das mensagens citadas em `dataJson`
-(só do mesmo cliente, `helpers/TransferNote` limita tamanho e quantidade), e emite o `appMessage` normal. Ela não passa
+(só do atendimento transferido, `helpers/TransferNote` limita tamanho e quantidade), e emite o `appMessage` normal. Ela não passa
 pelo `CreateMessageService` (não mexe em `unansweredSince`) nem pelo envio do WhatsApp, e não altera
 `Ticket.lastMessage`. O frontend desenha `transferNote` como cartão interno, sem menu de ações.
 
