@@ -62,6 +62,10 @@ import vCard from "vcard-parser";
 import { generateColor } from "../../helpers/colorGenerator";
 import { getInitials } from "../../helpers/getInitials";
 import { Mutex } from "async-mutex";
+import {
+  historyDividerKey,
+  isReplyOnlyHistoryMessage
+} from "../../helpers/historyDivider";
 
 const loadPageMutex = new Mutex();
 
@@ -880,6 +884,15 @@ const MessagesList = ({
               currentList,
               data.messages
             );
+            // Zap Komunick: the facts of the tickets of these messages (the
+            // dividers and the actions of the history depend on them)
+            if (data.historyTickets?.length) {
+              const refreshedTickets = {};
+              data.historyTickets.forEach(item => {
+                refreshedTickets[item.id] = item;
+              });
+              setHistoryTickets(prev => ({ ...prev, ...refreshedTickets }));
+            }
             let isAtBottom = false;
             let newestMessage = null;
 
@@ -1094,16 +1107,20 @@ const MessagesList = ({
     const previous = index > 0 ? messagesList[index - 1] : null;
     if (previous && previous.ticketId === message.ticketId) return null;
     if (!previous && message.ticketId === ticket?.id) return null;
-    const current = message.ticketId === ticket?.id;
     return (
       <div
         className={classes.ticketDivider}
         key={`ticket-${messageIdentity(message)}`}
       >
         <span>
-          {current
-            ? i18n.t("history.currentTicket", { id: message.ticketId })
-            : i18n.t("history.previousTicket", { id: message.ticketId })}
+          {i18n.t(
+            historyDividerKey(
+              message.ticketId,
+              ticket?.id,
+              historyTickets[message.ticketId]
+            ),
+            { id: message.ticketId }
+          )}
           {historyTicketDetails(historyTickets[message.ticketId]) && (
             <span className={classes.ticketDividerDetails}>
               {" · "}
@@ -1955,6 +1972,11 @@ const MessagesList = ({
     <div className={classes.messagesListWrapper}>
       <MessageOptionsMenu
         message={selectedMessage}
+        replyOnly={isReplyOnlyHistoryMessage(
+          selectedMessage,
+          ticket?.id,
+          historyTickets[selectedMessage?.ticketId]
+        )}
         data={selectedMessageData}
         anchorEl={anchorEl}
         menuOpen={messageOptionsMenuOpen}

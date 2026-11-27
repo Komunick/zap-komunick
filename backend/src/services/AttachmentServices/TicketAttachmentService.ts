@@ -15,6 +15,11 @@ import {
   parseAttachmentQuery
 } from "../../helpers/AttachmentRules";
 import { URLCharEncoder } from "../../helpers/URLCharEncoder";
+import {
+  loadSectorHistory,
+  NO_SECTOR_HISTORY,
+  sectorHistoryFence
+} from "../../helpers/HistoryVisibility";
 import AuthorizeTicketContextService, {
   ContextActor
 } from "../TicketServices/AuthorizeTicketContextService";
@@ -65,10 +70,21 @@ const scope = async (ticketId: string, actor: ContextActor) => {
     "messageVisibility",
     "message"
   );
+  const restrictHistory = !viewer.isAdmin && visibility === "message";
   return {
     ticket,
     viewer,
-    restrictHistory: !viewer.isAdmin && visibility === "message",
+    restrictHistory,
+    // how far the sectors of the attendant reach in the other tickets of the
+    // client (helpers/HistoryVisibility)
+    history: restrictHistory
+      ? await loadSectorHistory(
+          ticket.contactId,
+          actor.companyId,
+          viewer.queueIds,
+          ticket.id
+        )
+      : NO_SECTOR_HISTORY,
     fingerprint: JSON.stringify([
       ticket.id,
       ticket.contactId,
@@ -94,15 +110,12 @@ const conditions = (state: Scope, companyId: number): WhereOptions[] => {
     }
   ];
   // Same RF-017 fence as ListMessagesService: transfers preserve the current
-  // ticket, while historical messages retain their queue visibility.
+  // ticket, and of the tickets that left the sector of the attendant only
+  // what was there until the sector's last message.
   if (state.restrictHistory)
-    result.push({
-      [Op.or]: [
-        { ticketId: state.ticket.id },
-        { queueId: null },
-        { queueId: { [Op.in]: state.viewer.queueIds } }
-      ]
-    });
+    result.push(
+      sectorHistoryFence(state.ticket.id, state.viewer.queueIds, state.history)
+    );
   return result;
 };
 const attributes = [
@@ -130,16 +143,8 @@ const queryOptions = (
       as: "ticket",
       attributes: [],
       required: true,
-      where: {
-        companyId,
-        contactId: state.ticket.contactId,
-        ...(state.restrictHistory && {
-          [Op.or]: [
-            { id: state.ticket.id },
-            { queueId: { [Op.in]: state.viewer.queueIds } }
-          ]
-        })
-      }
+      // only the client and the office: the sector is decided per message
+      where: { companyId, contactId: state.ticket.contactId }
     }
   ],
   logging: false as const

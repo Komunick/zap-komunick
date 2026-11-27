@@ -400,8 +400,31 @@ após os dois jobs de validação. Os destinos são `ghcr.io/komunick/zap-komuni
 do SHA de origem; uma futura implantação deve selecionar o digest resultante. O workflow não faz deploy.
 
 **Histórico do cliente e nota de transferência (RF-017):** `ListMessagesService` busca mensagens de `Tickets` do mesmo
-`contactId` na empresa. Com `messageVisibility=message`, atendentes só consultam outros atendimentos em filas às quais
-têm acesso, além do filtro da fila registrada na mensagem. Cursors, anexos e citações seguem a mesma regra.
+`contactId` na empresa. Com `messageVisibility=message`, a regra dos outros atendimentos do cliente fica em
+`helpers/HistoryVisibility` e é uma só para a página, o cursor, citações e respostas (`sectorHistoryFence`), os
+arquivos (`TicketAttachmentService`) e a mensagem aberta por id (`AuthorizeMessageContextService`):
+1. atendimento com fila atual entre as do atendente: inteiro;
+2. atendimento que saiu: mensagens com `createdAt` até a última mensagem dele com `Messages.queueId` entre as filas do
+   atendente (`sectorHistoryOf` faz uma consulta agrupada por `ticketId` só nos atendimentos que saíram;
+   `ListMessagesService` passa os atendimentos do cliente que já carregou e `TicketAttachmentService` usa
+   `loadSectorHistory`);
+3. o resto: nada.
+O filtro leva também `queueId IN (filas do atendente)`: o corte vem do banco como data de JavaScript (milissegundos) e
+o PostgreSQL guarda microssegundos, então a própria última mensagem do setor poderia ficar logo depois do corte. Para
+uma mensagem aberta por id, `seesHistoryMessage` resolve sem consulta os casos 1 e a mensagem do próprio setor, e
+`sectorReachedMessage` pergunta ao banco o caso 2 com a mesma comparação do filtro, para a lista e o id nunca
+discordarem. O atendimento aberto não passa por essa regra: quem pode abri-lo lê tudo. Citar ao responder leva o
+atendimento aberto como contexto e segue a regra de leitura; reagir, editar, apagar, encaminhar e o histórico de edição
+não levam contexto e continuam autorizados pelo atendimento da própria mensagem. Para a tela não oferecer o que seria
+recusado, cada item de `historyTickets` leva `canOpen` (admin, atendimento aberto, ou fila atual entre as do
+atendente) e `helpers/historyDivider.js` decide o título da divisória e o menu só com **Responder**. A nota de
+transferência é gravada com a fila de destino. Limites: o corte é pelo `createdAt` (sempre a hora em que a linha foi
+gravada; nenhum caminho grava mensagem nova com data antiga num atendimento existente), então uma mensagem anterior ao
+corte que for editada depois aparece com o texto atual; e o custo é uma consulta agrupada sobre as mensagens dos
+atendimentos que saíram do setor por carga (duas por pedido de arquivo) mais um termo `OR` de uns 100 bytes por
+atendimento que saiu, em cada cópia do filtro (página, citação e respostas). Serve para dezenas desses atendimentos por
+cliente; com centenas (por exemplo com `keepUserAndQueue` desligado, em que fechar tira a fila do atendimento), criar
+antes um índice em `Messages (ticketId, queueId, createdAt)`.
 `PUT /tickets/:id` aceita `transferNote` e
 `transferMessageIds`: se a fila ou o atendente mudou, `CreateTransferNoteService` grava uma `Message` com
 `mediaType` = `transferNote` (id `ZKNOTE…`, `fromMe`, `read`), texto e cópia das mensagens citadas em `dataJson`

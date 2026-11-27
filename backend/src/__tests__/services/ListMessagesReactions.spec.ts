@@ -40,13 +40,20 @@ const mentions = (node: unknown, value: string): boolean => {
 };
 
 const lastQuery = () => findAll.mock.calls[findAll.mock.calls.length - 1][0];
+// the last message of the sector of the attendant on the ticket that left it
+const reachedUntil = new Date("2026-11-26T13:13:08.000Z");
 const include = (alias: string) =>
   lastQuery().include.find((item: { as?: string }) => item.as === alias);
 
 beforeEach(() => {
   jest.clearAllMocks();
-  (Ticket.findAll as jest.Mock).mockResolvedValue([{ id: 301 }, { id: 200 }]);
-  findAll.mockResolvedValue([]);
+  (Ticket.findAll as jest.Mock).mockResolvedValue([
+    { id: 301, queueId: 20 },
+    { id: 200, queueId: 99 }
+  ]);
+  findAll.mockImplementation(async query =>
+    query.group ? [{ ticketId: 200, until: reachedUntil }] : []
+  );
 });
 
 describe.each([
@@ -85,5 +92,38 @@ describe.each([
       ])
     );
     expect(mentions(include("replies").where, "queueId")).toBe(!isAdmin);
+    // the sector rule: the tickets that are in the sector of the attendant
+    // now (the open one among them), the messages exchanged in it and, for
+    // the ticket that left it, what was there until its last message
+    const sector = {
+      [Op.or]: [
+        { ticketId: { [Op.in]: [301] } },
+        { queueId: { [Op.in]: [20] } },
+        { ticketId: 200, createdAt: { [Op.lte]: reachedUntil } }
+      ]
+    };
+    [lastQuery().where[Op.and], include("quotedMsg").where[Op.and], fence]
+      .map(conditions =>
+        conditions.filter(
+          (item: Record<string | symbol, unknown>) =>
+            Op.or in item && !("mediaType" in item)
+        )
+      )
+      .forEach(found => expect(found).toEqual(isAdmin ? [] : [sector]));
+    // the reach is asked once, for the ticket outside the sector, by sector
+    const reach = findAll.mock.calls
+      .map(([query]) => query)
+      .filter(query => query.group);
+    expect(reach.map(query => query.where)).toEqual(
+      isAdmin
+        ? []
+        : [
+            {
+              ticketId: { [Op.in]: [200] },
+              companyId: 10,
+              queueId: { [Op.in]: [20] }
+            }
+          ]
+    );
   });
 });

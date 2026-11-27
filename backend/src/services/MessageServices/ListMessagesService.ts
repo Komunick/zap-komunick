@@ -13,6 +13,10 @@ import {
   HistoryTicketSummary,
   summarizeHistoryTicket
 } from "../../helpers/HistoryTickets";
+import {
+  sectorHistoryFence,
+  sectorHistoryOf
+} from "../../helpers/HistoryVisibility";
 
 interface Request {
   ticketId: string;
@@ -30,8 +34,15 @@ interface Response {
   nextId: string | null;
   // Zap Komunick: context of the client history (RF-017, RF-027)
   hiddenHistory: number;
-  historyTickets: HistoryTicketSummary[];
+  historyTickets: HistoryTicketEntry[];
 }
+
+// `canOpen`: whether the viewer may open that ticket. The history may show
+// messages of a ticket that is now in another sector (helpers/
+// HistoryVisibility); editing, deleting, reacting and forwarding are decided
+// by the ticket of the message and would be refused there, so the screen only
+// offers them where they can work.
+export type HistoryTicketEntry = HistoryTicketSummary & { canOpen: boolean };
 
 const ListMessagesService = async ({
   nextId,
@@ -61,12 +72,8 @@ const ListMessagesService = async ({
   // (docs/PRD.md, RF-017). A client who writes again after a resolved
   // conversation gets a new ticket; its old messages stay visible here.
   const contactTickets = await Ticket.findAll({
-    where: {
-      contactId: ticket.contactId,
-      companyId,
-      ...(restrictHistory && { queueId: { [Op.in]: queues } })
-    },
-    attributes: ["id"]
+    where: { contactId: ticket.contactId, companyId },
+    attributes: ["id", "queueId"]
   });
   const ticketIds = Array.from(
     new Set([ticket.id, ...contactTickets.map(t => t.id)])
@@ -80,21 +87,16 @@ const ListMessagesService = async ({
   ];
 
   if (restrictHistory) {
-    // Other tickets must still belong to an allowed queue. Their messages
-    // also retain their original queue restrictions.
-    fence.push({
-      [Op.or]: [
-        { ticketId: ticket.id },
-        {
-          queueId: {
-            [Op.or]: {
-              [Op.in]: queues,
-              [Op.eq]: null
-            }
-          }
-        }
-      ]
-    });
+    // The tickets that are in a sector of the attendant now, whole; of the
+    // ones that left, what was in the conversation up to the last message of
+    // their sector (helpers/HistoryVisibility).
+    fence.push(
+      sectorHistoryFence(
+        ticket.id,
+        queues,
+        await sectorHistoryOf(contactTickets, companyId, queues, ticket.id)
+      )
+    );
   }
 
   // Reactions are not rows of the conversation: they come back as `replies`
@@ -191,10 +193,6 @@ const ListMessagesService = async ({
   // how much, so the team knows it exists and who can open it (RF-027).
   let hiddenHistory = 0;
   if (restrictHistory && !nextId && !minUpdatedAt) {
-    const allTickets = await Ticket.findAll({
-      where: { contactId: ticket.contactId, companyId },
-      attributes: ["id"]
-    });
     const notReaction = {
       mediaType: {
         [Op.or]: {
@@ -207,7 +205,7 @@ const ListMessagesService = async ({
       Message.count({
         where: {
           [Op.and]: [
-            { ticketId: { [Op.in]: allTickets.map(t => t.id) } },
+            { ticketId: { [Op.in]: ticketIds } },
             { companyId },
             notReaction
           ]
@@ -223,7 +221,15 @@ const ListMessagesService = async ({
   const pageTicketIds = Array.from(
     new Set(visibleMessages.map(message => message.ticketId))
   );
-  const historyTickets = pageTicketIds.length
+  const sectorOf = new Map(contactTickets.map(t => [t.id, t.queueId]));
+  const canOpen = (id: number): boolean => {
+    if (viewer.isAdmin || id === ticket.id) return true;
+    const queueId = sectorOf.get(id);
+    return (
+      queueId !== null && queueId !== undefined && queues.includes(queueId)
+    );
+  };
+  const historyTickets: HistoryTicketEntry[] = pageTicketIds.length
     ? (
         await Ticket.findAll({
           where: { id: { [Op.in]: pageTicketIds }, companyId },
@@ -238,7 +244,10 @@ const ListMessagesService = async ({
             { model: User, as: "user", attributes: ["id", "name"] }
           ]
         })
-      ).map(summarizeHistoryTicket)
+      ).map(row => ({
+        ...summarizeHistoryTicket(row),
+        canOpen: canOpen(row.id)
+      }))
     : [];
 
   return {

@@ -1,5 +1,9 @@
 import AppError from "../../errors/AppError";
 import { GetCompanySetting } from "../../helpers/CheckSettings";
+import {
+  sectorReachedMessage,
+  seesHistoryMessage
+} from "../../helpers/HistoryVisibility";
 import Message from "../../models/Message";
 import Ticket from "../../models/Ticket";
 import AuthorizeTicketContextService, {
@@ -36,17 +40,23 @@ const AuthorizeMessageContextService = async (
       attributes: ["id", "queueId"]
     });
     if (!sourceTicket) throw new AppError("ERR_MESSAGE_NOT_FOUND", 404);
+    // Same rule as the history of the conversation (helpers/
+    // HistoryVisibility): the ticket of the message is in a sector of the
+    // attendant now, the message was exchanged in one, or it was already in
+    // the conversation when their sector last exchanged a message there.
     if (
       !viewer.isAdmin &&
-      (sourceTicket.queueId === null ||
-        !viewer.queueIds.includes(sourceTicket.queueId) ||
-        (message.queueId !== null &&
-          !viewer.queueIds.includes(message.queueId))) &&
+      !seesHistoryMessage(
+        viewer.queueIds,
+        message.queueId,
+        sourceTicket.queueId
+      ) &&
       (await GetCompanySetting(
         actor.companyId,
         "messageVisibility",
         "message"
-      )) === "message"
+      )) === "message" &&
+      !(await sectorReachedMessage(message, actor.companyId, viewer.queueIds))
     ) {
       throw new AppError("ERR_NO_PERMISSION", 403);
     }

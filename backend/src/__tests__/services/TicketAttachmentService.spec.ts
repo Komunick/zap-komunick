@@ -16,6 +16,7 @@ import {
 } from "../../helpers/AttachmentRules";
 import AppError from "../../errors/AppError";
 import ListMessagesService from "../../services/MessageServices/ListMessagesService";
+import AuthorizeMessageContextService from "../../services/MessageServices/AuthorizeMessageContextService";
 import ShowTicketService from "../../services/TicketServices/ShowTicketService";
 
 jest.mock("../../models/User", () => ({ findOne: jest.fn() }));
@@ -42,8 +43,20 @@ jest.mock("../../services/TicketServices/ShowTicketService", () => jest.fn());
 
 type Values = Record<string, unknown>;
 type Predicate = Record<string | symbol, unknown>;
+// A moment in microseconds, as PostgreSQL keeps it. A fixture may write six
+// decimals ("...T11:02:30.000400Z"); a JavaScript date only has three.
+const micros = (value: unknown): number => {
+  if (value instanceof Date) return value.getTime() * 1000;
+  const text = String(value);
+  const extra = /\.\d{3}(\d{3})Z$/.exec(text);
+  return new Date(text).getTime() * 1000 + (extra ? Number(extra[1]) : 0);
+};
 const matchesValue = (actual: unknown, expected: unknown): boolean => {
+  if (expected instanceof Date) return micros(actual) === micros(expected);
   if (!expected || typeof expected !== "object") return actual === expected;
+  // an object without operators would match every row
+  if (!Reflect.ownKeys(expected).length)
+    throw new Error("Empty test predicate");
   return Reflect.ownKeys(expected).every(operator => {
     const target = (expected as Predicate)[operator];
     if (operator === Op.or)
@@ -55,6 +68,7 @@ const matchesValue = (actual: unknown, expected: unknown): boolean => {
     if (operator === Op.in) return (target as unknown[]).includes(actual);
     if (operator === Op.notIn) return !(target as unknown[]).includes(actual);
     if (operator === Op.lt) return actual < target;
+    if (operator === Op.lte) return micros(actual) <= micros(target);
     throw new Error("Unknown test predicate");
   });
 };
@@ -158,6 +172,33 @@ const ormRows = (options: {
     })
   );
 };
+// The grouped query of helpers/HistoryVisibility: the last message of the
+// sectors of the attendant on each ticket that left them.
+const reachRows = (options: {
+  where: Predicate;
+  attributes: unknown[];
+  group: string[];
+}) => {
+  // any other aggregate (the first message, the last update) is another rule
+  expect(JSON.parse(JSON.stringify(options.attributes))).toEqual([
+    "ticketId",
+    [{ fn: "max", args: [{ col: "createdAt" }] }, "until"]
+  ]);
+  expect(options.group).toEqual(["ticketId"]);
+  const last = new Map<number, number>();
+  rows
+    .filter(row => matches(row, options.where))
+    .forEach(row => {
+      const when = new Date(String(row.createdAt)).getTime();
+      const ticketId = Number(row.ticketId);
+      last.set(ticketId, Math.max(last.get(ticketId) ?? when, when));
+    });
+  return Array.from(last, ([ticketId, when]) => ({
+    ticketId,
+    until: new Date(when)
+  }));
+};
+const at = (time: string, day = "2026-10-27") => `${day}T${time}:00.000Z`;
 describe("authorized attachment history and descriptor lifecycle", () => {
   beforeEach(() => {
     jest.resetAllMocks();
@@ -214,7 +255,11 @@ describe("authorized attachment history and descriptor lifecycle", () => {
       async options => ormRows(options)[0] || null
     );
     (Message.findAll as jest.Mock).mockImplementation(async options =>
-      ormRows(options)
+      options.group ? reachRows(options) : ormRows(options)
+    );
+    // counted from the fixture with the predicate the service really sends
+    (Message.count as jest.Mock).mockImplementation(
+      async ({ where }) => rows.filter(row => matches(row, where)).length
     );
     (openAttachmentFile as jest.Mock).mockResolvedValue({
       handle: { close },
@@ -254,20 +299,55 @@ describe("authorized attachment history and descriptor lifecycle", () => {
     expect(Message.update).not.toHaveBeenCalled();
     expect(Message.create).not.toHaveBeenCalled();
     expect(Message.upsert).not.toHaveBeenCalled();
-    const options = (Message.findAll as jest.Mock).mock.calls[0][0];
+    const queries = (Message.findAll as jest.Mock).mock.calls.map(
+      ([query]) => query
+    );
+    const options = queries.find(query => !query.group);
     expect(options.attributes).not.toContain("body");
-    expect(options.logging).toBe(false);
+    expect(queries.every(query => query.logging === false)).toBe(true);
     expect(close).toHaveBeenCalledTimes(1);
   });
-  it("preserves transferred context and checks both ticket and message queue for other tickets", async () => {
+  it("reads whole the tickets that are in the sector now and, of the ones that left, what was there until the sector's last message", async () => {
+    // a ticket of the client the sector 401 never took part in
+    tickets.push({
+      id: 305,
+      companyId: 10,
+      contactId: 201,
+      queueId: 402,
+      isGroup: false
+    });
     rows = [
+      // the ticket that is open: whole, whatever the sector of the message
       message("today", 301, { queueId: 402 }),
-      message("old-allowed", 300, { queueId: 401 }),
-      message("old-null", 300, { queueId: null }),
-      message("old-denied", 300, { queueId: 402 }),
-      message("other-queue-null", 303, { queueId: null }),
-      message("other-queue-old-match", 303),
-      message("unassigned-ticket", 304),
+      // 300 is in sector 401 now: whole, as by opening it
+      message("old-allowed", 300, { createdAt: at("08:00") }),
+      message("old-null", 300, { queueId: null, createdAt: at("08:30") }),
+      message("old-other-sector", 300, {
+        queueId: 402,
+        createdAt: at("09:00")
+      }),
+      message("old-after-other-sector", 300, { createdAt: at("10:00") }),
+      // 303 went 403 -> 401 -> 402: for 401, what was there until 10:00
+      message("moved-before", 303, { queueId: 403, createdAt: at("09:00") }),
+      message("moved-menu", 303, { queueId: null, createdAt: at("09:30") }),
+      message("moved-own-sector", 303, { createdAt: at("10:00") }),
+      message("moved-after", 303, { queueId: 402, createdAt: at("13:00") }),
+      message("moved-null-after", 303, {
+        queueId: null,
+        createdAt: at("13:30")
+      }),
+      // 304 left 401 and has no sector now
+      message("unassigned-own-sector", 304, { createdAt: at("10:00") }),
+      message("unassigned-after", 304, {
+        queueId: null,
+        createdAt: at("13:00")
+      }),
+      // 305 was never of 401
+      message("never-hers", 305, { queueId: 402, createdAt: at("09:00") }),
+      message("never-hers-null", 305, {
+        queueId: null,
+        createdAt: at("09:00")
+      }),
       message("other-client", 302),
       message("other-office", 501, { companyId: 20 }),
       message("deleted", 301, { isDeleted: true }),
@@ -275,52 +355,329 @@ describe("authorized attachment history and descriptor lifecycle", () => {
       message("note", 301, { mediaType: "transferNote" }),
       message("text", 301, { mediaUrl: null })
     ];
-    expect((await list()).items.map(item => item.messageId).sort()).toEqual([
+    const listed = async () =>
+      (await list()).items.map(item => item.messageId).sort();
+    const denied = (pairs: string[][]) =>
+      Promise.all(
+        pairs.map(([source, id]) =>
+          expect(detail(source, id)).rejects.toMatchObject({
+            message: "ERR_NO_PERMISSION",
+            statusCode: 403
+          })
+        )
+      );
+    const opened = (pairs: string[][]) =>
+      Promise.all(
+        pairs.map(async ([source, id]) =>
+          expect((await detail(source, id)).sourceTicketId).toBe(Number(source))
+        )
+      );
+
+    expect(await listed()).toEqual([
+      "moved-before",
+      "moved-menu",
+      "moved-own-sector",
+      "old-after-other-sector",
       "old-allowed",
       "old-null",
+      "old-other-sector",
+      "today",
+      "unassigned-own-sector"
+    ]);
+    // the list and the file opened by id agree, both ways
+    await opened([
+      ["303", "moved-before"],
+      ["303", "moved-menu"],
+      ["303", "moved-own-sector"],
+      ["304", "unassigned-own-sector"],
+      ["300", "old-other-sector"],
+      ["300", "old-null"]
+    ]);
+    await denied([
+      ["303", "moved-after"],
+      ["303", "moved-null-after"],
+      ["304", "unassigned-after"],
+      ["305", "never-hers"],
+      ["305", "never-hers-null"]
+    ]);
+
+    // An attendant of sector 402, with the open ticket in 402. Tickets 303
+    // and 305 are in 402 now: whole. In 300, which is of 401, sector 402
+    // exchanged a message at 09:00: what was there until then, not what 401
+    // said afterwards. Nothing of 304.
+    queues = [402];
+    tickets.find(ticket => ticket.id === 301).queueId = 402;
+    expect(await listed()).toEqual([
+      "moved-after",
+      "moved-before",
+      "moved-menu",
+      "moved-null-after",
+      "moved-own-sector",
+      "never-hers",
+      "never-hers-null",
+      "old-allowed",
+      "old-null",
+      "old-other-sector",
       "today"
     ]);
-    await expect(detail("300", "old-denied")).rejects.toMatchObject({
-      message: "ERR_NO_PERMISSION",
-      statusCode: 403
+    await denied([
+      ["300", "old-after-other-sector"],
+      ["304", "unassigned-own-sector"],
+      ["304", "unassigned-after"]
+    ]);
+
+    // the complete history: everything of the client
+    queues = [401];
+    tickets.find(ticket => ticket.id === 301).queueId = 401;
+    visibility = "ticket";
+    expect(await listed()).toEqual([
+      "moved-after",
+      "moved-before",
+      "moved-menu",
+      "moved-null-after",
+      "moved-own-sector",
+      "never-hers",
+      "never-hers-null",
+      "old-after-other-sector",
+      "old-allowed",
+      "old-null",
+      "old-other-sector",
+      "today",
+      "unassigned-after",
+      "unassigned-own-sector"
+    ]);
+  });
+  // Reported on 26/11/2026: "transferi o cliente para o outro setor, quando
+  // abri a conversa com ele novamente, a conversa de hoje não consta lá". The
+  // client wrote to one sector (403), was handed to hers (401), she answered
+  // and handed him to a third one (402); later she opened a conversation with
+  // him and the morning was gone.
+  it("keeps, in the history of the client, the conversation as it was when the attendant transferred it", async () => {
+    tickets.push({
+      id: 305,
+      companyId: 10,
+      contactId: 201,
+      queueId: 402,
+      isGroup: false
     });
+    rows = [
+      message("last-week", 300, { createdAt: at("12:00", "2026-10-20") }),
+      // another ticket of her sector: whole, even what another sector said
+      message("other-sector-on-own-ticket", 301, {
+        queueId: 402,
+        createdAt: at("12:01", "2026-10-20")
+      }),
+      // a ticket that left her sector and has none now
+      message("own-sector-on-unassigned", 304, {
+        createdAt: at("12:00", "2026-10-21")
+      }),
+      message("later-on-unassigned", 304, {
+        queueId: null,
+        createdAt: at("13:00", "2026-10-21")
+      }),
+      // a ticket her sector never took part in
+      message("never-hers", 305, {
+        queueId: 402,
+        createdAt: at("12:00", "2026-10-22")
+      }),
+      // today's ticket, now in sector 402
+      message("menu-of-the-robot", 303, {
+        queueId: null,
+        createdAt: at("10:59")
+      }),
+      message("client-asked", 303, { queueId: 403, createdAt: at("11:00") }),
+      message("first-sector-answered", 303, {
+        queueId: 403,
+        createdAt: at("11:01")
+      }),
+      message("she-answered", 303, {
+        createdAt: at("11:02"),
+        quotedMsgId: "client-asked"
+      }),
+      // Her last message, 400 microseconds into its millisecond: the cut the
+      // service gets back from the database is a JavaScript date, of
+      // milliseconds, and falls just before it.
+      message("she-answered-last", 303, {
+        createdAt: "2026-10-27T11:02:30.000400Z"
+      }),
+      // stored at the very instant of the cut: it was already there
+      message("same-instant-other-sector", 303, {
+        queueId: 402,
+        createdAt: "2026-10-27T11:02:30.000000Z"
+      }),
+      // 300 microseconds after her last message, in the same millisecond
+      message("same-ms-other-sector", 303, {
+        queueId: 402,
+        createdAt: "2026-10-27T11:02:30.000700Z"
+      }),
+      message("after-the-transfer", 303, {
+        queueId: 402,
+        createdAt: at("11:03"),
+        quotedMsgId: "she-answered"
+      }),
+      message("reply-in-the-other-sector", 303, {
+        queueId: 402,
+        createdAt: at("11:04"),
+        quotedMsgId: "client-asked"
+      })
+    ];
+    const listHistory = (nextId?: string) =>
+      ListMessagesService({ ...actor, ticketId: "300", nextId });
+    const history = await listHistory();
+    // oldest first; of today's ticket, everything up to her last message,
+    // including what the client asked the first sector
+    expect(history.messages.map(row => row.id)).toEqual([
+      "last-week",
+      "other-sector-on-own-ticket",
+      "own-sector-on-unassigned",
+      "menu-of-the-robot",
+      "client-asked",
+      "first-sector-answered",
+      "she-answered",
+      "same-instant-other-sector",
+      "she-answered-last"
+    ]);
+    // 14 messages of the client, 9 of them here
+    expect(history.hiddenHistory).toBe(5);
+    // she may act on the tickets of her sector; the two that left are only
+    // read
+    expect(
+      history.historyTickets
+        .map(item => [item.id, item.canOpen])
+        .sort(([a], [b]) => Number(a) - Number(b))
+    ).toEqual([
+      [300, true],
+      [301, true],
+      [303, false],
+      [304, false]
+    ]);
+    // quotes and replies follow the same rule
+    expect(
+      history.messages.find(row => row.id === "she-answered").quotedMsg.id
+    ).toBe("client-asked");
+    expect(
+      history.messages
+        .find(row => row.id === "client-asked")
+        .replies.map((reply: { id: string }) => reply.id)
+    ).toEqual(["she-answered"]);
+    // and so does the cursor
+    await expect(listHistory("she-answered")).resolves.toMatchObject({
+      messages: [
+        { id: "last-week" },
+        { id: "other-sector-on-own-ticket" },
+        { id: "own-sector-on-unassigned" },
+        { id: "menu-of-the-robot" },
+        { id: "client-asked" },
+        { id: "first-sector-answered" }
+      ]
+    });
+    await expect(listHistory("after-the-transfer")).rejects.toMatchObject({
+      message: "ERR_MESSAGE_NOT_FOUND",
+      statusCode: 404
+    });
+
+    // the ticket itself stays closed to who is not of its sector
+    await expect(
+      ListMessagesService({ ...actor, ticketId: "303" })
+    ).rejects.toMatchObject({ message: "ERR_NO_PERMISSION" });
+
+    // One message, by its id. Through the ticket she has open (quoting it in
+    // a reply) it follows the rule of the history, on both sides of the cut...
+    const quoting = (id: string) =>
+      AuthorizeMessageContextService(id, actor, "300", 303);
     await Promise.all(
       [
-        ["303", "other-queue-null"],
-        ["303", "other-queue-old-match"],
-        ["304", "unassigned-ticket"]
-      ].map(([source, id]) =>
-        expect(detail(source, id)).rejects.toMatchObject({
+        "menu-of-the-robot",
+        "client-asked",
+        "she-answered",
+        "same-instant-other-sector",
+        "she-answered-last"
+      ].map(id => expect(quoting(id)).resolves.toMatchObject({ id }))
+    );
+    await Promise.all(
+      [
+        "same-ms-other-sector",
+        "after-the-transfer",
+        "reply-in-the-other-sector"
+      ].map(id =>
+        expect(quoting(id)).rejects.toMatchObject({
           message: "ERR_NO_PERMISSION",
           statusCode: 403
         })
       )
     );
-    visibility = "ticket";
-    expect((await list()).items.map(item => item.messageId).sort()).toEqual([
-      "old-allowed",
-      "old-denied",
-      "old-null",
-      "other-queue-null",
-      "other-queue-old-match",
-      "today",
-      "unassigned-ticket"
+    // ...and with no ticket of her own behind it (react, edit, delete,
+    // forward) it is decided by the ticket of the message: refused, even for
+    // the message she wrote and reads in the history.
+    await expect(
+      AuthorizeMessageContextService("she-answered", actor)
+    ).rejects.toMatchObject({ message: "ERR_NO_PERMISSION", statusCode: 403 });
+
+    // the sector that received reads all of its ticket and, of hers, nothing
+    queues = [402];
+    tickets.find(ticket => ticket.id === 301).queueId = 402;
+    expect(
+      (await ListMessagesService({ ...actor, ticketId: "303" })).messages.map(
+        row => row.id
+      )
+    ).toEqual([
+      "other-sector-on-own-ticket",
+      "never-hers",
+      "menu-of-the-robot",
+      "client-asked",
+      "first-sector-answered",
+      "she-answered",
+      "same-instant-other-sector",
+      "same-ms-other-sector",
+      "she-answered-last",
+      "after-the-transfer",
+      "reply-in-the-other-sector"
     ]);
+    queues = [401];
+    tickets.find(ticket => ticket.id === 301).queueId = 401;
+
+    // an administrator may act on every ticket of the client
+    profile = "admin";
+    const everything = await listHistory();
+    expect(everything.messages).toHaveLength(14);
+    expect(everything.historyTickets.every(item => item.canOpen)).toBe(true);
+    // and may act on any message of it
+    await expect(
+      AuthorizeMessageContextService("after-the-transfer", actor)
+    ).resolves.toMatchObject({ id: "after-the-transfer" });
+  });
+  it("opens the files that were in a transferred ticket until the sector's last message, and none after it", async () => {
+    rows = [
+      message("moved-before", 303, { queueId: 403, createdAt: at("09:00") }),
+      message("moved-own-sector", 303, { createdAt: at("10:00") }),
+      message("moved-after", 303, { queueId: 402, createdAt: at("13:00") })
+    ];
+    const open = (id: string) =>
+      openTicketAttachment("301", actor, "303", id, {});
+    // eslint-disable-next-line no-restricted-syntax
+    for (const id of ["moved-before", "moved-own-sector"]) {
+      // eslint-disable-next-line no-await-in-loop
+      const file = await open(id);
+      expect(file.size).toBe(50);
+      // eslint-disable-next-line no-await-in-loop
+      await file.handle.close();
+    }
+    await expect(open("moved-after")).rejects.toMatchObject({
+      message: "ERR_NO_PERMISSION",
+      statusCode: 403
+    });
   });
   it("keeps foreign same-contact tickets out of message history, cursors, quotes and replies", async () => {
     rows = [
       message("current", 301, { queueId: 402, quotedMsgId: "hidden-quote" }),
       message("allowed", 300, { queueId: null }),
       message("hidden-quote", 303, { queueId: null }),
-      message("hidden-reply", 303, { quotedMsgId: "current" }),
-      message("hidden-unassigned", 304)
+      message("hidden-reply", 303, { queueId: 402, quotedMsgId: "current" }),
+      message("hidden-unassigned", 304, { queueId: null })
     ];
     const listHistory = (nextId?: string) =>
       ListMessagesService({ ...actor, ticketId: "301", nextId });
     // Zap Komunick (RF-027): 5 messages of the client, 2 visible here
-    (Message.count as jest.Mock)
-      .mockResolvedValueOnce(5)
-      .mockResolvedValueOnce(2);
     const history = await listHistory();
     expect(history.messages.map(row => row.id).sort()).toEqual([
       "allowed",
