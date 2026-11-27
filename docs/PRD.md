@@ -878,9 +878,8 @@ não é dessa fila os atendimentos e as mensagens de outras filas.
 - A opção que já existia passa a ter nome claro: Configurações › Opções › **Histórico do cliente para atendentes**,
   com "Só dos setores do atendente" (padrão, a regra de antes) ou "Completo, de todos os setores". No completo, quem
   pode ver o atendimento vê todo o histórico do cliente, como o administrador.
-- Quando a regra esconde parte do histórico, a conversa mostra no topo quantas mensagens anteriores do cliente estão
-  em setores que a pessoa não acompanha (ou em atendimentos sem setor) e quem pode liberar. Só a contagem: nada do
-  conteúdo escondido.
+- Quando a regra esconde parte do histórico, a conversa não mostra aviso nem contagem do que ficou de fora. O aviso
+  que aparecia no topo ("Há N mensagens anteriores deste cliente…") foi retirado em 26/11/2026, a pedido do dono.
 - O separador de cada atendimento no histórico mostra a data, a fila, o canal (marcando quando está desconectado) e o
   atendente.
 - O SuperChat só tem as mensagens que passaram por ele com o canal conectado. Conversas feitas direto no celular antes
@@ -925,7 +924,7 @@ não é dessa fila os atendimentos e as mensagens de outras filas.
 
 Dado a opção "Só dos setores do atendente" e uma cliente com 12 mensagens antigas na fila JBFraga,
 quando uma atendente da fila Pessoal abre o atendimento novo dessa cliente,
-então vê no topo da conversa que há 12 mensagens anteriores em setores que ela não acompanha. Depois que um
+então vê só as mensagens dos setores dela, sem aviso sobre as outras 12. Depois que um
 administrador escolhe "Completo, de todos os setores", ela vê essas mensagens, com o separador "Atendimento anterior
 #52 · 12/11/2026 · fila JBFraga · canal JBFraga (desconectado)".
 
