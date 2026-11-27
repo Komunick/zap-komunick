@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import fs from "fs";
 import AppError from "../errors/AppError";
 
 import SetTicketMessagesAsRead from "../helpers/SetTicketMessagesAsRead";
@@ -7,6 +6,7 @@ import BindDefaultWhatsapp from "../helpers/BindDefaultWhatsapp";
 import { assertNotImportedMessage } from "../helpers/ImportedMessage";
 import { sanitizeMessageQuotePayload } from "../helpers/MessageQuotePrivacy";
 import { isMessageSignatureRequired } from "../helpers/MessageSignature";
+import { isEmptyUpload, sendUploadsInOrder } from "../helpers/UploadsInOrder";
 import { getIO } from "../libs/socket";
 import Queue from "../models/Queue";
 import User from "../models/User";
@@ -169,6 +169,11 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     userId: req.user.id,
     companyId
   });
+  // Zap Komunick: a send of files that arrives without any file is refused
+  // instead of answered with success
+  if (isEmptyUpload(medias, body)) {
+    throw new AppError("ERR_NO_MEDIA_RECEIVED", 400);
+  }
   const authorizedQuote = quotedMsg
     ? await AuthorizeMessageContextService(
         quotedMsg.id,
@@ -197,15 +202,11 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     }
   }
 
-  if (medias) {
-    if (channel === "whatsapp") {
-      await Promise.all(
-        medias.map(async (media: Express.Multer.File) => {
-          await SendWhatsAppMedia({ media, ticket });
-          fs.unlinkSync(media.path);
-        })
-      );
-    }
+  if (medias?.length) {
+    // Zap Komunick: in the order chosen, one at a time (it was all at once)
+    await sendUploadsInOrder(medias, async media => {
+      if (channel === "whatsapp") await SendWhatsAppMedia({ media, ticket });
+    });
   } else if (channel === "whatsapp") {
     await SendWhatsAppMessage({
       body,

@@ -4577,6 +4577,21 @@ Object.assign(es.backendErrors, {
     "El ticket cambió de estado. Actualiza e inténtalo de nuevo."
 });
 
+// Zap Komunick: several files sent at once from a ticket leave one at a time;
+// what was not sent stays selected (helpers/mediaUpload.js).
+pt.messagesInput.sendStopped =
+  "{{sent}} de {{total}} arquivo(s) enviados. O envio parou em {{name}}. O que falta continua aqui para você tentar de novo.";
+en.messagesInput.sendStopped =
+  "{{sent}} of {{total}} file(s) sent. Sending stopped at {{name}}. What is left is still here for you to try again.";
+es.messagesInput.sendStopped =
+  "{{sent}} de {{total}} archivo(s) enviados. El envío se detuvo en {{name}}. Lo que falta sigue aquí para que lo intentes de nuevo.";
+pt.backendErrors.ERR_NO_MEDIA_RECEIVED =
+  "Nenhum arquivo chegou ao servidor. Atualize a página (F5) e envie de novo.";
+en.backendErrors.ERR_NO_MEDIA_RECEIVED =
+  "No file reached the server. Refresh the page (F5) and send again.";
+es.backendErrors.ERR_NO_MEDIA_RECEIVED =
+  "Ningún archivo llegó al servidor. Actualiza la página (F5) y envía de nuevo.";
+
 // Zap Komunick: files dropped on the internal chat while it cannot take them.
 pt.chatPage.dropUnavailable =
   "Não é possível anexar agora. Termine o envio ou a gravação em andamento.";

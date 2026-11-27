@@ -98,6 +98,18 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   com Esc ou com um clique fora não conta mais como "Agora não"; o cartão acompanha a tela quando o celular é virado; e
   responder ao convite numa aba fecha o convite nas outras (RF-031).
 - A barra de envio de anexos segue o tema. No modo escuro ela era quase branca e o nome do arquivo não aparecia.
+- Enviar vários anexos de uma vez no atendimento. As imagens são reduzidas no navegador antes de subir, e o envio
+  saía depois de 2 segundos fixos, com o que estivesse pronto: com várias fotos, ou num computador mais lento, parte
+  dos arquivos (ou todos) ficava de fora sem nenhum aviso, e a ordem podia trocar. Agora:
+  - cada arquivo espera a própria redução e vai num pedido só dele, na ordem em que foi escolhido. Uma foto sozinha
+    também sai mais rápido, sem a espera fixa;
+  - se um arquivo falhar, o envio para ali, um aviso diz em qual arquivo parou e os que faltam continuam selecionados
+    para tentar de novo. Antes, a seleção inteira era descartada;
+  - colar (Ctrl+V) vários arquivos anexa todos, e não só o primeiro;
+  - foto que o navegador não consegue reduzir (HEIC, por exemplo) vai como está, em vez de ser descartada;
+  - no servidor, os arquivos de um mesmo pedido saem um por vez e na ordem (saíam todos ao mesmo tempo), a cópia
+    temporária é apagada mesmo quando o envio falha, e um pedido de envio que chega sem nenhum arquivo é recusado com
+    erro, em vez de respondido como sucesso.
 - Conexão de WhatsApp que parece aberta e não recebe mais nada:
   - um download interno cortado ou parado por 60 s agora dá erro. Antes ele esperava para sempre e prendia a fila
     de mensagens, confirmações e avisos;
