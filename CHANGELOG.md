@@ -149,13 +149,16 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   usa um nome encurtado e sem caracteres que quebram caminho ou link; o cliente recebe o nome original. Vários
   arquivos enviados juntos não se sobrescrevem mais.
 - O menu lateral do desktop se recolhe quando o mouse sai da barra.
-- Depois de transferir um cliente para outro setor, quem transferiu abria a conversa do cliente de novo e a conversa
+- Depois de transferir um cliente para outro setor, quem transferiu abria uma conversa com ele de novo e a conversa
   do dia não estava mais lá. Com o histórico "Só dos setores do atendente", as mensagens seguiam o setor atual do
-  atendimento; agora cada mensagem segue o setor em que foi trocada. Quem atendeu continua lendo a parte que o seu
-  setor conversou (com os anexos) e pode citar essas mensagens numa resposta; o que o outro setor trocar depois
-  continua só dele, e o atendimento transferido continua fechado para quem não é do setor. No histórico, o atendimento
-  que ainda está aberto aparece como "Atendimento em andamento", e o menu dessas mensagens oferece só **Responder**
-  (reagir, editar, apagar e encaminhar dependem do atendimento da mensagem e eram recusados) (RF-017, RF-027).
+  atendimento. Agora, de um atendimento que saiu do seu setor, a pessoa continua lendo tudo o que já estava na
+  conversa até a última mensagem trocada no setor dela (inclusive o que o cliente escreveu a outro setor antes de
+  chegar a ela, e os anexos), e pode citar essas mensagens numa resposta. O que o setor seguinte trocar depois
+  continua só dele, e o atendimento transferido continua fechado para quem não é do setor. Atendimento que está no
+  setor da pessoa aparece inteiro no histórico, como ao abri-lo. No histórico, outro atendimento do cliente que ainda
+  não foi resolvido aparece como "Atendimento em andamento", e o menu das mensagens de um atendimento fora do setor
+  da pessoa oferece só **Responder** (reagir, editar, apagar e encaminhar dependem do atendimento da mensagem e eram
+  recusados). Uma mensagem que já estava na conversa e for editada depois aparece com o texto atual (RF-017, RF-027).
 
 ### Segurança
 
@@ -166,10 +169,11 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   `;`, `&` ou `$()` não executa mais comandos no servidor. Os uploads guardam só extensões alfanuméricas simples.
 - Entrar em outra empresa (impersonação) exige conta Super já na rota, antes das checagens do serviço.
 
-- Na visibilidade por fila, uma mensagem de outro atendimento do cliente só é lida por quem é do setor gravado nela;
-  mensagem antiga sem setor exige acesso à fila atual do atendimento dela. Anexos e citações seguem a mesma regra
-  (ajustada em 26/11: antes exigia também acesso à fila atual do atendimento, o que tirava do setor de origem a
-  conversa que ele mesmo teve). Criar ou excluir usuários exige o perfil administrativo atual.
+- Na visibilidade por fila, de outro atendimento do cliente a pessoa só lê o que o setor dela pode ler ou já leu: o
+  atendimento que está hoje num setor dela, e, do que saiu, o que havia na conversa até a última mensagem do setor
+  dela. Anexos e citações seguem a mesma regra (ajustada em 26/11: antes valiam o setor atual do atendimento e o
+  setor gravado na mensagem, o que tirava do setor de origem a conversa que ele mesmo teve). Criar ou excluir usuários
+  exige o perfil administrativo atual.
 
 - A geração de um novo QR Code fica restrita a administradores da empresa dona do canal desconectado.
 

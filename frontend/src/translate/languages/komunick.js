@@ -603,7 +603,7 @@ const pt = {
   messageOptionsMenu: {
     importedReadOnly: "Histórico do ZapContábil: só para consulta",
     otherSectorReplyOnly:
-      "Atendimento em outro setor: dá para ler e responder citando"
+      "Atendimento fora do seu setor: dá para ler e responder citando"
   },
   messagesInput: {
     placeholderPaused: "Atendimento pausado. Clique em Retomar para responder.",
@@ -1323,7 +1323,7 @@ const en = {
   messageOptionsMenu: {
     importedReadOnly: "ZapContábil history: read only",
     otherSectorReplyOnly:
-      "Ticket in another sector: you can read it and quote it in a reply"
+      "Ticket outside your sector: you can read it and quote it in a reply"
   },
   messagesInput: {
     placeholderPaused: "Ticket paused. Click Resume to reply.",
@@ -2047,7 +2047,7 @@ const es = {
   messageOptionsMenu: {
     importedReadOnly: "Historial de ZapContábil: solo consulta",
     otherSectorReplyOnly:
-      "Atención en otro sector: se puede leer y responder citando"
+      "Atención fuera de su sector: se puede leer y responder citando"
   },
   messagesInput: {
     placeholderPaused: "Atención pausada. Haga clic en Retomar para responder.",

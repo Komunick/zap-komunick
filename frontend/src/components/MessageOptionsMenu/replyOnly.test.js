@@ -15,8 +15,8 @@ jest.mock("../MessageForwardModal", () => () => null);
 jest.mock("../ConfirmationModal", () => () => null);
 jest.mock("emoji-mart", () => ({ Picker: () => null }));
 
-// One of her own messages, edited, with a WhatsApp payload: every action of
-// the menu applies to it.
+// An outgoing message, edited, with a WhatsApp payload: every action of the
+// menu applies to it.
 const message = {
   id: "m1",
   ticketId: 303,
@@ -64,10 +64,11 @@ test("a message of the open ticket keeps every action", () => {
   ).not.toBeInTheDocument();
 });
 
-// The history shows what her sector exchanged on a ticket that is now in
-// another sector. The server refuses to react, edit, delete, forward and show
-// the edit history there: the menu does not offer what can only fail.
-test("a message of a ticket in another sector can only be quoted in a reply", () => {
+// The history shows messages of a ticket she may not open any more: what her
+// sector exchanged there and what was in the conversation before it. The
+// server refuses to react, edit, delete, forward and show the edit history
+// there: the menu does not offer what can only fail.
+test("a message of a ticket outside her sector can only be quoted in a reply", () => {
   const { setReplyingMessage } = open({ replyOnly: true });
   ACTIONS.forEach(action =>
     expect(screen.queryByText(action)).not.toBeInTheDocument()

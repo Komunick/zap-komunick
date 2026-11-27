@@ -148,9 +148,9 @@ const MessageOptionsMenu = ({
             {i18n.t("messageOptionsMenu.importedReadOnly")}
           </MenuItem>
         )}
-        {/* Zap Komunick: a message of a ticket that is now in another sector
-            can be read and quoted in a reply; the other actions are decided by
-            its own ticket and the server refuses them (RF-027) */}
+        {/* Zap Komunick: a message of a ticket that left the sector of the
+            attendant can be read and quoted in a reply; the other actions are
+            decided by its own ticket and the server refuses them (RF-027) */}
         {replyOnly && !isImported && (
           <MenuItem disabled>
             {i18n.t("messageOptionsMenu.otherSectorReplyOnly")}

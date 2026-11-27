@@ -16,7 +16,8 @@ import {
 } from "../../helpers/AttachmentRules";
 import { URLCharEncoder } from "../../helpers/URLCharEncoder";
 import {
-  loadSectorTicketIds,
+  loadSectorHistory,
+  NO_SECTOR_HISTORY,
   sectorHistoryFence
 } from "../../helpers/HistoryVisibility";
 import AuthorizeTicketContextService, {
@@ -74,15 +75,16 @@ const scope = async (ticketId: string, actor: ContextActor) => {
     ticket,
     viewer,
     restrictHistory,
-    // tickets of the client now in a sector of the attendant: the ones whose
-    // files without a sector may be read (helpers/HistoryVisibility)
-    sectorTicketIds: restrictHistory
-      ? await loadSectorTicketIds(
+    // how far the sectors of the attendant reach in the other tickets of the
+    // client (helpers/HistoryVisibility)
+    history: restrictHistory
+      ? await loadSectorHistory(
           ticket.contactId,
           actor.companyId,
-          viewer.queueIds
+          viewer.queueIds,
+          ticket.id
         )
-      : [],
+      : NO_SECTOR_HISTORY,
     fingerprint: JSON.stringify([
       ticket.id,
       ticket.contactId,
@@ -108,14 +110,11 @@ const conditions = (state: Scope, companyId: number): WhereOptions[] => {
     }
   ];
   // Same RF-017 fence as ListMessagesService: transfers preserve the current
-  // ticket, while historical messages keep the sector written on them.
+  // ticket, and of the tickets that left the sector of the attendant only
+  // what was there until the sector's last message.
   if (state.restrictHistory)
     result.push(
-      sectorHistoryFence(
-        state.ticket.id,
-        state.viewer.queueIds,
-        state.sectorTicketIds
-      )
+      sectorHistoryFence(state.ticket.id, state.viewer.queueIds, state.history)
     );
   return result;
 };

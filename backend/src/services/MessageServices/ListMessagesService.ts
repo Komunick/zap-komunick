@@ -13,7 +13,10 @@ import {
   HistoryTicketSummary,
   summarizeHistoryTicket
 } from "../../helpers/HistoryTickets";
-import { sectorHistoryFence } from "../../helpers/HistoryVisibility";
+import {
+  sectorHistoryFence,
+  sectorHistoryOf
+} from "../../helpers/HistoryVisibility";
 
 interface Request {
   ticketId: string;
@@ -84,16 +87,14 @@ const ListMessagesService = async ({
   ];
 
   if (restrictHistory) {
-    // In the other tickets of the client, a message belongs to the sector
-    // written on it, wherever its ticket is now; one without a sector follows
-    // the ticket (helpers/HistoryVisibility).
+    // The tickets that are in a sector of the attendant now, whole; of the
+    // ones that left, what was in the conversation up to the last message of
+    // their sector (helpers/HistoryVisibility).
     fence.push(
       sectorHistoryFence(
         ticket.id,
         queues,
-        contactTickets
-          .filter(t => t.queueId !== null && queues.includes(t.queueId))
-          .map(t => t.id)
+        await sectorHistoryOf(contactTickets, companyId, queues, ticket.id)
       )
     );
   }

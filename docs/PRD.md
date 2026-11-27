@@ -569,10 +569,10 @@ mostrava as mensagens do atendimento aberto.
 - A conversa mostra o histórico de todos os atendimentos do cliente, do mais antigo ao atual, com uma divisória
   "Atendimento anterior #N" e "Atendimento atual #N" (e "Atendimento em andamento #N" para outro atendimento do
   cliente que ainda não foi resolvido, RF-027).
-- Com a visibilidade por fila, cada mensagem dos outros atendimentos do cliente pertence ao setor em que foi
-  trocada (o setor gravado na mensagem), esteja o atendimento onde estiver hoje; mensagem sem setor gravado segue o
-  setor atual do atendimento dela. A regra vale para anexos, citações e respostas (detalhe em RF-027). O atendimento
-  atual mantém o contexto que a equipe recebe em uma transferência.
+- Com a visibilidade por fila, dos outros atendimentos do cliente a pessoa lê: inteiros, os que estão hoje num setor
+  dela; e, dos que saíram do setor dela, o que já estava na conversa até a última mensagem trocada no setor dela. A
+  regra vale para anexos, citações e respostas (detalhe em RF-027). O atendimento atual mantém o contexto que a equipe
+  recebe em uma transferência.
 - Na janela de transferência, um campo "Contexto para o setor" e a lista das últimas mensagens do atendimento para
   destacar. A nota aparece na conversa num cartão próprio ("Nota de transferência", de onde para onde, quem
   escreveu), visível só para a equipe: o cliente não recebe nada, não conta como resposta no SLA e não vira a última
@@ -885,24 +885,40 @@ não é dessa fila os atendimentos e as mensagens de outras filas.
 - O SuperChat só tem as mensagens que passaram por ele com o canal conectado. Conversas feitas direto no celular antes
   do pareamento, ou com o canal fora, não estão no banco: a sincronização do histórico do WhatsApp continua desligada.
 - **Transferir não apaga a conversa de quem transferiu (26/11/2026, JB Fraga).** Relato: "transferi o cliente para o
-  outro setor, quando abri a conversa com ele novamente, a conversa de hoje não consta lá". Com "Só dos setores do
-  atendente", o histórico era cortado pelo setor em que o atendimento está **agora**: ao transferir, o setor de origem
-  perdia até as mensagens que ele mesmo trocou. A regra passa a ser pelo setor gravado em cada mensagem:
-  - quem é do setor em que a mensagem foi trocada continua lendo essa mensagem (e seus anexos) no histórico do
-    cliente, ao abrir qualquer outro atendimento dele, mesmo depois de o atendimento ir para outro setor;
-  - o que o outro setor trocar depois da transferência é do outro setor e não aparece;
-  - mensagem sem setor gravado (menu do robô, linhas antigas) continua seguindo o setor atual do atendimento;
-  - o atendimento transferido em si continua fechado para quem não é do setor dele: não dá para abri-lo nem escrever
+  outro setor, quando abri a conversa com ele novamente, a conversa de hoje não consta lá". O caso: o cliente escreveu
+  ao Financeiro, foi passado ao Fiscal, a atendente do Fiscal respondeu e o passou ao Pessoal; à tarde ela abriu uma
+  conversa nova com ele e a manhã inteira tinha sumido. Com "Só dos setores do atendente", o histórico era cortado
+  pelo setor em que o atendimento está **agora**. A regra passa a ser: **no histórico, a pessoa lê as mensagens que o
+  setor dela pode ler ou já leu, e nenhuma mensagem que chegou depois de o setor sair.**
+  - Atendimento que está hoje num setor da pessoa: inteiro, como ao abri-lo (quem pode abrir um atendimento lê tudo
+    dele, qualquer que seja o setor gravado em cada mensagem).
+  - Atendimento que saiu do setor da pessoa (transferido, ou devolvido sem setor): tudo o que já estava na conversa
+    até a última mensagem trocada no setor dela, incluindo o que o cliente escreveu a outro setor antes de chegar a
+    ela, o menu do robô e os anexos. O setor de cada mensagem é o gravado nela; uma mensagem do setor dela prova que,
+    naquele momento, o atendimento era dela, com tudo o que vinha antes à vista.
+  - As mensagens que o setor seguinte trocar depois dessa última mensagem não aparecem.
+  - A regra decide **quais** mensagens aparecem, pela hora em que cada uma foi trocada, e não o estado delas depois:
+    uma mensagem que já estava na conversa e for editada ou apagada depois de o setor sair aparece como está hoje, com
+    a marca de editada ou apagada. O histórico de edição continua só com o setor do atendimento.
+  - Atendimento em que o setor dela nunca trocou mensagem, e que não está no setor dela: nada.
+  - O atendimento transferido em si continua fechado para quem não é do setor dele: não dá para abri-lo nem escrever
     por ele. O que volta, dentro do histórico, é ler as mensagens, abrir os anexos e citar uma delas numa resposta
     enviada pelo atendimento que a pessoa tem aberto. Reagir, editar, apagar, encaminhar e ver o histórico de edição
     continuam dependendo do atendimento da mensagem e são recusados; por isso o menu dessas mensagens mostra só
-    **Responder**, com o aviso "Atendimento em outro setor: dá para ler e responder citando";
-  - a nota de transferência ("Contexto para o setor") é do setor que recebe o atendimento: fica com ele, e quem
-    transferiu não a lê de volta no histórico;
-  - no histórico, um atendimento do cliente que ainda não foi resolvido aparece como "Atendimento em andamento #N"
+    **Responder**, com o aviso "Atendimento fora do seu setor: dá para ler e responder citando".
+  - A nota de transferência ("Contexto para o setor") é gravada depois da transferência, com o setor que recebe:
+    fica com ele, e quem transferiu não a lê de volta no histórico.
+  - No histórico, um atendimento do cliente que ainda não foi resolvido aparece como "Atendimento em andamento #N"
     em vez de "Atendimento anterior". A divisória de um atendimento que saiu do setor da pessoa, aberto ou já
     resolvido, mostra a fila, o canal e o atendente atuais dele, como em RF-026 (a regra por setor esconde mensagens,
     não esses nomes).
+  - Administrador e a opção "Completo, de todos os setores" não mudam. Ninguém perde nada que lia antes.
+
+  **Cenário de sucesso (26/11):** dado um cliente que escreveu ao Financeiro às 08:24, foi passado ao Fiscal às 08:33,
+  recebeu respostas da atendente do Fiscal até 10:13 e foi passado por ela ao Pessoal, que respondeu às 14:41, quando
+  a atendente do Fiscal abre uma conversa nova com esse cliente às 16:21, então vê, antes da conversa nova, o
+  atendimento da manhã com as mensagens das 08:24 às 10:13 (as do cliente ao Financeiro e as dela) e não vê a resposta
+  do Pessoal das 14:41.
 
 **Cenário de sucesso:**
 
