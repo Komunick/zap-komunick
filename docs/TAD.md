@@ -67,6 +67,23 @@ do upstream para facilitar a mesclagem de novas versões.
   usam `ACTIVE_TICKET_STATUSES` (`open`, `pending`, `paused`), então a mensagem do cliente cai no atendimento pausado.
   O aviso pelo socket segue o do upstream (`company-<id>-<status>` e `user-<id>`); a aba "Pausados" é uma lista com
   `status=paused`. O SLA só olha `open` e `pending`, então o pausado sai do painel e do selo.
+- Mensagem de finalização (RF-034): `helpers/CloseCompletion` concentra quando há mensagem de conclusão a enviar
+  (`completionTextOnClose`: canal WhatsApp conectado, não é grupo, cliente sem `disableBot`, texto em
+  `Whatsapps.complationMessage`) e quem decide (`completionAllowed`). A configuração `completionMessagePrompt` (padrão
+  `disabled`, legível por atendentes, só aceita `enabled`/`disabled` e é igualada em todas as linhas da empresa) em
+  `enabled` faz `UpdateTicketService` só enviar com `sendCompletion: true` no corpo do `PUT /tickets/:id`. Em
+  `disabled` todo encerramento não silencioso envia, como antes, salvo `sendCompletion: false` explícito (o não de quem
+  foi perguntado com a opção ainda ligada). No modo perguntar, um sim que não pode ser atendido (atendimento já
+  `closed`, conexão fora, fila sem vínculo com a conexão, sem texto) devolve `409 ERR_COMPLETION_NOT_SENT` e nada é
+  finalizado; por isso um segundo `PUT` com sim não reenvia a mensagem. `justClose` com sim é tratado como silencioso.
+  `GET /tickets/:id/completion` (`ShowCloseCompletionService`, atrás de `AuthorizeTicketContextService`) devolve
+  `{ ask, message }` com o texto já formatado para a janela; ele repete as condições do envio (inclusive a regra de
+  grupo, pelo contato ou pelo atendimento), exige a fila ligada à conexão (`IsWhatsAppQueueLinked`) e a avaliação
+  desligada, e responde `ask: false` se o texto não puder ser formatado. O fluxo de avaliação (`wbotMessageListener`,
+  `queues.ts`) envia a mensagem de conclusão por conta própria e não passa por essa regra. Na tela,
+  `CloseTicketModal` ganhou `askReason` e `completionMessage` e manda a resposta como foi dada (`true` ou `false`);
+  `TicketActionButtonsCustom` lê a opção no clique, consulta o servidor antes de abrir a janela e a fecha se o
+  atendimento mudar de estado.
 - Motivo de finalização: na transição para `closed`, `UpdateTicketService` lê a configuração `closeReasonRequired` e os
   ids ativos da empresa e aplica `checkCloseReason`; só exige quando a chamada traz o usuário (`TicketController.update`)
   e o atendimento não é grupo. Motivo e observação ficam no `TicketTraking` do ciclo que fecha; o relatório agrupa
@@ -129,7 +146,8 @@ Stitch entra como tokens: `sidebar*` (menu preto, igual nos dois temas), `accent
 - `Users.accessHours` (JSONB, nulo): `{ weekdays: number[], start: "HH:mm", end: "HH:mm" }`.
 - `Schedules.recurrence` (texto, padrão `none`), `recurrenceEndAt` e `recurrenceAnchorAt` (datas, nulas).
 - Configurações por empresa (`Settings`): `slaMinutes` (padrão 0), `slaOldTicketHours` (padrão 72),
-  `walletAutoAssign` (padrão `disabled`), `closeReasonRequired` (padrão `disabled`).
+  `walletAutoAssign` (padrão `disabled`), `closeReasonRequired` (padrão `disabled`), `completionMessagePrompt`
+  (padrão `disabled`).
 
 **Dados da segunda entrega (migrações `20261021130000` e `20261021130100`):**
 - Tabela `CloseReasons` (`name`, `active` padrão verdadeiro, `companyId` com `ON DELETE CASCADE`), índice por empresa.

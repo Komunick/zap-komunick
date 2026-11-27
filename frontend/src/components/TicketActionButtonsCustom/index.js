@@ -58,6 +58,9 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
   const { getSetting } = useSettings();
   const [closeReasonRequired, setCloseReasonRequired] = useState(false);
   const [closeModalOpen, setCloseModalOpen] = useState(false);
+  // Zap Komunick (RF-034): the office may ask whoever finishes whether the
+  // client receives the completion message
+  const [completionMessage, setCompletionMessage] = useState(null);
   const [transferModalOpen, setTransferModalOpen] = useState(false);
 
   useEffect(() => {
@@ -96,13 +99,42 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
     }
   };
 
-  const handleFinish = e => {
-    if (closeReasonRequired && !ticket.isGroup) {
+  const handleFinish = async e => {
+    const askReason = closeReasonRequired && !ticket.isGroup;
+    let message = null;
+    if (!ticket.isGroup) {
+      // The option of the office is read at the click (it is cached and kept
+      // fresh by the socket), never from what this screen saw when it opened.
+      // Then the server says whether there is a message to ask about and shows
+      // the text as the client would receive it.
+      setLoading(true);
+      try {
+        const prompt = await getSetting("completionMessagePrompt", "disabled");
+        if (prompt === "enabled") {
+          const { data } = await api.get(`/tickets/${ticket.id}/completion`);
+          if (data?.ask && data.message) message = data.message;
+        }
+      } catch (err) {
+        setLoading(false);
+        toastError(err);
+        return;
+      }
+      setLoading(false);
+    }
+    setCompletionMessage(message);
+    if (askReason || message) {
       setCloseModalOpen(true);
       return;
     }
     handleUpdateTicketStatus(e, "closed", user?.id);
   };
+
+  // The window does not outlive the ticket it would finish: finished in
+  // another tab, or another ticket opened in this place, it closes.
+  useEffect(() => {
+    setCloseModalOpen(false);
+    setCompletionMessage(null);
+  }, [ticket.id, ticket.status]);
 
   const handleClosedWithReason = () => {
     setCurrentTicket({ id: null, code: null });
@@ -165,6 +197,8 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
         onClose={() => setCloseModalOpen(false)}
         ticket={ticket}
         onClosed={handleClosedWithReason}
+        askReason={closeReasonRequired && !ticket.isGroup}
+        completionMessage={completionMessage}
       />
       <TransferTicketModalCustom
         modalOpen={transferModalOpen}

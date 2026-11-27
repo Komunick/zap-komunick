@@ -1150,6 +1150,78 @@ quando uma versão nova é publicada,
 então aparece **Atualizar** na barra de cima, sem interromper o que ela digita; ao clicar em Atualizar agora, a página
 volta na mesma conversa, com o texto que ela tinha digitado, e o convite do tour aparece se ela ainda não respondeu.
 
+### RF-034 — Mensagem de finalização com pergunta a quem finaliza
+
+**Pedido (27/11/2026, JB Fraga), nas palavras do dono:** "importe as mensagens automáticas que existiam no zap
+contábil, ao finalizar uma conversa uma notificação com envio de mensagem automática é enviada aos funcionários,
+adicione isso ao site".
+
+**Como foi entendido (a confirmar com o dono):** ao finalizar uma conversa, quem atende é avisado e decide se a
+mensagem automática de finalização vai para o cliente. A tela do ZapContábil não foi consultada; o entendimento vem do
+histórico importado (RF-029), descrito a seguir.
+
+**O que o histórico importado mostra** (só textos enviados sem assinatura de atendente e repetidos em centenas de
+atendimentos, que são modelos do sistema e não conversa de cliente):
+- o menu de boas-vindas com os seis setores e as boas-vindas de cada setor: o SuperChat já tinha, com o mesmo texto;
+- a **mensagem de finalização** "*Seu atendimento será finalizado.* Sempre que precisar não hesite em nos contatar,
+  será um prazer atendê-lo.": faltava. Ela está em 10.980 dos 78.870 atendimentos importados (14%); de agosto de 2026
+  em diante, em 815 de 8.007 (10%). Como não vai em todo atendimento, tudo indica que era uma escolha de quem
+  finalizava, e não um envio automático em todo encerramento;
+- não foram trazidos, e ficam como decisão do dono: "*Por favor, escolha uma opção válida*" antes do menu, quando o
+  cliente digita algo que não é um setor (o SuperChat repete o menu sem essa frase), e uma boas-vindas genérica
+  "Bem vindo(a), a JB Fraga Contabilidade! Aguarde um momento…" (o SuperChat leva o cliente ao Atendimento geral depois
+  do tempo de espera, RF-033, com a boas-vindas dessa fila);
+- não apareceu mensagem de fora de horário nem de avaliação em uso.
+
+**Regras importantes:**
+- O texto é a **Mensagem de conclusão** da conexão (Conexões › editar a conexão), que já existia.
+- Opção nova em Configurações › Opções › **Mensagem de finalização ao cliente**:
+  - **Enviar sempre que finalizar** (padrão, como sempre foi): todo encerramento que não seja silencioso envia a
+    mensagem, o "Finalizar" da conversa e também os encerramentos automáticos (inatividade, fora de horário).
+  - **Perguntar a quem finaliza**: ao clicar em **Finalizar** na conversa, abre a janela "Finalizar atendimento" com o
+    texto que o cliente vai receber e dois botões, **Enviar mensagem e finalizar** e **Finalizar sem mensagem**. O
+    botão que envia nunca é o que está em foco, nem o de destaque, nem o último (onde sempre ficou o "Finalizar"): um
+    Enter distraído ou um clique por costume não manda mensagem a cliente.
+- No modo perguntar, a mensagem só sai com o sim de quem finaliza, dito no próprio pedido ao servidor. Finalizar pela
+  lista, em lote, por automação (inatividade, fora de horário), ou por uma tela aberta antes de a opção ser ligada não
+  envia nada.
+- A pergunta só aparece quando há o que enviar: conexão do atendimento conectada e com mensagem de conclusão, conversa
+  com uma pessoa (grupo não), cliente que não desligou o robô, e setor que responde por aquela conexão. Fora disso,
+  "Finalizar" finaliza direto, como hoje.
+- Com "Exigir motivo ao finalizar" (RF-007) ligado, a mesma janela pede o motivo e faz a pergunta.
+- **Exceção, avaliação do atendimento ligada:** a pergunta não aparece. O fim do atendimento continua com o fluxo da
+  avaliação, que pede a nota e depois envia a mensagem de conclusão por conta própria, sem perguntar a ninguém. Quem
+  quer a pergunta deve manter a avaliação desligada (é o caso da JB Fraga).
+- Quem pode ver a pergunta é quem pode abrir o atendimento.
+- A opção só aceita os dois valores; outro valor é recusado, para um erro de digitação não virar "enviar sempre".
+
+**Quando algo falha:**
+- O servidor não responde à pergunta: nada é finalizado, a tela mostra o erro e a pessoa tenta de novo.
+- A pessoa escolheu enviar e a mensagem não pode ir (o atendimento já tinha sido finalizado em outra aba, a conexão
+  caiu, o setor não responde por aquela conexão): nada é finalizado, a tela avisa, a janela continua aberta e
+  "Finalizar sem mensagem" está a um clique. O cliente não recebe a mensagem duas vezes.
+- Tela aberta antes de a opção ser ligada: finaliza sem perguntar e sem enviar, até ser recarregada.
+- O texto da conexão tem uma marcação quebrada (por exemplo `{{nome` sem fechar): a pergunta não aparece e "Finalizar"
+  finaliza sem enviar.
+
+**Para ligar num escritório, nesta ordem:**
+1. conferir que a avaliação do atendimento está desligada;
+2. ligar a opção "Perguntar a quem finaliza" e conferir que ficou gravada;
+3. só então escrever a mensagem de conclusão na conexão. Na ordem inversa, entre um passo e outro todo encerramento
+   enviaria a mensagem;
+4. para voltar atrás, primeiro apagar a mensagem de conclusão da conexão e só depois trocar a opção: com o texto
+   gravado, "Enviar sempre que finalizar" manda a mensagem em todo encerramento, inclusive os automáticos.
+
+Enquanto o mesmo número estiver ligado também ao ZapContábil, quem finalizar a mesma conversa nos dois sistemas
+enviando a mensagem nos dois faz o cliente recebê-la duas vezes: combinar com a equipe em qual dos dois se finaliza.
+
+**Cenário de sucesso:**
+
+Dado a JB Fraga com a mensagem de conclusão cadastrada na conexão e a opção em "Perguntar a quem finaliza",
+quando a atendente clica em "Finalizar" numa conversa e escolhe "Enviar mensagem e finalizar",
+então o cliente recebe "*Seu atendimento será finalizado.* …" e o atendimento vai para Resolvidos; se ela escolher
+"Finalizar sem mensagem", o atendimento vai para Resolvidos e o cliente não recebe nada.
+
 ## 4. Restrições e cuidados
 
 **Uso e acesso:** navegador, perfis do Ticketz (admin e usuário). Painel de SLA, carteira, horário de acesso, motivos
