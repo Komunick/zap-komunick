@@ -6,6 +6,13 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
 
 ### Adicionado
 
+- **Mensagem de finalização com pergunta a quem finaliza.** Em Configurações › Opções, "Mensagem de finalização ao
+  cliente" pode ficar em "Perguntar a quem finaliza": ao clicar em Finalizar na conversa, a pessoa vê o texto que o
+  cliente receberia (a "Mensagem de conclusão" da conexão) e escolhe entre **Enviar mensagem e finalizar** e
+  **Finalizar sem mensagem**. Nesse modo a mensagem só sai com essa escolha: finalizar pela lista, em lote ou por
+  automação não manda, e um atendimento já finalizado não recebe a mensagem de novo. Exceção: com a avaliação do
+  atendimento ligada a pergunta não aparece e a mensagem segue o fluxo da avaliação. O padrão continua "Enviar sempre
+  que finalizar", como era (RF-034).
 - Importação do histórico de conversas do ZapContábil como atendimentos fechados (script `importZappyHistory`, com
   simulação antes de gravar e sem repetir mensagens que o SuperChat já tem). Primeira etapa só com texto (RF-029).
   Mensagem importada é só para consulta: o menu avisa, e responder citando, encaminhar, editar, apagar ou reagir é

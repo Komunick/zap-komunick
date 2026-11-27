@@ -162,6 +162,15 @@ const pt = {
         enabled: "Exigir"
       }
     },
+    completionMessage: {
+      title: "Mensagem de finalização ao cliente",
+      helper:
+        'O texto é a "Mensagem de conclusão" da conexão (em Conexões). Perguntando, quem clica em Finalizar na conversa vê o texto e escolhe se o cliente recebe; finalizar pela lista, em lote ou sozinho pelo sistema não envia. Com a avaliação do atendimento ligada, a pergunta não aparece e a mensagem segue o fluxo da avaliação.',
+      options: {
+        always: "Enviar sempre que finalizar",
+        ask: "Perguntar a quem finaliza"
+      }
+    },
     sla: {
       group: "SLA e carteira de clientes",
       minutes: "Prazo de SLA (minutos sem resposta)",
@@ -608,6 +617,12 @@ const pt = {
     skippedFiles: "Pastas e arquivos vazios não podem ser anexados: {{names}}",
     moreFiles: "+{{count}} arquivo(s)"
   },
+  closeCompletion: {
+    subtitle: "Você está finalizando a conversa com {{contact}}.",
+    question: "Enviar ao cliente a mensagem de finalização?",
+    withoutMessage: "Finalizar sem mensagem",
+    withMessage: "Enviar mensagem e finalizar"
+  },
   closeReasons: {
     title: "Motivos de finalização",
     add: "Novo motivo",
@@ -879,6 +894,15 @@ const en = {
       options: {
         disabled: "Not required",
         enabled: "Required"
+      }
+    },
+    completionMessage: {
+      title: "Completion message to the client",
+      helper:
+        "The text is the connection's completion message (in Connections). When asking, whoever clicks Finish in the conversation sees the text and chooses whether the client receives it; closing from the list, in bulk or automatically does not send it. With service rating on, the question is not asked and the message follows the rating flow.",
+      options: {
+        always: "Always send when finishing",
+        ask: "Ask whoever finishes"
       }
     },
     sla: {
@@ -1324,6 +1348,12 @@ const en = {
     skippedFiles: "Folders and empty files cannot be attached: {{names}}",
     moreFiles: "+{{count}} file(s)"
   },
+  closeCompletion: {
+    subtitle: "You are finishing the conversation with {{contact}}.",
+    question: "Send the completion message to the client?",
+    withoutMessage: "Finish without message",
+    withMessage: "Send message and finish"
+  },
   closeReasons: {
     title: "Close reasons",
     add: "New reason",
@@ -1597,6 +1627,15 @@ const es = {
       options: {
         disabled: "No exigir",
         enabled: "Exigir"
+      }
+    },
+    completionMessage: {
+      title: "Mensaje de cierre al cliente",
+      helper:
+        "El texto es el mensaje de conclusión de la conexión (en Conexiones). Preguntando, quien hace clic en Finalizar en la conversación ve el texto y elige si el cliente lo recibe; cerrar desde la lista, en lote o automáticamente no lo envía. Con la evaluación de la atención activada, la pregunta no aparece y el mensaje sigue el flujo de la evaluación.",
+      options: {
+        always: "Enviar siempre al finalizar",
+        ask: "Preguntar a quien finaliza"
       }
     },
     sla: {
@@ -2045,6 +2084,12 @@ const es = {
     skippedFiles:
       "No se pueden adjuntar carpetas ni archivos vacíos: {{names}}",
     moreFiles: "+{{count}} archivo(s)"
+  },
+  closeCompletion: {
+    subtitle: "Está finalizando la conversación con {{contact}}.",
+    question: "¿Enviar al cliente el mensaje de cierre?",
+    withoutMessage: "Finalizar sin mensaje",
+    withMessage: "Enviar mensaje y finalizar"
   },
   closeReasons: {
     title: "Motivos de cierre",
@@ -4585,6 +4630,14 @@ en.messagesInput.sendStopped =
   "{{sent}} of {{total}} file(s) sent. Sending stopped at {{name}}. What is left is still here for you to try again.";
 es.messagesInput.sendStopped =
   "{{sent}} de {{total}} archivo(s) enviados. El envío se detuvo en {{name}}. Lo que falta sigue aquí para que lo intentes de nuevo.";
+// Zap Komunick (RF-034): the person asked for the completion message and it
+// could not go; the ticket was not finished.
+pt.backendErrors.ERR_COMPLETION_NOT_SENT =
+  "A mensagem de finalização não pôde ser enviada (conexão fora do ar ou atendimento já finalizado). Nada foi finalizado: tente de novo ou finalize sem mensagem.";
+en.backendErrors.ERR_COMPLETION_NOT_SENT =
+  "The completion message could not be sent (connection down or ticket already finished). Nothing was finished: try again or finish without the message.";
+es.backendErrors.ERR_COMPLETION_NOT_SENT =
+  "No se pudo enviar el mensaje de cierre (conexión caída o atención ya finalizada). No se finalizó nada: inténtalo de nuevo o finaliza sin mensaje.";
 pt.backendErrors.ERR_NO_MEDIA_RECEIVED =
   "Nenhum arquivo chegou ao servidor. Atualize a página (F5) e envie de novo.";
 en.backendErrors.ERR_NO_MEDIA_RECEIVED =

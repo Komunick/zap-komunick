@@ -11,6 +11,7 @@ import {
 } from "../../helpers/GeneralTriage";
 import Queue from "../../models/Queue";
 import { FORCE_MESSAGE_SIGNATURE } from "../../helpers/MessageSignature";
+import { COMPLETION_PROMPT_SETTING } from "../../helpers/CloseCompletion";
 
 interface Request {
   key: string;
@@ -46,6 +47,14 @@ const UpdateSettingService = async ({
   }
   if (
     key === FORCE_MESSAGE_SIGNATURE &&
+    !["enabled", "disabled"].includes(value)
+  ) {
+    throw new AppError("ERR_SYNTAX", 400);
+  }
+  // Zap Komunick (RF-034): anything but these two would be read as "always
+  // send", the opposite of what someone turning the question on wants.
+  if (
+    key === COMPLETION_PROMPT_SETTING &&
     !["enabled", "disabled"].includes(value)
   ) {
     throw new AppError("ERR_SYNTAX", 400);
@@ -93,7 +102,8 @@ const UpdateSettingService = async ({
       "integratedAssistantEnabled",
       GENERAL_TRIAGE_QUEUE,
       GENERAL_TRIAGE_TIMEOUT,
-      FORCE_MESSAGE_SIGNATURE
+      FORCE_MESSAGE_SIGNATURE,
+      COMPLETION_PROMPT_SETTING
     ].includes(key)
   ) {
     await Setting.update({ value }, { where: { companyId, key } });

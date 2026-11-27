@@ -148,6 +148,8 @@ export default function Options(props) {
   const [walletAutoAssign, setWalletAutoAssign] = useState("disabled");
   const [syncPhoneContacts, setSyncPhoneContacts] = useState("enabled");
   const [closeReasonRequired, setCloseReasonRequired] = useState("disabled");
+  const [completionMessagePrompt, setCompletionMessagePrompt] =
+    useState("disabled");
 
   const [queues, setQueues] = useState([]);
   const { findAll: findAllQueues } = useQueues();
@@ -364,6 +366,12 @@ export default function Options(props) {
         s => s.key === "closeReasonRequired"
       );
       setCloseReasonRequired(closeReasonRequiredSetting?.value || "disabled");
+      const completionMessagePromptSetting = settings.find(
+        s => s.key === "completionMessagePrompt"
+      );
+      setCompletionMessagePrompt(
+        completionMessagePromptSetting?.value || "disabled"
+      );
 
       const gracePeriod = settings.find(s => s.key === "gracePeriod");
       setGracePeriod(gracePeriod?.value || 0);
@@ -1172,6 +1180,35 @@ export default function Options(props) {
             </Select>
             <FormHelperText>
               {i18n.t("settings.closeReason.requiredHelper")}
+            </FormHelperText>
+          </FormControl>
+        </Grid>
+
+        <Grid xs={12} sm={6} md={4} item>
+          <FormControl className={classes.selectContainer}>
+            <InputLabel id="completion-message-prompt-label">
+              {i18n.t("settings.completionMessage.title")}
+            </InputLabel>
+            <Select
+              labelId="completion-message-prompt-label"
+              value={completionMessagePrompt}
+              onChange={async e => {
+                handleSetting(
+                  "completionMessagePrompt",
+                  e.target.value,
+                  setCompletionMessagePrompt
+                );
+              }}
+            >
+              <MenuItem value={"disabled"}>
+                {i18n.t("settings.completionMessage.options.always")}
+              </MenuItem>
+              <MenuItem value={"enabled"}>
+                {i18n.t("settings.completionMessage.options.ask")}
+              </MenuItem>
+            </Select>
+            <FormHelperText>
+              {i18n.t("settings.completionMessage.helper")}
             </FormHelperText>
           </FormControl>
         </Grid>

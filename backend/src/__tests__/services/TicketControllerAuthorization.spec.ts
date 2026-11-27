@@ -6,6 +6,7 @@ import AuthorizeTicketContextService, {
 } from "../../services/TicketServices/AuthorizeTicketContextService";
 import CreateTicketService from "../../services/TicketServices/CreateTicketService";
 import UpdateTicketService from "../../services/TicketServices/UpdateTicketService";
+import ShowCloseCompletionService from "../../services/TicketServices/ShowCloseCompletionService";
 import DeleteTicketService from "../../services/TicketServices/DeleteTicketService";
 import Ticket from "../../models/Ticket";
 import Contact from "../../models/Contact";
@@ -28,6 +29,9 @@ jest.mock("../../services/TicketServices/ShowTicketFromUUIDService", () =>
   jest.fn()
 );
 jest.mock("../../services/TicketServices/ShowTicketService", () => jest.fn());
+jest.mock("../../services/TicketServices/ShowCloseCompletionService", () =>
+  jest.fn()
+);
 jest.mock("../../services/TicketServices/UpdateTicketService", () => jest.fn());
 jest.mock("../../services/TicketServices/ListTicketsServiceKanban", () =>
   jest.fn()
@@ -74,6 +78,26 @@ describe("ticket mutations cannot bypass context authorization", () => {
     await expect(TicketController.update(req, res)).rejects.toBe(denied);
     expect(Ticket.findByPk).not.toHaveBeenCalled();
     expect(UpdateTicketService).not.toHaveBeenCalled();
+  });
+
+  it("asks about the completion message as the logged user, in their office", async () => {
+    (ShowCloseCompletionService as jest.Mock).mockResolvedValue({
+      ask: true,
+      message: "Até logo"
+    });
+    await TicketController.completion(req, res);
+    expect(ShowCloseCompletionService).toHaveBeenCalledWith("301", {
+      userId: "101",
+      companyId: 10
+    });
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ ask: true, message: "Até logo" });
+  });
+
+  it("passes on the refusal of the completion question", async () => {
+    (ShowCloseCompletionService as jest.Mock).mockRejectedValue(denied);
+    await expect(TicketController.completion(req, res)).rejects.toBe(denied);
+    expect(res.json).not.toHaveBeenCalled();
   });
 
   it("denies removal before calling the deletion service", async () => {

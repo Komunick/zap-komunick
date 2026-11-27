@@ -17,6 +17,7 @@ const safeSettingsKeys = new Set([
   "slaMinutes",
   "closeReasonRequired",
   "allowSilentlyClose",
+  "completionMessagePrompt",
   "generalTriageQueueId"
 ]);
 

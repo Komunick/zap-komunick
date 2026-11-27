@@ -31,6 +31,9 @@ export const safeSettingsKeys = {
   closeReasonRequired: "disabled",
   [FORCE_MESSAGE_SIGNATURE]: "disabled",
   allowSilentlyClose: "enabled",
+  // Zap Komunick (RF-034): whether who finishes is asked about the completion
+  // message; the ticket screen needs it to know if it has to ask.
+  completionMessagePrompt: "disabled",
   // Zap Komunick (RF-033): which queue is the general one, so the ticket
   // list can apply its queue filter to the conversations waiting for a sector.
   generalTriageQueueId: ""

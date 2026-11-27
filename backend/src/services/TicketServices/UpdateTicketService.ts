@@ -37,6 +37,13 @@ import {
 } from "../../helpers/GeneralTriage";
 import { loadTicketViewer } from "./AuthorizeTicketContextService";
 import { assignGeneralTriageDestination } from "../WbotServices/GeneralTriageRouting";
+import {
+  COMPLETION_PROMPT_SETTING,
+  completionAllowed,
+  completionRequested,
+  completionTextOnClose,
+  mayNotifyOnClose
+} from "../../helpers/CloseCompletion";
 
 export interface UpdateTicketData {
   status?: string;
@@ -46,6 +53,9 @@ export interface UpdateTicketData {
   chatbot?: boolean;
   queueOptionId?: number;
   justClose?: boolean;
+  // Zap Komunick (RF-034): the yes of whoever finishes, when the office asks
+  // before sending the completion message
+  sendCompletion?: boolean;
   closeReasonId?: number | null;
   closeReasonNote?: string | null;
 }
@@ -383,22 +393,55 @@ const UpdateTicketService = async ({
         ticketTraking.userId = ticket.userId;
       }
 
-      const canNotifyOnClose =
-        ticket.whatsapp?.status === "CONNECTED" &&
-        !isGroup &&
-        !ticket.contact.disableBot &&
-        !justClose;
+      const closeFacts = {
+        channel: ticket.channel,
+        isGroup: !!isGroup,
+        contactDisableBot: ticket.contact.disableBot,
+        whatsappStatus: ticket.whatsapp?.status,
+        completionMessage: ticket.whatsapp?.complationMessage
+      };
+      const canNotifyOnClose = mayNotifyOnClose(closeFacts) && !justClose;
       const shouldRequestRating =
         canNotifyOnClose &&
         userRatingSetting === "enabled" &&
         ticket.userId &&
         !ticketTraking.ratingAt;
-      const completionText = ticket.whatsapp?.complationMessage?.trim();
+      const completionText = completionTextOnClose(closeFacts);
+      // Zap Komunick (RF-034): when the office asks who finishes, the message
+      // only goes with that person's explicit yes
+      const completionPrompt =
+        completionText || ticketData.sendCompletion === true
+          ? await GetCompanySetting(
+              companyId,
+              COMPLETION_PROMPT_SETTING,
+              "disabled"
+            )
+          : "disabled";
+      // Said yes to the question: a ticket somebody else already finished
+      // (another tab, a retry after a lost answer) does not get the message a
+      // second time.
+      const saidYes =
+        !justClose &&
+        completionRequested(completionPrompt, ticketData.sendCompletion);
       const shouldSendCompletion =
-        canNotifyOnClose && ticket.channel === "whatsapp" && completionText;
+        canNotifyOnClose &&
+        !!completionText &&
+        completionAllowed(completionPrompt, ticketData.sendCompletion) &&
+        !(saidYes && oldStatus === "closed");
       const canNotify =
         (shouldRequestRating || shouldSendCompletion) &&
         (await canNotifyOnQueue(ticket));
+      // ...and when the message they asked for cannot go (the ticket was
+      // already finished, the connection dropped, the sector does not answer
+      // through it), nothing is finished: the window stays open, with the
+      // reason, and "finish without message" is one click away.
+      if (
+        saidYes &&
+        !shouldRequestRating &&
+        !(shouldSendCompletion && canNotify)
+      ) {
+        throw new AppError("ERR_COMPLETION_NOT_SENT", 409);
+      }
 
       if (shouldRequestRating && canNotify) {
         if (ticket.channel === "whatsapp") {
@@ -455,6 +498,13 @@ const UpdateTicketService = async ({
       }
 
       if (shouldSendCompletion && canNotify) {
+        // who sent it and how it was decided: later, the only way to tell
+        if (saidYes) {
+          logger.info(
+            { ticketId: ticket.id, reqUserId },
+            "Completion message sent by the choice of who finished."
+          );
+        }
         const body = formatBody(completionText, ticket);
         const sentMessage = await SendWhatsAppMessage({ body, ticket });
         await verifyMessage(sentMessage, ticket, ticket.contact);

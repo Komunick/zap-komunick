@@ -16,6 +16,13 @@ ticketRoutes.get(
 );
 
 ticketRoutes.get(
+  "/tickets/:ticketId/completion",
+  isAuth,
+  isCompliant,
+  TicketController.completion
+);
+
+ticketRoutes.get(
   "/tickets/u/:uuid",
   isAuth,
   isCompliant,

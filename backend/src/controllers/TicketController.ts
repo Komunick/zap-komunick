@@ -8,6 +8,7 @@ import DeleteTicketService from "../services/TicketServices/DeleteTicketService"
 import ListTicketsService from "../services/TicketServices/ListTicketsService";
 import ShowTicketUUIDService from "../services/TicketServices/ShowTicketFromUUIDService";
 import ShowTicketService from "../services/TicketServices/ShowTicketService";
+import ShowCloseCompletionService from "../services/TicketServices/ShowCloseCompletionService";
 import UpdateTicketService from "../services/TicketServices/UpdateTicketService";
 import AppError from "../errors/AppError";
 import {
@@ -262,6 +263,19 @@ export const show = async (req: Request, res: Response): Promise<Response> => {
   const contact = await ShowTicketService(ticketId, companyId);
 
   return res.status(200).json(contact);
+};
+
+// Zap Komunick (RF-034): before finishing, must the person be asked about the
+// completion message, and what would the client receive
+export const completion = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const result = await ShowCloseCompletionService(req.params.ticketId, {
+    userId: req.user.id,
+    companyId: req.user.companyId
+  });
+  return res.status(200).json(result);
 };
 
 export const showFromUUID = async (
