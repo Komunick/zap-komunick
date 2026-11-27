@@ -785,6 +785,14 @@ no cliente errado. Falha ou dado desatualizado fica explícito, sem confirmaçã
 - Arquivos externos/grandes podem manter a ação **Abrir original** pelo mecanismo existente. Os caminhos públicos
   legados do Express/nginx e da entrega ao destinatário continuam públicos; esta entrega não promete privatizá-los
   nem altera uploads, armazenamento, envio ou retenção dos arquivos.
+- **Prévia antes de enviar em janela baixa (25/11/2026):** ao escolher arquivos para enviar, a barra com o nome do
+  arquivo, **cancelar** e **enviar** fica inteira na tela e clicável. Em janela baixa (navegador com zoom num notebook
+  de 768 px de altura, celular deitado) quem cede espaço é o resto: a prévia encolhe e ajusta a imagem inteira dentro
+  da área que sobra (mínimo de 48 px); a conversa acima vira uma faixa e, com 560 px de altura ou menos, some; nessa
+  mesma altura a faixa de arquivos, painéis de integração e etiquetas sai da tela enquanto houver arquivo esperando
+  envio, e volta como estava ao enviar ou cancelar. Quando nem a prévia mínima cabe (várias miniaturas em janela muito
+  baixa), ela rola dentro de si, sem passar por cima da barra. Em monitor alto nada muda (prévia de até 360 px).
+  Medido de 1920x1080 até 683x300, que é um notebook de 768 px com o navegador maximizado em 200% de zoom.
 
 Essa compatibilidade pública refere-se aos arquivos dos atendimentos. Os anexos do chat interno seguem a regra
 privada do RF-010 e sua especificação, sem alterar a entrega de arquivos dos demais módulos neste recorte.

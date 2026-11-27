@@ -37,6 +37,10 @@ import { isWaitingForSector } from "../../helpers/generalTriage";
 
 const drawerWidth = 320;
 
+// A viewport of 560 CSS px of height or less. A maximised browser on a 768 px
+// notebook (about 630 px of page at 100%) gets there at about 115% of zoom.
+const LOW_WINDOW = "@media (max-height: 560px)";
+
 const useStyles = makeStyles(theme => ({
   root: {
     display: "flex",
@@ -91,6 +95,26 @@ const useStyles = makeStyles(theme => ({
     flexDirection: "column",
     position: "relative"
   },
+  // While files wait to be sent, the conversation (first child) gives way
+  // first: it keeps only what is left after the preview and the send bar took
+  // their room (`flex-basis: 0`), down to a strip. Without this, a long
+  // conversation would claim the height and squeeze the preview instead.
+  dropZoneWithPreview: {
+    "& > :first-child": { minHeight: 56, flexBasis: 0 },
+    // On a low window even that strip costs too much: the conversation gives
+    // all its room, and the name of the contact stays in the header above.
+    [LOW_WINDOW]: {
+      "& > :first-child": { minHeight: 0 }
+    }
+  },
+  // The strip between the header and the conversation (files of the ticket,
+  // integration panels, tags). On a low window it leaves the screen while
+  // files wait to be sent: its height is not ours to bound (the panels grow
+  // with what the integrations bring), and the send bar comes first. Hidden,
+  // not unmounted: it comes back as it was.
+  contextStripWithPreview: {
+    [LOW_WINDOW]: { display: "none" }
+  },
   dropOverlay: {
     position: "absolute",
     inset: theme.spacing(1),
@@ -142,6 +166,7 @@ const Ticket = () => {
   );
   const [dropRequest, setDropRequest] = useState(null);
   const [dragging, setDragging] = useState(false);
+  const [mediaPreviewOpen, setMediaPreviewOpen] = useState(false);
   const dragDepth = useRef(0);
   const { getSetting } = useSettings();
 
@@ -345,7 +370,10 @@ const Ticket = () => {
   const renderMessagesList = () => {
     return (
       <div
-        className={classes.dropZone}
+        className={clsx(
+          classes.dropZone,
+          mediaPreviewOpen && classes.dropZoneWithPreview
+        )}
         data-testid="ticket-drop-zone"
         onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
@@ -368,6 +396,7 @@ const Ticket = () => {
               ticket={ticket}
               showTabGroups
               dropRequest={dropRequest}
+              onMediaPreviewChange={setMediaPreviewOpen}
             />
           )}
         {dragging && (
@@ -420,7 +449,10 @@ const Ticket = () => {
             </Tooltip>
           )}
         </TicketHeader>
-        <Paper>
+        <Paper
+          className={clsx(mediaPreviewOpen && classes.contextStripWithPreview)}
+          data-testid="ticket-context-strip"
+        >
           {attachmentContextReady && (
             <div className={classes.attachmentToolbar}>
               <AttachmentsPanel

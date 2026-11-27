@@ -5,6 +5,19 @@ import ButtonBase from "@material-ui/core/ButtonBase";
 import InsertDriveFileIcon from "@material-ui/icons/InsertDriveFile";
 
 // Zap Komunick: what is about to be sent, shown above the send bar.
+//
+// THE PREVIEW GIVES WAY, THE SEND BAR DOES NOT. On a low window (a notebook
+// with the browser zoomed in, a phone lying down) there is not room for the
+// conversation, a 42vh picture and the bar. The picture area therefore
+// shrinks, down to `MIN_STAGE`, before anything else is pushed out of the
+// screen; the picture is fitted inside whatever area it gets. When not even
+// that fits, the preview scrolls INSIDE ITSELF: nothing of it may spill over
+// the send bar below, which would cover the thumbnails and take their clicks.
+
+// The smallest the picture area gets: still enough to tell which file it is.
+export const MIN_STAGE = 48;
+// Below this window height every pixel counts: the margins get tighter.
+const LOW_WINDOW = "@media (max-height: 480px)";
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -12,27 +25,45 @@ const useStyles = makeStyles(theme => ({
     flexDirection: "column",
     alignItems: "center",
     gap: 12,
-    padding: "16px 16px 4px"
+    padding: "16px 16px 4px",
+    // may shrink inside the composer when the window is low, and then scrolls
+    flex: "0 1 auto",
+    minHeight: 0,
+    overflowY: "auto",
+    [LOW_WINDOW]: { gap: 6, padding: "8px 16px 0" }
   },
   stage: {
+    position: "relative",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
     width: "100%",
+    // the height it would like; `flex-shrink` takes from it what is missing
     height: "min(360px, 42vh)",
+    flex: "0 1 auto",
+    minHeight: MIN_STAGE,
     color: theme.komunick.textSecondary
   },
+  // Fitted inside the area by its own box: an absolutely placed box always
+  // knows the size of the area, however the area got that size (a percentage
+  // of a flexed height is not reliable in every browser).
   image: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
     display: "block",
+    margin: "auto",
     maxWidth: "100%",
     maxHeight: "100%",
-    objectFit: "contain",
     borderRadius: 8
   },
-  fileIcon: { fontSize: 72 },
+  fileIcon: { fontSize: 72, maxHeight: "100%" },
   strip: {
     display: "flex",
+    flex: "none",
     maxWidth: "100%",
     gap: 8,
     padding: 2,
@@ -88,8 +119,8 @@ const MediaSendPreview = ({ files, selected, onSelect }) => {
   if (!files.some(isImageFile)) return null;
 
   return (
-    <div className={classes.root}>
-      <div className={classes.stage}>
+    <div className={classes.root} data-testid="media-send-preview">
+      <div className={classes.stage} data-testid="media-send-stage">
         <FilePreview
           file={files[selected]}
           className={classes.image}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useMemo, useRef } from "react";
+import React, { useState, useEffect, useLayoutEffect, useContext, useMemo, useRef } from "react";
 import withWidth, { isWidthUp } from "@material-ui/core/withWidth";
 import "emoji-mart/css/emoji-mart.css";
 import { Picker } from "emoji-mart";
@@ -65,6 +65,10 @@ import useTicketDraft from "../../hooks/useTicketDraft";
 
 const Mp3Recorder = new MicRecorder({ bitRate: 128 });
 
+// The bar of the files that wait to be sent: icon buttons of 48 px plus its
+// own padding.
+const VIEW_MEDIA_BAR_HEIGHT = 68;
+
 const useStyles = makeStyles(theme => ({
   mainWrapper: {
     display: "flex",
@@ -116,8 +120,22 @@ const useStyles = makeStyles(theme => ({
     display: "none"
   },
 
+  // Zap Komunick: the composer while files wait to be sent. On a low window
+  // (browser zoomed in, phone lying down) it may be given less height than the
+  // preview would like: the preview shrinks (components/MediaSendPreview), and
+  // the bar with the name of the file, cancel and send keeps its full height
+  // (`flex: none`) at the bottom. If even the smallest preview does not fit,
+  // the preview scrolls inside itself, above the bar. The composer itself only
+  // scrolls in the odd case of a bar taller than the room there is (a very
+  // long file name on several lines).
   viewMediaInputWrapper: {
     position: "relative",
+    display: "flex",
+    flexDirection: "column",
+    flex: "0 1 auto",
+    // the bar plus the 1 px border above it (everything is border-box)
+    minHeight: VIEW_MEDIA_BAR_HEIGHT + 1,
+    overflowY: "auto",
     backgroundColor: theme.komunick.composer,
     color: theme.komunick.text,
     borderTop: `1px solid ${theme.komunick.composerBorder}`
@@ -125,10 +143,14 @@ const useStyles = makeStyles(theme => ({
 
   viewMediaBar: {
     display: "flex",
+    flex: "none",
+    minHeight: VIEW_MEDIA_BAR_HEIGHT,
+    boxSizing: "border-box",
     padding: "10px 13px",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: 8
+    gap: 8,
+    backgroundColor: theme.komunick.composer
   },
 
   viewMediaName: {
@@ -880,12 +902,25 @@ function useCompanyMessageSignature(companyId, userId) {
 }
 
 const MessageInputCustom = props => {
-  const { ticket, showTabGroups, dropRequest } = props;
+  const { ticket, showTabGroups, dropRequest, onMediaPreviewChange } = props;
   const { status: ticketStatus, id: ticketId } = ticket;
   const classes = useStyles();
 
   const [medias, setMedias] = useState([]);
   const [selectedMedia, setSelectedMedia] = useState(0);
+  // Zap Komunick: tells the ticket screen that files wait to be sent, so the
+  // conversation above gives room to the preview on a low window. Before the
+  // browser paints: the screen must never be drawn with the preview on and the
+  // conversation still claiming the height.
+  const previewOpen = medias.length > 0;
+  const notifyPreview = useRef(onMediaPreviewChange);
+  notifyPreview.current = onMediaPreviewChange;
+  useLayoutEffect(() => {
+    notifyPreview.current?.(previewOpen);
+    return () => {
+      if (previewOpen) notifyPreview.current?.(false);
+    };
+  }, [previewOpen]);
   // A drop made before this composer existed is not for it.
   const handledDrop = useRef(dropRequest?.id);
   const [inputMessage, setInputMessage] = useTicketDraft(ticketId);
@@ -1291,13 +1326,18 @@ const MessageInputCustom = props => {
 
   if (medias.length > 0)
     return (
-      <Paper elevation={0} square className={classes.viewMediaInputWrapper}>
+      <Paper
+        elevation={0}
+        square
+        className={classes.viewMediaInputWrapper}
+        data-testid="media-send-composer"
+      >
         <MediaSendPreview
           files={medias}
           selected={selectedMedia}
           onSelect={setSelectedMedia}
         />
-        <div className={classes.viewMediaBar}>
+        <div className={classes.viewMediaBar} data-testid="media-send-bar">
           <IconButton
             aria-label="cancel-upload"
             component="span"
