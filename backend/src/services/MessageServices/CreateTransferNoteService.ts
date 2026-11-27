@@ -34,16 +34,16 @@ const CreateTransferNoteService = async ({
   fromQueueId,
   fromUserId
 }: Request): Promise<Message> => {
-  // only messages of this client, in this company
-  const contactTickets = await Ticket.findAll({
-    where: { contactId: ticket.contactId, companyId: ticket.companyId },
-    attributes: ["id"]
-  });
+  // Only messages of THIS ticket, in this company. The ids come from the
+  // request: the window of the transfer offers the last messages of the open
+  // ticket, and whoever may transfer a ticket reads all of it. A message of
+  // another ticket of the client may belong to a sector this person does not
+  // read (docs/PRD.md, RF-027), and the note would copy its text.
   const sources = parsed.messageIds.length
     ? await Message.findAll({
         where: {
           id: { [Op.in]: parsed.messageIds },
-          ticketId: { [Op.in]: contactTickets.map(t => t.id) },
+          ticketId: ticket.id,
           companyId: ticket.companyId,
           mediaType: { [Op.ne]: TRANSFER_NOTE_TYPE }
         },

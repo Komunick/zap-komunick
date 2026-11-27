@@ -195,6 +195,10 @@ Mudanças relevantes para quem usa, integra ou opera o projeto.
   continua sem diferenciar acentos e maiúsculas, e nomes com apóstrofo (como "D'Ávila"), que davam erro, passam a ser
   encontrados.
 
+- A nota de transferência só cita mensagens do atendimento que está sendo transferido. Antes, um id de mensagem de
+  outro atendimento do mesmo cliente, enviado numa requisição montada à mão, era copiado para a nota sem conferir se a
+  pessoa podia ler aquela mensagem. A tela nunca ofereceu essas mensagens (RF-017).
+
 ### Adicionado
 
 - O atendente pode consultar a última mensagem recebida de um atendimento pendente e depois usar

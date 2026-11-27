@@ -577,7 +577,8 @@ mostrava as mensagens do atendimento aberto.
   destacar. A nota aparece na conversa num cartão próprio ("Nota de transferência", de onde para onde, quem
   escreveu), visível só para a equipe: o cliente não recebe nada, não conta como resposta no SLA e não vira a última
   mensagem do atendimento.
-- A nota só cita mensagens do próprio cliente; até 30 mensagens e 2.000 caracteres.
+- A nota só cita mensagens do próprio atendimento que está sendo transferido (as que a janela oferece); até 30
+  mensagens e 2.000 caracteres. Id de mensagem de outro atendimento do cliente é ignorado.
 
 **Cenário de sucesso:**
 
